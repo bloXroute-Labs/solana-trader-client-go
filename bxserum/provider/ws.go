@@ -38,48 +38,33 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderb
 }
 
 func unaryWSRequest[T any](conn *websocket.Conn, request string) (*T, error) {
-	if err := conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
-		return nil, fmt.Errorf("error with sending message - %v", err)
-	}
-
-	_, msg, err := conn.ReadMessage()
+	err := sendWSRequest(conn, request)
 	if err != nil {
-		return nil, fmt.Errorf("error with reading message - %v", err)
+		return nil, err
 	}
 
-	var response T
-	if err = json.Unmarshal(msg, &response); err != nil {
-		return nil, fmt.Errorf("error with unmarshalling message of type %T - %v", response, err) // TODO check that response type is actually printed
-	}
-
-	return &response, nil
+	return recvWSResponse[T](conn)
 }
 
-func unaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request string, respChannel chan T) error {
-	if err := conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
-		return fmt.Errorf("error with sending message - %v", err)
+func unaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request string, responseChan chan *T) error {
+	err := sendWSRequest(conn, request)
+	if err != nil {
+		return err
 	}
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Log().Debug("stream closed", "remote addr", conn.RemoteAddr())
 				return
 			default:
-				_, msg, err := conn.ReadMessage()
+				response, err := recvWSResponse[T](conn)
 				if err != nil {
-					logger.Log().Errorw("error with reading message - %v", "err", err)
-					return
-				}
-
-				var response T
-				if err = json.Unmarshal(msg, &response); err != nil {
-					logger.Log().Errorw("error with unmarshalling message", "type", reflect.TypeOf(response), "err", err)
+					logger.Log().Error(err)
 					continue
 				}
 
-				respChannel <- response
+				responseChan <- response
 			}
 		}
 	}()
@@ -87,6 +72,42 @@ func unaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request str
 	return nil
 }
 
+func sendWSRequest(conn *websocket.Conn, request string) error {
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
+		return fmt.Errorf("error with sending message - %v", err)
+	}
+	return nil
+}
+
+func recvWSResponse[T any](conn *websocket.Conn) (*T, error) {
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("error reading WS response - %v", err)
+	}
+
+	// extract the result
+	var r jsonrpc2.Response
+	err = r.UnmarshalJSON(msg)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
+	}
+	bytes, err := r.Result.MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling JSON data - %v", err)
+	}
+
+	var response T
+	if err = json.Unmarshal(bytes, &response); err != nil {
+		return nil, fmt.Errorf("error with unmarshalling message of type %T - %v", response, err)
+	}
+	return &response, nil
+}
+
 func (w *WSClient) CloseConn() error {
-	return w.conn.Close()
+	err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		// TODO close conn harshly?
+		return fmt.Errorf("error writing close msg -  %v", err)
+	}
+	return nil
 }
