@@ -39,9 +39,7 @@ func callWebsocket() {
 	}
 
 	for i := 1; i <= 5; i++ {
-		orderBook := <-orderBookChan
-		fmt.Println(orderBook)
-
+		<-orderBookChan
 		fmt.Printf("response %v received\n", i)
 	}
 }
