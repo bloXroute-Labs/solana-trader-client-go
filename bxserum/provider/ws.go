@@ -6,17 +6,10 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/borsh/serumborsh"
 	"github.com/bloXroute-Labs/serum-api/logger"
-	"github.com/gorilla/websocket"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/gorilla/websocket"
 	"reflect"
 )
-
-// want to be able to connect/disconnect to it using the address
-// client should be able to give me results for api calls?
-// maybe like
-// g := NewGRPCClient(addr)
-// g.GetOrderBookStream(market, channel)
-// get a provider?
 
 type WSClient struct {
 	pb.UnsafeApiServer
@@ -35,21 +28,21 @@ func NewWSClient(addr string) (*WSClient, error) {
 }
 
 func (w *WSClient) GetOrderbook(market string) (*serumborsh.Orderbook, error) {
-	command := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbook", "params": {"market":"%s"}"`, market)
-	return w.unaryWSRequest(command)
+	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbook", "params": {"market":"%s"}"`, market)
+	return unaryWSRequest[serumborsh.Orderbook](w.conn, request)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan serumborsh.Orderbook) {
-	command := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}"`, market)
-	w.unaryWSStream(ctx, command, orderbookChan)
+	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}"`, market)
+	unaryWSStream(ctx, w.conn, request, orderbookChan)
 }
 
-func (w *WSClient) unaryWSRequest[T any](request string) (T, error) {
-	if err := w.conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
+func unaryWSRequest[T any](conn *websocket.Conn, request string) (*T, error) {
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
 		return nil, fmt.Errorf("error with sending message - %v", err)
 	}
 
-	_, msg, err := w.conn.ReadMessage()
+	_, msg, err := conn.ReadMessage()
 	if err != nil {
 		return nil, fmt.Errorf("error with reading message - %v", err)
 	}
@@ -62,18 +55,19 @@ func (w *WSClient) unaryWSRequest[T any](request string) (T, error) {
 	return &response, nil
 }
 
-func (w *WSClient) unaryWSStream[T any](ctx context.Context, request string, respChannel chan T) {
-	if err := w.conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
-		logger.Log().Errorf("error with sending message - %v", err)
+func unaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request string, respChannel chan T) error {
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
+		return fmt.Errorf("error with sending message - %v", err)
 	}
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
+				logger.Log().Debug("stream closed", "remote addr", conn.RemoteAddr())
 				return
 			default:
-				_, msg, err := w.conn.ReadMessage()
+				_, msg, err := conn.ReadMessage()
 				if err != nil {
 					logger.Log().Errorw("error with reading message - %v", "err", err)
 					return
@@ -81,7 +75,7 @@ func (w *WSClient) unaryWSStream[T any](ctx context.Context, request string, res
 
 				var response T
 				if err = json.Unmarshal(msg, &response); err != nil {
-					logger.Log().Errorw("error with unmarshalling message", "type", reflect.TypeOf(response), "err", err) // TODO check that response type is actually printed
+					logger.Log().Errorw("error with unmarshalling message", "type", reflect.TypeOf(response), "err", err)
 					continue
 				}
 
@@ -89,6 +83,8 @@ func (w *WSClient) unaryWSStream[T any](ctx context.Context, request string, res
 			}
 		}
 	}()
+
+	return nil
 }
 
 func (w *WSClient) CloseConn() error {
