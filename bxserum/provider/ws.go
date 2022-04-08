@@ -39,7 +39,7 @@ func (w *WSClient) GetOrderbook(market string) (*serumborsh.Orderbook, error) {
 	return w.unaryWSRequest(command)
 }
 
-func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *serumborsh.Orderbook) {
+func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan serumborsh.Orderbook) {
 	command := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}"`, market)
 	w.unaryWSStream(ctx, command, orderbookChan)
 }
