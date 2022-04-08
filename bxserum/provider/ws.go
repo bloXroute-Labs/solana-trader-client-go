@@ -36,42 +36,15 @@ func NewWSClient(addr string) (*WSClient, error) {
 
 func (w *WSClient) GetOrderbook(market string) (*serumborsh.Orderbook, error) {
 	command := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbook", "params": {"market":"%s"}"`, market)
-	msg, err := w.unaryWSRequest(command)
-	if err != nil {
-		return nil, err
-	}
-
-	var orderBook serumborsh.Orderbook
-	if err := json.Unmarshal(msg, &orderBook); err != nil {
-		return nil, fmt.Errorf("error with unmarshalling message - %v", err)
-	}
-
-	return &orderBook, nil
+	return w.unaryWSRequest(command)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *serumborsh.Orderbook) {
 	command := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}"`, market)
-	if err := w.conn.WriteMessage(websocket.TextMessage, []byte(command)); err != nil {
-		logger.Log().Errorw("error with sending message", "err", err)
-	}
-
-	b := make(chan serumborsh.Orderbook)
-	w.unaryWSStream(command, b)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case resp := <-b:
-				orderbookChan <- &resp
-			}
-		}
-	}()
-
-	return nil
+	w.unaryWSStream(ctx, command, orderbookChan)
 }
 
-func (w *WSClient) unaryWSRequest[T any](request string) (interface{}, error) {
+func (w *WSClient) unaryWSRequest[T any](request string) (T, error) {
 	if err := w.conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
 		return nil, fmt.Errorf("error with sending message - %v", err)
 	}
@@ -89,26 +62,31 @@ func (w *WSClient) unaryWSRequest[T any](request string) (interface{}, error) {
 	return &response, nil
 }
 
-func (w *WSClient) unaryWSStream[T any](request string, respChannel T) {
+func (w *WSClient) unaryWSStream[T any](ctx context.Context, request string, respChannel chan T) {
 	if err := w.conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
 		logger.Log().Errorf("error with sending message - %v", err)
 	}
 
 	go func() {
 		for {
-			_, msg, err := w.conn.ReadMessage()
-			if err != nil {
-				logger.Log().Errorw("error with reading message - %v", "err", err)
+			select {
+			case <-ctx.Done():
 				return
-			}
+			default:
+				_, msg, err := w.conn.ReadMessage()
+				if err != nil {
+					logger.Log().Errorw("error with reading message - %v", "err", err)
+					return
+				}
 
-			var response T
-			if err = json.Unmarshal(msg, &response); err != nil {
-				logger.Log().Errorw("error with unmarshalling message", "type", reflect.TypeOf(response), "err", err) // TODO check that response type is actually printed
-				continue
-			}
+				var response T
+				if err = json.Unmarshal(msg, &response); err != nil {
+					logger.Log().Errorw("error with unmarshalling message", "type", reflect.TypeOf(response), "err", err) // TODO check that response type is actually printed
+					continue
+				}
 
-			respChannel <- response
+				respChannel <- response
+			}
 		}
 	}()
 }
