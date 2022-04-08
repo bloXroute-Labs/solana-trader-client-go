@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-api/borsh/serumborsh"
 	"github.com/bloXroute-Labs/serum-api/logger"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/gorilla/websocket"
-	"reflect"
+	"github.com/sourcegraph/jsonrpc2"
 )
 
 type WSClient struct {
@@ -27,14 +26,14 @@ func NewWSClient(addr string) (*WSClient, error) {
 	return &WSClient{addr: addr, conn: conn}, nil
 }
 
-func (w *WSClient) GetOrderbook(market string) (*serumborsh.Orderbook, error) {
-	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbook", "params": {"market":"%s"}"`, market)
-	return unaryWSRequest[serumborsh.Orderbook](w.conn, request)
+func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
+	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbook", "params": {"market":"%s"}}`, market)
+	return unaryWSRequest[pb.GetOrderbookResponse](w.conn, request)
 }
 
-func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan serumborsh.Orderbook) {
-	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}"`, market)
-	unaryWSStream(ctx, w.conn, request, orderbookChan)
+func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
+	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}}`, market)
+	return unaryWSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
 func unaryWSRequest[T any](conn *websocket.Conn, request string) (*T, error) {
