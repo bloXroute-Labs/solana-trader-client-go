@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-api/logger"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
@@ -59,7 +59,7 @@ func unaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request str
 			default:
 				response, err := recvWSResponse[T](conn)
 				if err != nil {
-					logger.Log().Error(err)
+					log.Error(err)
 					continue
 				}
 

@@ -3,10 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	"github.com/bloXroute-Labs/serum-api/logger"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	"log"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func callWebsocket() {
 	// One time request
 	orderBook, err := w.GetOrderbook("ETH/USDT")
 	if err != nil {
-		logger.Log().Errorw("error with GetOrderbook request for ETH/USDT", "err", err)
+		log.Errorf("error with GetOrderbook request for ETH/USDT - %v", err)
 	} else {
 		fmt.Println(orderBook)
 	}
@@ -35,7 +34,7 @@ func callWebsocket() {
 
 	err = w.GetOrderbookStream(ctx, "SOL/USDT", orderBookChan)
 	if err != nil {
-		logger.Log().Errorw("error with GetOrderbookStream request for SOL/USDT", "err", err)
+		log.Errorf("error with GetOrderbookStream request for SOL/USDT - %v", err)
 	}
 
 	for i := 1; i <= 5; i++ {
