@@ -15,7 +15,7 @@ func UnaryWSRequest[T any](conn *websocket.Conn, request string) (*T, error) {
 		return nil, err
 	}
 
-	return recvWSResponse[T](conn)
+	return recvWSResult[T](conn)
 }
 
 func UnaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request string, responseChan chan *T) error {
@@ -30,7 +30,7 @@ func UnaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request str
 			case <-ctx.Done():
 				return
 			default:
-				response, err := recvWSResponse[T](conn)
+				response, err := recvWSResult[T](conn)
 				if err != nil {
 					logrus.Error(err)
 					continue
@@ -51,26 +51,26 @@ func sendWSRequest(conn *websocket.Conn, request string) error {
 	return nil
 }
 
-func recvWSResponse[T any](conn *websocket.Conn) (*T, error) {
+func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
 		return nil, fmt.Errorf("error reading WS response - %v", err)
 	}
 
 	// extract the result
-	var r jsonrpc2.Response
-	err = r.UnmarshalJSON(msg)
+	var resp jsonrpc2.Response
+	err = resp.UnmarshalJSON(msg)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
 	}
-	bytes, err := r.Result.MarshalJSON()
+	resultBytes, err := resp.Result.MarshalJSON()
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling JSON result - %v", err)
 	}
 
-	var response T
-	if err = json.Unmarshal(bytes, &response); err != nil {
-		return nil, fmt.Errorf("error with unmarshalling message of type %T - %v", response, err)
+	var result T
+	if err = json.Unmarshal(resultBytes, &result); err != nil {
+		return nil, fmt.Errorf("error with unmarshalling message of type %T - %v", result, err)
 	}
-	return &response, nil
+	return &result, nil
 }
