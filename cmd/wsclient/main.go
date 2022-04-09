@@ -35,10 +35,10 @@ func callWebsocket() {
 	err = w.GetOrderbookStream(ctx, "SOL/USDT", orderBookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDT - %v", err)
-	}
-
-	for i := 1; i <= 5; i++ {
-		<-orderBookChan
-		fmt.Printf("response %v received\n", i)
+	} else {
+		for i := 1; i <= 5; i++ {
+			<-orderBookChan
+			fmt.Printf("response %v received\n", i)
+		}
 	}
 }
