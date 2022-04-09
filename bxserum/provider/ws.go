@@ -92,7 +92,7 @@ func recvWSResponse[T any](conn *websocket.Conn) (*T, error) {
 	}
 	bytes, err := r.Result.MarshalJSON()
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling JSON data - %v", err)
+		return nil, fmt.Errorf("error marshalling JSON result - %v", err)
 	}
 
 	var response T
