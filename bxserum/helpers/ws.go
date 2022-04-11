@@ -9,6 +9,8 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
+// TODO Handle sending responses to their correct locations
+
 func UnaryWSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	err := sendWSRequest(conn, request)
 	if err != nil {
