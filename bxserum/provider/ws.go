@@ -71,5 +71,5 @@ func (w *WSClient) Close() error {
 
 func jsonRPCRequest(method string, params string) string {
 	id := getRequestID()
-	return fmt.Sprintf(`{"jsonrpc": "2.0", "id": %v, "method": "%s", "params": "%s"}`, id, method, params)
+	return fmt.Sprintf(`{"jsonrpc": "2.0", "id": %v, "method": "%s", "params": %s}`, id, method, params)
 }

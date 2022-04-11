@@ -13,7 +13,7 @@ func main() {
 }
 
 func callWebsocket() {
-	w, err := provider.NewWSClient("ws://174.129.154.164:1810/ws")
+	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
@@ -37,7 +37,7 @@ func callWebsocket() {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDT - %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
-			<-orderbookChan
+			fmt.Println(<-orderbookChan)
 			fmt.Printf("response %v received\n", i)
 		}
 	}
