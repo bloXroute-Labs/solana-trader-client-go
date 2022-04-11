@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/serum-api/bxserum/helpers"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/gorilla/websocket"
+	"sync"
 )
 
 type WSClient struct {
@@ -13,6 +14,20 @@ type WSClient struct {
 
 	addr string
 	conn *websocket.Conn
+}
+
+var requestID uint64 = 1
+var requestIDLock sync.Mutex
+
+func getRequestID() uint64 {
+	var val uint64
+
+	requestIDLock.Lock()
+	val = requestID
+	requestID++
+	requestIDLock.Unlock()
+
+	return val
 }
 
 // Connects to Mainnet Serum API
