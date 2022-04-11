@@ -7,7 +7,6 @@ import (
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
-	"sync"
 )
 
 type WSClient struct {
@@ -15,20 +14,6 @@ type WSClient struct {
 
 	addr string
 	conn *websocket.Conn
-}
-
-var requestID uint64 = 1
-var requestIDLock sync.Mutex
-
-func getRequestID() uint64 {
-	var val uint64
-
-	requestIDLock.Lock()
-	val = requestID
-	requestID++
-	requestIDLock.Unlock()
-
-	return val
 }
 
 // Connects to Mainnet Serum API
@@ -77,7 +62,7 @@ func (w *WSClient) Close() error {
 }
 
 func jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
-	id := getRequestID()
+	id := helpers.GetRequestID()
 	req := jsonrpc2.Request{
 		Method: method,
 		ID:     jsonrpc2.ID{Num: id},

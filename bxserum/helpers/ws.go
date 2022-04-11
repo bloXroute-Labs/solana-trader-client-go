@@ -7,9 +7,24 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/jsonrpc2"
+	"sync"
 )
 
 // TODO Handle sending responses to their correct locations
+
+var requestID uint64 = 1
+var requestIDLock sync.Mutex
+
+func GetRequestID() uint64 {
+	var val uint64
+
+	requestIDLock.Lock()
+	val = requestID
+	requestID++
+	requestIDLock.Unlock()
+
+	return val
+}
 
 func UnaryWSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	err := sendWSRequest(conn, request)
