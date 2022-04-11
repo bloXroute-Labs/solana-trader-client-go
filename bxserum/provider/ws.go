@@ -20,7 +20,7 @@ func NewWSClient() (*WSClient, error) {
 	return NewWSClientWithEndpoint("ws://174.129.154.164:1810/ws")
 }
 
-// TODO Connects to Testnet Serum API
+// Connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
 	panic("implement me")
 }
