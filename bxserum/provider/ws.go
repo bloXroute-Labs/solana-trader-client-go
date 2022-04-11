@@ -36,12 +36,12 @@ func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 }
 
 func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
-	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbook", "params": {"market":"%s"}}`, market)
+	request := jsonRPCRequest("GetOrderbook", fmt.Sprintf(`{"market":"%s"}`, market))
 	return helpers.UnaryWSRequest[pb.GetOrderbookResponse](w.conn, request)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
-	request := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "GetOrderbookStream", "params": {"market":"%s"}}`, market)
+	request := jsonRPCRequest("GetOrderbookStream", fmt.Sprintf(`{"market":"%s"}`, market))
 	return helpers.UnaryWSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
@@ -52,4 +52,9 @@ func (w *WSClient) Close() error {
 		return fmt.Errorf("error writing close msg -  %v", err)
 	}
 	return nil
+}
+
+func jsonRPCRequest(method string, params string) string {
+	id := getRequestID()
+	return fmt.Sprintf(`{"jsonrpc": "2.0", "id": %v, "method": "%s", "params": "%s"}`, id, method, params)
 }
