@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/serum-api/bxserum/helpers"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/gorilla/websocket"
+	"github.com/sourcegraph/jsonrpc2"
 	"sync"
 )
 
@@ -51,12 +52,18 @@ func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 }
 
 func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
-	request := jsonRPCRequest("GetOrderbook", fmt.Sprintf(`{"market":"%s"}`, market))
+	request, err := jsonRPCRequest("GetOrderbook", map[string]string{"market": market})
+	if err != nil {
+		return nil, err
+	}
 	return helpers.UnaryWSRequest[pb.GetOrderbookResponse](w.conn, request)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
-	request := jsonRPCRequest("GetOrderbookStream", fmt.Sprintf(`{"market":"%s"}`, market))
+	request, err := jsonRPCRequest("GetOrderbookStream", map[string]string{"market": market})
+	if err != nil {
+		return err
+	}
 	return helpers.UnaryWSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
@@ -69,7 +76,15 @@ func (w *WSClient) Close() error {
 	return nil
 }
 
-func jsonRPCRequest(method string, params string) string {
+func jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
 	id := getRequestID()
-	return fmt.Sprintf(`{"jsonrpc": "2.0", "id": %v, "method": "%s", "params": %s}`, id, method, params)
+	req := jsonrpc2.Request{
+		Method: method,
+		ID:     jsonrpc2.ID{Num: id},
+	}
+	if err := req.SetParams(params); err != nil {
+		return nil, err
+	}
+
+	return req.MarshalJSON()
 }

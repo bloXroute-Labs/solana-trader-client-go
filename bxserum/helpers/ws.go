@@ -9,7 +9,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func UnaryWSRequest[T any](conn *websocket.Conn, request string) (*T, error) {
+func UnaryWSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	err := sendWSRequest(conn, request)
 	if err != nil {
 		return nil, err
@@ -18,7 +18,7 @@ func UnaryWSRequest[T any](conn *websocket.Conn, request string) (*T, error) {
 	return recvWSResult[T](conn)
 }
 
-func UnaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request string, responseChan chan *T) error {
+func UnaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
 	err := sendWSRequest(conn, request)
 	if err != nil {
 		return err
@@ -44,8 +44,8 @@ func UnaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request str
 	return nil
 }
 
-func sendWSRequest(conn *websocket.Conn, request string) error {
-	if err := conn.WriteMessage(websocket.TextMessage, []byte(request)); err != nil {
+func sendWSRequest(conn *websocket.Conn, request []byte) error {
+	if err := conn.WriteMessage(websocket.TextMessage, request); err != nil {
 		return fmt.Errorf("error with sending message - %v", err)
 	}
 	return nil
