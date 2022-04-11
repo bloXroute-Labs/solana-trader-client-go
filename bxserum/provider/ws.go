@@ -25,7 +25,7 @@ func NewWSClientTestnet() (*WSClient, error) {
 	panic("implement me")
 }
 
-// Connects to specified Serum API
+// Connects to custom Serum API
 func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 	conn, _, err := websocket.DefaultDialer.Dial(addr, nil)
 	if err != nil {
