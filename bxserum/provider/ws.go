@@ -15,7 +15,18 @@ type WSClient struct {
 	conn *websocket.Conn
 }
 
-func NewWSClient(addr string) (*WSClient, error) {
+// Connects to Mainnet Serum API
+func NewWSClient() (*WSClient, error) {
+	return NewWSClientWithEndpoint("ws://174.129.154.164:1810/ws")
+}
+
+// TODO Connects to Testnet Serum API
+func NewWSClientTestnet() (*WSClient, error) {
+	panic("implement me")
+}
+
+// Connects to specified Serum API
+func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 	conn, _, err := websocket.DefaultDialer.Dial(addr, nil)
 	if err != nil {
 		return nil, err
