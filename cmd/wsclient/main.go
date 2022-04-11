@@ -37,7 +37,7 @@ func callWebsocket() {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDT - %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
-			fmt.Println(<-orderbookChan)
+			<-orderbookChan
 			fmt.Printf("response %v received\n", i)
 		}
 	}
