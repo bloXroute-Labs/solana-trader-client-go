@@ -34,7 +34,7 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderb
 	return helpers.UnaryWSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
-func (w *WSClient) CloseConn() error {
+func (w *WSClient) Close() error {
 	err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		// TODO close conn harshly?

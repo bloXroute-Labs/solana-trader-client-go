@@ -17,7 +17,7 @@ func callWebsocket() {
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
-	defer w.CloseConn()
+	defer w.Close()
 
 	// One time request
 	orderBook, err := w.GetOrderbook("ETH/USDT")
