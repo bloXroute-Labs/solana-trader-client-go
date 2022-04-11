@@ -55,7 +55,6 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderb
 func (w *WSClient) Close() error {
 	err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
-		// TODO close conn harshly?
 		return fmt.Errorf("error writing close msg -  %v", err)
 	}
 	return nil
