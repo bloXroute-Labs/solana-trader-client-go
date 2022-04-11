@@ -20,24 +20,24 @@ func callWebsocket() {
 	defer w.Close()
 
 	// One time request
-	orderBook, err := w.GetOrderbook("ETH/USDT")
+	orderbook, err := w.GetOrderbook("ETH/USDT")
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH/USDT - %v", err)
 	} else {
-		fmt.Println(orderBook)
+		fmt.Println(orderbook)
 	}
 
 	// Stream request
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	orderBookChan := make(chan *pb.GetOrderbookStreamResponse)
+	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
 
-	err = w.GetOrderbookStream(ctx, "SOL/USDT", orderBookChan)
+	err = w.GetOrderbookStream(ctx, "SOL/USDT", orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDT - %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
-			<-orderBookChan
+			<-orderbookChan
 			fmt.Printf("response %v received\n", i)
 		}
 	}
