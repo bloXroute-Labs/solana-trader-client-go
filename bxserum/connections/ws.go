@@ -30,7 +30,7 @@ func RequestID() uint64 {
 	return val
 }
 
-func UnaryWSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
+func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	err := sendWSRequest(conn, request)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func UnaryWSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	return recvWSResult[T](conn)
 }
 
-func UnaryWSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
+func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
 	err := sendWSRequest(conn, request)
 	if err != nil {
 		return err
