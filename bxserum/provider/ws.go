@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/bloXroute-Labs/serum-api/utils"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -12,8 +13,9 @@ import (
 type WSClient struct {
 	pb.UnsafeApiServer
 
-	addr string
-	conn *websocket.Conn
+	addr      string
+	conn      *websocket.Conn
+	requestID utils.RequestID
 }
 
 // Connects to Mainnet Serum API
