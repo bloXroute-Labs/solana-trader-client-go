@@ -1,6 +1,8 @@
 package utils
 
-import "sync"
+import (
+	"sync"
+)
 
 type RequestID struct {
 	id   uint64
@@ -14,7 +16,7 @@ func NewRequestID() RequestID {
 	}
 }
 
-func (r RequestID) Next() uint64 {
+func (r *RequestID) Next() uint64 {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
