@@ -11,6 +11,10 @@ import (
 )
 
 // TODO Handle sending responses to their correct locations
+type response struct {
+	Result json.RawMessage
+	Error  jsonrpc2.Error
+}
 
 var requestID uint64 = 1
 var requestIDLock sync.Mutex
@@ -75,19 +79,14 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 	}
 
 	// extract the result
-	var resp jsonrpc2.Response
-	err = resp.UnmarshalJSON(msg)
-	if err != nil {
+	var resp response
+	if err = json.Unmarshal(msg, &resp); err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
-	}
-	resultBytes, err := resp.Result.MarshalJSON()
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling JSON result - %v", err)
 	}
 
 	var result T
-	if err = json.Unmarshal(resultBytes, &result); err != nil {
-		return nil, fmt.Errorf("error with unmarshalling message of type %T - %v", result, err)
+	if err = json.Unmarshal(resp.Result, &result); err != nil {
+		return nil, fmt.Errorf("error unmarshalling message of type %T - %v", result, err)
 	}
 	return &result, nil
 }
