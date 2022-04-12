@@ -7,27 +7,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"github.com/sourcegraph/jsonrpc2"
-	"sync"
 )
 
 // TODO Handle sending responses to their correct locations
 type response struct {
 	Result json.RawMessage
 	Error  jsonrpc2.Error
-}
-
-var requestID uint64 = 1
-var requestIDLock sync.Mutex
-
-func RequestID() uint64 {
-	var val uint64
-
-	requestIDLock.Lock()
-	val = requestID
-	requestID++
-	requestIDLock.Unlock()
-
-	return val
 }
 
 func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
