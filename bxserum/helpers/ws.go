@@ -19,7 +19,7 @@ type response struct {
 var requestID uint64 = 1
 var requestIDLock sync.Mutex
 
-func GetRequestID() uint64 {
+func RequestID() uint64 {
 	var val uint64
 
 	requestIDLock.Lock()

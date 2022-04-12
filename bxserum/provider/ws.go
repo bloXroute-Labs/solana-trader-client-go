@@ -61,7 +61,7 @@ func (w *WSClient) Close() error {
 }
 
 func jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
-	id := helpers.GetRequestID()
+	id := helpers.RequestID()
 	req := jsonrpc2.Request{
 		Method: method,
 		ID:     jsonrpc2.ID{Num: id},
