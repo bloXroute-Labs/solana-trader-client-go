@@ -68,6 +68,9 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 	if err = json.Unmarshal(msg, &resp); err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
 	}
+	if resp.Error.Data != nil {
+		return nil, fmt.Errorf("error in JSON response - %s", resp.Error.Message)
+	}
 
 	var result T
 	if err = json.Unmarshal(resp.Result, &result); err != nil {
