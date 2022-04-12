@@ -35,11 +35,15 @@ func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 		return nil, err
 	}
 
-	return &WSClient{addr: addr, conn: conn}, nil
+	return &WSClient{
+		addr:      addr,
+		conn:      conn,
+		requestID: utils.NewRequestID(),
+	}, nil
 }
 
 func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
-	request, err := jsonRPCRequest("GetOrderbook", map[string]string{"market": market})
+	request, err := w.jsonRPCRequest("GetOrderbook", map[string]string{"market": market})
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +51,7 @@ func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
-	request, err := jsonRPCRequest("GetOrderbookStream", map[string]string{"market": market})
+	request, err := w.jsonRPCRequest("GetOrderbookStream", map[string]string{"market": market})
 	if err != nil {
 		return err
 	}
@@ -62,8 +66,8 @@ func (w *WSClient) Close() error {
 	return nil
 }
 
-func jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
-	id := connections.RequestID()
+func (w *WSClient) jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
+	id := w.requestID.Next()
 	req := jsonrpc2.Request{
 		Method: method,
 		ID:     jsonrpc2.ID{Num: id},
