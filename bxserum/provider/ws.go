@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-api/bxserum/helpers"
+	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
@@ -41,7 +41,7 @@ func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error)
 	if err != nil {
 		return nil, err
 	}
-	return helpers.UnaryWSRequest[pb.GetOrderbookResponse](w.conn, request)
+	return connections.WSRequest[pb.GetOrderbookResponse](w.conn, request)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
@@ -49,7 +49,7 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderb
 	if err != nil {
 		return err
 	}
-	return helpers.UnaryWSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
+	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
 func (w *WSClient) Close() error {
@@ -61,7 +61,7 @@ func (w *WSClient) Close() error {
 }
 
 func jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
-	id := helpers.RequestID()
+	id := connections.RequestID()
 	req := jsonrpc2.Request{
 		Method: method,
 		ID:     jsonrpc2.ID{Num: id},
