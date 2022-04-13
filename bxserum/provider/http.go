@@ -1,12 +1,10 @@
 package provider
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -38,36 +36,5 @@ func NewHTTPClientWithEndpoint(baseURL string) *HTTPClient {
 
 func (h *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
-	return getHTTPResponse[pb.GetOrderbookResponse](h.httpClient, url)
-}
-
-// response for GET request
-func getHTTPResponse[T any](client *http.Client, url string) (*T, error) {
-	if client == nil {
-		return nil, errors.New("client is nil, please create one using a `NewHTTPClient` function")
-	}
-	httpResp, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	return unmarshalHTTPResponse[T](httpResp)
-}
-
-func unmarshalHTTPResponse[T any](httpResp *http.Response) (*T, error) {
-	if httpResp == nil {
-		return nil, fmt.Errorf("HTTP response is nil")
-	}
-
-	b, err := ioutil.ReadAll(httpResp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp T
-	if err := json.Unmarshal(b, &resp); err != nil {
-		return nil, err
-	}
-
-	return &resp, err
+	return connections.HTTPGetResponse[pb.GetOrderbookResponse](h.httpClient, url)
 }
