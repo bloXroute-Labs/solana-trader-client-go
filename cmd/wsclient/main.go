@@ -26,6 +26,7 @@ func callWebsocket() {
 	} else {
 		fmt.Println(orderbook)
 	}
+	fmt.Println()
 
 	// Stream request
 	ctx, cancel := context.WithCancel(context.Background())
