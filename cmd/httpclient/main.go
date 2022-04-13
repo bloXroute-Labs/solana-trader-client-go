@@ -11,10 +11,10 @@ func main() {
 }
 
 func callHTTP() {
-	w := provider.NewHTTPClient()
+	h := provider.NewHTTPClient()
 
 	// One time request
-	orderbook, err := w.GetOrderbook("ETH-USDT")
+	orderbook, err := h.GetOrderbook("ETH-USDT")
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH/USDT - %v", err)
 	} else {
@@ -22,7 +22,7 @@ func callHTTP() {
 	}
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook("SOL-USDT")
+	orderbook, err = h.GetOrderbook("SOL-USDT")
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL/USDT - %v", err)
 	} else {
@@ -30,7 +30,7 @@ func callHTTP() {
 	}
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook("ETH-USDC")
+	orderbook, err = h.GetOrderbook("ETH-USDC")
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH/USDC - %v", err)
 	} else {
