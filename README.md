@@ -14,6 +14,9 @@ GetOrderbookStream
 ```azure
 GetOrderbook
 ```
+Methods that end in `Stream` continuously stream responses through a channel, while other methods return a one and done response.
+
+Furthermore, the HTTP client only supports unary/non-streaming methods.
 
 ## Usage
 #### Unary Response:
@@ -36,12 +39,14 @@ func main() {
         // ...
     }
 
+
     // HTTP
     h := provider.NewHTTPClient()
     orderbook, err := h.GetOrderbook("ETH-USDT") // do not put slashes in the HTTP request, you can do A-B (`ETH-USDT`) or AB (i.e. `ETHUSDT`)
     if err != nil {
         // ...
     }
+
 
     // WS
     w, err := provider.NewWSClient()
@@ -83,4 +88,4 @@ func main() {
 }
 ```
 
-To run some working code samples, please visit the `cmd` where you can see examples of code for each client.
+To run some working code samples, please visit the `cmd` directory where you can see examples of code for each client.
