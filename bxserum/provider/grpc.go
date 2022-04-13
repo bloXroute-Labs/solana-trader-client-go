@@ -53,31 +53,18 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, outp
 	return nil
 }
 
-func grpcStream[T any](ctx context.Context, client *grpc.ClientConn, method string, in interface{}, out chan<- *T) error {
-	if client == nil {
-		return errors.New("client is nil, please create one using a `NewGRPCClient` function")
-	}
-	stream, err := client.NewStream(ctx, nil, method)
-	if err != nil {
-		return err
-	}
-	if err := stream.SendMsg(in); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			output := new(T)
-			err := stream.RecvMsg(&output)
-			if err == io.EOF {
-				log.Errorf("stream for method %s ended successfully", method)
-			} else if err != nil {
-				log.Errorf("error when receiving message for method %s - %v", method, err)
-			} else {
-				out <- output
-			}
+func streamOutput[T any](stream grpc.ClientStream, input string, outputChan chan *T) {
+	for {
+		output := new(T)
+		err := stream.RecvMsg(output)
+		if err == io.EOF {
+			log.Errorf("stream for input %s ended successfully", input)
+			return
+		} else if err != nil {
+			log.Errorf("error when receiving message for input %s - %v", input, err)
+			return
+		} else {
+			outputChan <- output
 		}
-	}()
-
-	return nil
+	}
 }
