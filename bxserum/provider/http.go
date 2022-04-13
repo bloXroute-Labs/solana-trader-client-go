@@ -10,7 +10,6 @@ import (
 )
 
 type HTTPClient struct {
-	pb.UnsafeApiServer // TODO Regular API Server?
 	pb.UnimplementedApiServer
 
 	baseURL    string

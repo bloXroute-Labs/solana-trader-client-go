@@ -11,7 +11,6 @@ import (
 )
 
 type GRPCClient struct {
-	pb.UnsafeApiServer // TODO Regular API Server?
 	pb.UnimplementedApiServer
 
 	apiClient pb.ApiClient
