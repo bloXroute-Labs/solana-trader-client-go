@@ -48,11 +48,11 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, outp
 	if err != nil {
 		return err
 	}
-	go streamOutput[pb.GetOrderbookStreamResponse](stream, market, outputChan)
+	go streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
 	return nil
 }
 
-func streamOutput[T any](stream grpc.ClientStream, input string, outputChan chan *T) {
+func streamResponse[T any](stream grpc.ClientStream, input string, outputChan chan *T) {
 	for {
 		output := new(T)
 		err := stream.RecvMsg(output)

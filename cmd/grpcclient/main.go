@@ -16,44 +16,57 @@ func main() {
 func callGRPC() {
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Errorf("error dialing GRPC client - %v", err)
+		log.Fatalf("error dialing GRPC client - %v", err)
+		return
 	}
 
-	// One time request
+	// Unary response
 	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT")
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH/USDT - %v", err)
+		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
+
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOL-USDT")
+	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT")
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL/USDT - %v", err)
+		log.Errorf("error with GetOrderbook request for SOLUSDT - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
+
+	fmt.Println()
+
+	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC")
+	if err != nil {
+		log.Errorf("error with GetOrderbook request for SOL:USDC - %v", err)
+	} else {
+		fmt.Println(orderbook)
+	}
+
 	fmt.Println()
 }
 
 func callGRPCStream() {
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Errorf("error dialing GRPC client - %v", err)
+		log.Fatalf("error dialing GRPC client - %v", err)
+		return
 	}
 
 	// Stream response
-	respChan := make(chan *pb.GetOrderbookStreamResponse)
+	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err = g.GetOrderbookStream(ctx, "ETH/USDC", respChan)
+	err = g.GetOrderbookStream(ctx, "SOL/USDC", orderbookChan)
 	if err != nil {
-		log.Errorf("error with GetOrderbook stream request for ETH/USDT - %v", err)
+		log.Errorf("error with GetOrderbook stream request for SOL/USDC - %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
-			<-respChan
+			<-orderbookChan
 			fmt.Printf("response %v received\n", i)
 		}
 	}

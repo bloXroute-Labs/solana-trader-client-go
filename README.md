@@ -1,8 +1,8 @@
-# Golang-Serum-Client
+# Serum Golang Client
 
 ## Objective
 This SDK is designed to make it easy for you to use the [Bloxroute Labs Serum API](https://github.com/bloXroute-Labs/serum-api)
-in Go. As we continue to develop the Serum API, we will update this code to have more methods as well. Currently the methods supported are:
+in Go. As we continue to develop the Serum API, we will update the methods here as well. Currently, the methods supported are:
 
 #### GRPC/WS:
 ```azure
@@ -18,7 +18,19 @@ Methods that end in `Stream` continuously stream responses through a channel, wh
 
 Furthermore, the HTTP client only supports unary/non-streaming methods.
 
+## Installation
+```
+go get github.com/bloXroute-Labs/serum-api/bxserum/provider
+go get github.com/bloXroute-Labs/serum-api/proto
+```
+
 ## Usage
+Note: Markets can be provided in different formats:
+1. `A/B` (only for GRPC/WS clients) --> `ETH/USDT`
+2. `A:B` --> `ETH:USDT`
+3. `A-B` --> `ETH-USDT`
+4. `AB` --> `ETHUSDT`
+
 #### Unary Response:
 ```go
 import (
@@ -34,7 +46,7 @@ func main() {
         // ...
     }
 
-    orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT")
+    orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT")
     if err != nil {
         // ...
     }
@@ -42,7 +54,7 @@ func main() {
 
     // HTTP
     h := provider.NewHTTPClient()
-    orderbook, err := h.GetOrderbook("ETH-USDT") // do not put slashes in the HTTP request, you can do A-B (`ETH-USDT`) or AB (i.e. `ETHUSDT`)
+    orderbook, err := h.GetOrderbook("ETH-USDT") // do not use forward slashes for the HTTP market parameter
     if err != nil {
         // ...
     }
@@ -54,11 +66,12 @@ func main() {
         // ...
     }
 
-    orderbook, err := w.GetOrderbook("ETH-USDT")
+    orderbook, err := w.GetOrderbook("ETH/USDT")
     if err != nil {
         // ...
     }
 }
+
 ```
 #### Stream response (only in GRPC/WS):
 ```go
@@ -73,7 +86,7 @@ func main() {
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()
 
-    g, err := provider.NewGRPCClient() // you can replace this with `NewWSClient()`
+    g, err := provider.NewGRPCClient() // you can replace this with `NewWSClient()` to use WebSockets
     if err != nil {
         // ...
     }

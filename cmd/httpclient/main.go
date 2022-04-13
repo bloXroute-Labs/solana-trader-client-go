@@ -13,28 +13,29 @@ func main() {
 func callHTTP() {
 	h := provider.NewHTTPClient()
 
-	// One time request
+	// Unary response
 	orderbook, err := h.GetOrderbook("ETH-USDT")
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH/USDT - %v", err)
+		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
+
 	fmt.Println()
 
-	orderbook, err = h.GetOrderbook("SOL-USDT")
+	orderbook, err = h.GetOrderbook("SOLUSDT")
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL/USDT - %v", err)
+		log.Errorf("error with GetOrderbook request for SOLUSDT - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
+
 	fmt.Println()
 
-	orderbook, err = h.GetOrderbook("ETH-USDC")
+	orderbook, err = h.GetOrderbook("SOL:USDC")
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH/USDC - %v", err)
+		log.Errorf("error with GetOrderbook request for SOL:USDC - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
-	fmt.Println()
 }
