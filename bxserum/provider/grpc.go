@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +14,7 @@ type GRPCClient struct {
 	pb.UnsafeApiServer // TODO Regular API Server?
 	pb.UnimplementedApiServer
 
-	grpcConn  *grpc.ClientConn
+	apiClient pb.ApiClient
 	requestID utils.RequestID
 }
 
@@ -36,28 +35,22 @@ func NewGRPCClientWithEndpoint(baseURL string) (*GRPCClient, error) {
 		return nil, err
 	}
 	return &GRPCClient{
-		grpcConn:  conn,
+		apiClient: pb.NewApiClient(conn),
 		requestID: utils.NewRequestID(),
 	}, nil
 }
 
 func (g *GRPCClient) GetOrderbook(ctx context.Context, market string) (*pb.GetOrderbookResponse, error) {
-	method := "/api.Api/GetOrderbook"
-	in := &pb.GetOrderBookRequest{Market: market}
-	out := new(pb.GetOrderbookResponse)
-	return grpcResponse[pb.GetOrderbookResponse](ctx, g.grpcConn, method, in, out)
+	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market})
 }
 
-func grpcResponse[T any](ctx context.Context, client *grpc.ClientConn, method string, in interface{}, out *T) (*T, error) {
-	if client == nil {
-		return nil, errors.New("client is nil, please create one using a `NewGRPCClient` function")
-	}
-	err := client.Invoke(ctx, method, in, out)
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, outputChan chan *pb.GetOrderbookStreamResponse) error {
+	stream, err := g.apiClient.GetOrderbookStream(ctx, &pb.GetOrderBookRequest{Market: market})
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return out, nil
+	go streamOutput[pb.GetOrderbookStreamResponse](stream, market, outputChan)
+	return nil
 }
 
 func grpcStream[T any](ctx context.Context, client *grpc.ClientConn, method string, in interface{}, out chan<- *T) error {
