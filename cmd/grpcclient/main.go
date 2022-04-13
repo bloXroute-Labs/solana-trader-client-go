@@ -35,13 +35,6 @@ func callGRPC() {
 		fmt.Println(orderbook)
 	}
 	fmt.Println()
-
-	g, err = provider.NewGRPCClientWithEndpoint("http://1.1.1.1:1809")
-	if err != nil {
-		fmt.Println("successfully got error when dialing invalid IP")
-	} else {
-		fmt.Println("did not get error when dialing invalid IP")
-	}
 }
 
 func callGRPCStream() {
