@@ -52,9 +52,9 @@ func callGRPCStream() {
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for ETH/USDT - %v", err)
 	} else {
-		for i := 0; i < 5; i++ {
-			fmt.Println(<-respChan)
-			fmt.Println()
+		for i := 1; i <= 5; i++ {
+			<-respChan
+			fmt.Printf("response %v received\n", i)
 		}
 	}
 }
