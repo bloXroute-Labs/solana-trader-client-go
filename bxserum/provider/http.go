@@ -36,9 +36,9 @@ func NewHTTPClientWithEndpoint(baseURL string) *HTTPClient {
 	return &HTTPClient{baseURL: baseURL, httpClient: &client} // TODO handle possible forward slash at end of base url?
 }
 
-func (w *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
-	url := w.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
-	return getHTTPResponse[pb.GetOrderbookResponse](w.httpClient, url)
+func (h *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
+	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
+	return getHTTPResponse[pb.GetOrderbookResponse](h.httpClient, url)
 }
 
 // response for GET request
