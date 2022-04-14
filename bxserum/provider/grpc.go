@@ -28,8 +28,8 @@ func NewGRPCTestnet() (*GRPCClient, error) {
 }
 
 // Connects to custom Serum API
-func NewGRPCClientWithEndpoint(baseURL string) (*GRPCClient, error) {
-	conn, err := grpc.Dial(baseURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
+	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}

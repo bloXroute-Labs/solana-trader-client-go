@@ -56,11 +56,11 @@ func callGRPCStream() {
 		return
 	}
 
-	// Stream response
 	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Stream response
 	err = g.GetOrderbookStream(ctx, "SOL/USDC", orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC - %v", err)

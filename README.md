@@ -86,7 +86,7 @@ func main() {
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()
 
-    g, err := provider.NewGRPCClient() // you can replace this with `NewWSClient()` to use WebSockets
+    g, err := provider.NewGRPCClient() // replace this with `NewWSClient()` to use WebSockets
     if err != nil {
         // ...
     }
