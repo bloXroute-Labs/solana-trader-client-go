@@ -27,7 +27,7 @@ func NewHTTPTestnet() *HTTPClient {
 	panic("implement me")
 }
 
-// Connects to custom Serum API
+// Connects to custom Serum API (set client to nil to use default client)
 func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient {
 	if client == nil {
 		client = &http.Client{Timeout: time.Second * 7}
