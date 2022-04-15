@@ -37,5 +37,5 @@ func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient
 
 func (h *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
-	return connections.HTTPGetWithClient[pb.GetOrderbookResponse](h.httpClient, url)
+	return connections.HTTPGetWithClient[pb.GetOrderbookResponse](url, h.httpClient)
 }

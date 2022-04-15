@@ -11,11 +11,11 @@ import (
 // HTTP response for GET request with default client
 func HTTPGet[T any](url string) (*T, error) {
 	client := &http.Client{Timeout: time.Second * 7}
-	return HTTPGetWithClient[T](client, url)
+	return HTTPGetWithClient[T](url, client)
 }
 
 // HTTP response for GET request
-func HTTPGetWithClient[T any](client *http.Client, url string) (*T, error) {
+func HTTPGetWithClient[T any](url string, client *http.Client) (*T, error) {
 	httpResp, err := client.Get(url)
 	if err != nil {
 		return nil, err
