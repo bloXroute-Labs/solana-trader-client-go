@@ -37,3 +37,8 @@ func (h *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, erro
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
 	return connections.HTTPGetResponse[pb.GetOrderbookResponse](h.httpClient, url)
 }
+
+func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
+	url := h.baseURL + fmt.Sprintf("/api/v1/market/markets")
+	return connections.HTTPGetResponse[pb.GetMarketsResponse](h.httpClient, url)
+}

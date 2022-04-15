@@ -52,6 +52,10 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, outp
 	return nil
 }
 
+func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
+	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
+}
+
 func streamResponse[T any](stream grpc.ClientStream, input string, outputChan chan *T) {
 	for {
 		output := new(T)
