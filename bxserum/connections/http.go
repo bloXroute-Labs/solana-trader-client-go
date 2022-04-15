@@ -2,26 +2,29 @@ package connections
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
+// HTTP response for GET request with default client
+func HTTPGet[T any](url string) (*T, error) {
+	client := &http.Client{Timeout: time.Second * 7}
+	return HTTPGetWithClient[T](client, url)
+}
+
 // HTTP response for GET request
-func HTTPGetResponse[T any](client *http.Client, url string) (*T, error) {
-	if client == nil {
-		return nil, errors.New("client is nil, please create one using a `NewHTTPClient` function")
-	}
+func HTTPGetWithClient[T any](client *http.Client, url string) (*T, error) {
 	httpResp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
 
-	return httpUnmarshalResponse[T](httpResp)
+	return httpUnmarshal[T](httpResp)
 }
 
-func httpUnmarshalResponse[T any](httpResp *http.Response) (*T, error) {
+func httpUnmarshal[T any](httpResp *http.Response) (*T, error) {
 	if httpResp == nil {
 		return nil, fmt.Errorf("HTTP response is nil")
 	}
