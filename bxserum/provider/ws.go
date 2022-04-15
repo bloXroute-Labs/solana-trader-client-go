@@ -58,6 +58,14 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderb
 	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
+func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
+	request, err := w.jsonRPCRequest("GetMarkets", nil)
+	if err != nil {
+		return nil, err
+	}
+	return connections.WSRequest[pb.GetMarketsResponse](w.conn, request)
+}
+
 func (w *WSClient) Close() error {
 	err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
