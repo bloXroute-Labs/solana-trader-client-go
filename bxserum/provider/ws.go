@@ -11,7 +11,7 @@ import (
 )
 
 type WSClient struct {
-	pb.UnsafeApiServer
+	pb.UnimplementedApiServer
 
 	addr      string
 	conn      *websocket.Conn
