@@ -6,402 +6,402 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 service Api {
-rpc GetMarkets(GetMarketsRequest) returns (GetMarketsResponse) {
-option(google.api.http) = {
-get: "/api/v1/market/markets"
-};
-}
+  rpc GetMarkets(GetMarketsRequest) returns (GetMarketsResponse) {
+    option(google.api.http) = {
+      get: "/api/v1/market/markets"
+    };
+  }
 
-rpc GetTicker(GetTickerRequest) returns (GetTickerResponse) {
-option(google.api.http) = {
-get: "/api/v1/market/tickers/{market}"
-};
-}
+  rpc GetTicker(GetTickerRequest) returns (GetTickerResponse) {
+    option(google.api.http) = {
+      get: "/api/v1/market/tickers/{market}"
+    };
+  }
 
-rpc GetKline(GetKlineRequest) returns (GetKlineResponse) {
-option(google.api.http) = {
-get: "/api/v1/market/kline/{market}"
-};
-}
+  rpc GetKline(GetKlineRequest) returns (GetKlineResponse) {
+    option(google.api.http) = {
+      get: "/api/v1/market/kline/{market}"
+    };
+  }
 
-rpc GetOrderbook(GetOrderBookRequest) returns (GetOrderbookResponse) {
-option (google.api.http) = {
-get: "/api/v1/market/orderbooks/{market}"
-};
-}
+  rpc GetOrderbook(GetOrderBookRequest) returns (GetOrderbookResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/market/orderbooks/{market}"
+    };
+  }
 
-rpc GetTrades(GetTradesRequest) returns (GetTradesResponse) {
-option (google.api.http) = {
-get: "/api/v1/market/trades/{market}"
-};
-}
+  rpc GetTrades(GetTradesRequest) returns (GetTradesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/market/trades/{market}"
+    };
+  }
 
-rpc GetServerTime(GetServerTimeRequest) returns (GetServerTimeResponse) {
-option (google.api.http) = {
-get: "/api/v1/system/time"
-};
-}
+  rpc GetServerTime(GetServerTimeRequest) returns (GetServerTimeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/system/time"
+    };
+  }
 
-// account endpoints
-rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse) {
-option (google.api.http) = {
-get: "/api/v1/account/balance"
-};
-}
+  // account endpoints
+  rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/account/balance"
+    };
+  }
 
-// trade endpoints
-rpc PostOrder(PostOrderRequest) returns (PostOrderResponse) {
-option (google.api.http) = {
-post: "/api/v1/trade/place"
-};
-}
+  // trade endpoints
+  rpc PostOrder(PostOrderRequest) returns (PostOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/place"
+    };
+  }
 
-rpc PostCancelOrder(PostCancelOrderRequest) returns (PostCancelOrderResponse) {
-option (google.api.http) = {
-post: "/api/v1/trade/cancel"
-};
-}
+  rpc PostCancelOrder(PostCancelOrderRequest) returns (PostCancelOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/cancel"
+    };
+  }
 
-rpc PostCancelAll(PostCancelAllRequest) returns (PostCancelAllResponse) {
-option (google.api.http) = {
-post: "/api/v1/trade/cancelall"
-};
-}
+  rpc PostCancelAll(PostCancelAllRequest) returns (PostCancelAllResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/cancelall"
+    };
+  }
 
-rpc PostSettle(PostSettleRequest) returns (PostSettleResponse) {
-option (google.api.http) = {
-post: "/api/v1/trade/settle"
-};
-}
+  rpc PostSettle(PostSettleRequest) returns (PostSettleResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/settle"
+    };
+  }
 
-rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {
-option (google.api.http) = {
-get: "/api/v1/trade/orders/{market}"
-};
-}
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trade/orders/{market}"
+    };
+  }
 
-rpc GetOpenOrders(GetOpenOrdersRequest) returns (GetOpenOrdersResponse) {
-option (google.api.http) = {
-get: "/api/v1/trade/openorders/{market}"
-};
-}
+  rpc GetOpenOrders(GetOpenOrdersRequest) returns (GetOpenOrdersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trade/openorders/{market}"
+    };
+  }
 
-rpc GetOrderByID(GetOrderByIDRequest) returns (GetOrderByIDResponse) {
-option (google.api.http) = {
-get: "/api/v1/trade/orderbyid/{orderID}"
-};
-}
+  rpc GetOrderByID(GetOrderByIDRequest) returns (GetOrderByIDResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trade/orderbyid/{orderID}"
+    };
+  }
 
-rpc GetUnsettled(GetUnsettledRequest) returns (GetUnsettledResponse) {
-option (google.api.http) = {
-get: "/api/v1/trade/unsettled/{symbol}"
-};
-}
+  rpc GetUnsettled(GetUnsettledRequest) returns (GetUnsettledResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trade/unsettled/{symbol}"
+    };
+  }
 
-// streaming endpoints
-rpc GetOrderbookStream(GetOrderBookRequest) returns (stream GetOrderbookStreamResponse) {
+  // streaming endpoints
+  rpc GetOrderbookStream(GetOrderBookRequest) returns (stream GetOrderbookStreamResponse) {
 
-}
+  }
 
-rpc GetTickerStream(GetTickerRequest) returns (stream GetTickerStreamResponse) {
+  rpc GetTickerStream(GetTickerRequest) returns (stream GetTickerStreamResponse) {
 
-}
+  }
 
-rpc GetMarketDepthStream(GetMarketsRequest) returns (stream GetMarketDepthStreamResponse) {
+  rpc GetMarketDepthStream(GetMarketsRequest) returns (stream GetMarketDepthStreamResponse) {
 
-}
+  }
 
-rpc GetTradeStream(GetTradesRequest) returns (stream GetTradesStreamResponse) {
+  rpc GetTradeStream(GetTradesRequest) returns (stream GetTradesStreamResponse) {
 
-}
+  }
 }
 
 message GetMarketsRequest {
 }
 
 message GetMarketsResponse {
-map<string, Market> markets = 1;
+  map<string, Market> markets = 1;
 }
 
 message Market {
-string market = 1;
-MarketStatus status = 2;
-string address = 3;
+  string market = 1;
+  MarketStatus status = 2;
+  string address = 3;
 }
 
 enum MarketStatus {
-MS_UNKNOWN = 0;
-MS_ONLINE = 1;
+  MS_UNKNOWN = 0;
+  MS_ONLINE = 1;
 }
 
 message GetTickerRequest {
-string market = 1; // empty for ALL
+  string market = 1; // empty for ALL
 }
 
 message GetTickerResponse {
-Ticker ticker = 1;
+  Ticker ticker = 1;
 }
 
 message Ticker {
-string market = 1;
-MarketStatus status = 2;
-string marketAddress = 3;
-double close = 4;
-double open = 5;
-double amount = 6;
-double volume = 7;
-double count = 8;
-double bid = 9;
-double bidSize = 10;
-double ask = 11;
-double askSize = 12;
+  string market = 1;
+  MarketStatus status = 2;
+  string marketAddress = 3;
+  double close = 4;
+  double open = 5;
+  double amount = 6;
+  double volume = 7;
+  double count = 8;
+  double bid = 9;
+  double bidSize = 10;
+  double ask = 11;
+  double askSize = 12;
 }
 
 message GetKlineRequest {
-string market = 1;
-google.protobuf.Timestamp from = 2;
-google.protobuf.Timestamp to = 3;
-string resolution = 4; // indicates a duration: e.g. 1d, 4h, 1h, 30m, 15m, 1m
-int32 limit = 5;
+  string market = 1;
+  google.protobuf.Timestamp from = 2;
+  google.protobuf.Timestamp to = 3;
+  string resolution = 4; // indicates a duration: e.g. 1d, 4h, 1h, 30m, 15m, 1m
+  uint32 limit = 5;
 }
 
 message GetKlineResponse {
-string market = 1;
-google.protobuf.Timestamp timestamp = 2;
-repeated Candle candles = 3;
+  string market = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  repeated Candle candles = 3;
 }
 
 message Candle {
-google.protobuf.Timestamp startTime = 1;
-google.protobuf.Timestamp updateTime = 2;
-double open = 3;
-double close = 4;
-double low = 5;
-double high = 6;
-double amount = 7;
-double volume = 8;
-double count = 9;
+  google.protobuf.Timestamp startTime = 1;
+  google.protobuf.Timestamp updateTime = 2;
+  double open = 3;
+  double close = 4;
+  double low = 5;
+  double high = 6;
+  double amount = 7;
+  double volume = 8;
+  double count = 9;
 }
 
 message GetOrderBookRequest {
-string market = 1;
-int32 limit = 2;
+  string market = 1;
+  uint32 limit = 2;
 }
 
 message GetOrderbookResponse {
-string market = 1;
-string marketAddress = 2;
-repeated OrderbookBid bids = 3;
-repeated OrderbookAsk asks = 4;
+  string market = 1;
+  string marketAddress = 2;
+  repeated OrderbookBid bids = 3;
+  repeated OrderbookAsk asks = 4;
 }
 
 message OrderbookBid {
-double price = 1;
-double size = 2;
+  double price = 1;
+  double size = 2;
 }
 
 message OrderbookAsk {
-double price = 1;
-double size = 2;
+  double price = 1;
+  double size = 2;
 }
 
 message GetTradesRequest {
-string market = 1;
-google.protobuf.Timestamp from = 2;
-int32 limit = 3;
+  string market = 1;
+  google.protobuf.Timestamp from = 2;
+  uint32 limit = 3;
 }
 
 message GetTradesResponse {
-repeated Trade trades = 1;
+  repeated Trade trades = 1;
 }
 
 message Trade {
-string side = 1;
-double size = 2;
-double price = 3;
-google.protobuf.Timestamp createdAt = 4;
+  string side = 1;
+  double size = 2;
+  double price = 3;
+  google.protobuf.Timestamp createdAt = 4;
 }
 
 message GetServerTimeRequest {}
 
 message GetServerTimeResponse {
-google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Timestamp timestamp = 1;
 }
 
 message GetAccountBalanceRequest {}
 
 message GetAccountBalanceResponse {
-repeated TokenBalance tokens = 1;
+  repeated TokenBalance tokens = 1;
 }
 
 message TokenBalance {
-string symbol = 1;
-double amount = 2;
+  string symbol = 1;
+  double amount = 2;
 }
 
 message PostOrderRequest {
-string address = 1;
-string market = 2;
-Side side = 3;
-repeated OrderType type = 4;
-double amount = 5;
-double price = 6;
+  string address = 1;
+  string market = 2;
+  Side side = 3;
+  repeated OrderType type = 4;
+  double amount = 5;
+  double price = 6;
 }
 
 enum Side {
-S_UNKNOWN = 0;
-S_BID = 1;
-S_ASK = 2;
+  S_UNKNOWN = 0;
+  S_BID = 1;
+  S_ASK = 2;
 }
 
 enum OrderType {
-OT_MARKET = 0;
-OT_LIMIT = 1; // MARKET and LIMIT are mutually exclusive
-OT_IOC = 2; // immediate or cancel
-OT_POST = 3;
+  OT_MARKET = 0;
+  OT_LIMIT = 1; // MARKET and LIMIT are mutually exclusive
+  OT_IOC = 2; // immediate or cancel
+  OT_POST = 3;
 }
 
 message PostOrderResponse {
-string orderID = 1;
+  string orderID = 1;
 }
 
 message PostCancelOrderRequest {
-string orderID = 1;
+  string orderID = 1;
 }
 
 message PostCancelOrderResponse {
-string orderID = 1;
+  string orderID = 1;
 }
 
 message PostCancelAllRequest {
-string market = 1;
+  string market = 1;
 }
 
 message PostCancelAllResponse {
-repeated string orderIDs = 1;
+  repeated string orderIDs = 1;
 }
 
 message PostSettleRequest {
-string symbol = 1;
+  string symbol = 1;
 }
 
 message PostSettleResponse {
-Settlement settlement = 1;
+  Settlement settlement = 1;
 }
 
 message Settlement {
-string symbol = 1;
-double unsettled = 2;
-double amount = 3;
+  string symbol = 1;
+  double unsettled = 2;
+  double amount = 3;
 }
 
 message GetOrdersRequest {
-string market = 1;
-OrderStatus status = 2;
-Side side = 3;
-repeated OrderType types = 4;
-google.protobuf.Timestamp from = 5;
-int32 limit = 6;
-Direction direction = 7;
+  string market = 1;
+  OrderStatus status = 2;
+  Side side = 3;
+  repeated OrderType types = 4;
+  google.protobuf.Timestamp from = 5;
+  uint32 limit = 6;
+  Direction direction = 7;
 }
 
 enum OrderStatus {
-OS_UNKNOWN = 0;
-OS_OPEN = 1;
-OS_PARTIAL_FILL = 2;
-OS_FILLED = 3;
-OS_CANCELLED = 4;
-OS_PENDING = 5;
+  OS_UNKNOWN = 0;
+  OS_OPEN = 1;
+  OS_PARTIAL_FILL = 2;
+  OS_FILLED = 3;
+  OS_CANCELLED = 4;
+  OS_PENDING = 5;
 }
 
 enum Direction {
-D_ASCENDING = 0;
-D_DESCENDING = 1;
+  D_ASCENDING = 0;
+  D_DESCENDING = 1;
 }
 
 message GetOrdersResponse {
-repeated Order orders = 1;
+  repeated Order orders = 1;
 }
 
 message Order {
-string orderID = 1;
-string market = 2;
-Side side = 3;
-repeated OrderType types = 4;
-double price = 5;
-double size = 6;
-double remainingSize = 7;
-google.protobuf.Timestamp createdAt = 8;
-OrderStatus status = 9;
+  string orderID = 1;
+  string market = 2;
+  Side side = 3;
+  repeated OrderType types = 4;
+  double price = 5;
+  double size = 6;
+  double remainingSize = 7;
+  google.protobuf.Timestamp createdAt = 8;
+  OrderStatus status = 9;
 }
 
 message GetOpenOrdersRequest {
-string market = 1;
-Side side = 2;
-repeated OrderType types = 3;
-google.protobuf.Timestamp from = 4;
-int32 limit = 5;
-Direction direction = 6;
+  string market = 1;
+  Side side = 2;
+  repeated OrderType types = 3;
+  google.protobuf.Timestamp from = 4;
+  uint32 limit = 5;
+  Direction direction = 6;
 }
 
 message GetOpenOrdersResponse {
-OrderStatus status = 1;
-repeated Order orders = 2;
+  OrderStatus status = 1;
+  repeated Order orders = 2;
 }
 
 message GetOrderByIDRequest {
-string orderID = 1;
+  string orderID = 1;
 }
 
 message GetOrderByIDResponse {
-OrderStatus status = 1;
-Order order = 2;
+  OrderStatus status = 1;
+  Order order = 2;
 }
 
 message GetUnsettledRequest {
-string symbol = 1;
+  string symbol = 1;
 }
 
 message GetUnsettledResponse {
-string symbol = 1;
-double unsettled = 2;
+  string symbol = 1;
+  double unsettled = 2;
 }
 
 message GetOrderbookStreamResponse {
-int64 blockHeight = 1;
-GetOrderbookResponse orderbook = 2;
+  int64 blockHeight = 1;
+  GetOrderbookResponse orderbook = 2;
 }
 
 message GetTickerStreamResponse {
-int64 blockHeight = 1;
-GetTickerResponse ticker = 2;
+  int64 blockHeight = 1;
+  GetTickerResponse ticker = 2;
 }
 
 message GetMarketDepthRequest {
-string market = 1;
-int32 depth = 2;
-Step step = 3;
+  string market = 1;
+  int32 depth = 2;
+  Step step = 3;
 }
 
 enum Step {
-STEP0 = 0;
-STEP1 = 1;
-STEP2 = 2;
-STEP3 = 3;
+  STEP0 = 0;
+  STEP1 = 1;
+  STEP2 = 2;
+  STEP3 = 3;
 }
 
 message GetMarketDepthStreamResponse {
-int64 blockHeight = 1;
-MarketDepthTick tick = 2;
+  int64 blockHeight = 1;
+  MarketDepthTick tick = 2;
 }
 
 message MarketDepthTick {
-int64 prevBlockHeight = 1;
-repeated OrderbookAsk asks = 2;
-repeated OrderbookBid bids = 3;
+  int64 prevBlockHeight = 1;
+  repeated OrderbookAsk asks = 2;
+  repeated OrderbookBid bids = 3;
 }
 
 message GetTradesStreamResponse {
-int64 blockHeight = 1;
-GetTradesResponse trades = 2;
+  int64 blockHeight = 1;
+  GetTradesResponse trades = 2;
 }
