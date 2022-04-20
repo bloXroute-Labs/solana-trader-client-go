@@ -39,12 +39,12 @@ func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
 	}, nil
 }
 
-func (g *GRPCClient) GetOrderbook(ctx context.Context, market string) (*pb.GetOrderbookResponse, error) {
-	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market})
+func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponse, error) {
+	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
 }
 
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, outputChan chan *pb.GetOrderbookStreamResponse) error {
-	stream, err := g.apiClient.GetOrderbookStream(ctx, &pb.GetOrderBookRequest{Market: market})
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetOrderbookStreamResponse) error {
+	stream, err := g.apiClient.GetOrderbookStream(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
 	if err != nil {
 		return err
 	}

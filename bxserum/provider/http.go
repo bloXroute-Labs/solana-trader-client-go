@@ -29,12 +29,15 @@ func NewHTTPTestnet() *HTTPClient {
 
 // Connects to custom Serum API
 func NewHTTPClientWithEndpoint(endpoint string) *HTTPClient {
-	client := http.Client{Timeout: time.Second * 7}            // TODO should we allow users to set the timeout?
-	return &HTTPClient{baseURL: endpoint, httpClient: &client} // TODO handle possible forward slash at end of base url?
+	client := http.Client{Timeout: time.Second * 7}
+	return &HTTPClient{baseURL: endpoint, httpClient: &client}
 }
 
-func (h *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
+func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
+	if limit != 0 {
+		url += fmt.Sprintf("?limit=%v", limit)
+	}
 	return connections.HTTPGetResponse[pb.GetOrderbookResponse](h.httpClient, url)
 }
 
