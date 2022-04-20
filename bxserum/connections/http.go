@@ -8,6 +8,16 @@ import (
 	"net/http"
 )
 
+type HTTPError struct {
+	Code    int         `json:"code"`
+	Details interface{} `json:"details"`
+	Message string      `json:"message"`
+}
+
+func (h HTTPError) Error() string {
+	return h.Message
+}
+
 // HTTP response for GET request
 func HTTPGetResponse[T any](client *http.Client, url string) (*T, error) {
 	if client == nil {
@@ -17,8 +27,26 @@ func HTTPGetResponse[T any](client *http.Client, url string) (*T, error) {
 	if err != nil {
 		return nil, err
 	}
+	if httpResp.StatusCode != 200 {
+		return nil, httpUnmarshalError(httpResp)
+	}
 
 	return httpUnmarshalResponse[T](httpResp)
+}
+
+func httpUnmarshalError(httpResp *http.Response) error {
+	var httpError HTTPError
+	body, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling response to HTTPError") // TODO write better errors?
+	}
+
+	err = json.Unmarshal(body, &httpError)
+	if err != nil {
+		return err
+	}
+
+	return httpError
 }
 
 func httpUnmarshalResponse[T any](httpResp *http.Response) (*T, error) {
