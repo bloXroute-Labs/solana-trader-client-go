@@ -3,6 +3,7 @@ package connections
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -69,7 +70,11 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
 	}
 	if resp.Error.Data != nil {
-		return nil, fmt.Errorf("error in JSON response - %s", resp.Error.Message)
+		m, err := json.Marshal(&(resp.Error.Data))
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(string(m))
 	}
 
 	var result T
