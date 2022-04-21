@@ -13,7 +13,7 @@ func TestWSClient_Requests(t *testing.T) {
 	w, err := provider.NewWSClient()
 	require.Nil(t, err)
 
-	TestGetOrderbook(
+	testGetOrderbook(
 		t,
 		func(ctx context.Context, market string, limit uint32) *pb.GetOrderbookResponse {
 			orderbook, err := w.GetOrderbook(market, limit)
@@ -29,6 +29,15 @@ func TestWSClient_Requests(t *testing.T) {
 			return "provided market name/address is not found"
 		},
 	)
+
+	testGetMarkets(
+		t,
+		func(ctx context.Context) *pb.GetMarketsResponse {
+			markets, err := w.GetMarkets()
+			require.Nil(t, err)
+
+			return markets
+		})
 }
 
 func TestWSClient_Streams(t *testing.T) {

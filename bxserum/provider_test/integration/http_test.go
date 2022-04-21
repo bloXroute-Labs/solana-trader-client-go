@@ -11,7 +11,7 @@ import (
 func TestHTTPClient_Requests(t *testing.T) {
 	h := provider.NewHTTPClient()
 
-	TestGetOrderbook(
+	testGetOrderbook(
 		t,
 		func(ctx context.Context, market string, limit uint32) *pb.GetOrderbookResponse {
 			orderbook, err := h.GetOrderbook(market, limit)
@@ -26,4 +26,13 @@ func TestHTTPClient_Requests(t *testing.T) {
 			return err.Error()
 		},
 	)
+
+	testGetMarkets(
+		t,
+		func(ctx context.Context) *pb.GetMarketsResponse {
+			markets, err := h.GetMarkets()
+			require.Nil(t, err)
+
+			return markets
+		})
 }

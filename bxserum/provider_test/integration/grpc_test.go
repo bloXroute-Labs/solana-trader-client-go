@@ -13,7 +13,7 @@ func TestGRPCClient_Requests(t *testing.T) {
 	g, err := provider.NewGRPCClient()
 	require.Nil(t, err)
 
-	TestGetOrderbook(
+	testGetOrderbook(
 		t,
 		func(ctx context.Context, market string, limit uint32) *pb.GetOrderbookResponse {
 			orderbook, err := g.GetOrderbook(ctx, market, limit)
@@ -29,6 +29,16 @@ func TestGRPCClient_Requests(t *testing.T) {
 			require.True(t, ok)
 
 			return grpcStatus.Message()
+		},
+	)
+
+	testGetMarkets(
+		t,
+		func(ctx context.Context) *pb.GetMarketsResponse {
+			markets, err := g.GetMarkets(ctx)
+			require.Nil(t, err)
+
+			return markets
 		},
 	)
 }

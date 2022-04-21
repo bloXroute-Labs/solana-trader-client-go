@@ -12,7 +12,7 @@ import (
 const publicRequestTimeout = 5 * time.Second
 
 // if limit == -1: assume no limit
-func TestGetOrderbook(
+func testGetOrderbook(
 	t *testing.T,
 	getOrderbookFn func(ctx context.Context, market string, limit uint32) *pb.GetOrderbookResponse,
 	getOrderbookErrFn func(ctx context.Context, market string, limit uint32) string,
