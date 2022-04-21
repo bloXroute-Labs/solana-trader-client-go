@@ -31,7 +31,7 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 		return err
 	}
 
-	go func() {
+	go func(responseChan chan *T) {
 		for {
 			select {
 			case <-ctx.Done():
@@ -46,7 +46,7 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 				responseChan <- response
 			}
 		}
-	}()
+	}(responseChan)
 
 	return nil
 }
@@ -70,7 +70,7 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
 	}
 	if resp.Error.Data != nil {
-		m, err := json.Marshal(&(resp.Error.Data))
+		m, err := json.Marshal(resp.Error.Data)
 		if err != nil {
 			return nil, err
 		}
