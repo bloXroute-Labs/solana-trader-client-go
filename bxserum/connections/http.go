@@ -31,7 +31,7 @@ func HTTPGet[T any](client *http.Client, url string) (*T, error) { // TODO chang
 		return nil, httpUnmarshalError(httpResp)
 	}
 
-	return httpUnmarshalResponse[T](httpResp)
+	return httpUnmarshal[T](httpResp)
 }
 
 // HTTP response for GET request
@@ -44,7 +44,7 @@ func HTTPGetWithClient[T any](url string, client *http.Client) (*T, error) {
 	return httpUnmarshal[T](httpResp)
 }
 
-func httpUnmarshal(httpResp *http.Response) error {
+func httpUnmarshalError(httpResp *http.Response) error {
 	var httpError HTTPError
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
@@ -59,7 +59,7 @@ func httpUnmarshal(httpResp *http.Response) error {
 	return httpError
 }
 
-func httpUnmarshalResponse[T any](httpResp *http.Response) (*T, error) {
+func httpUnmarshal[T any](httpResp *http.Response) (*T, error) {
 	if httpResp == nil {
 		return nil, fmt.Errorf("HTTP response is nil")
 	}

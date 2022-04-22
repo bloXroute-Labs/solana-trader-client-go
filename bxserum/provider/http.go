@@ -19,7 +19,7 @@ type HTTPClient struct {
 
 // Connects to Mainnet Serum API
 func NewHTTPClient() *HTTPClient {
-	return NewHTTPClientWithEndpoint("http://174.129.154.164:1809")
+	return NewHTTPClientWithEndpoint("http://174.129.154.164:1809", nil)
 }
 
 // Connects to Testnet Serum API
@@ -40,10 +40,10 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbook
 	if limit != 0 {
 		url += fmt.Sprintf("?limit=%v", limit)
 	}
-	return connections.HTTPGetResponse[pb.GetOrderbookResponse](h.httpClient, url)
+	return connections.HTTPGet[pb.GetOrderbookResponse](h.httpClient, url)
 }
 
 func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/markets")
-	return connections.HTTPGetResponse[pb.GetMarketsResponse](h.httpClient, url)
+	return connections.HTTPGet[pb.GetMarketsResponse](h.httpClient, url)
 }
