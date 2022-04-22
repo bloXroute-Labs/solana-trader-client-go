@@ -37,10 +37,7 @@ func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient
 
 // Set limit to 0 to get all bids/asks
 func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
-	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
-	if limit != 0 {
-		url += fmt.Sprintf("?limit=%v", limit)
-	}
+	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s?limit=%v", market, limit)
 	orderbook := new(pb.GetOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponse](url, h.httpClient, orderbook); err != nil {
 		return nil, err
