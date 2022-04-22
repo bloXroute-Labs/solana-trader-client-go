@@ -47,10 +47,11 @@ func TestGRPCClient_Streams(t *testing.T) {
 	g, err := provider.NewGRPCClient()
 	require.Nil(t, err)
 
-	TestGetOrderbookStream(
+	testGetOrderbookStream(
 		t,
 		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbookStreamResponse) {
 			err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
 			require.Nil(t, err)
-		})
+		},
+	)
 }

@@ -45,7 +45,7 @@ func TestWSClient_Streams(t *testing.T) {
 	w, err := provider.NewWSClient()
 	require.Nil(t, err)
 
-	TestGetOrderbookStream(
+	testGetOrderbookStream(
 		t,
 		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbookStreamResponse) {
 			err := w.GetOrderbookStream(ctx, market, limit, orderbookCh)

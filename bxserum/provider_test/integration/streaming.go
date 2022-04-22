@@ -14,7 +14,7 @@ const (
 	streamExpectTimeout = 10 * time.Second
 )
 
-func TestGetOrderbookStream(
+func testGetOrderbookStream(
 	t *testing.T,
 	connectFn func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbookStreamResponse),
 ) {
