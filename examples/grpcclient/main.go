@@ -21,16 +21,19 @@ func callGRPC() {
 	}
 
 	// Unary response
-	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT")
+	ctx, cancel := context.WithCancel(context.Background())
+	orderbook, err := g.GetOrderbook(ctx, "ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
+	cancel()
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT")
+	ctx, cancel = context.WithCancel(context.Background())
+	orderbook, err = g.GetOrderbook(ctx, "SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT - %v", err)
 	} else {
@@ -39,7 +42,7 @@ func callGRPC() {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC")
+	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC - %v", err)
 	} else {
@@ -61,7 +64,7 @@ func callGRPCStream() {
 	defer cancel()
 
 	// Stream response
-	err = g.GetOrderbookStream(ctx, "SOL/USDC", orderbookChan)
+	err = g.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC - %v", err)
 	} else {

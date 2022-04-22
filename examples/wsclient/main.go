@@ -22,7 +22,7 @@ func callWS() {
 	defer w.Close()
 
 	// Unary response
-	orderbook, err := w.GetOrderbook("ETH-USDT")
+	orderbook, err := w.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
 	} else {
@@ -31,7 +31,7 @@ func callWS() {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook("SOLUSDT")
+	orderbook, err = w.GetOrderbook("SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT - %v", err)
 	} else {
@@ -40,7 +40,7 @@ func callWS() {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook("SOL:USDC")
+	orderbook, err = w.GetOrderbook("SOL:USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC - %v", err)
 	} else {
@@ -63,7 +63,7 @@ func callWSStream() {
 	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
 
 	// Stream response
-	err = w.GetOrderbookStream(ctx, "SOL/USDC", orderbookChan)
+	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDC - %v", err)
 	} else {
