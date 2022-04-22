@@ -19,7 +19,7 @@ func (h HTTPError) Error() string {
 }
 
 // HTTP response for GET request
-func HTTPGetResponse[T any](client *http.Client, url string) (*T, error) {
+func HTTPGet[T any](client *http.Client, url string) (*T, error) { // TODO change func names HTTPGet
 	if client == nil {
 		return nil, errors.New("client is nil, please create one using a `NewHTTPClient` function")
 	}
@@ -34,7 +34,17 @@ func HTTPGetResponse[T any](client *http.Client, url string) (*T, error) {
 	return httpUnmarshalResponse[T](httpResp)
 }
 
-func httpUnmarshalError(httpResp *http.Response) error {
+// HTTP response for GET request
+func HTTPGetWithClient[T any](url string, client *http.Client) (*T, error) {
+	httpResp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	return httpUnmarshal[T](httpResp)
+}
+
+func httpUnmarshal(httpResp *http.Response) error {
 	var httpError HTTPError
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {

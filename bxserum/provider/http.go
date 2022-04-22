@@ -28,9 +28,11 @@ func NewHTTPTestnet() *HTTPClient {
 }
 
 // Connects to custom Serum API
-func NewHTTPClientWithEndpoint(endpoint string) *HTTPClient {
-	client := http.Client{Timeout: time.Second * 7}
-	return &HTTPClient{baseURL: endpoint, httpClient: &client}
+func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient {
+	if client == nil {
+		client = &http.Client{Timeout: time.Second * 7}
+	}
+	return &HTTPClient{baseURL: endpoint, httpClient: client}
 }
 
 func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
