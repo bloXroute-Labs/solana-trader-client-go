@@ -64,7 +64,7 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 		return nil, fmt.Errorf("error reading WS response - %v", err)
 	}
 
-	// extract the result
+	// extract the HTTP Response Result
 	var resp response
 	if err = json.Unmarshal(msg, &resp); err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
@@ -74,6 +74,7 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return nil, errors.New(string(m))
 	}
 
@@ -81,5 +82,6 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 	if err = json.Unmarshal(resp.Result, &result); err != nil {
 		return nil, fmt.Errorf("error unmarshalling message of type %T - %v", result, err)
 	}
+
 	return &result, nil
 }

@@ -37,7 +37,8 @@ func TestWSClient_Requests(t *testing.T) {
 			require.Nil(t, err)
 
 			return markets
-		})
+		},
+	)
 }
 
 func TestWSClient_Streams(t *testing.T) {

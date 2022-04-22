@@ -42,6 +42,7 @@ func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 	}, nil
 }
 
+// Set limit to 0 to get all bids/asks
 func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	request, err := w.jsonRPCRequest("GetOrderbook", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {

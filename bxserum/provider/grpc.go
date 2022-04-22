@@ -39,6 +39,7 @@ func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
 	}, nil
 }
 
+// Set limit to 0 to get all bids/asks
 func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
 }

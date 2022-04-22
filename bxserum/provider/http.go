@@ -27,7 +27,7 @@ func NewHTTPTestnet() *HTTPClient {
 	panic("implement me")
 }
 
-// Connects to custom Serum API
+// Connects to custom Serum API (set client to nil to use default client)
 func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient {
 	if client == nil {
 		client = &http.Client{Timeout: time.Second * 7}
@@ -35,6 +35,7 @@ func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient
 	return &HTTPClient{baseURL: endpoint, httpClient: client}
 }
 
+// Set limit to 0 to get all bids/asks
 func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
 	if limit != 0 {

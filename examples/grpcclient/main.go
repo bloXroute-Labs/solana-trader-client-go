@@ -21,19 +21,16 @@ func callGRPC() {
 	}
 
 	// Unary response
-	ctx, cancel := context.WithCancel(context.Background())
-	orderbook, err := g.GetOrderbook(ctx, "ETH-USDT", 0)
+	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
-	cancel()
 
 	fmt.Println()
 
-	ctx, cancel = context.WithCancel(context.Background())
-	orderbook, err = g.GetOrderbook(ctx, "SOLUSDT", 2)
+	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT - %v", err)
 	} else {

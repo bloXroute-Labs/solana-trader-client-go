@@ -26,19 +26,20 @@ func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 	return HTTPGetWithClient[T](url, client, val)
 }
 
-// HTTP response for GET request
 func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T) error {
 	httpResp, err := client.Get(url)
 	if err != nil {
 		return err
 	}
-	if httpResp.StatusCode != 200 {
+
+	if httpResp.StatusCode != http.StatusOK {
 		return httpUnmarshalError(httpResp)
 	}
 
 	if err := httpUnmarshal[T](httpResp, val); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -46,6 +47,7 @@ func httpUnmarshalError(httpResp *http.Response) error {
 	if httpResp == nil {
 		return fmt.Errorf("HTTP response is nil")
 	}
+
 	var httpError HTTPError
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
@@ -73,5 +75,6 @@ func httpUnmarshal[T protoreflect.ProtoMessage](httpResp *http.Response, val T) 
 	if err := protojson.Unmarshal(b, val); err != nil {
 		return err
 	}
+
 	return nil
 }
