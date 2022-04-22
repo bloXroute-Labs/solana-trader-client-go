@@ -3,6 +3,8 @@ package connections
 import (
 	"encoding/json"
 	"fmt"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -19,29 +21,35 @@ func (h HTTPError) Error() string {
 }
 
 // HTTP response for GET request
-func HTTPGet[T any](url string) (*T, error) {
+func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 	client := &http.Client{Timeout: time.Second * 7}
-	return HTTPGetWithClient[T](url, client)
+	return HTTPGetWithClient[T](url, client, val)
 }
 
 // HTTP response for GET request
-func HTTPGetWithClient[T any](url string, client *http.Client) (*T, error) {
+func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T) error {
 	httpResp, err := client.Get(url)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if httpResp.StatusCode != 200 {
-		return nil, httpUnmarshalError(httpResp)
+		return httpUnmarshalError(httpResp)
 	}
 
-	return httpUnmarshal[T](httpResp)
+	if err := httpUnmarshal[T](httpResp, val); err != nil {
+		return err
+	}
+	return nil
 }
 
 func httpUnmarshalError(httpResp *http.Response) error {
+	if httpResp == nil {
+		return fmt.Errorf("HTTP response is nil")
+	}
 	var httpError HTTPError
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling response to HTTPError") // TODO write better errors?
+		return fmt.Errorf("error unmarshalling response to HTTPError")
 	}
 
 	err = json.Unmarshal(body, &httpError)
@@ -52,20 +60,18 @@ func httpUnmarshalError(httpResp *http.Response) error {
 	return httpError
 }
 
-func httpUnmarshal[T any](httpResp *http.Response) (*T, error) {
+func httpUnmarshal[T protoreflect.ProtoMessage](httpResp *http.Response, val T) error {
 	if httpResp == nil {
-		return nil, fmt.Errorf("HTTP response is nil")
+		return fmt.Errorf("HTTP response is nil")
 	}
 
 	b, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var resp T
-	if err := json.Unmarshal(b, &resp); err != nil {
-		return nil, err
+	if err := protojson.Unmarshal(b, val); err != nil {
+		return err
 	}
-
-	return &resp, err
+	return nil
 }

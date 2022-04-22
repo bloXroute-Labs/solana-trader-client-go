@@ -40,10 +40,20 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbook
 	if limit != 0 {
 		url += fmt.Sprintf("?limit=%v", limit)
 	}
-	return connections.HTTPGetWithClient[pb.GetOrderbookResponse](url, h.httpClient)
+	orderbook := new(pb.GetOrderbookResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponse](url, h.httpClient, orderbook); err != nil {
+		return nil, err
+	}
+
+	return orderbook, nil
 }
 
 func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	url := h.baseURL + fmt.Sprintf("/api/v1/market/markets")
-	return connections.HTTPGetWithClient[pb.GetMarketsResponse](url, h.httpClient)
+	markets := new(pb.GetMarketsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponse](url, h.httpClient, markets); err != nil {
+		return nil, err
+	}
+
+	return markets, nil
 }

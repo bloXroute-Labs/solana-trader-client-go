@@ -60,7 +60,7 @@ func testGetOrderbook(
 	// another orderbook by address
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
-	orderbook = getOrderbookFn(ctx, "oTVAoRCiHnfEds5MTPerZk6VunEp24bCae8oSVrQmSU", 1)
+	orderbook = getOrderbookFn(ctx, "HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1", 1) // address for SOL/USDT
 
 	assert.Equal(t, 1, len(orderbook.Asks))
 	assert.Equal(t, 1, len(orderbook.Bids))
