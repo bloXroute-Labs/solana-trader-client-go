@@ -2,10 +2,10 @@ package connections
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type HTTPError struct {
@@ -19,19 +19,9 @@ func (h HTTPError) Error() string {
 }
 
 // HTTP response for GET request
-func HTTPGet[T any](client *http.Client, url string) (*T, error) { // TODO change func names HTTPGet
-	if client == nil {
-		return nil, errors.New("client is nil, please create one using a `NewHTTPClient` function")
-	}
-	httpResp, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	if httpResp.StatusCode != 200 {
-		return nil, httpUnmarshalError(httpResp)
-	}
-
-	return httpUnmarshal[T](httpResp)
+func HTTPGet[T any](url string) (*T, error) {
+	client := &http.Client{Timeout: time.Second * 7}
+	return HTTPGetWithClient[T](url, client)
 }
 
 // HTTP response for GET request
@@ -39,6 +29,9 @@ func HTTPGetWithClient[T any](url string, client *http.Client) (*T, error) {
 	httpResp, err := client.Get(url)
 	if err != nil {
 		return nil, err
+	}
+	if httpResp.StatusCode != 200 {
+		return nil, httpUnmarshalError(httpResp)
 	}
 
 	return httpUnmarshal[T](httpResp)

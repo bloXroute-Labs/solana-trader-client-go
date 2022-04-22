@@ -1,17 +1,17 @@
 # Serum Golang Client
 
 ## Objective
-This SDK is designed to make it easy for you to use the [Bloxroute Labs Serum API](https://github.com/bloXroute-Labs/serum-api)
+This SDK is designed to make it easy for you to use the [bloXroute Labs Serum API](https://github.com/bloXroute-Labs/serum-api)
 in Go. As we continue to develop the Serum API, we will update the methods here as well. Currently, the methods supported are:
 
 #### GRPC/WS:
-```azure
+```
 GetOrderbook
 GetOrderbookStream
 ```
 
 #### HTTP:
-```azure
+```
 GetOrderbook
 ```
 Methods that end in `Stream` continuously stream responses through a channel, while other methods return a one and done response.
@@ -101,4 +101,4 @@ func main() {
 }
 ```
 
-To run some working code samples, please visit the `cmd` directory where you can see examples of code for each client.
+To run some working code samples, please visit the `examples` directory where you can see examples of code for each client.
