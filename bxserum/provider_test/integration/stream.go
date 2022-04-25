@@ -2,7 +2,7 @@ package integration
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider_test/bxassert"
+	"github.com/bloXroute-Labs/serum-api/bxserum/provider_test/bxassert" // different import than serum-api's bxassert
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
