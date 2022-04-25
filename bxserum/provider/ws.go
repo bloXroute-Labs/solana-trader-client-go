@@ -17,7 +17,7 @@ type WSClient struct {
 }
 
 // Connects to Mainnet Serum API
-func NewWSClient() (*WSClient, error) {
+func NewWSClient() *WSClient {
 	return NewWSClientWithEndpoint("ws://174.129.154.164:1810/ws")
 }
 
@@ -27,14 +27,14 @@ func NewWSClientTestnet() (*WSClient, error) {
 }
 
 // Connects to custom Serum API
-func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
+func NewWSClientWithEndpoint(addr string) *WSClient {
 	connectionManager := connections.NewConnectionManager(addr)
 
 	return &WSClient{
 		addr:              addr,
 		connectionManager: &connectionManager,
 		requestID:         utils.NewRequestID(),
-	}, nil
+	}
 }
 
 // Set limit to 0 to get all bids/asks

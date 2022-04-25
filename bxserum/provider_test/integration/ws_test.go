@@ -10,8 +10,7 @@ import (
 )
 
 func TestWSClient_Requests(t *testing.T) {
-	w, err := provider.NewWSClient()
-	require.Nil(t, err)
+	w := provider.NewWSClient()
 
 	testGetOrderbook(
 		t,
@@ -42,8 +41,7 @@ func TestWSClient_Requests(t *testing.T) {
 }
 
 func TestWSClient_Streams(t *testing.T) {
-	w, err := provider.NewWSClient()
-	require.Nil(t, err)
+	w := provider.NewWSClient()
 
 	testGetOrderbookStream(
 		t,

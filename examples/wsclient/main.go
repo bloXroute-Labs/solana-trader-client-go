@@ -13,14 +13,9 @@ func main() {
 	callWSStream()
 }
 
+// Unary response
 func callWS() {
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client - %v", err)
-		return
-	}
-
-	// Unary response
+	w := provider.NewWSClient()
 	orderbook, err := w.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
@@ -49,19 +44,14 @@ func callWS() {
 	fmt.Println()
 }
 
+// Stream response
 func callWSStream() {
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client - %v", err)
-		return
-	}
-
+	w := provider.NewWSClient()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
 
-	// Stream response
-	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err := w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDC - %v", err)
 	} else {
