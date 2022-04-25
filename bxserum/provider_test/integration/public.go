@@ -89,6 +89,10 @@ func assertSOLUSDCOrderbook(t *testing.T, name string, orderbook *pb.GetOrderboo
 	assertOrderbook(t, name, "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", orderbook)
 }
 
+func assertSOLUSDTOrderbook(t *testing.T, name string, orderbook *pb.GetOrderbookResponse) {
+	assertOrderbook(t, name, "HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1", orderbook)
+}
+
 func assertOrderbook(t *testing.T, expectedName string, expectedAddress string, orderbook *pb.GetOrderbookResponse) {
 	require.NotNil(t, orderbook)
 

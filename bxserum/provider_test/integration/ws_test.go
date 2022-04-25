@@ -51,5 +51,12 @@ func TestWSClient_Streams(t *testing.T) {
 			err := w.GetOrderbookStream(ctx, market, limit, orderbookCh)
 			require.Nil(t, err)
 		},
+		func(ctx context.Context, market string, limit uint32) string {
+			orderbookCh := make(chan *pb.GetOrderbookStreamResponse)
+			err := w.GetOrderbookStream(ctx, market, limit, orderbookCh)
+			require.NotNil(t, err)
+
+			return err.Error()
+		},
 	)
 }
