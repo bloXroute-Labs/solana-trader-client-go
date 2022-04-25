@@ -2,7 +2,7 @@ package integration
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider_test/bxassert" // different import than serum-api's bxassert
+	"github.com/bloXroute-Labs/serum-api/bxserum/provider_test/bxassert" // different import than serum-api
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,7 @@ import (
 
 const (
 	streamExpectEntries = 3
-	streamExpectTimeout = 30 * time.Second
+	streamExpectTimeout = 60 * time.Second // longer timeout than serum-api
 )
 
 func testGetOrderbookStream(
