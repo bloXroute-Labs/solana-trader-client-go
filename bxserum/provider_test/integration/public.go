@@ -60,10 +60,10 @@ func testGetOrderbook(
 	// another orderbook by address
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
-	orderbook = getOrderbookFn(ctx, "HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1", 1) // address for SOL/USDT
-
-	assert.Equal(t, 1, len(orderbook.Asks))
-	assert.Equal(t, 1, len(orderbook.Bids))
+	orderbook = getOrderbookFn(ctx, "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", 2)
+	assertOrderbook(t, "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", orderbook)
+	assert.Equal(t, 2, len(orderbook.Asks))
+	assert.Equal(t, 2, len(orderbook.Bids))
 }
 
 func testGetMarkets(t *testing.T, getMarketsFn func(ctx context.Context) *pb.GetMarketsResponse) {
