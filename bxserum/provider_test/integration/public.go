@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const publicRequestTimeout = 7 * time.Second
+const publicRequestTimeout = 5 * time.Second
 
 // if limit == -1: assume no limit
 func testGetOrderbook(
