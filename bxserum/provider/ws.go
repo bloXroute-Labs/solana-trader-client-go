@@ -2,20 +2,18 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
-	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
 type WSClient struct {
 	pb.UnimplementedApiServer
 
-	addr      string
-	conn      *websocket.Conn
-	requestID utils.RequestID
+	addr              string
+	connectionManager *connections.ConnectionManager
+	requestID         utils.RequestID
 }
 
 // Connects to Mainnet Serum API
@@ -30,15 +28,12 @@ func NewWSClientTestnet() (*WSClient, error) {
 
 // Connects to custom Serum API
 func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
-	conn, _, err := websocket.DefaultDialer.Dial(addr, nil)
-	if err != nil {
-		return nil, err
-	}
+	connectionManager := connections.NewConnectionManager(addr)
 
 	return &WSClient{
-		addr:      addr,
-		conn:      conn,
-		requestID: utils.NewRequestID(),
+		addr:              addr,
+		connectionManager: &connectionManager,
+		requestID:         utils.NewRequestID(),
 	}, nil
 }
 
@@ -48,7 +43,8 @@ func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookRe
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[pb.GetOrderbookResponse](w.conn, request)
+
+	return connections.WSRequest[pb.GetOrderbookResponse](w.connectionManager, request)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
@@ -56,7 +52,7 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit 
 	if err != nil {
 		return err
 	}
-	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
+	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.connectionManager, request, orderbookChan)
 }
 
 func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
@@ -64,15 +60,7 @@ func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[pb.GetMarketsResponse](w.conn, request)
-}
-
-func (w *WSClient) Close() error {
-	err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	if err != nil {
-		return fmt.Errorf("error writing close msg -  %v", err)
-	}
-	return nil
+	return connections.WSRequest[pb.GetMarketsResponse](w.connectionManager, request)
 }
 
 func (w *WSClient) jsonRPCRequest(method string, params map[string]interface{}) ([]byte, error) {

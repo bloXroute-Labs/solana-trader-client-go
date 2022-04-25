@@ -19,7 +19,6 @@ func callWS() {
 		log.Fatalf("error dialing WS client - %v", err)
 		return
 	}
-	defer w.Close()
 
 	// Unary response
 	orderbook, err := w.GetOrderbook("ETH-USDT", 0)
@@ -56,7 +55,6 @@ func callWSStream() {
 		log.Fatalf("error dialing WS client - %v", err)
 		return
 	}
-	defer w.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
