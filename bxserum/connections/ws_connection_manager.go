@@ -28,10 +28,10 @@ func (c *ConnectionManager) Next() (*websocket.Conn, int, error) {
 		return nil, 0, fmt.Errorf("connection to %s was nil", c.address)
 	}
 
-	c.connectionMap[c.id] = conn
 	c.id++
+	c.connectionMap[c.id] = conn
 
-	return conn, c.id - 1, nil
+	return conn, c.id, nil
 }
 
 func (c *ConnectionManager) RemoveConnection(id int) error {
