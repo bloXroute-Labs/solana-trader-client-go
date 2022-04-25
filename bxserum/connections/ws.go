@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
@@ -14,51 +14,6 @@ import (
 type response struct {
 	Result json.RawMessage
 	Error  jsonrpc2.Error
-}
-
-type ConnectionManager struct {
-	connectionMap map[int]*websocket.Conn
-	address       string
-	id            int
-}
-
-func NewConnectionManager(address string) ConnectionManager {
-	return ConnectionManager{
-		connectionMap: make(map[int]*websocket.Conn),
-		address:       address,
-		id:            0,
-	}
-}
-
-func (c *ConnectionManager) Next() (*websocket.Conn, int, error) {
-	conn, _, err := websocket.DefaultDialer.Dial(c.address, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	if conn == nil {
-		return nil, 0, fmt.Errorf("connection to %s was nil", c.address)
-	}
-
-	c.connectionMap[c.id] = conn
-	c.id++
-
-	return conn, c.id - 1, nil
-}
-
-func (c *ConnectionManager) RemoveConnection(id int) error {
-	conn, ok := c.connectionMap[id]
-	if !ok {
-		return fmt.Errorf("conn with id %v not found", id)
-	}
-
-	err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	if err != nil {
-		return fmt.Errorf("error writing close msg -  %v", err)
-	}
-
-	delete(c.connectionMap, id)
-
-	return nil
 }
 
 func WSRequest[T any](connectionManager *ConnectionManager, request []byte) (*T, error) {
@@ -69,7 +24,7 @@ func WSRequest[T any](connectionManager *ConnectionManager, request []byte) (*T,
 	defer func(connectionManager *ConnectionManager, id int) {
 		err := connectionManager.RemoveConnection(id)
 		if err != nil {
-			logrus.Error("connection with id %v not closed correctly - %s", err.Error())
+			log.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
 		}
 	}(connectionManager, id)
 
@@ -88,14 +43,14 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 	}
 
 	err = sendWSRequest(conn, request)
-	logrus.Infof("WS Stream Request: %v Error: %v", string(request), err)
+	log.Infof("WS Stream Request: %v Error: %v", string(request), err)
 	if err != nil {
 		return err
 	}
 
 	response, err := recvWSResult[T](conn)
 	if err != nil {
-		logrus.Errorf("error in ws stream %v", err)
+		log.Errorf("error in ws stream %v", err)
 		return err
 	}
 	responseChan <- response
@@ -104,7 +59,7 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 		defer func() {
 			err := connectionManager.RemoveConnection(id)
 			if err != nil {
-				logrus.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
+				log.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
 			}
 		}()
 		for {
@@ -114,7 +69,7 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 			default:
 				response, err := recvWSResult[T](conn)
 				if err != nil {
-					logrus.Error(err)
+					log.Error(err)
 					break
 				}
 
