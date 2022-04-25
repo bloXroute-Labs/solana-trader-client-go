@@ -34,7 +34,7 @@ func (c *ConnectionManager) Next() (*websocket.Conn, int, error) {
 	return conn, c.id, nil
 }
 
-func (c *ConnectionManager) RemoveConnection(id int) error {
+func (c *ConnectionManager) CloseConn(id int) error {
 	conn, ok := c.connectionMap[id]
 	if !ok {
 		return fmt.Errorf("conn with id %v not found", id)

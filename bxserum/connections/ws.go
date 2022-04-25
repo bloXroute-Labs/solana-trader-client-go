@@ -22,7 +22,7 @@ func WSRequest[T any](connectionManager *ConnectionManager, request []byte) (*T,
 		return nil, err
 	}
 	defer func(connectionManager *ConnectionManager, id int) {
-		err := connectionManager.RemoveConnection(id)
+		err := connectionManager.CloseConn(id)
 		if err != nil {
 			log.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
 		}
@@ -57,7 +57,7 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 
 	go func(responseChan chan *T, conn *websocket.Conn, id int) {
 		defer func() {
-			err := connectionManager.RemoveConnection(id)
+			err := connectionManager.CloseConn(id)
 			if err != nil {
 				log.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
 			}
