@@ -21,6 +21,7 @@ func WSRequest[T any](connectionManager *ConnectionManager, request []byte) (*T,
 	if err != nil {
 		return nil, err
 	}
+
 	defer func(connectionManager *ConnectionManager, id int) {
 		err := connectionManager.CloseConn(id)
 		if err != nil {
@@ -43,7 +44,6 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 	}
 
 	err = sendWSRequest(conn, request)
-	log.Infof("WS Stream Request: %v Error: %v", string(request), err)
 	if err != nil {
 		return err
 	}
