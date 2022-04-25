@@ -20,7 +20,6 @@ func testGetOrderbookStream(
 	connectFn func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbookStreamResponse),
 	connectFnErr func(ctx context.Context, market string, limit uint32) string,
 ) {
-
 	// no timeout: channel read timeouts are sufficient
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -42,5 +41,5 @@ func testGetOrderbookStream(
 	defer cancel()
 
 	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
-	assert.Equal(t, "\"provided market name/address is not found\"", errMessage)
+	assert.Equal(t, "provided market name/address is not found", errMessage)
 }
