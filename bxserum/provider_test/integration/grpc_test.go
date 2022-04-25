@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+// Unary response
 func TestGRPCClient_Requests(t *testing.T) {
 	g, err := provider.NewGRPCClient()
 	require.Nil(t, err)
@@ -43,6 +44,7 @@ func TestGRPCClient_Requests(t *testing.T) {
 	)
 }
 
+// Stream response
 func TestGRPCClient_Streams(t *testing.T) {
 	g, err := provider.NewGRPCClient()
 	require.Nil(t, err)
