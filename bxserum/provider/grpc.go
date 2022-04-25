@@ -2,11 +2,14 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"io"
 )
 
@@ -49,26 +52,48 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limi
 	if err != nil {
 		return err
 	}
-	go streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
-	return nil
+	return streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
+
 }
 
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
-func streamResponse[T any](stream grpc.ClientStream, input string, outputChan chan *T) {
-	for {
-		output := new(T)
-		err := stream.RecvMsg(output)
-		if err == io.EOF {
-			log.Errorf("stream for input %s ended successfully", input)
-			return
-		} else if err != nil {
-			log.Errorf("error when receiving message for input %s - %v", input, err)
-			return
-		} else {
-			outputChan <- output
-		}
+func streamResponse[T any](stream grpc.ClientStream, input string, outputChan chan *T) error {
+	val, err := readGRPCStream[T](stream, input)
+	if err != nil {
+		return err
 	}
+	outputChan <- val
+
+	go func(stream grpc.ClientStream, input string) {
+		for {
+			val, err = readGRPCStream[T](stream, input)
+			if err != nil {
+				log.Errorf(err.Error())
+				return
+			} else {
+				outputChan <- val
+			}
+		}
+	}(stream, input)
+
+	return nil
+}
+
+func readGRPCStream[T any](stream grpc.ClientStream, input string) (*T, error) {
+	m := new(T)
+	err := stream.RecvMsg(m)
+	if err == io.EOF {
+		return nil, fmt.Errorf("stream for input %s ended successfully", input)
+	} else if err != nil {
+		grpcStatus, ok := status.FromError(err)
+		if !ok {
+			return nil, fmt.Errorf("error getting status from error for input %s", input)
+		}
+		return nil, errors.New(grpcStatus.Message())
+	}
+
+	return m, nil
 }
