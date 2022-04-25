@@ -58,7 +58,10 @@ func TestGRPCClient_Streams(t *testing.T) {
 			err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
 			require.NotNil(t, err)
 
-			return err.Error()
+			grpcStatus, ok := status.FromError(err)
+			require.True(t, ok)
+
+			return grpcStatus.Message()
 		},
 	)
 }

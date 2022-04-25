@@ -2,14 +2,12 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 	"io"
 )
 
@@ -88,11 +86,7 @@ func readGRPCStream[T any](stream grpc.ClientStream, input string) (*T, error) {
 	if err == io.EOF {
 		return nil, fmt.Errorf("stream for input %s ended successfully", input)
 	} else if err != nil {
-		grpcStatus, ok := status.FromError(err)
-		if !ok {
-			return nil, fmt.Errorf("error getting status from error for input %s", input)
-		}
-		return nil, errors.New(grpcStatus.Message())
+		return nil, err
 	}
 
 	return m, nil
