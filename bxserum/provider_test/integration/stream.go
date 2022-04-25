@@ -12,7 +12,7 @@ import (
 
 const (
 	streamExpectEntries = 3
-	streamExpectTimeout = time.Minute
+	streamExpectTimeout = 30 * time.Second
 )
 
 func testGetOrderbookStream(
