@@ -16,7 +16,7 @@ type response struct {
 	Error  jsonrpc2.Error
 }
 
-func WSRequest[T any](connectionManager *ConnectionManager, request []byte) (*T, error) {
+func WSResponse[T any](connectionManager *ConnectionManager, request []byte) (*T, error) {
 	conn, id, err := connectionManager.Next()
 	if err != nil {
 		return nil, err
