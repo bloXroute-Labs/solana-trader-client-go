@@ -22,7 +22,6 @@ func callWS() {
 	}
 	defer w.Close()
 
-	// Unary response
 	orderbook, err := w.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)

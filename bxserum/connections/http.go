@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var httpResponseNil error = fmt.Errorf("HTTP response is nil")
+
 type HTTPError struct {
 	Code    int         `json:"code"`
 	Details interface{} `json:"details"`
@@ -45,7 +47,7 @@ func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Cli
 
 func httpUnmarshalError(httpResp *http.Response) error {
 	if httpResp == nil {
-		return fmt.Errorf("HTTP response is nil")
+		return httpResponseNil
 	}
 
 	body, err := ioutil.ReadAll(httpResp.Body)
@@ -64,7 +66,7 @@ func httpUnmarshalError(httpResp *http.Response) error {
 
 func httpUnmarshal[T protoreflect.ProtoMessage](httpResp *http.Response, val T) error {
 	if httpResp == nil {
-		return fmt.Errorf("HTTP response is nil")
+		return httpResponseNil
 	}
 
 	b, err := ioutil.ReadAll(httpResp.Body)

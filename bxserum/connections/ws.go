@@ -37,7 +37,7 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 		return err
 	}
 
-	go func(response *T, responseChan chan *T) {
+	go func(response *T, responseChan chan *T, conn *websocket.Conn) {
 		responseChan <- response
 
 		for {
@@ -54,7 +54,7 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 				responseChan <- response
 			}
 		}
-	}(response, responseChan)
+	}(response, responseChan, conn)
 
 	return nil
 }
