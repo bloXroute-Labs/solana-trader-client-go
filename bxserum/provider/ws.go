@@ -48,7 +48,7 @@ func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookRe
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[pb.GetOrderbookResponse](w.conn, request)
+	return connections.WSResponse[pb.GetOrderbookResponse](w.conn, request)
 }
 
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
@@ -64,7 +64,7 @@ func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[pb.GetMarketsResponse](w.conn, request)
+	return connections.WSResponse[pb.GetMarketsResponse](w.conn, request)
 }
 
 func (w *WSClient) Close() error {
