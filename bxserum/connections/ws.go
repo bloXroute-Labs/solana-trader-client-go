@@ -16,20 +16,8 @@ type response struct {
 	Error  jsonrpc2.Error
 }
 
-func WSResponse[T any](connectionManager *ConnectionManager, request []byte) (*T, error) {
-	conn, id, err := connectionManager.Next()
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(connectionManager *ConnectionManager, id int) {
-		err := connectionManager.CloseConn(id)
-		if err != nil {
-			log.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
-		}
-	}(connectionManager, id)
-
-	err = sendWSRequest(conn, request)
+func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
+	err := sendWSRequest(conn, request)
 	if err != nil {
 		return nil, err
 	}
@@ -37,34 +25,21 @@ func WSResponse[T any](connectionManager *ConnectionManager, request []byte) (*T
 	return recvWSResult[T](conn)
 }
 
-func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, request []byte, responseChan chan *T) error {
-	conn, id, err := connectionManager.Next()
+func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
+	err := sendWSRequest(conn, request)
 	if err != nil {
-		return err
-	}
-
-	err = sendWSRequest(conn, request)
-	if err != nil {
-		connectionManager.CloseConn(id)
 		return err
 	}
 
 	response, err := recvWSResult[T](conn)
 	if err != nil {
-		connectionManager.CloseConn(id)
 		log.Errorf("error in ws stream %v", err)
 		return err
 	}
 
-	go func(response *T, responseChan chan *T, conn *websocket.Conn, id int) {
+	go func(response *T, responseChan chan *T) {
 		responseChan <- response
 
-		defer func() {
-			err := connectionManager.CloseConn(id)
-			if err != nil {
-				log.Errorf("connection with id %v not closed correctly - %s", id, err.Error())
-			}
-		}()
 		for {
 			select {
 			case <-ctx.Done():
@@ -72,14 +47,14 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 			default:
 				response, err = recvWSResult[T](conn)
 				if err != nil {
-					log.Error(err)
+					log.Errorf("error in ws stream %v", err)
 					break
 				}
 
 				responseChan <- response
 			}
 		}
-	}(response, responseChan, conn, id)
+	}(response, responseChan)
 
 	return nil
 }
@@ -97,7 +72,7 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 		return nil, fmt.Errorf("error reading WS response - %v", err)
 	}
 
-	// Extract the WS Response Result
+	// extract the HTTP Response Result
 	var resp response
 	if err = json.Unmarshal(msg, &resp); err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)
@@ -115,5 +90,6 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 	if err = json.Unmarshal(resp.Result, &result); err != nil {
 		return nil, fmt.Errorf("error unmarshalling message of type %T - %v", result, err)
 	}
+
 	return &result, nil
 }
