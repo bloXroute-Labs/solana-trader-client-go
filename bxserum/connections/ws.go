@@ -53,9 +53,10 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 		log.Errorf("error in ws stream %v", err)
 		return err
 	}
-	responseChan <- response
 
-	go func(responseChan chan *T, conn *websocket.Conn, id int) {
+	go func(response *T, responseChan chan *T, conn *websocket.Conn, id int) {
+		responseChan <- response
+
 		defer func() {
 			err := connectionManager.CloseConn(id)
 			if err != nil {
@@ -67,7 +68,7 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 			case <-ctx.Done():
 				return
 			default:
-				response, err := recvWSResult[T](conn)
+				response, err = recvWSResult[T](conn)
 				if err != nil {
 					log.Error(err)
 					break
@@ -76,7 +77,7 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 				responseChan <- response
 			}
 		}
-	}(responseChan, conn, id)
+	}(response, responseChan, conn, id)
 
 	return nil
 }

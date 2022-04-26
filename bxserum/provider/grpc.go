@@ -58,24 +58,25 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
-func streamResponse[T any](stream grpc.ClientStream, input string, outputChan chan *T) error {
-	val, err := readGRPCStream[T](stream, input)
+func streamResponse[T any](stream grpc.ClientStream, input string, responseChan chan *T) error {
+	response, err := readGRPCStream[T](stream, input)
 	if err != nil {
 		return err
 	}
-	outputChan <- val
 
-	go func(stream grpc.ClientStream, input string) {
+	go func(response *T, stream grpc.ClientStream, input string) {
+		responseChan <- response
+
 		for {
-			val, err = readGRPCStream[T](stream, input)
+			response, err = readGRPCStream[T](stream, input)
 			if err != nil {
 				log.Errorf(err.Error())
 				return
 			} else {
-				outputChan <- val
+				responseChan <- response
 			}
 		}
-	}(stream, input)
+	}(response, stream, input)
 
 	return nil
 }
