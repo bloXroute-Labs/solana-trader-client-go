@@ -50,8 +50,8 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limi
 	if err != nil {
 		return err
 	}
-	return streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
 
+	return streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
 }
 
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {

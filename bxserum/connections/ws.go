@@ -45,11 +45,13 @@ func WSStream[T any](ctx context.Context, connectionManager *ConnectionManager, 
 
 	err = sendWSRequest(conn, request)
 	if err != nil {
+		connectionManager.CloseConn(id)
 		return err
 	}
 
 	response, err := recvWSResult[T](conn)
 	if err != nil {
+		connectionManager.CloseConn(id)
 		log.Errorf("error in ws stream %v", err)
 		return err
 	}
@@ -94,7 +96,8 @@ func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reading WS response - %v", err)
 	}
-	// extract the HTTP Response Result
+
+	// Extract the WS Response Result
 	var resp response
 	if err = json.Unmarshal(msg, &resp); err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSON response - %v", err)

@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Same as public.go in serum-api
 const publicRequestTimeout = 5 * time.Second
 
 // if limit == -1: assume no limit

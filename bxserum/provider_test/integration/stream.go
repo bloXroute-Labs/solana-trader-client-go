@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
+// Very similar to stream.go in serum-api except for two differences
 const (
 	streamExpectEntries = 3
-	streamExpectTimeout = 60 * time.Second // longer timeout than serum-api
+	streamExpectTimeout = 60 * time.Second // #1. longer timeout than serum-api
 )
 
 func testGetOrderbookStream(
@@ -40,6 +41,6 @@ func testGetOrderbookStream(
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
+	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0) // #2. cleaned up code here
 	assert.Equal(t, "provided market name/address is not found", errMessage)
 }
