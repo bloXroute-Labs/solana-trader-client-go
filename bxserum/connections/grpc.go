@@ -8,7 +8,7 @@ import (
 )
 
 func GRPCStream[T any](stream grpc.ClientStream, input string, responseChan chan *T) error {
-	response, err := recvGRPCResponse[T](stream, input)
+	response, err := recvGRPC[T](stream, input)
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,7 @@ func GRPCStream[T any](stream grpc.ClientStream, input string, responseChan chan
 		responseChan <- response
 
 		for {
-			response, err = recvGRPCResponse[T](stream, input)
+			response, err = recvGRPC[T](stream, input)
 			if err != nil {
 				logrus.Errorf(err.Error())
 				return
@@ -30,7 +30,7 @@ func GRPCStream[T any](stream grpc.ClientStream, input string, responseChan chan
 	return nil
 }
 
-func recvGRPCResponse[T any](stream grpc.ClientStream, input string) (*T, error) {
+func recvGRPC[T any](stream grpc.ClientStream, input string) (*T, error) {
 	m := new(T)
 	err := stream.RecvMsg(m)
 	if err == io.EOF {

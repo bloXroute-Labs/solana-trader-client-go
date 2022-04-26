@@ -48,12 +48,12 @@ func httpUnmarshalError(httpResp *http.Response) error {
 		return fmt.Errorf("HTTP response is nil")
 	}
 
-	var httpError HTTPError
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling response to HTTPError")
+		return err
 	}
 
+	var httpError HTTPError
 	err = json.Unmarshal(body, &httpError)
 	if err != nil {
 		return err
