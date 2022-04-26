@@ -34,5 +34,6 @@ func TestHTTPClient_Requests(t *testing.T) {
 			require.Nil(t, err)
 
 			return markets
-		})
+		},
+	)
 }
