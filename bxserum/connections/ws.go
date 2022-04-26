@@ -17,21 +17,21 @@ type response struct {
 }
 
 func WSResponse[T any](conn *websocket.Conn, request []byte) (*T, error) {
-	err := sendWSRequest(conn, request)
+	err := sendWS(conn, request)
 	if err != nil {
 		return nil, err
 	}
 
-	return recvWSResult[T](conn)
+	return recvWS[T](conn)
 }
 
 func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
-	err := sendWSRequest(conn, request)
+	err := sendWS(conn, request)
 	if err != nil {
 		return err
 	}
 
-	response, err := recvWSResult[T](conn)
+	response, err := recvWS[T](conn)
 	if err != nil {
 		log.Errorf("error in ws stream %v", err)
 		return err
@@ -45,7 +45,7 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 			case <-ctx.Done():
 				return
 			default:
-				response, err = recvWSResult[T](conn)
+				response, err = recvWS[T](conn)
 				if err != nil {
 					log.Errorf("error in ws stream %v", err)
 					break
@@ -59,14 +59,14 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 	return nil
 }
 
-func sendWSRequest(conn *websocket.Conn, request []byte) error {
+func sendWS(conn *websocket.Conn, request []byte) error {
 	if err := conn.WriteMessage(websocket.TextMessage, request); err != nil {
 		return fmt.Errorf("error with sending message - %v", err)
 	}
 	return nil
 }
 
-func recvWSResult[T any](conn *websocket.Conn) (*T, error) {
+func recvWS[T any](conn *websocket.Conn) (*T, error) {
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
 		return nil, fmt.Errorf("error reading WS response - %v", err)
