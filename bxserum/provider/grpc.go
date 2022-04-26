@@ -2,13 +2,11 @@ package provider
 
 import (
 	"context"
-	"fmt"
+	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
 )
 
 type GRPCClient struct {
@@ -51,44 +49,9 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limi
 		return err
 	}
 
-	return streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
+	return connections.GRPCStream[pb.GetOrderbookStreamResponse](stream, market, outputChan)
 }
 
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
-}
-
-func streamResponse[T any](stream grpc.ClientStream, input string, responseChan chan *T) error {
-	response, err := readGRPCStream[T](stream, input)
-	if err != nil {
-		return err
-	}
-
-	go func(response *T, stream grpc.ClientStream, input string) {
-		responseChan <- response
-
-		for {
-			response, err = readGRPCStream[T](stream, input)
-			if err != nil {
-				log.Errorf(err.Error())
-				return
-			} else {
-				responseChan <- response
-			}
-		}
-	}(response, stream, input)
-
-	return nil
-}
-
-func readGRPCStream[T any](stream grpc.ClientStream, input string) (*T, error) {
-	m := new(T)
-	err := stream.RecvMsg(m)
-	if err == io.EOF {
-		return nil, fmt.Errorf("stream for input %s ended successfully", input)
-	} else if err != nil {
-		return nil, err
-	}
-
-	return m, nil
 }
