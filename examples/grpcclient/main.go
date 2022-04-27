@@ -16,14 +16,14 @@ func main() {
 func callGRPC() {
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Fatalf("error dialing GRPC client - %v", err)
+		log.Fatalf("error dialing GRPC client: %v", err)
 		return
 	}
 
 	// Unary response
 	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT", 0)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH-USDT - %v", err)
+		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
@@ -32,7 +32,7 @@ func callGRPC() {
 
 	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOLUSDT - %v", err)
+		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
@@ -41,7 +41,7 @@ func callGRPC() {
 
 	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL:USDC - %v", err)
+		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 	} else {
 		fmt.Println(orderbook)
 	}
