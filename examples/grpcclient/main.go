@@ -63,7 +63,7 @@ func callGRPCStream() {
 	// Stream response
 	err = g.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
-		log.Errorf("error with GetOrderbook stream request for SOL/USDC - %v", err)
+		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
 			<-orderbookChan
