@@ -15,7 +15,7 @@ type response struct {
 	Error  jsonrpc2.Error
 }
 
-func WSResponse[T any](conn *websocket.Conn, request []byte) (*T, error) {
+func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	err := sendWS(conn, request)
 	if err != nil {
 		return nil, err
