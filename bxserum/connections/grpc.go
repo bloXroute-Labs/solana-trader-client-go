@@ -2,7 +2,6 @@ package connections
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"io"
 )
@@ -19,7 +18,6 @@ func GRPCStream[T any](stream grpc.ClientStream, input string, responseChan chan
 		for {
 			response, err = recvGRPC[T](stream, input)
 			if err != nil {
-				logrus.Errorf(err.Error())
 				return
 			} else {
 				responseChan <- response

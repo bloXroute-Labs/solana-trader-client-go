@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
@@ -33,7 +32,6 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 
 	response, err := recvWS[T](conn)
 	if err != nil {
-		log.Errorf("error in ws stream %v", err)
 		return err
 	}
 
@@ -47,7 +45,6 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 			default:
 				response, err = recvWS[T](conn)
 				if err != nil {
-					log.Errorf("error in ws stream %v", err)
 					break
 				}
 
