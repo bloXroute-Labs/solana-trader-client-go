@@ -42,20 +42,29 @@ func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 	}, nil
 }
 
-func (w *WSClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
-	request, err := w.jsonRPCRequest("GetOrderbook", map[string]string{"market": market})
+// Set limit to 0 to get all bids/asks
+func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
+	request, err := w.jsonRPCRequest("GetOrderbook", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
 		return nil, err
 	}
 	return connections.WSRequest[pb.GetOrderbookResponse](w.conn, request)
 }
 
-func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
-	request, err := w.jsonRPCRequest("GetOrderbookStream", map[string]string{"market": market})
+func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
+	request, err := w.jsonRPCRequest("GetOrderbookStream", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
 		return err
 	}
 	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
+}
+
+func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
+	request, err := w.jsonRPCRequest("GetMarkets", nil)
+	if err != nil {
+		return nil, err
+	}
+	return connections.WSRequest[pb.GetMarketsResponse](w.conn, request)
 }
 
 func (w *WSClient) Close() error {
@@ -66,7 +75,7 @@ func (w *WSClient) Close() error {
 	return nil
 }
 
-func (w *WSClient) jsonRPCRequest(method string, params map[string]string) ([]byte, error) {
+func (w *WSClient) jsonRPCRequest(method string, params map[string]interface{}) ([]byte, error) {
 	id := w.requestID.Next()
 	req := jsonrpc2.Request{
 		Method: method,

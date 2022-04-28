@@ -35,7 +35,23 @@ func NewHTTPClientWithEndpoint(endpoint string, client *http.Client) *HTTPClient
 	return &HTTPClient{baseURL: endpoint, httpClient: client}
 }
 
-func (h *HTTPClient) GetOrderbook(market string) (*pb.GetOrderbookResponse, error) {
-	url := h.baseURL + fmt.Sprintf("/api/v1/market/orderbooks/%s", market)
-	return connections.HTTPGetWithClient[pb.GetOrderbookResponse](url, h.httpClient)
+// Set limit to 0 to get all bids/asks
+func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v", h.baseURL, market, limit)
+	orderbook := new(pb.GetOrderbookResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponse](url, h.httpClient, orderbook); err != nil {
+		return nil, err
+	}
+
+	return orderbook, nil
+}
+
+func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/markets", h.baseURL)
+	markets := new(pb.GetMarketsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponse](url, h.httpClient, markets); err != nil {
+		return nil, err
+	}
+
+	return markets, nil
 }

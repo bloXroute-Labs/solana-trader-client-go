@@ -2,12 +2,11 @@ package provider
 
 import (
 	"context"
+	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
 )
 
 type GRPCClient struct {
@@ -39,31 +38,20 @@ func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
 	}, nil
 }
 
-func (g *GRPCClient) GetOrderbook(ctx context.Context, market string) (*pb.GetOrderbookResponse, error) {
-	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market})
+// Set limit to 0 to get all bids/asks
+func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponse, error) {
+	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
 }
 
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, outputChan chan *pb.GetOrderbookStreamResponse) error {
-	stream, err := g.apiClient.GetOrderbookStream(ctx, &pb.GetOrderBookRequest{Market: market})
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetOrderbookStreamResponse) error {
+	stream, err := g.apiClient.GetOrderbookStream(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
 	if err != nil {
 		return err
 	}
-	go streamResponse[pb.GetOrderbookStreamResponse](stream, market, outputChan)
-	return nil
+
+	return connections.GRPCStream[pb.GetOrderbookStreamResponse](stream, market, outputChan)
 }
 
-func streamResponse[T any](stream grpc.ClientStream, input string, outputChan chan *T) {
-	for {
-		output := new(T)
-		err := stream.RecvMsg(output)
-		if err == io.EOF {
-			log.Errorf("stream for input %s ended successfully", input)
-			return
-		} else if err != nil {
-			log.Errorf("error when receiving message for input %s - %v", input, err)
-			return
-		} else {
-			outputChan <- output
-		}
-	}
+func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
+	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
