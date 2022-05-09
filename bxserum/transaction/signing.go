@@ -1,11 +1,23 @@
 package transaction
 
 import (
+	"fmt"
 	"github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
+	"os"
 )
 
-func SignTx(transaction string, privateKeyKeygenPath string) (string, error) {
+// SignTx uses the environment variable for `PRIVATE_KEY` to sign the transaction
+func SignTx(transaction string) (string, error) {
+	pKeyStr := os.Getenv("PRIVATE_KEY")
+	if pKeyStr == "" {
+		return "", fmt.Errorf("env variable `PRIVATE_KEY` not set")
+	}
+	pKey, err := solana.PrivateKeyFromBase58(pKeyStr)
+	if err != nil {
+		return "", err
+	}
+
 	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(transaction)
 	tx := solanarpc.TransactionWithMeta{
 		Transaction: txBytes,
@@ -14,12 +26,8 @@ func SignTx(transaction string, privateKeyKeygenPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	privKey, err := solana.PrivateKeyFromSolanaKeygenFile(privateKeyKeygenPath)
-	if err != nil {
-		return "", err
-	}
 
-	err = signTx(solanaTx, privKey)
+	err = signTx(solanaTx, pKey)
 	if err != nil {
 		return "", err
 	}
