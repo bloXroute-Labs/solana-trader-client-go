@@ -7,51 +7,55 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
+	"log"
 )
 
-// TODO Handle sending responses to their correct locations
-type response struct {
-	Result json.RawMessage
-	Error  jsonrpc2.Error
+type SubscriptionResponse struct {
+	ID     uint64 `json:"id"`
+	Result string `json:"result"`
 }
 
-func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
+type streamResponse struct {
+	SubscriptionID string          `json:"subscriptionID"`
+	Params         json.RawMessage `json:"params"`
+}
+
+func WSRequest[T any](conn *websocket.Conn, request []byte, responseChan chan json.RawMessage) (*T, error) {
 	err := sendWS(conn, request)
 	if err != nil {
 		return nil, err
 	}
+	resp := <-responseChan
 
-	return recvWS[T](conn)
+	var result *T
+	if err = json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("error unmarshalling message of type %T: %v", result, err)
+	}
+
+	return result, nil
 }
 
-func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
+func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, subscriptionChan chan json.RawMessage, responseChan chan *T) error {
 	err := sendWS(conn, request)
 	if err != nil {
 		return err
 	}
 
-	response, err := recvWS[T](conn)
-	if err != nil {
-		return err
-	}
-
-	go func(response *T, responseChan chan *T, conn *websocket.Conn) {
-		responseChan <- response
-
+	go func(responseChan chan *T, conn *websocket.Conn) {
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			default:
-				response, err = recvWS[T](conn)
-				if err != nil {
-					break
+			case resp := <-subscriptionChan:
+				var result T
+				if err = json.Unmarshal(resp, &result); err != nil {
+					return
 				}
-
-				responseChan <- response
+				log.Println(result)
+				responseChan <- &result
 			}
 		}
-	}(response, responseChan, conn)
+	}(responseChan, conn)
 
 	return nil
 }
@@ -63,30 +67,71 @@ func sendWS(conn *websocket.Conn, request []byte) error {
 	return nil
 }
 
-func recvWS[T any](conn *websocket.Conn) (*T, error) {
+func RecvWS(conn *websocket.Conn, nonStreamResponsesReaders map[uint64]chan json.RawMessage, streamResponsesReaders map[string]chan json.RawMessage, subscriptionsReader chan SubscriptionResponse) error {
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
-		return nil, fmt.Errorf("error reading WS response: %v", err)
+		return fmt.Errorf("error reading WS response: %v", err)
 	}
 
-	// extract the result
-	var resp response
+	resp := jsonrpc2.Response{}
+
 	if err = json.Unmarshal(msg, &resp); err != nil {
-		return nil, fmt.Errorf("error unmarshalling JSON response: %v", err)
+		return fmt.Errorf("error unmarshalling JSON response: %v", err)
 	}
-	if resp.Error.Data != nil {
-		m, err := json.Marshal(resp.Error.Data)
-		if err != nil {
-			return nil, err
+
+	if resp.Error != nil {
+		if resp.Error.Data != nil {
+			m, err := json.Marshal(resp.Error.Data)
+			if err != nil {
+				return err
+			}
+
+			return errors.New(string(m))
 		}
 
-		return nil, errors.New(string(m))
+		return errors.New("failed to check ")
 	}
 
-	var result T
-	if err = json.Unmarshal(resp.Result, &result); err != nil {
-		return nil, fmt.Errorf("error unmarshalling message of type %T: %v", result, err)
+	if resp.ID.Str == "null" {
+		subscription := streamResponse{}
+		err := json.Unmarshal(*resp.Result, &subscription)
+		if err != nil {
+			return err
+		}
+
+		if subscription.SubscriptionID == "" {
+			return errors.New("received invalid subscription ID")
+		}
+
+		responseReader, ok := streamResponsesReaders[subscription.SubscriptionID]
+		if !ok {
+			return nil
+		}
+
+		responseReader <- subscription.Params
+
+		return nil
 	}
 
-	return &result, nil
+	if resp.ID.IsString {
+		return errors.New("received invalid request ID")
+	}
+
+	// new subscription for feed
+	subscriptionResponse := SubscriptionResponse{}
+	err = json.Unmarshal(msg, &subscriptionResponse)
+	if err == nil {
+		subscriptionResponse.ID = resp.ID.Num
+		subscriptionsReader <- subscriptionResponse
+		return nil
+	}
+
+	responseReader, ok := nonStreamResponsesReaders[resp.ID.Num]
+	if !ok {
+		return nil
+	}
+
+	responseReader <- *resp.Result
+
+	return nil
 }
