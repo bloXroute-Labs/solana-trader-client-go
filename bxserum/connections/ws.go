@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
-	"log"
 )
 
 type SubscriptionResponse struct {
@@ -51,7 +50,6 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 				if err = json.Unmarshal(resp, &result); err != nil {
 					return
 				}
-				log.Println(result)
 				responseChan <- &result
 			}
 		}
