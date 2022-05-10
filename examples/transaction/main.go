@@ -41,8 +41,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	unsignedTx, err := unsignedTx(privateKeyPath, recentBlockhash)
-	signedTx, err := transaction.SignTx(unsignedTx.MustToBase64())
+	privateKey := os.Getenv("PRIVATE_KEY")
+	if privateKey == "" {
+		log.Fatalf("env variable `PRIVATE_KEY` not set")
+	}
+
+	unsignedTx, err := unsignedTransaction(privateKey, recentBlockhash)
+	if err != nil {
+		log.Fatal(err)
+	}
+	unsignedTxMessageBase64 := unsignedTx.Message.ToBase64()
+
+	signedTx, err := transaction.SignTxMessage(unsignedTxMessageBase64)
 	if err != nil {
 		log.Fatal(err)
 	}
