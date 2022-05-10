@@ -78,6 +78,7 @@ func unsignedTransaction(privateKey string, recentBlockHash *solanarpc.GetRecent
 	}, recentBlockHash.Value.Blockhash)
 }
 
+// marshals transaction without checking number of signatures
 func partialMarshal(tx *solana.Transaction) ([]byte, error) {
 	messageBytes, err := tx.Message.MarshalBinary()
 	if err != nil {
