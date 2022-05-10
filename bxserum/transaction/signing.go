@@ -1,14 +1,15 @@
 package transaction
 
 import (
+	"encoding/base64"
 	"fmt"
+	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
-	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"os"
 )
 
-// SignTx uses the environment variable for `PRIVATE_KEY` to sign the transaction
-func SignTx(transaction string) (string, error) {
+// SignTxMessage uses the environment variable for `PRIVATE_KEY` to sign the transaction
+func SignTxMessage(transactionMessage string) (string, error) {
 	pKeyStr := os.Getenv("PRIVATE_KEY")
 	if pKeyStr == "" {
 		return "", fmt.Errorf("env variable `PRIVATE_KEY` not set")
@@ -18,15 +19,13 @@ func SignTx(transaction string) (string, error) {
 		return "", err
 	}
 
-	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(transaction)
-	tx := solanarpc.TransactionWithMeta{
-		Transaction: txBytes,
-	}
-	solanaTx, err := tx.GetTransaction()
-	if err != nil {
+	var m solana.Message
+	b64, err := base64.StdEncoding.DecodeString(transactionMessage)
+	if err := m.UnmarshalWithDecoder(bin.NewCompactU16Decoder(b64)); err != nil {
 		return "", err
 	}
 
+	solanaTx := &solana.Transaction{Message: m}
 	err = signTx(solanaTx, pKey)
 	if err != nil {
 		return "", err
