@@ -1,4 +1,4 @@
-package transaction
+package main
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	rpc_endpoint     = solanarpc.MainNetBeta_RPC
+	rpcEndpoint      = solanarpc.MainNetBeta_RPC
 	recipientAddress = "FmZ9kC8bRVsFTgAWrXUyGHp3dN3HtMxJmoi2ijdaYGwi"
 )
 
@@ -26,16 +26,16 @@ type txConfirmation struct {
 }
 
 func main() {
-	rpcClient := solanarpc.New(rpc_endpoint)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	privateKeyPath := os.Getenv("PRIVATE_KEY_PATH")
-	if privateKeyPath == "" {
-		log.Fatalf("env variable `PRIVATE_KEY_PATH` not set")
+	rpcClient := solanarpc.New(rpcEndpoint)
+	wsClient, err := solanaws.Connect(ctx, solanarpc.MainNetBeta_WS)
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	defer cancel()
 	recentBlockhash, err := rpcClient.GetRecentBlockhash(ctx, solanarpc.CommitmentFinalized)
 	if err != nil {
 		log.Fatal(err)
@@ -44,41 +44,31 @@ func main() {
 	unsignedTx, err := unsignedTx(privateKeyPath, recentBlockhash)
 	signedTx, err := transaction.SignTx(unsignedTx.MustToBase64())
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
+	fmt.Println("tx message signed, ready to send tx")
 
-	signature, err := sendTx(context.Background(), signedTx)
+	signature, err := sendAndConfirmTx(context.Background(), signedTx, rpcClient, wsClient)
 	if err != nil {
 		log.Fatalf("transaction not sent successfully: %v", err)
 	}
 
-	fmt.Printf("tx %s sent successfully\n", signature.String())
+	fmt.Printf("tx %s sent and confirmed successfully\n", signature.String())
 }
 
-func unsignedTx(privateKeyPath string, recentBlockHash *solanarpc.GetRecentBlockhashResult) (*solana.Transaction, error) {
-	privateKey, err := solana.PrivateKeyFromSolanaKeygenFile(privateKeyPath)
+func unsignedTransaction(privateKey string, recentBlockHash *solanarpc.GetRecentBlockhashResult) (*solana.Transaction, error) {
+	pKey, err := solana.PrivateKeyFromBase58(privateKey)
 	if err != nil {
 		return nil, err
 	}
 	recipient := solana.MustPublicKeyFromBase58(recipientAddress)
 
-	tx, err := solana.NewTransaction([]solana.Instruction{
-		system.NewTransferInstruction(1, privateKey.PublicKey(), recipient).Build(),
+	return solana.NewTransaction([]solana.Instruction{
+		system.NewTransferInstruction(1, pKey.PublicKey(), recipient).Build(),
 	}, recentBlockHash.Value.Blockhash)
-	if err != nil {
-		return nil, err
-	}
-
-	return tx, nil
 }
 
-func sendTx(ctx context.Context, txBase64 string) (solana.Signature, error) {
-	rpcClient := solanarpc.New(solanarpc.MainNetBeta_RPC)
-	wsClient, err := solanaws.Connect(ctx, solanarpc.MainNetBeta_WS)
-	if err != nil {
-		return solana.Signature{}, err
-	}
-
+func sendAndConfirmTx(ctx context.Context, txBase64 string, rpcClient *solanarpc.Client, wsClient *solanaws.Client) (solana.Signature, error) {
 	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(txBase64)
 	if err != nil {
 		return solana.Signature{}, err
