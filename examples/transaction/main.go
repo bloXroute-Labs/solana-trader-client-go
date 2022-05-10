@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	"github.com/gagliardetto/solana-go"
@@ -10,14 +9,13 @@ import (
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	sendandconfirmtransaction "github.com/gagliardetto/solana-go/rpc/sendAndConfirmTransaction"
 	solanaws "github.com/gagliardetto/solana-go/rpc/ws"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 )
 
 const (
 	rpcEndpoint      = solanarpc.MainNetBeta_RPC
+	wsEndpoint       = solanarpc.MainNetBeta_WS
 	recipientAddress = "FmZ9kC8bRVsFTgAWrXUyGHp3dN3HtMxJmoi2ijdaYGwi"
 )
 
@@ -30,7 +28,7 @@ func main() {
 	defer cancel()
 
 	rpcClient := solanarpc.New(rpcEndpoint)
-	wsClient, err := solanaws.Connect(ctx, solanarpc.MainNetBeta_WS)
+	wsClient, err := solanaws.Connect(ctx, wsEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,29 +88,4 @@ func sendAndConfirmTx(ctx context.Context, txBase64 string, rpcClient *solanarpc
 	}
 
 	return sendandconfirmtransaction.SendAndConfirmTransaction(ctx, rpcClient, wsClient, tx)
-}
-
-func confirmTx(signature solana.Signature) (string, error) {
-	url := fmt.Sprintf("https://public-api.solscan.io/transaction/%s", signature.String())
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var confirmation txConfirmation
-	err = json.Unmarshal(b, &confirmation)
-	if err != nil {
-		return "", err
-	}
-
-	return confirmation.TxHash, nil
 }

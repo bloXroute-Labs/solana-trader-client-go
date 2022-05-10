@@ -9,7 +9,7 @@ import (
 )
 
 // SignTxMessage uses the environment variable for `PRIVATE_KEY` to sign the transaction
-func SignTxMessage(transactionMessage string) (string, error) {
+func SignTxMessage(txMessage string) (string, error) {
 	pKeyStr := os.Getenv("PRIVATE_KEY")
 	if pKeyStr == "" {
 		return "", fmt.Errorf("env variable `PRIVATE_KEY` not set")
@@ -20,8 +20,8 @@ func SignTxMessage(transactionMessage string) (string, error) {
 	}
 
 	var m solana.Message
-	b64, err := base64.StdEncoding.DecodeString(transactionMessage)
-	if err := m.UnmarshalWithDecoder(bin.NewCompactU16Decoder(b64)); err != nil {
+	txBytes, err := base64.StdEncoding.DecodeString(txMessage)
+	if err := m.UnmarshalWithDecoder(bin.NewCompactU16Decoder(txBytes)); err != nil {
 		return "", err
 	}
 
