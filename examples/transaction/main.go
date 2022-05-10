@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
+	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
@@ -47,9 +49,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	unsignedTxMessageBase64 := unsignedTx.Message.ToBase64()
+	unsignedTxBytes, err := partialMarshal(unsignedTx)
+	unsignedTxBase64 := base64.StdEncoding.EncodeToString(unsignedTxBytes)
 
-	signedTx, err := transaction.SignTxMessage(unsignedTxMessageBase64)
+	signedTx, err := transaction.SignTx(unsignedTxBase64)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,6 +76,25 @@ func unsignedTransaction(privateKey string, recentBlockHash *solanarpc.GetRecent
 	return solana.NewTransaction([]solana.Instruction{
 		system.NewTransferInstruction(1, pKey.PublicKey(), recipient).Build(),
 	}, recentBlockHash.Value.Blockhash)
+}
+
+func partialMarshal(tx *solana.Transaction) ([]byte, error) {
+	messageBytes, err := tx.Message.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+
+	var signatureCount []byte
+	bin.EncodeCompactU16Length(&signatureCount, len(tx.Signatures))
+
+	output := make([]byte, 0, len(signatureCount)+len(signatureCount)*64+len(messageBytes))
+	output = append(output, signatureCount...) // signatureCount | signatures | message
+	for _, sig := range tx.Signatures {
+		output = append(output, sig[:]...)
+	}
+	output = append(output, messageBytes...)
+
+	return output, nil
 }
 
 func sendAndConfirmTx(ctx context.Context, txBase64 string, rpcClient *solanarpc.Client, wsClient *solanaws.Client) (solana.Signature, error) {
