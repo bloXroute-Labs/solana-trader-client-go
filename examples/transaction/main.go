@@ -33,7 +33,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer cancel()
 	recentBlockhash, err := rpcClient.GetRecentBlockhash(ctx, solanarpc.CommitmentFinalized)
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +40,7 @@ func main() {
 
 	privateKey := os.Getenv("PRIVATE_KEY")
 	if privateKey == "" {
-		log.Fatalf("env variable `PRIVATE_KEY` not set")
+		log.Fatal("env variable `PRIVATE_KEY` not set")
 	}
 
 	unsignedTx, err := unsignedTransaction(privateKey, recentBlockhash)
