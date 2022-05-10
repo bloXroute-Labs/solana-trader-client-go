@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-// SignTxMessage uses the environment variable for `PRIVATE_KEY` to sign the transaction message
-func SignTxMessage(txMessage string) (string, error) {
+// SignTx uses the environment variable for `PRIVATE_KEY` to sign the transaction
+func SignTx(unsignedTxBase64 string) (string, error) {
 	pKeyStr := os.Getenv("PRIVATE_KEY")
 	if pKeyStr == "" {
 		return "", fmt.Errorf("env variable `PRIVATE_KEY` not set")
@@ -18,12 +18,12 @@ func SignTxMessage(txMessage string) (string, error) {
 		return "", err
 	}
 
-	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(txMessage)
+	unsignedTxBytes, err := solanarpc.DataBytesOrJSONFromBase64(unsignedTxBase64)
 	if err != nil {
 		return "", err
 	}
-	tx := solanarpc.TransactionWithMeta{Transaction: txBytes}
-	solanaTx, err := tx.GetTransaction()
+	unsignedTx := solanarpc.TransactionWithMeta{Transaction: unsignedTxBytes}
+	solanaTx, err := unsignedTx.GetTransaction()
 
 	err = signTx(solanaTx, pKey)
 	if err != nil {
@@ -37,7 +37,7 @@ func signTx(tx *solana.Transaction, privateKey solana.PrivateKey) error {
 	signaturesRequired := int(tx.Message.Header.NumRequiredSignatures)
 	signaturesPresent := len(tx.Signatures)
 	if signaturesPresent != signaturesRequired-1 {
-		return fmt.Errorf("transaction requires %v instruction and has %v signatures, should need exactly one more signature", signaturesRequired, signaturesPresent)
+		return fmt.Errorf("transaction requires %v signatures and has %v signatures, should need exactly one more signature", signaturesRequired, signaturesPresent)
 	}
 
 	_, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
