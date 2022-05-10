@@ -9,8 +9,8 @@ import (
 
 // SignTx uses the environment variable for `PRIVATE_KEY` to sign the transaction
 func SignTx(unsignedTxBase64 string) (string, error) {
-	pKeyStr := os.Getenv("PRIVATE_KEY")
-	if pKeyStr == "" {
+	pKeyStr, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
 		return "", fmt.Errorf("env variable `PRIVATE_KEY` not set")
 	}
 	pKey, err := solana.PrivateKeyFromBase58(pKeyStr)
