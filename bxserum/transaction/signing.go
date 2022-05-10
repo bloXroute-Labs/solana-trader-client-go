@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-// SignTxMessage uses the environment variable for `PRIVATE_KEY` to sign the transaction
+// SignTxMessage uses the environment variable for `PRIVATE_KEY` to sign the transaction message
 func SignTxMessage(txMessage string) (string, error) {
 	pKeyStr := os.Getenv("PRIVATE_KEY")
 	if pKeyStr == "" {
