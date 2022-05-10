@@ -1,10 +1,9 @@
 package transaction
 
 import (
-	"encoding/base64"
 	"fmt"
-	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
+	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"os"
 )
 
@@ -19,13 +18,13 @@ func SignTxMessage(txMessage string) (string, error) {
 		return "", err
 	}
 
-	var m solana.Message
-	txBytes, err := base64.StdEncoding.DecodeString(txMessage)
-	if err := m.UnmarshalWithDecoder(bin.NewCompactU16Decoder(txBytes)); err != nil {
+	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(txMessage)
+	if err != nil {
 		return "", err
 	}
+	tx := solanarpc.TransactionWithMeta{Transaction: txBytes}
+	solanaTx, err := tx.GetTransaction()
 
-	solanaTx := &solana.Transaction{Message: m}
 	err = signTx(solanaTx, pKey)
 	if err != nil {
 		return "", err
@@ -35,7 +34,13 @@ func SignTxMessage(txMessage string) (string, error) {
 }
 
 func signTx(tx *solana.Transaction, privateKey solana.PrivateKey) error {
-	sigs, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+	signaturesRequired := int(tx.Message.Header.NumRequiredSignatures)
+	signaturesPresent := len(tx.Signatures)
+	if signaturesPresent != signaturesRequired-1 {
+		return fmt.Errorf("transaction requires %v instruction and has %v signatures, should need exactly one more signature", signaturesRequired, signaturesPresent)
+	}
+
+	_, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
 		if key.Equals(privateKey.PublicKey()) {
 			return &privateKey
 		}
@@ -45,6 +50,5 @@ func signTx(tx *solana.Transaction, privateKey solana.PrivateKey) error {
 		return err
 	}
 
-	tx.Signatures = sigs
 	return nil
 }
