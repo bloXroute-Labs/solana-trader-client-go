@@ -53,6 +53,14 @@ service Api {
   rpc PostOrder(PostOrderRequest) returns (PostOrderResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/place"
+      body: "*"
+    };
+  }
+
+  rpc PostSubmit(PostSubmitRequest) returns (PostSubmitResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/submit"
+      body: "*"
     };
   }
 
@@ -66,18 +74,21 @@ service Api {
   rpc PostCancelOrder(PostCancelOrderRequest) returns (PostCancelOrderResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/cancel"
+      body: "*"
     };
   }
 
   rpc PostCancelAll(PostCancelAllRequest) returns (PostCancelAllResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/cancelall"
+      body: "*"
     };
   }
 
   rpc PostSettle(PostSettleRequest) returns (PostSettleResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/settle"
+      body: "*"
     };
   }
 
@@ -223,7 +234,7 @@ message GetTradesResponse {
 }
 
 message Trade {
-  string side = 1;
+  Side side = 1;
   double size = 2;
   double price = 3;
   google.protobuf.Timestamp createdAt = 4;
@@ -247,12 +258,15 @@ message TokenBalance {
 }
 
 message PostOrderRequest {
-  string address = 1;
-  string market = 2;
-  Side side = 3;
-  repeated OrderType type = 4;
-  double amount = 5;
-  double price = 6;
+  string ownerAddress = 1;
+  string payerAddress = 2;
+  string market = 3;
+  Side side = 4;
+  repeated OrderType type = 5;
+  double amount = 6;
+  double price = 7;
+  string openOrdersAddress = 8;
+  uint64 clientOrderID = 9;
 }
 
 enum Side {
@@ -269,7 +283,8 @@ enum OrderType {
 }
 
 message PostOrderResponse {
-  string orderID = 1;
+  string transaction = 1;
+  string openOrdersAddress = 2;
 }
 
 message PostCancelOrderRequest {

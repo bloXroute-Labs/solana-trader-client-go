@@ -93,3 +93,5 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 
 	return markets, nil
 }
+
+func (h *HTTPClient) PostOrder() *pb.PostOrderRequest
