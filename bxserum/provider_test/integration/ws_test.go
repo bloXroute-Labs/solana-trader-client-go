@@ -24,9 +24,9 @@ func TestWSClient_Requests(t *testing.T) {
 		func(ctx context.Context, market string, limit uint32) string {
 			_, err := w.GetOrderbook(market, limit)
 			require.NotNil(t, err)
-			assert.Equal(t, err.Error(), "\"provided market name/address is not found\"")
+			assert.Equal(t, err.Error(), "\"provided market name/address was not found\"")
 
-			return "provided market name/address is not found"
+			return "provided market name/address was not found"
 		},
 	)
 
@@ -39,6 +39,25 @@ func TestWSClient_Requests(t *testing.T) {
 			return markets
 		},
 	)
+
+	testGetOrders(
+		t,
+		func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse {
+			orders, err := w.GetOrders(market, owner)
+			require.Nil(t, err)
+			return orders
+		},
+	)
+
+	testGetTickers(
+		t,
+		func(ctx context.Context, market string) *pb.GetTickersResponse {
+			w.GetOrderbook(market, 1)
+
+			tickers, err := w.GetTickers(market)
+			require.Nil(t, err)
+			return tickers
+		})
 }
 
 // TODO separate WS streams
@@ -57,9 +76,9 @@ func TestWSClient_Streams(t *testing.T) {
 			orderbookCh := make(chan *pb.GetOrderbookStreamResponse)
 			err := w.GetOrderbookStream(ctx, market, limit, orderbookCh)
 			require.NotNil(t, err)
-			require.Equal(t, "\"provided market name/address is not found\"", err.Error())
+			require.Equal(t, "\"provided market name/address was not found\"", err.Error())
 
-			return "provided market name/address is not found"
+			return "provided market name/address was not found"
 		},
 	)
 }*/

@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApiClient interface {
 	GetMarkets(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (*GetMarketsResponse, error)
-	GetTicker(ctx context.Context, in *GetTickerRequest, opts ...grpc.CallOption) (*GetTickerResponse, error)
+	GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error)
 	GetKline(ctx context.Context, in *GetKlineRequest, opts ...grpc.CallOption) (*GetKlineResponse, error)
 	GetOrderbook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error)
 	GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error)
@@ -28,6 +28,7 @@ type ApiClient interface {
 	GetAccountBalance(ctx context.Context, in *GetAccountBalanceRequest, opts ...grpc.CallOption) (*GetAccountBalanceResponse, error)
 	// trade endpoints
 	PostOrder(ctx context.Context, in *PostOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error)
+	PostSubmit(ctx context.Context, in *PostSubmitRequest, opts ...grpc.CallOption) (*PostSubmitResponse, error)
 	PostCancelOrder(ctx context.Context, in *PostCancelOrderRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelAll(ctx context.Context, in *PostCancelAllRequest, opts ...grpc.CallOption) (*PostCancelAllResponse, error)
 	PostSettle(ctx context.Context, in *PostSettleRequest, opts ...grpc.CallOption) (*PostSettleResponse, error)
@@ -37,7 +38,7 @@ type ApiClient interface {
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
 	// streaming endpoints
 	GetOrderbookStream(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (Api_GetOrderbookStreamClient, error)
-	GetTickerStream(ctx context.Context, in *GetTickerRequest, opts ...grpc.CallOption) (Api_GetTickerStreamClient, error)
+	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
 	GetMarketDepthStream(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (Api_GetMarketDepthStreamClient, error)
 	GetTradeStream(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (Api_GetTradeStreamClient, error)
 }
@@ -59,9 +60,9 @@ func (c *apiClient) GetMarkets(ctx context.Context, in *GetMarketsRequest, opts 
 	return out, nil
 }
 
-func (c *apiClient) GetTicker(ctx context.Context, in *GetTickerRequest, opts ...grpc.CallOption) (*GetTickerResponse, error) {
-	out := new(GetTickerResponse)
-	err := c.cc.Invoke(ctx, "/api.Api/GetTicker", in, out, opts...)
+func (c *apiClient) GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error) {
+	out := new(GetTickersResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetTickers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +117,15 @@ func (c *apiClient) GetAccountBalance(ctx context.Context, in *GetAccountBalance
 func (c *apiClient) PostOrder(ctx context.Context, in *PostOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error) {
 	out := new(PostOrderResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/PostOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) PostSubmit(ctx context.Context, in *PostSubmitRequest, opts ...grpc.CallOption) (*PostSubmitResponse, error) {
+	out := new(PostSubmitResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostSubmit", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -217,12 +227,12 @@ func (x *apiGetOrderbookStreamClient) Recv() (*GetOrderbookStreamResponse, error
 	return m, nil
 }
 
-func (c *apiClient) GetTickerStream(ctx context.Context, in *GetTickerRequest, opts ...grpc.CallOption) (Api_GetTickerStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[1], "/api.Api/GetTickerStream", opts...)
+func (c *apiClient) GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[1], "/api.Api/GetTickersStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &apiGetTickerStreamClient{stream}
+	x := &apiGetTickersStreamClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -232,16 +242,16 @@ func (c *apiClient) GetTickerStream(ctx context.Context, in *GetTickerRequest, o
 	return x, nil
 }
 
-type Api_GetTickerStreamClient interface {
+type Api_GetTickersStreamClient interface {
 	Recv() (*GetTickerStreamResponse, error)
 	grpc.ClientStream
 }
 
-type apiGetTickerStreamClient struct {
+type apiGetTickersStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *apiGetTickerStreamClient) Recv() (*GetTickerStreamResponse, error) {
+func (x *apiGetTickersStreamClient) Recv() (*GetTickerStreamResponse, error) {
 	m := new(GetTickerStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -318,7 +328,7 @@ func (x *apiGetTradeStreamClient) Recv() (*GetTradesStreamResponse, error) {
 // for forward compatibility
 type ApiServer interface {
 	GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error)
-	GetTicker(context.Context, *GetTickerRequest) (*GetTickerResponse, error)
+	GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error)
 	GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error)
 	GetOrderbook(context.Context, *GetOrderBookRequest) (*GetOrderbookResponse, error)
 	GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error)
@@ -327,6 +337,7 @@ type ApiServer interface {
 	GetAccountBalance(context.Context, *GetAccountBalanceRequest) (*GetAccountBalanceResponse, error)
 	// trade endpoints
 	PostOrder(context.Context, *PostOrderRequest) (*PostOrderResponse, error)
+	PostSubmit(context.Context, *PostSubmitRequest) (*PostSubmitResponse, error)
 	PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error)
 	PostCancelAll(context.Context, *PostCancelAllRequest) (*PostCancelAllResponse, error)
 	PostSettle(context.Context, *PostSettleRequest) (*PostSettleResponse, error)
@@ -336,7 +347,7 @@ type ApiServer interface {
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
 	// streaming endpoints
 	GetOrderbookStream(*GetOrderBookRequest, Api_GetOrderbookStreamServer) error
-	GetTickerStream(*GetTickerRequest, Api_GetTickerStreamServer) error
+	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
 	GetMarketDepthStream(*GetMarketsRequest, Api_GetMarketDepthStreamServer) error
 	GetTradeStream(*GetTradesRequest, Api_GetTradeStreamServer) error
 	mustEmbedUnimplementedApiServer()
@@ -349,8 +360,8 @@ type UnimplementedApiServer struct {
 func (UnimplementedApiServer) GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMarkets not implemented")
 }
-func (UnimplementedApiServer) GetTicker(context.Context, *GetTickerRequest) (*GetTickerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTicker not implemented")
+func (UnimplementedApiServer) GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTickers not implemented")
 }
 func (UnimplementedApiServer) GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetKline not implemented")
@@ -369,6 +380,9 @@ func (UnimplementedApiServer) GetAccountBalance(context.Context, *GetAccountBala
 }
 func (UnimplementedApiServer) PostOrder(context.Context, *PostOrderRequest) (*PostOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostOrder not implemented")
+}
+func (UnimplementedApiServer) PostSubmit(context.Context, *PostSubmitRequest) (*PostSubmitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostSubmit not implemented")
 }
 func (UnimplementedApiServer) PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostCancelOrder not implemented")
@@ -394,8 +408,8 @@ func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest
 func (UnimplementedApiServer) GetOrderbookStream(*GetOrderBookRequest, Api_GetOrderbookStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderbookStream not implemented")
 }
-func (UnimplementedApiServer) GetTickerStream(*GetTickerRequest, Api_GetTickerStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetTickerStream not implemented")
+func (UnimplementedApiServer) GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetTickersStream not implemented")
 }
 func (UnimplementedApiServer) GetMarketDepthStream(*GetMarketsRequest, Api_GetMarketDepthStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetMarketDepthStream not implemented")
@@ -434,20 +448,20 @@ func _Api_GetMarkets_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Api_GetTicker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTickerRequest)
+func _Api_GetTickers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTickersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ApiServer).GetTicker(ctx, in)
+		return srv.(ApiServer).GetTickers(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.Api/GetTicker",
+		FullMethod: "/api.Api/GetTickers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).GetTicker(ctx, req.(*GetTickerRequest))
+		return srv.(ApiServer).GetTickers(ctx, req.(*GetTickersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -556,6 +570,24 @@ func _Api_PostOrder_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).PostOrder(ctx, req.(*PostOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_PostSubmit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSubmitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostSubmit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostSubmit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostSubmit(ctx, req.(*PostSubmitRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -707,24 +739,24 @@ func (x *apiGetOrderbookStreamServer) Send(m *GetOrderbookStreamResponse) error 
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Api_GetTickerStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetTickerRequest)
+func _Api_GetTickersStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetTickersRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ApiServer).GetTickerStream(m, &apiGetTickerStreamServer{stream})
+	return srv.(ApiServer).GetTickersStream(m, &apiGetTickersStreamServer{stream})
 }
 
-type Api_GetTickerStreamServer interface {
+type Api_GetTickersStreamServer interface {
 	Send(*GetTickerStreamResponse) error
 	grpc.ServerStream
 }
 
-type apiGetTickerStreamServer struct {
+type apiGetTickersStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *apiGetTickerStreamServer) Send(m *GetTickerStreamResponse) error {
+func (x *apiGetTickersStreamServer) Send(m *GetTickerStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -782,8 +814,8 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Api_GetMarkets_Handler,
 		},
 		{
-			MethodName: "GetTicker",
-			Handler:    _Api_GetTicker_Handler,
+			MethodName: "GetTickers",
+			Handler:    _Api_GetTickers_Handler,
 		},
 		{
 			MethodName: "GetKline",
@@ -808,6 +840,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostOrder",
 			Handler:    _Api_PostOrder_Handler,
+		},
+		{
+			MethodName: "PostSubmit",
+			Handler:    _Api_PostSubmit_Handler,
 		},
 		{
 			MethodName: "PostCancelOrder",
@@ -845,8 +881,8 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "GetTickerStream",
-			Handler:       _Api_GetTickerStream_Handler,
+			StreamName:    "GetTickersStream",
+			Handler:       _Api_GetTickersStream_Handler,
 			ServerStreams: true,
 		},
 		{

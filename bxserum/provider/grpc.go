@@ -52,6 +52,30 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limi
 	return connections.GRPCStream[pb.GetOrderbookStreamResponse](stream, market, outputChan)
 }
 
+// Set limit to 0 to get all trades
+func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32) (*pb.GetTradesResponse, error) {
+	return g.apiClient.GetTrades(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
+}
+
+func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetTradesStreamResponse) error {
+	stream, err := g.apiClient.GetTradeStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
+	if err != nil {
+		return err
+	}
+
+	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market, outputChan)
+}
+
+// GetOrders returns all opened orders by owner address and market
+func (g *GRPCClient) GetOrders(ctx context.Context, market string, owner string) (*pb.GetOrdersResponse, error) {
+	return g.apiClient.GetOrders(ctx, &pb.GetOrdersRequest{Market: market, Address: owner})
+}
+
+// Set market to empty string to 0 to get all tickers
+func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTickersResponse, error) {
+	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
+}
+
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }

@@ -56,7 +56,7 @@ func testGetOrderbook(
 	defer cancel()
 	errMessage := getOrderbookErrFn(ctx, "market-doesnt-exist", 0)
 
-	assert.Equal(t, "provided market name/address is not found", errMessage)
+	assert.Equal(t, "provided market name/address was not found", errMessage)
 
 	// another orderbook by address
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
@@ -75,15 +75,31 @@ func testGetMarkets(t *testing.T, getMarketsFn func(ctx context.Context) *pb.Get
 
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
-	assertMarketPresent(t, "MATH/USDT", pb.MarketStatus_MS_ONLINE, "2WghiBkDL2yRhHdvm8CpprrkmfguuQGJTCDfPSudKBAZ", markets)
+	assertMarketPresent(t, "MATH/USDT", pb.MarketStatus_MS_ONLINE, "CkvNfATB7nky8zPLuwS9bgcFbVRkQdkd5zuKEovyo9rs", markets)
 
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
-	assertMarketPresent(t, "SWAG/USDT", pb.MarketStatus_MS_ONLINE, "J2XSt77XWim5HwtUM8RUwQvmRXNZsbMKpp5GTKpHafvf", markets)
+	assertMarketPresent(t, "SWAG/USDT", pb.MarketStatus_MS_ONLINE, "6URQ4zFWvPm1fhJCKKWorrh8X3mmTFiDDyXEUmSf8Rb2", markets)
 
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
 	assertMarketNotPresent(t, "market-doesnt-exist", markets)
+}
+
+func testGetOrders(t *testing.T, getOrdersFn func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	orders := getOrdersFn(ctx, "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	assertOrder(t, "SOLUSDC", orders)
+
+}
+
+func testGetTickers(t *testing.T, getTickersFn func(ctx context.Context, market string) *pb.GetTickersResponse) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	tickers := getTickersFn(ctx, "SOLUSDC")
+	assertTickers(t, "SOLUSDC", tickers)
+
 }
 
 func assertSOLUSDCOrderbook(t *testing.T, name string, orderbook *pb.GetOrderbookResponse) {
@@ -115,4 +131,28 @@ func assertMarketNotPresent(t *testing.T, marketName string, markets *pb.GetMark
 
 	_, ok := markets.Markets[marketName]
 	assert.False(t, ok)
+}
+
+func assertOrder(t *testing.T, expectedName string, orders *pb.GetOrdersResponse) {
+	require.NotEmpty(t, orders.GetOrders())
+	order := *(orders.Orders[0])
+	assert.Equal(t, expectedName, order.Market)
+}
+
+func assertTickers(t *testing.T, expectedName string, tickers *pb.GetTickersResponse) {
+	require.NotEmpty(t, tickers.Tickers)
+	ticker := *(tickers.Tickers[0])
+	assert.Equal(t, expectedName, ticker.Market)
+	assert.Greater(t, ticker.Bid, float64(0))
+	assert.Greater(t, ticker.BidSize, float64(0))
+	assert.Greater(t, ticker.Ask, float64(0))
+	assert.Greater(t, ticker.AskSize, float64(0))
+}
+
+func assertTrades(t *testing.T, orders *pb.GetTradesResponse) {
+	trades := orders.Trades
+	require.NotEmpty(t, trades)
+	trade := trades[0]
+	assert.Greater(t, 0, trade.Size)
+	assert.Greater(t, 0, trade.Price)
 }

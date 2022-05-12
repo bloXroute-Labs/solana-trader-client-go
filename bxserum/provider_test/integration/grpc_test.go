@@ -42,6 +42,27 @@ func TestGRPCClient_Requests(t *testing.T) {
 			return markets
 		},
 	)
+
+	testGetOrders(
+		t,
+		func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse {
+			orders, err := g.GetOrders(ctx, market, owner)
+			require.Nil(t, err)
+			return orders
+		},
+	)
+
+	testGetTickers(
+		t,
+		func(ctx context.Context, market string) *pb.GetTickersResponse {
+
+			g.GetOrderbook(context.Background(), market, 2)
+
+			response, err := g.GetTickers(context.Background(), market)
+
+			require.Nil(t, err, "unexpected error=%v", err)
+			return response
+		})
 }
 
 // Stream response
