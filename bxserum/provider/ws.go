@@ -59,6 +59,41 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit 
 	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
+// Set limit to 0 to get all trades
+func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
+	request, err := w.jsonRPCRequest("GetTrades", map[string]interface{}{"market": market, "limit": limit})
+	if err != nil {
+		return nil, err
+	}
+	return connections.WSRequest[pb.GetTradesResponse](w.conn, request)
+}
+
+func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, tradesChan chan *pb.GetTradesStreamResponse) error {
+	request, err := w.jsonRPCRequest("GetTradeStream", map[string]interface{}{"market": market, "limit": limit})
+	if err != nil {
+		return err
+	}
+	return connections.WSStream[pb.GetTradesStreamResponse](ctx, w.conn, request, tradesChan)
+}
+
+// GetOrders returns all opened orders by owner address and market
+func (w *WSClient) GetOrders(market string, owner string) (*pb.GetOrdersResponse, error) {
+	request, err := w.jsonRPCRequest("GetOrders", map[string]interface{}{"market": market, "address": owner})
+	if err != nil {
+		return nil, err
+	}
+	return connections.WSRequest[pb.GetOrdersResponse](w.conn, request)
+}
+
+// Set market to empty string to get all tickers
+func (w *WSClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
+	request, err := w.jsonRPCRequest("GetTickers", map[string]interface{}{"market": market})
+	if err != nil {
+		return nil, err
+	}
+	return connections.WSRequest[pb.GetTickersResponse](w.conn, request)
+}
+
 func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	request, err := w.jsonRPCRequest("GetMarkets", nil)
 	if err != nil {

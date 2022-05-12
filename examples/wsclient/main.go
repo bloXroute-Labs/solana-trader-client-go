@@ -9,12 +9,16 @@ import (
 )
 
 func main() {
-	callWS()
-	callWSStream()
+	callOrderbookWS()
+	callOrdersWS()
+	callTradesWS()
+	callTickersWS()
+	callOrderbookWSStream()
+	callTradesWSStream()
 }
 
 // Unary response
-func callWS() {
+func callOrderbookWS() {
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -50,8 +54,63 @@ func callWS() {
 	fmt.Println()
 }
 
+func callOrdersWS() {
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	orders, err := w.GetOrders("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	if err != nil {
+		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
+	} else {
+		fmt.Println(orders)
+	}
+
+	fmt.Println()
+}
+
+func callTradesWS() {
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	trades, err := w.GetTrades("SOLUSDC", 2)
+	if err != nil {
+		log.Errorf("error with GetTrades request for SOL-USDT: %v", err)
+	} else {
+		fmt.Println(trades)
+	}
+
+	fmt.Println()
+}
+
+func callTickersWS() {
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	tickers, err := w.GetTickers("SOLUSDC")
+	if err != nil {
+		log.Errorf("error with GetTickers request for SOL-USDT: %v", err)
+	} else {
+		fmt.Println(tickers)
+	}
+
+	fmt.Println()
+}
+
 // Stream response
-func callWSStream() {
+func callOrderbookWSStream() {
+	fmt.Println("starting orderbook stream")
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -69,6 +128,30 @@ func callWSStream() {
 	} else {
 		for i := 1; i <= 5; i++ {
 			<-orderbookChan
+			fmt.Printf("response %v received\n", i)
+		}
+	}
+}
+
+func callTradesWSStream() {
+	fmt.Println("starting trades stream")
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	tradesChan := make(chan *pb.GetTradesStreamResponse)
+
+	err = w.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
+	if err != nil {
+		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
+	} else {
+		for i := 1; i <= 5; i++ {
+			<-tradesChan
 			fmt.Printf("response %v received\n", i)
 		}
 	}

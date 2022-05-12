@@ -12,7 +12,7 @@ service Api {
     };
   }
 
-  rpc GetTicker(GetTickerRequest) returns (GetTickerResponse) {
+  rpc GetTickers(GetTickersRequest) returns (GetTickersResponse) {
     option(google.api.http) = {
       get: "/api/v1/market/tickers/{market}"
     };
@@ -53,6 +53,13 @@ service Api {
   rpc PostOrder(PostOrderRequest) returns (PostOrderResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/place"
+    };
+  }
+
+  rpc PostSubmit(PostSubmitRequest) returns (PostSubmitResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/submit"
+      body: "*"
     };
   }
 
@@ -103,7 +110,7 @@ service Api {
 
   }
 
-  rpc GetTickerStream(GetTickerRequest) returns (stream GetTickerStreamResponse) {
+  rpc GetTickersStream(GetTickersRequest) returns (stream GetTickerStreamResponse) {
 
   }
 
@@ -134,12 +141,12 @@ enum MarketStatus {
   MS_ONLINE = 1;
 }
 
-message GetTickerRequest {
+message GetTickersRequest {
   string market = 1; // empty for ALL
 }
 
-message GetTickerResponse {
-  Ticker ticker = 1;
+message GetTickersResponse {
+  repeated Ticker tickers = 1;
 }
 
 message Ticker {
@@ -303,6 +310,7 @@ message GetOrdersRequest {
   google.protobuf.Timestamp from = 5;
   uint32 limit = 6;
   Direction direction = 7;
+  string address = 8;
 }
 
 enum OrderStatus {
@@ -333,6 +341,14 @@ message Order {
   double remainingSize = 7;
   google.protobuf.Timestamp createdAt = 8;
   OrderStatus status = 9;
+}
+
+message PostSubmitRequest {
+  string transaction = 1;
+}
+
+message PostSubmitResponse {
+  string signature = 1;
 }
 
 message GetOpenOrdersRequest {
@@ -374,7 +390,7 @@ message GetOrderbookStreamResponse {
 
 message GetTickerStreamResponse {
   int64 blockHeight = 1;
-  GetTickerResponse ticker = 2;
+  GetTickersResponse ticker = 2;
 }
 
 message GetMarketDepthRequest {
