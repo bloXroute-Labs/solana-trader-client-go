@@ -19,7 +19,7 @@ type HTTPClient struct {
 
 // Connects to Mainnet Serum API
 func NewHTTPClient() *HTTPClient {
-	return NewHTTPClientWithEndpoint("http://174.129.154.164:1809", nil, time.Second*7)
+	return NewHTTPClientWithTimeout(time.Second * 7)
 }
 
 // Connects to Mainnet Serum API

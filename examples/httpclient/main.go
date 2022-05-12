@@ -45,7 +45,7 @@ func callOrderbookHTTP() {
 }
 
 func callOrdersHTTP() {
-	h := provider.NewHTTPClientWithTimeout(time.Second * 20)
+	h := provider.NewHTTPClientWithTimeout(time.Second * 60)
 
 	orders, err := h.GetOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 )
 
 func TestHTTPClient_Requests(t *testing.T) {
-	h := provider.NewHTTPClientWithTimeout(time.Second * 30)
+	h := provider.NewHTTPClientWithTimeout(time.Second * 60)
 
 	testGetOrderbook(
 		t,
