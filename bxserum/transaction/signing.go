@@ -8,14 +8,18 @@ import (
 	"os"
 )
 
-// SignTx uses the environment variable for `PRIVATE_KEY` to sign the message content and replace the zero signature
-func SignTx(unsignedTxBase64 string) (string, error) {
+func LoadPrivateKeyFromEnv() (solana.PrivateKey, error) {
 	privateKeyBase58, ok := os.LookupEnv("PRIVATE_KEY")
 	if !ok {
-		return "", fmt.Errorf("env variable `PRIVATE_KEY` not set")
+		return solana.PrivateKey{}, fmt.Errorf("env variable `PRIVATE_KEY` not set")
 	}
 
-	privateKey, err := solana.PrivateKeyFromBase58(privateKeyBase58)
+	return solana.PrivateKeyFromBase58(privateKeyBase58)
+}
+
+// SignTx uses the environment variable for `PRIVATE_KEY` to sign the message content and replace the zero signature
+func SignTx(unsignedTxBase64 string) (string, error) {
+	privateKey, err := LoadPrivateKeyFromEnv()
 	if err != nil {
 		return "", err
 	}

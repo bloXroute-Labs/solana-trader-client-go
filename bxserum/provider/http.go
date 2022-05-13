@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
+	"github.com/gagliardetto/solana-go"
 	"net/http"
 	"time"
 )
@@ -16,29 +17,44 @@ type HTTPClient struct {
 	baseURL    string
 	httpClient *http.Client
 	requestID  utils.RequestID
+	privateKey solana.PrivateKey
 }
 
 // Connects to Mainnet Serum API
-func NewHTTPClient() *HTTPClient {
+func NewHTTPClient() (*HTTPClient, error) {
 	return NewHTTPClientWithTimeout(time.Second * 7)
 }
 
 // Connects to Mainnet Serum API
-func NewHTTPClientWithTimeout(timeout time.Duration) *HTTPClient {
+func NewHTTPClientWithTimeout(timeout time.Duration) (*HTTPClient, error) {
 	return NewHTTPClientWithEndpoint("http://174.129.154.164:1809", nil, timeout)
 }
 
 // Connects to Testnet Serum API
-func NewHTTPTestnet() *HTTPClient {
+func NewHTTPTestnet() (*HTTPClient, error) {
 	panic("implement me")
 }
 
 // Connects to custom Serum API (set client to nil to use default client)
-func NewHTTPClientWithEndpoint(endpoint string, client *http.Client, timeout time.Duration) *HTTPClient {
+func NewHTTPClientWithEndpoint(endpoint string, client *http.Client, timeout time.Duration) (*HTTPClient, error) {
 	if client == nil {
-		client = &http.Client{Timeout: time.Second * 7}
+		client = &http.Client{Timeout: timeout}
 	}
-	return &HTTPClient{baseURL: endpoint, httpClient: client}
+
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	return &HTTPClient{
+		baseURL:    endpoint,
+		httpClient: client,
+		privateKey: privateKey,
+	}, nil
+}
+
+func (h *HTTPClient) SetPrivateKey(privateKey solana.PrivateKey) {
+	h.privateKey = privateKey
 }
 
 // Set limit to 0 to get all bids/asks
