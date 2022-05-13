@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
@@ -67,12 +68,17 @@ func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) 
 		return fmt.Errorf("unable to sign message: %v", err)
 	}
 
+	found := false
 	for i, sig := range tx.Signatures {
 		if sig.IsZero() {
 			tx.Signatures[i] = signedMessageContent
+			found = true // TODO what if more than 1 zero signature?
 			break
 		}
 	}
 
+	if !found {
+		return errors.New("no zero signatures to replace in transaction")
+	}
 	return nil
 }
