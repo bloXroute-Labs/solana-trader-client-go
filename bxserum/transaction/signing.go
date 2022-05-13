@@ -45,8 +45,8 @@ func SignTxWithPrivateKey(unsignedTxBase64 string, privateKey solana.PrivateKey)
 func signTx(solanaTx *solana.Transaction, privateKey solana.PrivateKey) error {
 	signaturesRequired := int(solanaTx.Message.Header.NumRequiredSignatures)
 	signaturesPresent := len(solanaTx.Signatures)
-	if signaturesPresent != signaturesRequired-1 {
-		return fmt.Errorf("transaction requires %v signatures and has %v signatures, should need exactly one more signature", signaturesRequired, signaturesPresent)
+	if signaturesPresent != signaturesRequired {
+		return fmt.Errorf("transaction requires %v signatures and has %v signatures", signaturesRequired, signaturesPresent)
 	}
 
 	err := replaceZeroSignature(solanaTx, privateKey)
