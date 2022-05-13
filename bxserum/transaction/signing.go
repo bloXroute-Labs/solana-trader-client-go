@@ -64,17 +64,19 @@ func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) 
 		return fmt.Errorf("unable to sign message: %v", err)
 	}
 
-	found := false
+	zeroSigIndex := -1
 	for i, sig := range tx.Signatures {
 		if sig.IsZero() {
-			tx.Signatures[i] = signedMessageContent
-			found = true
-			break
+			if zeroSigIndex != -1 {
+				return errors.New("more than one zero signature provided in transaction")
+			}
+			zeroSigIndex = i
 		}
 	}
-
-	if !found {
+	if zeroSigIndex == -1 {
 		return errors.New("no zero signatures to replace in transaction")
 	}
+
+	tx.Signatures[zeroSigIndex] = signedMessageContent
 	return nil
 }
