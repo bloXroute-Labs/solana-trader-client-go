@@ -21,10 +21,6 @@ const (
 	recipientAddress = "FmZ9kC8bRVsFTgAWrXUyGHp3dN3HtMxJmoi2ijdaYGwi"
 )
 
-type txConfirmation struct {
-	TxHash string `json:"txHash"`
-}
-
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -64,10 +60,10 @@ func main() {
 
 	signature, err := sendAndConfirmTx(context.Background(), signedTx, rpcClient, wsClient)
 	if err != nil {
-		log.Fatalf("transaction not sent successfully: %v", err)
+		log.Fatalf("tx not sent successfully: %v", err)
 	}
 
-	fmt.Printf("tx %s sent and confirmed successfully\n", signature.String())
+	fmt.Printf("tx sent and confirmed successfully, signature: %s\n", signature.String())
 }
 
 // creates a transaction with a zero signature (private key only used to get public key)
