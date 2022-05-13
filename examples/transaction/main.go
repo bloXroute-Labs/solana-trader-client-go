@@ -60,7 +60,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("tx message signed, ready to send tx")
+	fmt.Println("tx signed, ready to send")
 
 	signature, err := sendAndConfirmTx(context.Background(), signedTx, rpcClient, wsClient)
 	if err != nil {
