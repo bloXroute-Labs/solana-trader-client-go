@@ -25,17 +25,20 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// get clients
 	rpcClient := solanarpc.New(rpcEndpoint)
 	wsClient, err := solanaws.Connect(ctx, wsEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// get recent blockhash
 	recentBlockhash, err := rpcClient.GetRecentBlockhash(ctx, solanarpc.CommitmentFinalized)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// get private key from env variable
 	privateKeyBase58 := os.Getenv("PRIVATE_KEY")
 	if privateKeyBase58 == "" {
 		log.Fatal("env variable `PRIVATE_KEY` not set")
@@ -45,6 +48,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// create unsigned tx using blockhash and private key
 	unsignedTx, err := unsignedTransaction(privateKey.PublicKey(), recentBlockhash)
 	if err != nil {
 		log.Fatal(err)
@@ -52,17 +56,18 @@ func main() {
 	unsignedTxBytes, err := partialMarshal(unsignedTx)
 	unsignedTxBase64 := base64.StdEncoding.EncodeToString(unsignedTxBytes)
 
+	// sign tx
 	signedTx, err := transaction.SignTx(unsignedTxBase64) // gets private key from environment variable
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("tx signed, ready to send")
 
+	// send and confirm tx
 	signature, err := sendAndConfirmTx(context.Background(), signedTx, rpcClient, wsClient)
 	if err != nil {
 		log.Fatalf("tx not sent successfully: %v", err)
 	}
-
 	fmt.Printf("tx sent and confirmed successfully, signature: %s\n", signature.String())
 }
 
