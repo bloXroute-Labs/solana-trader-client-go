@@ -82,7 +82,7 @@ func unsignedTransaction(publicKey solana.PublicKey, recentBlockHash *solanarpc.
 		return nil, err
 	}
 
-	tx.Signatures = append(tx.Signatures, solana.Signature{}) //adding a zero signature
+	tx.Signatures = append(tx.Signatures, solana.Signature{}) // adding a zero signature
 	return tx, nil
 }
 
