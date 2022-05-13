@@ -73,9 +73,15 @@ func unsignedTransaction(privateKey string, recentBlockHash *solanarpc.GetRecent
 	}
 	recipient := solana.MustPublicKeyFromBase58(recipientAddress)
 
-	return solana.NewTransaction([]solana.Instruction{
+	tx, err := solana.NewTransaction([]solana.Instruction{
 		system.NewTransferInstruction(1, pKey.PublicKey(), recipient).Build(),
 	}, recentBlockHash.Value.Blockhash)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Signatures = append(tx.Signatures, solana.Signature{}) //adding a zero signature
+	return tx, nil
 }
 
 // marshals transaction without checking number of signatures
