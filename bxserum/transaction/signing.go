@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+// LoadPrivateKeyFromEnv looks up private key from the `PRIVATE_KEY` environment variable
 func LoadPrivateKeyFromEnv() (solana.PrivateKey, error) {
 	privateKeyBase58, ok := os.LookupEnv("PRIVATE_KEY")
 	if !ok {
