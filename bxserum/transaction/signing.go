@@ -72,7 +72,7 @@ func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) 
 	for i, sig := range tx.Signatures {
 		if sig.IsZero() {
 			tx.Signatures[i] = signedMessageContent
-			found = true // TODO what if more than 1 zero signature?
+			found = true
 			break
 		}
 	}

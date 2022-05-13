@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// get recent blockhash
+	// get recent block hash
 	recentBlockhash, err := rpcClient.GetRecentBlockhash(ctx, solanarpc.CommitmentFinalized)
 	if err != nil {
 		log.Fatal(err)
@@ -48,7 +48,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// create unsigned tx using blockhash and private key
+	// create unsigned tx using block hash and private key
 	unsignedTx, err := unsignedTransaction(privateKey.PublicKey(), recentBlockhash)
 	if err != nil {
 		log.Fatal(err)
