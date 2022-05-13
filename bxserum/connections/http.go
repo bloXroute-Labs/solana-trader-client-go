@@ -1,6 +1,7 @@
 package connections
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -10,7 +11,9 @@ import (
 	"time"
 )
 
-var httpResponseNil error = fmt.Errorf("HTTP response is nil")
+const contentType = "application/json"
+
+var httpResponseNil = fmt.Errorf("HTTP response is nil")
 
 type HTTPError struct {
 	Code    int         `json:"code"`
@@ -30,6 +33,28 @@ func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 
 func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T) error {
 	httpResp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+
+	if httpResp.StatusCode != http.StatusOK {
+		return httpUnmarshalError(httpResp)
+	}
+
+	if err := httpUnmarshal[T](httpResp, val); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HTTPPostWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, body interface{}, val T) error {
+	b, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	httpResp, err := client.Post(url, contentType, bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}

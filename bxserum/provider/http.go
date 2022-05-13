@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
+	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
 	"net/http"
@@ -94,4 +95,29 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	return markets, nil
 }
 
-func (h *HTTPClient) PostOrder() *pb.PostOrderRequest
+func (h *HTTPClient) PostOrder() (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/markets", h.baseURL)
+	request := &pb.PostOrderRequest{
+		OwnerAddress:      "",
+		PayerAddress:      "",
+		Market:            "",
+		Side:              0,
+		Type:              nil,
+		Amount:            0,
+		Price:             0,
+		OpenOrdersAddress: "",
+		ClientOrderID:     0,
+	}
+
+	var postOrder pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &postOrder)
+	if err != nil {
+		return nil, err
+	}
+	return &postOrder, nil
+}
+
+func (h *HTTPClient) SubmitOrder() error {
+	response, err := h.PostOrder()
+	transaction.SignTx(response.Transaction)
+}
