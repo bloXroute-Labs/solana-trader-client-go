@@ -40,19 +40,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	privateKey := os.Getenv("PRIVATE_KEY")
-	if privateKey == "" {
+	privateKeyBase58 := os.Getenv("PRIVATE_KEY")
+	if privateKeyBase58 == "" {
 		log.Fatal("env variable `PRIVATE_KEY` not set")
 	}
+	privateKey, err := solana.PrivateKeyFromBase58(privateKeyBase58)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	unsignedTx, err := unsignedTransaction(privateKey, recentBlockhash)
+	unsignedTx, err := unsignedTransaction(privateKey.PublicKey(), recentBlockhash)
 	if err != nil {
 		log.Fatal(err)
 	}
 	unsignedTxBytes, err := partialMarshal(unsignedTx)
 	unsignedTxBase64 := base64.StdEncoding.EncodeToString(unsignedTxBytes)
 
-	signedTx, err := transaction.SignTx(unsignedTxBase64)
+	signedTx, err := transaction.SignTx(unsignedTxBase64) // gets private key from environment variable
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,15 +70,12 @@ func main() {
 	fmt.Printf("tx %s sent and confirmed successfully\n", signature.String())
 }
 
-func unsignedTransaction(privateKey string, recentBlockHash *solanarpc.GetRecentBlockhashResult) (*solana.Transaction, error) {
-	pKey, err := solana.PrivateKeyFromBase58(privateKey)
-	if err != nil {
-		return nil, err
-	}
+// creates a transaction with a zero signature (private key only used to get public key)
+func unsignedTransaction(publicKey solana.PublicKey, recentBlockHash *solanarpc.GetRecentBlockhashResult) (*solana.Transaction, error) {
 	recipient := solana.MustPublicKeyFromBase58(recipientAddress)
 
 	tx, err := solana.NewTransaction([]solana.Instruction{
-		system.NewTransferInstruction(1, pKey.PublicKey(), recipient).Build(),
+		system.NewTransferInstruction(1, publicKey, recipient).Build(),
 	}, recentBlockHash.Value.Blockhash)
 	if err != nil {
 		return nil, err
