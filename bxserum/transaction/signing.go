@@ -50,11 +50,7 @@ func signTx(solanaTx *solana.Transaction, privateKey solana.PrivateKey) error {
 		return fmt.Errorf("transaction requires %v signatures and has %v signatures", signaturesRequired, signaturesPresent)
 	}
 
-	err := replaceZeroSignature(solanaTx, privateKey)
-	if err != nil {
-		return err
-	}
-	return nil
+	return replaceZeroSignature(solanaTx, privateKey)
 }
 
 func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) error {
