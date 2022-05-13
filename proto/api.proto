@@ -64,13 +64,6 @@ service Api {
     };
   }
 
-  rpc PostSubmit(PostSubmitRequest) returns (PostSubmitResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/trade/submit"
-      body: "*"
-    };
-  }
-
   rpc PostCancelOrder(PostCancelOrderRequest) returns (PostCancelOrderResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/cancel"

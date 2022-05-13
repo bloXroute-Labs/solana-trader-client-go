@@ -109,15 +109,41 @@ func (h *HTTPClient) PostOrder() (*pb.PostOrderResponse, error) {
 		ClientOrderID:     0,
 	}
 
-	var postOrder pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &postOrder)
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
 	if err != nil {
 		return nil, err
 	}
-	return &postOrder, nil
+	return &response, nil
+}
+
+func (h *HTTPClient) SubmitTransaction(txBase64 string) (*pb.PostSubmitResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
+	request := &pb.PostSubmitRequest{Transaction: txBase64}
+
+	var response pb.PostSubmitResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 func (h *HTTPClient) SubmitOrder() error {
-	response, err := h.PostOrder()
-	transaction.SignTx(response.Transaction)
+	order, err := h.PostOrder()
+	if err != nil {
+		return err
+	}
+
+	txBase64, err := transaction.SignTx(order.Transaction)
+	if err != nil {
+		return err
+	}
+
+	// TODO: figure out response content
+	_, err = h.SubmitTransaction(txBase64)
+	if err != nil {
+		return err
+	}
+	return nil
 }
