@@ -61,14 +61,14 @@ func testSubmitOrder(
 	ctx, cancel = context.WithTimeout(context.Background(), orderSubmissionTimeout)
 	defer cancel()
 	err = submitOrderErrFn(ctx, publicKey, publicKey, "SOL/USDC", pb.Side_S_ASK, 0.0000001, 10_000, provider.PostOrderOpts{})
-	require.Equal(t, "", err)
+	require.Equal(t, "Transaction simulation failed: Error processing Instruction 2: invalid program argument", err)
 
 	// bad open orders address
 	privateKey, _ := solana.NewRandomPrivateKey()
 	ctx, cancel = context.WithTimeout(context.Background(), orderSubmissionTimeout)
 	defer cancel()
 	err = submitOrderErrFn(ctx, publicKey, publicKey, "SOL/USDC", pb.Side_S_ASK, 0.0000001, 10_000, provider.PostOrderOpts{OpenOrdersAddress: privateKey.PublicKey().String()})
-	require.Equal(t, "", err)
+	require.Equal(t, "Transaction simulation failed: Error processing Instruction 2: invalid program argument", err)
 }
 
 type txConfirmation struct {
