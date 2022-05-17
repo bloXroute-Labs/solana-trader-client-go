@@ -10,7 +10,11 @@ import (
 )
 
 func TestHTTPClient_Requests(t *testing.T) {
-	h := provider.NewHTTPClientWithTimeout(time.Second * 60)
+	h := provider.NewHTTPClientWithOpts(nil, provider.RPCOpts{
+		Endpoint:   "",
+		Timeout:    60 * time.Second,
+		PrivateKey: nil,
+	})
 
 	testGetOrderbook(
 		t,
@@ -50,7 +54,7 @@ func TestHTTPClient_Requests(t *testing.T) {
 	testGetTickers(
 		t,
 		func(ctx context.Context, market string) *pb.GetTickersResponse {
-			h.GetOrderbook(market, 1)
+			_, _ = h.GetOrderbook(market, 1) // warm up ticker
 
 			tickers, err := h.GetTickers(market)
 			require.Nil(t, err)

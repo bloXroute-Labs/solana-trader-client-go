@@ -25,7 +25,7 @@ func NewHTTPClient() (*HTTPClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewHTTPClientWithOpts(nil, opts)
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
 // NewHTTPTestnet connects to Testnet Serum API
@@ -34,7 +34,7 @@ func NewHTTPTestnet() (*HTTPClient, error) {
 }
 
 // NewHTTPClientWithOpts connects to custom Serum API (set client to nil to use default client)
-func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) (*HTTPClient, error) {
+func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	if client == nil {
 		client = &http.Client{Timeout: opts.Timeout}
 	}
@@ -43,7 +43,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) (*HTTPClient, erro
 		baseURL:    opts.Endpoint,
 		httpClient: client,
 		privateKey: opts.PrivateKey,
-	}, nil
+	}
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
