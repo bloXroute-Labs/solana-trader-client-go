@@ -7,6 +7,7 @@ import (
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -14,9 +15,10 @@ import (
 type WSClient struct {
 	pb.UnimplementedApiServer
 
-	addr      string
-	conn      *websocket.Conn
-	requestID utils.RequestID
+	addr       string
+	conn       *websocket.Conn
+	requestID  utils.RequestID
+	privateKey solana.PrivateKey
 }
 
 // NewWSClient connects to Mainnet Serum API
@@ -36,10 +38,16 @@ func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
 		return nil, err
 	}
 
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
 	return &WSClient{
-		addr:      addr,
-		conn:      conn,
-		requestID: utils.NewRequestID(),
+		addr:       addr,
+		conn:       conn,
+		requestID:  utils.NewRequestID(),
+		privateKey: privateKey,
 	}, nil
 }
 
@@ -141,7 +149,7 @@ func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, amount
 		return "", err
 	}
 
-	txBase64, err := transaction.SignTx(order.Transaction)
+	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, w.privateKey)
 	if err != nil {
 		return "", err
 	}

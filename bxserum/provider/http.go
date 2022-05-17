@@ -156,7 +156,7 @@ func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, amou
 		return "", err
 	}
 
-	txBase64, err := transaction.SignTx(order.Transaction)
+	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, h.privateKey)
 	if err != nil {
 		return "", err
 	}

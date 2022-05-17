@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
-	"github.com/bloXroute-Labs/serum-api/utils"
+	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -12,21 +12,21 @@ import (
 type GRPCClient struct {
 	pb.UnimplementedApiServer
 
-	apiClient pb.ApiClient
-	requestID utils.RequestID
+	apiClient  pb.ApiClient
+	privateKey solana.PrivateKey
 }
 
-// Connects to Mainnet Serum API
+// NewGRPCClient onnects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
 	return NewGRPCClientWithEndpoint("174.129.154.164:1811")
 }
 
-// Connects to Testnet Serum API
+// NewGRPCTestnet onnects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	panic("implement me")
 }
 
-// Connects to custom Serum API
+// NewGRPCClientWithEndpoint connects to custom Serum API
 func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
 	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -34,7 +34,6 @@ func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
 	}
 	return &GRPCClient{
 		apiClient: pb.NewApiClient(conn),
-		requestID: utils.NewRequestID(),
 	}, nil
 }
 
