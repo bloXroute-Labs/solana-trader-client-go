@@ -23,7 +23,11 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	return NewWSClientWithEndpoint("ws://174.129.154.164:1810/ws")
+	opts, err := DefaultRPCOpts("ws://174.129.154.164:1810/ws")
+	if err != nil {
+		return nil, err
+	}
+	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Serum API
@@ -31,23 +35,18 @@ func NewWSClientTestnet() (*WSClient, error) {
 	panic("implement me")
 }
 
-// NewWSClientWithEndpoint onnects to custom Serum API
-func NewWSClientWithEndpoint(addr string) (*WSClient, error) {
-	conn, _, err := websocket.DefaultDialer.Dial(addr, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+// NewWSClientWithOpts connects to custom Serum API
+func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
+	conn, _, err := websocket.DefaultDialer.Dial(opts.Endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &WSClient{
-		addr:       addr,
+		addr:       opts.Endpoint,
 		conn:       conn,
 		requestID:  utils.NewRequestID(),
-		privateKey: privateKey,
+		privateKey: opts.PrivateKey,
 	}, nil
 }
 

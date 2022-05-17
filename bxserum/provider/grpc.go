@@ -19,7 +19,11 @@ type GRPCClient struct {
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	return NewGRPCClientWithEndpoint("174.129.154.164:1811")
+	opts, err := DefaultRPCOpts("174.129.154.164:1811")
+	if err != nil {
+		return nil, err
+	}
+	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCTestnet connects to Testnet Serum API
@@ -27,14 +31,15 @@ func NewGRPCTestnet() (*GRPCClient, error) {
 	panic("implement me")
 }
 
-// NewGRPCClientWithEndpoint connects to custom Serum API
-func NewGRPCClientWithEndpoint(endpoint string) (*GRPCClient, error) {
-	conn, err := grpc.Dial(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+// NewGRPCClientWithOpts connects to custom Serum API
+func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
+	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
 	return &GRPCClient{
-		apiClient: pb.NewApiClient(conn),
+		apiClient:  pb.NewApiClient(conn),
+		privateKey: opts.PrivateKey,
 	}, nil
 }
 
