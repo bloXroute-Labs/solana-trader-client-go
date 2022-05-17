@@ -103,7 +103,7 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/markets", h.baseURL)
+	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
