@@ -60,6 +60,7 @@ func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookRe
 	return connections.WSRequest[pb.GetOrderbookResponse](w.conn, request)
 }
 
+// GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
 	request, err := w.jsonRPCRequest("GetOrderbookStream", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
@@ -77,6 +78,7 @@ func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse
 	return connections.WSRequest[pb.GetTradesResponse](w.conn, request)
 }
 
+// GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, tradesChan chan *pb.GetTradesStreamResponse) error {
 	request, err := w.jsonRPCRequest("GetTradeStream", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
