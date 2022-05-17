@@ -135,13 +135,13 @@ func assertMarketNotPresent(t *testing.T, marketName string, markets *pb.GetMark
 
 func assertOrder(t *testing.T, expectedName string, orders *pb.GetOrdersResponse) {
 	require.NotEmpty(t, orders.GetOrders())
-	order := *(orders.Orders[0])
+	order := orders.Orders[0]
 	assert.Equal(t, expectedName, order.Market)
 }
 
 func assertTickers(t *testing.T, expectedName string, tickers *pb.GetTickersResponse) {
 	require.NotEmpty(t, tickers.Tickers)
-	ticker := *(tickers.Tickers[0])
+	ticker := tickers.Tickers[0]
 	assert.Equal(t, expectedName, ticker.Market)
 	assert.Greater(t, ticker.Bid, float64(0))
 	assert.Greater(t, ticker.BidSize, float64(0))
