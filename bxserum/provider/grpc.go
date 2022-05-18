@@ -19,7 +19,7 @@ type GRPCClient struct {
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts, err := DefaultRPCOpts("174.129.154.164:1811")
+	opts, err := DefaultRPCOpts(MainnetSerumAPIGRPC)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +89,13 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrder(ctx, &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              side,
-		Type:              []pb.OrderType{pb.OrderType_OT_LIMIT},
+		Type:              types,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -109,8 +109,8 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string) (*pb.PostS
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrder(ctx, owner, payer, market, side, amount, price, opts)
+func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
 		return "", err
 	}

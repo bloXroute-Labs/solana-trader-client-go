@@ -21,7 +21,7 @@ type HTTPClient struct {
 
 // NewHTTPClient connects to Mainnet Serum API
 func NewHTTPClient() (*HTTPClient, error) {
-	opts, err := DefaultRPCOpts("http://174.129.154.164:1809")
+	opts, err := DefaultRPCOpts(MainnetSerumAPIHTTP)
 	if err != nil {
 		return nil, err
 	}
@@ -102,14 +102,14 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              side,
-		Type:              []pb.OrderType{pb.OrderType_OT_LIMIT},
+		Type:              types,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -138,8 +138,8 @@ func (h *HTTPClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := h.PostOrder(owner, payer, market, side, amount, price, opts)
+func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := h.PostOrder(owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
 		return "", err
 	}

@@ -74,12 +74,12 @@ func TestGRPCClient_Requests(t *testing.T) {
 		testSubmitOrder(
 			t,
 			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
-				txHash, err := g.SubmitOrder(ctx, owner, payer, market, side, amount, price, opts)
+				txHash, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.Nil(t, err, "unexpected error %v", err)
 				return txHash
 			},
 			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
-				_, err := g.SubmitOrder(ctx, owner, payer, market, side, amount, price, opts)
+				_, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.NotNil(t, err)
 
 				s, ok := status.FromError(err)

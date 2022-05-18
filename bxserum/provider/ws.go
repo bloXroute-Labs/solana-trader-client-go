@@ -23,7 +23,7 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	opts, err := DefaultRPCOpts("ws://174.129.154.164:1810/ws")
+	opts, err := DefaultRPCOpts(MainnetSerumAPIWS)
 	if err != nil {
 		return nil, err
 	}
@@ -114,13 +114,13 @@ func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request, err := w.jsonRPCRequest("PostOrder", &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              side,
-		Type:              []pb.OrderType{pb.OrderType_OT_LIMIT},
+		Type:              types,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -144,8 +144,8 @@ func (w *WSClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := w.PostOrder(owner, payer, market, side, amount, price, opts)
+func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostOrder(owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
 		return "", err
 	}

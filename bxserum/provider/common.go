@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+const (
+	MainnetSerumAPIHTTP = "http://174.129.154.164:1809"
+	MainnetSerumAPIWS   = "ws://174.129.154.164:1810/ws"
+	MainnetSerumAPIGRPC = "174.129.154.164:1811"
+	defaultRPCTimeout   = 7 * time.Second
+)
+
 type PostOrderOpts struct {
 	OpenOrdersAddress string
 	ClientOrderID     uint64
@@ -24,7 +31,7 @@ func DefaultRPCOpts(endpoint string) (RPCOpts, error) {
 	}
 	return RPCOpts{
 		Endpoint:   endpoint,
-		Timeout:    time.Second * 7,
+		Timeout:    defaultRPCTimeout,
 		PrivateKey: privateKey,
 	}, nil
 }
