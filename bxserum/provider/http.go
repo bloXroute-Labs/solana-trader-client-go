@@ -3,10 +3,11 @@ package provider
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
+	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
+	"github.com/gagliardetto/solana-go"
 	"net/http"
-	"time"
 )
 
 type HTTPClient struct {
@@ -15,32 +16,37 @@ type HTTPClient struct {
 	baseURL    string
 	httpClient *http.Client
 	requestID  utils.RequestID
+	privateKey solana.PrivateKey
 }
 
-// Connects to Mainnet Serum API
-func NewHTTPClient() *HTTPClient {
-	return NewHTTPClientWithTimeout(time.Second * 7)
+// NewHTTPClient connects to Mainnet Serum API
+func NewHTTPClient() (*HTTPClient, error) {
+	opts, err := DefaultRPCOpts(MainnetSerumAPIHTTP)
+	if err != nil {
+		return nil, err
+	}
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
-// Connects to Mainnet Serum API
-func NewHTTPClientWithTimeout(timeout time.Duration) *HTTPClient {
-	return NewHTTPClientWithEndpoint("http://174.129.154.164:1809", nil, timeout)
-}
-
-// Connects to Testnet Serum API
-func NewHTTPTestnet() *HTTPClient {
+// NewHTTPTestnet connects to Testnet Serum API
+func NewHTTPTestnet() (*HTTPClient, error) {
 	panic("implement me")
 }
 
-// Connects to custom Serum API (set client to nil to use default client)
-func NewHTTPClientWithEndpoint(endpoint string, client *http.Client, timeout time.Duration) *HTTPClient {
+// NewHTTPClientWithOpts connects to custom Serum API (set client to nil to use default client)
+func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	if client == nil {
-		client = &http.Client{Timeout: time.Second * 7}
+		client = &http.Client{Timeout: opts.Timeout}
 	}
-	return &HTTPClient{baseURL: endpoint, httpClient: client}
+
+	return &HTTPClient{
+		baseURL:    opts.Endpoint,
+		httpClient: client,
+		privateKey: opts.PrivateKey,
+	}
 }
 
-// Set limit to 0 to get all bids/asks
+// GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v", h.baseURL, market, limit)
 	orderbook := new(pb.GetOrderbookResponse)
@@ -51,7 +57,7 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbook
 	return orderbook, nil
 }
 
-// Set limit to 0 to get all trades
+// GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/trades/%s?limit=%v", h.baseURL, market, limit)
 	marketTrades := new(pb.GetTradesResponse)
@@ -62,7 +68,7 @@ func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesRespon
 	return marketTrades, nil
 }
 
-// Set market to empty string to get all tickers
+// GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/tickers/%s", h.baseURL, market)
 	tickers := new(pb.GetTickersResponse)
@@ -84,6 +90,7 @@ func (h *HTTPClient) GetOrders(market string, owner string) (*pb.GetOrdersRespon
 	return orders, nil
 }
 
+// GetMarkets returns the list of all available named markets
 func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/markets", h.baseURL)
 	markets := new(pb.GetMarketsResponse)
@@ -92,4 +99,59 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	}
 
 	return markets, nil
+}
+
+// PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
+	request := &pb.PostOrderRequest{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              types,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostSubmit posts the transaction string to the Solana network.
+func (h *HTTPClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
+	request := &pb.PostSubmitRequest{Transaction: txBase64}
+
+	var response pb.PostSubmitResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitOrder builds a Serum market order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := h.PostOrder(owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, h.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := h.PostSubmit(txBase64)
+	if err != nil {
+		return "", err
+	}
+	return response.Signature, nil
 }

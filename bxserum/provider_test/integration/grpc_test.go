@@ -14,55 +14,80 @@ func TestGRPCClient_Requests(t *testing.T) {
 	g, err := provider.NewGRPCClient()
 	require.Nil(t, err)
 
-	testGetOrderbook(
-		t,
-		func(ctx context.Context, market string, limit uint32) *pb.GetOrderbookResponse {
-			orderbook, err := g.GetOrderbook(ctx, market, limit)
-			require.Nil(t, err)
+	t.Run("orderbook", func(t *testing.T) {
+		testGetOrderbook(
+			t,
+			func(ctx context.Context, market string, limit uint32) *pb.GetOrderbookResponse {
+				orderbook, err := g.GetOrderbook(ctx, market, limit)
+				require.Nil(t, err)
 
-			return orderbook
-		},
-		func(ctx context.Context, market string, limit uint32) string {
-			_, err := g.GetOrderbook(ctx, market, limit)
-			require.NotNil(t, err)
+				return orderbook
+			},
+			func(ctx context.Context, market string, limit uint32) string {
+				_, err := g.GetOrderbook(ctx, market, limit)
+				require.NotNil(t, err)
 
-			grpcStatus, ok := status.FromError(err)
-			require.True(t, ok)
+				grpcStatus, ok := status.FromError(err)
+				require.True(t, ok)
 
-			return grpcStatus.Message()
-		},
-	)
+				return grpcStatus.Message()
+			},
+		)
+	})
 
-	testGetMarkets(
-		t,
-		func(ctx context.Context) *pb.GetMarketsResponse {
-			markets, err := g.GetMarkets(ctx)
-			require.Nil(t, err)
+	t.Run("markets", func(t *testing.T) {
+		testGetMarkets(
+			t,
+			func(ctx context.Context) *pb.GetMarketsResponse {
+				markets, err := g.GetMarkets(ctx)
+				require.Nil(t, err)
 
-			return markets
-		},
-	)
+				return markets
+			},
+		)
+	})
 
-	testGetOrders(
-		t,
-		func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse {
-			orders, err := g.GetOrders(ctx, market, owner)
-			require.Nil(t, err)
-			return orders
-		},
-	)
+	t.Run("orders", func(t *testing.T) {
+		testGetOrders(
+			t,
+			func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse {
+				orders, err := g.GetOrders(ctx, market, owner)
+				require.Nil(t, err)
+				return orders
+			},
+		)
+	})
 
-	testGetTickers(
-		t,
-		func(ctx context.Context, market string) *pb.GetTickersResponse {
+	t.Run("tickers", func(t *testing.T) {
+		testGetTickers(
+			t,
+			func(ctx context.Context, market string) *pb.GetTickersResponse {
+				_, _ = g.GetOrderbook(ctx, market, 2) // warm up tickers
+				response, err := g.GetTickers(ctx, market)
 
-			g.GetOrderbook(context.Background(), market, 2)
+				require.Nil(t, err, "unexpected error=%v", err)
+				return response
+			})
+	})
 
-			response, err := g.GetTickers(context.Background(), market)
+	t.Run("submit order", func(t *testing.T) {
+		testSubmitOrder(
+			t,
+			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
+				txHash, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
+				require.Nil(t, err, "unexpected error %v", err)
+				return txHash
+			},
+			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
+				_, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
+				require.NotNil(t, err)
 
-			require.Nil(t, err, "unexpected error=%v", err)
-			return response
-		})
+				s, ok := status.FromError(err)
+				require.True(t, ok)
+				return s.Message()
+			})
+	})
+
 }
 
 // Stream response
