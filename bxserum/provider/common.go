@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	MainnetSerumAPIHTTP = "http://174.129.154.164:1809"
-	MainnetSerumAPIWS   = "ws://174.129.154.164:1810/ws"
-	MainnetSerumAPIGRPC = "174.129.154.164:1811"
+	MainnetSerumAPIHTTP = "http://0.0.0.0:9000"
+	MainnetSerumAPIWS   = "ws://0.0.0.0:9001/ws"
+	MainnetSerumAPIGRPC = "0.0.0.0:9002"
 	defaultRPCTimeout   = 7 * time.Second
 )
 

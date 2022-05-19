@@ -78,9 +78,14 @@ func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTick
 	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
 }
 
-// GetOrders returns all opened orders by owner address and market
-func (g *GRPCClient) GetOrders(ctx context.Context, market string, owner string) (*pb.GetOrdersResponse, error) {
-	return g.apiClient.GetOrders(ctx, &pb.GetOrdersRequest{Market: market, Address: owner})
+// GetOpenOrders returns all opened orders by owner address and market
+func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner string) (*pb.GetOpenOrdersResponse, error) {
+	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner})
+}
+
+// GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
+	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, Owner: owner})
 }
 
 // GetMarkets returns the list of all available named markets

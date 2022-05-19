@@ -10,11 +10,12 @@ import (
 
 func main() {
 	callOrderbookGRPC()
-	callOrdersGRPC()
+	callOpenOrdersGRPC()
 	callTradesGRPC()
 	callTickersGRPC()
 	callOrderbookGRPCStream()
 	callTradesGRPCStream()
+	callUnsettledGRPC()
 }
 
 func callOrderbookGRPC() {
@@ -53,18 +54,36 @@ func callOrderbookGRPC() {
 	fmt.Println()
 }
 
-func callOrdersGRPC() {
+func callOpenOrdersGRPC() {
 	g, err := provider.NewGRPCClient()
 	if err != nil {
 		log.Fatalf("error dialing GRPC client: %v", err)
 		return
 	}
 
-	orders, err := g.GetOrders(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 	} else {
 		fmt.Println(orders)
+	}
+
+	fmt.Println()
+
+}
+
+func callUnsettledGRPC() {
+	g, err := provider.NewGRPCClient()
+	if err != nil {
+		log.Fatalf("error dialing GRPC client: %v", err)
+		return
+	}
+
+	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	if err != nil {
+		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
+	} else {
+		fmt.Println(response)
 	}
 
 	fmt.Println()

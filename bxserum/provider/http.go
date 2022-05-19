@@ -79,11 +79,11 @@ func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	return tickers, nil
 }
 
-// GetOrders returns all opened orders by owner address and market
-func (h *HTTPClient) GetOrders(market string, owner string) (*pb.GetOrdersResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/orders/%s?address=%s", h.baseURL, market, owner)
-	orders := new(pb.GetOrdersResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetOrdersResponse](url, h.httpClient, orders); err != nil {
+// GetOpenOrders returns all opened orders by owner address and market
+func (h *HTTPClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrdersResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s", h.baseURL, market, owner)
+	orders := new(pb.GetOpenOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOpenOrdersResponse](url, h.httpClient, orders); err != nil {
 		return nil, err
 	}
 
@@ -99,6 +99,17 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	}
 
 	return markets, nil
+}
+
+// GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?owner=%s", h.baseURL, market, owner)
+	result := new(pb.GetUnsettledResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](url, h.httpClient, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.

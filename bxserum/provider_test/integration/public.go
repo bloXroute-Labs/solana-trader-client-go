@@ -86,12 +86,18 @@ func testGetMarkets(t *testing.T, getMarketsFn func(ctx context.Context) *pb.Get
 	assertMarketNotPresent(t, "market-doesnt-exist", markets)
 }
 
-func testGetOrders(t *testing.T, getOrdersFn func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse) {
+func testGetOpenOrders(t *testing.T, getOrdersFn func(ctx context.Context, market string, owner string) *pb.GetOpenOrdersResponse) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orders := getOrdersFn(ctx, "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
-	assertOrder(t, "SOLUSDC", orders)
+	assertOpenOrder(t, "SOLUSDC", orders)
+}
 
+func testUnsettled(t *testing.T, getUnsettledFn func(ctx context.Context, market string, owner string) *pb.GetUnsettledResponse) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	response := getUnsettledFn(ctx, "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	assertUnsettled(t, "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", response)
 }
 
 func testGetTickers(t *testing.T, getTickersFn func(ctx context.Context, market string) *pb.GetTickersResponse) {
@@ -133,10 +139,15 @@ func assertMarketNotPresent(t *testing.T, marketName string, markets *pb.GetMark
 	assert.False(t, ok)
 }
 
-func assertOrder(t *testing.T, expectedName string, orders *pb.GetOrdersResponse) {
+func assertOpenOrder(t *testing.T, expectedName string, orders *pb.GetOpenOrdersResponse) {
 	require.NotEmpty(t, orders.GetOrders())
 	order := orders.Orders[0]
 	assert.Equal(t, expectedName, order.Market)
+}
+
+func assertUnsettled(t *testing.T, expectedAddress string, unsettledResponse *pb.GetUnsettledResponse) {
+	require.NotEmpty(t, unsettledResponse.Unsettled)
+	assert.Equal(t, expectedAddress, unsettledResponse.Market)
 }
 
 func assertTickers(t *testing.T, expectedName string, tickers *pb.GetTickersResponse) {

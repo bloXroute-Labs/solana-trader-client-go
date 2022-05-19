@@ -105,7 +105,7 @@ service Api {
 
   rpc GetUnsettled(GetUnsettledRequest) returns (GetUnsettledResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trade/unsettled/{symbol}"
+      get: "/api/v1/trade/unsettled/{market}"
     };
   }
 
@@ -366,6 +366,7 @@ message GetOpenOrdersRequest {
   google.protobuf.Timestamp from = 4;
   uint32 limit = 5;
   Direction direction = 6;
+  string address = 7;
 }
 
 message GetOpenOrdersResponse {
@@ -383,12 +384,24 @@ message GetOrderByIDResponse {
 }
 
 message GetUnsettledRequest {
-  string symbol = 1;
+  string market = 1;
+  string owner = 2;
+}
+
+message UnsettledAccountToken {
+  string address = 1;
+  double amount = 2;
+}
+
+message UnsettledAccount {
+  string account = 1;
+  UnsettledAccountToken baseToken = 2;
+  UnsettledAccountToken quoteToken = 3;
 }
 
 message GetUnsettledResponse {
-  string symbol = 1;
-  double unsettled = 2;
+  string market = 1;
+  repeated UnsettledAccount unsettled = 2;
 }
 
 message GetOrderbookStreamResponse {
