@@ -45,13 +45,25 @@ func TestWSClient_Requests(t *testing.T) {
 
 	})
 
-	t.Run("orders", func(t *testing.T) {
-		testGetOrders(
+	t.Run("openOrders", func(t *testing.T) {
+		testGetOpenOrders(
 			t,
-			func(ctx context.Context, market string, owner string) *pb.GetOrdersResponse {
-				orders, err := w.GetOrders(market, owner)
+			func(ctx context.Context, market string, owner string) *pb.GetOpenOrdersResponse {
+				orders, err := w.GetOpenOrders(market, owner)
 				require.Nil(t, err)
 				return orders
+			},
+		)
+
+	})
+
+	t.Run("unsettled", func(t *testing.T) {
+		testUnsettled(
+			t,
+			func(ctx context.Context, market string, owner string) *pb.GetUnsettledResponse {
+				response, err := w.GetUnsettled(market, owner)
+				require.Nil(t, err)
+				return response
 			},
 		)
 

@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 	"time"
 )
 
 func main() {
 	callOrderbookHTTP()
-	callOrdersHTTP()
+	callOpenOrdersHTTP()
 	callTradesHTTP()
 	callTickersHTTP()
+	callUnsettledHTTP()
 }
 
 func callOrderbookHTTP() {
-	h := provider.NewHTTPClient()
+	h, _ := provider.NewHTTPClient()
 
 	// Unary response
 	orderbook, err := h.GetOrderbook("ETH-USDT", 0)
@@ -44,10 +46,12 @@ func callOrderbookHTTP() {
 	}
 }
 
-func callOrdersHTTP() {
-	h := provider.NewHTTPClientWithTimeout(time.Second * 60)
+func callOpenOrdersHTTP() {
+	client := &http.Client{Timeout: time.Second * 60}
+	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	orders, err := h.GetOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
 	} else {
@@ -57,8 +61,23 @@ func callOrdersHTTP() {
 	fmt.Println()
 }
 
+func callUnsettledHTTP() {
+	client := &http.Client{Timeout: time.Second * 60}
+	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, opts)
+
+	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	if err != nil {
+		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+	} else {
+		fmt.Println(response)
+	}
+
+	fmt.Println()
+}
+
 func callTradesHTTP() {
-	h := provider.NewHTTPClient()
+	h, _ := provider.NewHTTPClient()
 
 	trades, err := h.GetTrades("SOLUSDT", 5)
 	if err != nil {
@@ -71,7 +90,7 @@ func callTradesHTTP() {
 }
 
 func callTickersHTTP() {
-	h := provider.NewHTTPClient()
+	h, _ := provider.NewHTTPClient()
 
 	tickers, err := h.GetTickers("SOLUSDT")
 	if err != nil {

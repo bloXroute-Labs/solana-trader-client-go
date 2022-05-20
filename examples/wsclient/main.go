@@ -10,11 +10,12 @@ import (
 
 func main() {
 	callOrderbookWS()
-	callOrdersWS()
+	callOpenOrdersWS()
 	callTradesWS()
 	callTickersWS()
 	callOrderbookWSStream()
 	callTradesWSStream()
+	callUnsettledWS()
 }
 
 // Unary response
@@ -54,7 +55,7 @@ func callOrderbookWS() {
 	fmt.Println()
 }
 
-func callOrdersWS() {
+func callOpenOrdersWS() {
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -62,11 +63,29 @@ func callOrdersWS() {
 	}
 	defer w.Close()
 
-	orders, err := w.GetOrders("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	orders, err := w.GetOpenOrders("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 	} else {
 		fmt.Println(orders)
+	}
+
+	fmt.Println()
+}
+
+func callUnsettledWS() {
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	response, err := w.GetUnsettled("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	if err != nil {
+		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
+	} else {
+		fmt.Println(response)
 	}
 
 	fmt.Println()

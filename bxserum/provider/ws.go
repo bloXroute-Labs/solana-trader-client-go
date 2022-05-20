@@ -95,13 +95,22 @@ func (w *WSClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	return connections.WSRequest[pb.GetTickersResponse](w.conn, request)
 }
 
-// GetOrders returns all opened orders by owner address and market
-func (w *WSClient) GetOrders(market string, owner string) (*pb.GetOrdersResponse, error) {
-	request, err := w.jsonRPCRequest("GetOrders", map[string]interface{}{"market": market, "address": owner})
+// GetOpenOrders returns all opened orders by owner address and market
+func (w *WSClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrdersResponse, error) {
+	request, err := w.jsonRPCRequest("GetOpenOrders", map[string]interface{}{"market": market, "address": owner})
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[pb.GetOrdersResponse](w.conn, request)
+	return connections.WSRequest[pb.GetOpenOrdersResponse](w.conn, request)
+}
+
+// GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (w *WSClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
+	request, err := w.jsonRPCRequest("GetUnsettled", map[string]interface{}{"market": market, "owner": owner})
+	if err != nil {
+		return nil, err
+	}
+	return connections.WSRequest[pb.GetUnsettledResponse](w.conn, request)
 }
 
 // GetMarkets returns the list of all available named markets
