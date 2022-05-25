@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
@@ -152,14 +153,9 @@ func (w *WSClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
 	return connections.WSRequest[pb.PostSubmitResponse](w.conn, request)
 }
 
-// SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := w.PostOrder(owner, payer, market, side, types, amount, price, opts)
-	if err != nil {
-		return "", err
-	}
-
-	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, w.privateKey)
+// signAndSubmit signs the given transaction and submits it.
+func (w *WSClient) signAndSubmit(tx string) (string, error) {
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, w.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -168,7 +164,59 @@ func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, types 
 	if err != nil {
 		return "", err
 	}
+
 	return response.Signature, nil
+}
+
+// SubmitOrder builds a Serum market order, signs it, and submits to the network.
+func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostOrder(owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(order.Transaction)
+}
+
+// PostCancelOrder builds a Serum cancel order, signs and submits it to the network.
+func (w *WSClient) PostCancelOrder(orderID string, side pb.Side, owner, market, openOrders string) (string, error) {
+	request, err := w.jsonRPCRequest("CancelOrder", &pb.PostCancelOrderRequest{
+		OrderID:    orderID,
+		Side:       side,
+		Market:     market,
+		Owner:      owner,
+		OpenOrders: openOrders,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	response, err := connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(response.Transaction)
+}
+
+// PostCancelOrderByClientID builds a Serum cancel order by client ID, signs and submits it to the network.
+func (w *WSClient) PostCancelOrderByClientID(clientID uint64, owner, market, openOrders string) (string, error) {
+	request, err := w.jsonRPCRequest("CancelOrderByClientID", &pb.PostCancelOrderByClientIDRequest{
+		ClientID:   clientID,
+		Market:     market,
+		Owner:      owner,
+		OpenOrders: openOrders,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	response, err := connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(response.Transaction)
 }
 
 func (w *WSClient) Close() error {

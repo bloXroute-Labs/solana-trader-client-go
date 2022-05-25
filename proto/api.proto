@@ -71,6 +71,13 @@ service Api {
     };
   }
 
+  rpc PostCancelOrderByClientID(PostCancelOrderByClientIDRequest) returns (PostCancelOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/cancelbyid"
+      body: "*"
+    };
+  }
+
   rpc PostCancelAll(PostCancelAllRequest) returns (PostCancelAllResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/cancelall"
@@ -282,10 +289,21 @@ message PostOrderResponse {
 
 message PostCancelOrderRequest {
   string orderID = 1;
+  Side side = 2;
+  string market = 3;
+  string owner = 4;
+  string openOrders = 5;
+}
+
+message PostCancelOrderByClientIDRequest {
+  uint64 clientID = 1;
+  string market = 2;
+  string owner = 3;
+  string openOrders = 4;
 }
 
 message PostCancelOrderResponse {
-  string orderID = 1;
+  string transaction = 1;
 }
 
 message PostCancelAllRequest {

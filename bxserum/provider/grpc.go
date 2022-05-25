@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
@@ -113,14 +114,9 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string) (*pb.PostS
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: txBase64})
 }
 
-// SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, opts)
-	if err != nil {
-		return "", err
-	}
-
-	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, g.privateKey)
+// signAndSubmit signs the given transaction and submits it.
+func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string) (string, error) {
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, g.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -129,5 +125,47 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if err != nil {
 		return "", err
 	}
+
 	return response.Signature, nil
+}
+
+// SubmitOrder builds a Serum market order, signs it, and submits to the network.
+func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction)
+}
+
+// PostCancelOrder builds a Serum cancel order, signs and submits it to the network.
+func (g *GRPCClient) PostCancelOrder(ctx context.Context, orderID string, side pb.Side, owner, market, openOrders string) (string, error) {
+	order, err := g.apiClient.PostCancelOrder(ctx, &pb.PostCancelOrderRequest{
+		OrderID:    orderID,
+		Side:       side,
+		Market:     market,
+		Owner:      owner,
+		OpenOrders: openOrders,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction)
+}
+
+// PostCancelOrderByClientID builds a Serum cancel order by client ID, signs and submits it to the network.
+func (g *GRPCClient) PostCancelOrderByClientID(ctx context.Context, clientID uint64, owner, market, openOrders string) (string, error) {
+	order, err := g.apiClient.PostCancelOrderByClientID(ctx, &pb.PostCancelOrderByClientIDRequest{
+		ClientID:   clientID,
+		Market:     market,
+		Owner:      owner,
+		OpenOrders: openOrders,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction)
 }
