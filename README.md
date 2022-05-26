@@ -7,12 +7,27 @@ in Go. As we continue to develop the Serum API, we will update the methods here 
 #### GRPC/WS:
 ```
 GetOrderbook
+GetTrades
+GetTickers
+GetOpenOrders
+GetUnsettled
+GetMarkets
+PostOrder
+PostSubmit
 GetOrderbookStream
+GetTradesStream
 ```
 
 #### HTTP:
 ```
 GetOrderbook
+GetTrades
+GetTickers
+GetOpenOrders
+GetMarkets
+GetUnsettled
+PostOrder
+PostSubmit
 ```
 Methods that end in `Stream` continuously stream responses through a channel, while other methods return a one and done response.
 
@@ -46,7 +61,50 @@ func main() {
         // ...
     }
 
-    orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT")
+    orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT", 5) // in this case limit to 5 bids and asks. 0 for no limit
+    if err != nil {
+        // ...
+    }
+
+    trades, err := g.GetTrades(context.Background(), "ETH/USDT", 5) // in this case limit to 5 trades. 0 for no limit
+    if err != nil {
+        // ...
+    }
+
+    tickers, err := g.GetTickers(context.Background(), "ETH/USDT") 
+    if err != nil {
+        // ...
+    }
+    
+    openOrders, err := g.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv") 
+    if err != nil {
+        // ...
+    }
+	
+    unsettledFunds, err := g.GetUnsettled(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+    if err != nil {
+        // ...
+    }
+	
+    supportedMarkets, err := g.GetMarkets(context.Background()) 
+    if err != nil {
+        // ...
+    }
+	
+    newOrderUnsignedTransaction, err := g.SubmitOrder(
+        ctx, 
+        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
+        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
+        "SOL/USDC", // market 
+        pb.Side_S_BID, // trade side (Bid/Ask)
+        []pb.OrderType{pb.OrderType_OT_LIMIT}, // OrderType
+        20, // order size
+        float64(0.124), // order price 
+        provider.PostOrderOpts{
+            ClientOrderID: 5000, // Client controlled OrderID
+        })
+	// The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+    
     if err != nil {
         // ...
     }
@@ -59,7 +117,49 @@ func main() {
         // ...
     }
 
+    trades, err := h.GetTrades(context.Background(), "ETH/USDT", 5) // in this case limit to 5 trades. 0 for no limit
+    if err != nil {
+        // ...
+    }
 
+    tickers, err := h.GetTickers(context.Background(), "ETH/USDT")
+    if err != nil {
+        // ...
+    }
+
+    openOrders, err := h.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+    if err != nil {
+        // ...
+    }
+	
+    unsettledFunds, err := h.GetUnsettled(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+    if err != nil {
+        // ...
+    }
+
+    supportedMarkets, err := h.GetMarkets(context.Background())
+    if err != nil {
+        // ...
+    }
+
+    newOrderUnsignedTransaction, err := h.SubmitOrder(
+        ctx,
+        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
+        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
+        "SOL/USDC", // market 
+        pb.Side_S_BID, // trade side (Bid/Ask)
+        []pb.OrderType{pb.OrderType_OT_LIMIT}, // OrderType
+        20, // order size
+        float64(0.124), // order price 
+        provider.PostOrderOpts{
+            ClientOrderID: 5000, // Client controlled OrderID
+        })	
+	// The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+    if err != nil {
+        // ...
+    }
+	
+	
     // WS
     w, err := provider.NewWSClient()
     if err != nil {
@@ -67,6 +167,49 @@ func main() {
     }
 
     orderbook, err := w.GetOrderbook("ETH/USDT")
+    if err != nil {
+        // ...
+    }
+
+    trades, err := w.GetTrades(context.Background(), "ETH/USDT", 5) // in this case limit to 5 trades. 0 for no limit
+    if err != nil {
+        // ...
+    }
+
+    tickers, err := w.GetTickers(context.Background(), "ETH/USDT")
+    if err != nil {
+        // ...
+    }
+
+    openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+    if err != nil {
+        // ...
+    }
+
+    unsettledFunds, err := w.GetUnsettled(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+    if err != nil {
+        // ...
+    }
+
+    supportedMarkets, err := w.GetMarkets(context.Background())
+    if err != nil {
+        // ...
+    }
+
+    newOrderUnsignedTransaction, err := w.SubmitOrder(
+        ctx,
+        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
+        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
+        "SOL/USDC", // market 
+        pb.Side_S_BID, // trade side (Bid/Ask)
+        []pb.OrderType{pb.OrderType_OT_LIMIT}, // OrderType
+        20, // order size
+        float64(0.124), // order price 
+        provider.PostOrderOpts{
+            ClientOrderID: 5000, // Client controlled OrderID
+        })
+        // The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+
     if err != nil {
         // ...
     }
@@ -82,7 +225,7 @@ import (
 )
 
 func main() {
-    orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
+    
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()
 
@@ -90,13 +233,23 @@ func main() {
     if err != nil {
         // ...
     }
-
-    err = g.GetOrderbookStream(ctx, "SOL/USDT", orderbookChan)
+	
+    orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
+    err = g.GetOrderbookStream(ctx, "SOL/USDT", 5,  orderbookChan)
     if err != nil {
         // ...
     }
     for {
         orderbook := <-orderbookChan
+    }
+
+    tradesChan := make(chan *pb.GetTradesStreamResponse)
+    err = g.GetTradesStream(ctx, "SOL/USDT", 5, tradesChan)
+    if err != nil {
+        // ...
+    }
+    for {
+        trades := <-tradesChan
     }
 }
 ```
