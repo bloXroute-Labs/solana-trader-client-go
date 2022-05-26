@@ -164,7 +164,7 @@ func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
 	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	_, err = h.CancelOrderByClientID(clientID, ownerAddr,
+	_, err = h.SubmitCancelOrderByClientID(clientID, ownerAddr,
 		marketAddr, ooAddr)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client ID (%w)", err)

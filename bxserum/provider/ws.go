@@ -178,45 +178,77 @@ func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, types 
 	return w.signAndSubmit(order.Transaction)
 }
 
-// PostCancelOrder builds a Serum cancel order, signs and submits it to the network.
-func (w *WSClient) PostCancelOrder(orderID string, side pb.Side, owner, market, openOrders string) (string, error) {
+// PostCancelOrder builds a Serum cancel order.
+func (w *WSClient) PostCancelOrder(
+	orderID string,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+) (*pb.PostCancelOrderResponse, error) {
 	request, err := w.jsonRPCRequest("CancelOrder", &pb.PostCancelOrderRequest{
 		OrderID:    orderID,
 		Side:       side,
-		Market:     market,
 		Owner:      owner,
+		Market:     market,
 		OpenOrders: openOrders,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	response, err := connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
-	if err != nil {
-		return "", err
-	}
-
-	return w.signAndSubmit(response.Transaction)
+	return connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
 }
 
-// PostCancelOrderByClientID builds a Serum cancel order by client ID, signs and submits it to the network.
-func (w *WSClient) PostCancelOrderByClientID(clientID uint64, owner, market, openOrders string) (string, error) {
+// SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
+func (w *WSClient) SubmitCancelOrder(
+	orderID string,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+) (string, error) {
+	order, err := w.PostCancelOrder(orderID, side, owner, market, openOrders)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(order.Transaction)
+}
+
+// PostCancelOrderByClientID builds a Serum cancel order by client ID.
+func (w *WSClient) PostCancelOrderByClientID(
+	clientID uint64,
+	owner,
+	market,
+	openOrders string,
+) (*pb.PostCancelOrderResponse, error) {
 	request, err := w.jsonRPCRequest("CancelOrderByClientID", &pb.PostCancelOrderByClientIDRequest{
 		ClientID:   clientID,
-		Market:     market,
 		Owner:      owner,
+		Market:     market,
 		OpenOrders: openOrders,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	response, err := connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
+	return connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
+}
+
+// SubmitCancelOrder builds a Serum cancel order by client ID, signs and submits it to the network.
+func (w *WSClient) SubmitCancelOrderByClientID(
+	clientID uint64,
+	owner,
+	market,
+	openOrders string,
+) (string, error) {
+	order, err := w.PostCancelOrderByClientID(clientID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(response.Transaction)
+	return w.signAndSubmit(order.Transaction)
 }
 
 func (w *WSClient) Close() error {
