@@ -3,7 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"os"
+	"time"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
+	api "github.com/bloXroute-Labs/serum-api/proto"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,6 +21,23 @@ func main() {
 	callOrderbookGRPCStream()
 	callTradesGRPCStream()
 	callUnsettledGRPC()
+
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	if !ok {
+		log.Infof("PUBLIC_KEY environment variable not set")
+		log.Infof("Skipping Place and Cancel Order examples")
+		return
+	}
+
+	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Infof("OPEN_ORDERS environment variable not set")
+		log.Infof("Skipping Place and Cancel Order examples")
+		return
+	}
+
+	clientID := callPlaceOrderGRPC(ownerAddr, ooAddr)
+	callCancelOrderByClientID(ownerAddr, ooAddr, clientID)
 }
 
 func callOrderbookGRPC() {
@@ -105,7 +127,6 @@ func callTradesGRPC() {
 	}
 
 	fmt.Println()
-
 }
 
 func callTickersGRPC() {
@@ -123,7 +144,6 @@ func callTickersGRPC() {
 	}
 
 	fmt.Println()
-
 }
 
 func callOrderbookGRPCStream() {
@@ -172,4 +192,67 @@ func callTradesGRPCStream() {
 			fmt.Printf("response %v received\n", i)
 		}
 	}
+}
+
+const (
+	// SOL/USDC market
+	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
+
+	orderSide   = api.Side_S_ASK
+	orderType   = api.OrderType_OT_LIMIT
+	orderPrice  = float64(170200)
+	orderAmount = float64(0.1)
+)
+
+func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
+	fmt.Println("starting place order")
+
+	g, err := provider.NewGRPCClient()
+	if err != nil {
+		log.Errorf("error dialing GRPC client (%w)", err)
+		return 0
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// generate a random clientId for this order
+	rand.Seed(time.Now().UnixNano())
+	clientID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientID,
+		OpenOrdersAddress: ooAddr,
+	}
+
+	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
+		orderSide, []api.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatalf("failed to submit order (%w)", err)
+	}
+
+	fmt.Printf("placed order %v with clientID %x\n", sig, clientID)
+
+	return clientID
+}
+
+func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
+	fmt.Println("starting cancel order by client ID")
+
+	g, err := provider.NewGRPCClient()
+	if err != nil {
+		log.Errorf("error dialing GRPC client (%w)", err)
+		return
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, err = g.PostCancelOrderByClientID(ctx, clientID, ownerAddr,
+		marketAddr, ooAddr)
+	if err != nil {
+		log.Fatalf("failed to cancel order by client ID (%w)", err)
+	}
+
+	fmt.Printf("canceled order for clientID %x\n", clientID)
 }

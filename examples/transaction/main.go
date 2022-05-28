@@ -3,119 +3,192 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
+	"io/ioutil"
+	"log"
+	"math/rand"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/bloXroute-Labs/serum-api/borsh/serumborsh"
+	"github.com/bloXroute-Labs/serum-api/service"
+	"github.com/bloXroute-Labs/serum-api/utils"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/programs/system"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
-	sendandconfirmtransaction "github.com/gagliardetto/solana-go/rpc/sendAndConfirmTransaction"
-	solanaws "github.com/gagliardetto/solana-go/rpc/ws"
-	"log"
-	"os"
 )
 
 const (
-	rpcEndpoint      = solanarpc.MainNetBeta_RPC
-	wsEndpoint       = solanarpc.MainNetBeta_WS
-	recipientAddress = "FmZ9kC8bRVsFTgAWrXUyGHp3dN3HtMxJmoi2ijdaYGwi"
+	defaultRpcEndpoint = "https://solana-api.projectserum.com"
+	wsEndpoint         = solanarpc.MainNetBeta_WS
+
+	// SOL/USDC market
+	marketAddress = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 )
+
+type txConfirmation struct {
+	TxHash string `json:"txHash"`
+}
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// get clients
-	rpcClient := solanarpc.New(rpcEndpoint)
-	wsClient, err := solanaws.Connect(ctx, wsEndpoint)
-	if err != nil {
-		log.Fatal(err)
+	rpcEndpoint, ok := os.LookupEnv("RPC_ENDPOINT")
+	if !ok {
+		rpcEndpoint = defaultRpcEndpoint
 	}
 
-	// get recent block hash
-	recentBlockhash, err := rpcClient.GetRecentBlockhash(ctx, solanarpc.CommitmentFinalized)
-	if err != nil {
-		log.Fatal(err)
+	publicKeyStr, ok := os.LookupEnv("PUBLIC_KEY")
+	if !ok {
+		log.Fatal("PUBLIC_KEY environment variable not set")
 	}
 
-	// get private key from env variable
-	privateKeyBase58 := os.Getenv("PRIVATE_KEY")
-	if privateKeyBase58 == "" {
-		log.Fatal("env variable `PRIVATE_KEY` not set")
+	privateKeyStr, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
+		log.Fatal("PRIVATE_KEY environment variable not set")
 	}
-	privateKey, err := solana.PrivateKeyFromBase58(privateKeyBase58)
+	privateKey, err := solana.PrivateKeyFromBase58(privateKeyStr)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	// create unsigned tx using block hash and private key
-	unsignedTx, err := unsignedTransaction(privateKey.PublicKey(), recentBlockhash)
-	if err != nil {
-		log.Fatal(err)
-	}
-	unsignedTxBytes, err := partialMarshal(unsignedTx)
-	unsignedTxBase64 := base64.StdEncoding.EncodeToString(unsignedTxBytes)
+	ooAddress, _ := os.LookupEnv("OPEN_ORDERS")
 
-	// sign tx
-	signedTx, err := transaction.SignTx(unsignedTxBase64) // gets private key from environment variable
+	marketService, err := service.NewMarket(utils.MarketsFileFlag.Value)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	fmt.Println("tx signed, ready to send")
 
-	// send and confirm tx
-	signature, err := sendAndConfirmTx(context.Background(), signedTx, rpcClient, wsClient)
+	solanaService, err := service.NewSolana(rpcEndpoint, wsEndpoint)
 	if err != nil {
-		log.Fatalf("tx not sent successfully: %v", err)
+		panic(err)
 	}
-	fmt.Printf("tx sent and confirmed successfully, signature: %s\n", signature.String())
+
+	serumService := service.NewSerum(ctx, marketService, solanaService, false)
+
+	// generate a random clientId for this order
+	rand.Seed(time.Now().UnixNano())
+	clientId := rand.Uint64()
+
+	// get partially signed transaction
+	txBytes, _, err := serumService.PlaceOrder(ctx, "SOL/USDC", publicKeyStr,
+		publicKeyStr, serumborsh.OSSell, 0.1, 170200, ooAddress, clientId)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("partial transaction received")
+	signAndConfirmTx(solanaService, txBytes, privateKey, false)
+
+	fmt.Printf("attempting to cancel order with clientId %x\n", clientId)
+
+	// try to cancel the order
+	txCancel, err := serumService.CancelOrderByClientID(ctx, clientId,
+		marketAddress, publicKeyStr, ooAddress, nil)
+	if err != nil {
+		log.Fatalf("failed to create a CancelOrder tx (%v)", err)
+	}
+
+	signAndConfirmTx(solanaService, txCancel, privateKey, true)
 }
 
-// creates a transaction with a zero signature (private key only used to get public key)
-func unsignedTransaction(publicKey solana.PublicKey, recentBlockHash *solanarpc.GetRecentBlockhashResult) (*solana.Transaction, error) {
-	recipient := solana.MustPublicKeyFromBase58(recipientAddress)
+func signAndConfirmTx(solanaService service.Solana, tx []byte, privateKey solana.PrivateKey, skipPreFlight bool) {
+	txBytes, txSignSig := signTx(tx, privateKey)
 
-	tx, err := solana.NewTransaction([]solana.Instruction{
-		system.NewTransferInstruction(1, publicKey, recipient).Build(),
-	}, recentBlockHash.Value.Blockhash)
+	txSig, err := sendTx(solanaService, txBytes, skipPreFlight)
 	if err != nil {
-		return nil, err
+		log.Fatalf("failed to send tx (%v)", err)
+	}
+	fmt.Printf("tx %s sent successfully\n", txSig)
+
+	time.Sleep(time.Second * 25)
+
+	txConf, err := confirmTx(txSignSig)
+	if err != nil {
+		log.Printf("failed to confirm tx (%v)", err)
+		return
 	}
 
-	tx.Signatures = append(tx.Signatures, solana.Signature{}) // adding a zero signature
-	return tx, nil
+	if txConf == txSignSig.String() {
+		fmt.Printf("tx %s confirmed successfully\n", txConf)
+	} else {
+		log.Fatalf("tx from confirmation %s not equal to tx sent %s",
+			txConf, txSignSig.String())
+	}
 }
 
-// marshals transaction without checking number of signatures
-func partialMarshal(tx *solana.Transaction) ([]byte, error) {
-	messageBytes, err := tx.Message.MarshalBinary()
+func signTx(txBytes []byte, privateKey solana.PrivateKey) ([]byte, solana.Signature) {
+	var transaction solana.Transaction
+
+	// decode transaction for signing
+	err := bin.NewBinDecoder(txBytes).Decode(&transaction)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	var signatureCount []byte
-	bin.EncodeCompactU16Length(&signatureCount, len(tx.Signatures))
-
-	output := make([]byte, 0, len(signatureCount)+len(signatureCount)*64+len(messageBytes))
-	output = append(output, signatureCount...) // signatureCount | signatures | message
-	for _, sig := range tx.Signatures {
-		output = append(output, sig[:]...)
+	// sign with final private key
+	messageBytes, err := transaction.Message.MarshalBinary()
+	if err != nil {
+		panic(err)
 	}
-	output = append(output, messageBytes...)
 
-	return output, nil
+	signature, err := privateKey.Sign(messageBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	for i, signed := range transaction.Signatures {
+		if signed.IsZero() {
+			transaction.Signatures[i] = signature
+			break
+		}
+	}
+
+	signedTxBytes, err := transaction.MarshalBinary()
+	if err != nil {
+		panic(err)
+	}
+
+	err = transaction.VerifySignatures()
+	if err != nil {
+		panic(err)
+	}
+
+	return signedTxBytes, signature
 }
 
-func sendAndConfirmTx(ctx context.Context, txBase64 string, rpcClient *solanarpc.Client, wsClient *solanaws.Client) (solana.Signature, error) {
-	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(txBase64)
+func sendTx(solanaService service.Solana, transactionBytes []byte, skipPreFlight bool) (solana.Signature, error) {
+	txBase64 := base64.StdEncoding.EncodeToString(transactionBytes)
+	fmt.Println("transaction has been resigned and verified, submitting...")
+	fmt.Println(txBase64)
+
+	return solanaService.SendTransaction(context.Background(), txBase64, skipPreFlight)
+}
+
+func confirmTx(signature solana.Signature) (string, error) {
+	url := fmt.Sprintf("https://public-api.solscan.io/transaction/%s", signature.String())
+	resp, err := http.Get(url)
 	if err != nil {
-		return solana.Signature{}, err
+		return "", err
 	}
 
-	tx, err := solanarpc.TransactionWithMeta{Transaction: txBytes}.GetTransaction()
-	if err != nil {
-		return solana.Signature{}, err
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(resp.Status)
 	}
 
-	return sendandconfirmtransaction.SendAndConfirmTransaction(ctx, rpcClient, wsClient, tx)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var confirmation txConfirmation
+	err = json.Unmarshal(b, &confirmation)
+	if err != nil {
+		return "", err
+	}
+
+	return confirmation.TxHash, nil
 }

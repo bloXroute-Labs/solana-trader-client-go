@@ -2,10 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
+	api "github.com/bloXroute-Labs/serum-api/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -14,6 +18,23 @@ func main() {
 	callTradesHTTP()
 	callTickersHTTP()
 	callUnsettledHTTP()
+
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	if !ok {
+		log.Infof("PUBLIC_KEY environment variable not set")
+		log.Infof("Skipping Place and Cancel Order examples")
+		return
+	}
+
+	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Infof("OPEN_ORDERS environment variable not set")
+		log.Infof("Skipping Place and Cancel Order examples")
+		return
+	}
+
+	clientID := callPlaceOrderGRPC(ownerAddr, ooAddr)
+	callCancelOrderByClientID(ownerAddr, ooAddr, clientID)
 }
 
 func callOrderbookHTTP() {
@@ -100,4 +121,54 @@ func callTickersHTTP() {
 	}
 
 	fmt.Println()
+}
+
+const (
+	// SOL/USDC market
+	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
+
+	orderSide   = api.Side_S_ASK
+	orderType   = api.OrderType_OT_LIMIT
+	orderPrice  = float64(170200)
+	orderAmount = float64(0.1)
+)
+
+func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
+	client := &http.Client{Timeout: time.Second * 30}
+	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, opts)
+
+	// generate a random clientId for this order
+	rand.Seed(time.Now().UnixNano())
+	clientID := rand.Uint64()
+
+	orderOpts := provider.PostOrderOpts{
+		ClientOrderID:     clientID,
+		OpenOrdersAddress: ooAddr,
+	}
+
+	response, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
+		orderSide, []api.OrderType{orderType}, orderAmount,
+		orderPrice, orderOpts)
+	if err != nil {
+		log.Fatalf("failed to submit order (%w)", err)
+	}
+
+	fmt.Printf("placed order %v with clientID %x\n", response, clientID)
+
+	return clientID
+}
+
+func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
+	client := &http.Client{Timeout: time.Second * 30}
+	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, opts)
+
+	_, err = h.SubmitCancelOrderByClientID(clientID, ownerAddr,
+		marketAddr, ooAddr)
+	if err != nil {
+		log.Fatalf("failed to cancel order by client ID (%w)", err)
+	}
+
+	fmt.Printf("canceled order for clientID %x\n", clientID)
 }

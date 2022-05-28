@@ -2,12 +2,13 @@ package provider
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/bloXroute-Labs/serum-api/utils"
 	"github.com/gagliardetto/solana-go"
-	"net/http"
 )
 
 type HTTPClient struct {
@@ -112,6 +113,21 @@ func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettled
 	return result, nil
 }
 
+// signAndSubmit signs the given transaction and submits it.
+func (h *HTTPClient) signAndSubmit(tx string) (string, error) {
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, h.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := h.PostSubmit(txBase64)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Signature, nil
+}
+
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
@@ -155,14 +171,86 @@ func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, type
 		return "", err
 	}
 
-	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, h.privateKey)
+	return h.signAndSubmit(order.Transaction)
+}
+
+// PostCancelOrder builds a Serum cancel order.
+func (h *HTTPClient) PostCancelOrder(
+	orderID string,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+) (*pb.PostCancelOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/cancel", h.baseURL)
+	request := &pb.PostCancelOrderRequest{
+		OrderID:    orderID,
+		Side:       side,
+		Owner:      owner,
+		Market:     market,
+		OpenOrders: openOrders,
+	}
+
+	var response pb.PostCancelOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelOrder(
+	orderID string,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+) (string, error) {
+	order, err := h.PostCancelOrder(orderID, side, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	response, err := h.PostSubmit(txBase64)
+	return h.signAndSubmit(order.Transaction)
+}
+
+// PostCancelOrderByClientID builds a Serum cancel order by client ID.
+func (h *HTTPClient) PostCancelOrderByClientID(
+	clientID uint64,
+	owner,
+	market,
+	openOrders string,
+) (*pb.PostCancelOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/cancelbyid", h.baseURL)
+	request := &pb.PostCancelOrderByClientIDRequest{
+		ClientID:   clientID,
+		Owner:      owner,
+		Market:     market,
+		OpenOrders: openOrders,
+	}
+
+	var response pb.PostCancelOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// SubmitCancelOrderByClientID builds a Serum cancel order by client ID, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelOrderByClientID(
+	clientID uint64,
+	owner,
+	market,
+	openOrders string,
+) (string, error) {
+	order, err := h.PostCancelOrderByClientID(clientID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
-	return response.Signature, nil
+
+	return h.signAndSubmit(order.Transaction)
 }
