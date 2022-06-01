@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // TODO Handle sending responses to their correct locations
@@ -15,7 +17,7 @@ type response struct {
 	Error  jsonrpc2.Error
 }
 
-func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
+func WSRequest[T proto.Message](conn *websocket.Conn, request []byte) (T, error) {
 	err := sendWS(conn, request)
 	if err != nil {
 		return nil, err
@@ -24,7 +26,7 @@ func WSRequest[T any](conn *websocket.Conn, request []byte) (*T, error) {
 	return recvWS[T](conn)
 }
 
-func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan *T) error {
+func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan T) error {
 	err := sendWS(conn, request)
 	if err != nil {
 		return err
@@ -35,7 +37,7 @@ func WSStream[T any](ctx context.Context, conn *websocket.Conn, request []byte, 
 		return err
 	}
 
-	go func(response *T, responseChan chan *T, conn *websocket.Conn) {
+	go func(response T, responseChan chan T, conn *websocket.Conn) {
 		responseChan <- response
 
 		for {
@@ -63,7 +65,7 @@ func sendWS(conn *websocket.Conn, request []byte) error {
 	return nil
 }
 
-func recvWS[T any](conn *websocket.Conn) (*T, error) {
+func recvWS[T proto.Message](conn *websocket.Conn) (T, error) {
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
 		return nil, fmt.Errorf("error reading WS response: %v", err)
@@ -84,9 +86,9 @@ func recvWS[T any](conn *websocket.Conn) (*T, error) {
 	}
 
 	var result T
-	if err = json.Unmarshal(resp.Result, &result); err != nil {
+	if err = protojson.Unmarshal(resp.Result, result); err != nil {
 		return nil, fmt.Errorf("error unmarshalling message of type %T: %v", result, err)
 	}
 
-	return &result, nil
+	return result, nil
 }
