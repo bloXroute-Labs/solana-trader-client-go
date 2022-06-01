@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	MainnetSerumAPIHTTP = "http://0.0.0.0:9000"
-	MainnetSerumAPIWS   = "ws://0.0.0.0:9001/ws"
+	MainnetSerumAPIHTTP = "http://virginia.solana.dex.blxrbdn.com"
+	MainnetSerumAPIWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
 	MainnetSerumAPIGRPC = "0.0.0.0:9002"
 	defaultRPCTimeout   = 7 * time.Second
 )

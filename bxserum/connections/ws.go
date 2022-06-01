@@ -72,7 +72,7 @@ func recvWS[T proto.Message](conn *websocket.Conn, result T) error {
 	if err = json.Unmarshal(msg, &resp); err != nil {
 		return fmt.Errorf("error unmarshalling JSON response: %w", err)
 	}
-	if resp.Error.Data != nil {
+	if resp.Error != nil {
 		m, err := json.Marshal(resp.Error.Data)
 		if err != nil {
 			return err
