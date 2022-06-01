@@ -11,19 +11,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// TODO Handle sending responses to their correct locations
-type response struct {
-	Result json.RawMessage
-	Error  jsonrpc2.Error
-}
-
-func WSRequest[T proto.Message](conn *websocket.Conn, request []byte) (T, error) {
+func WSRequest[T proto.Message](conn *websocket.Conn, request []byte, response T) error {
 	err := sendWS(conn, request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return recvWS[T](conn)
+	return recvWS[T](conn, response)
 }
 
 func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan T) error {
@@ -32,7 +26,8 @@ func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, reques
 		return err
 	}
 
-	response, err := recvWS[T](conn)
+	var response T
+	err = recvWS[T](conn, response)
 	if err != nil {
 		return err
 	}
@@ -45,12 +40,13 @@ func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, reques
 			case <-ctx.Done():
 				return
 			default:
-				response, err = recvWS[T](conn)
+				var next T
+				err = recvWS[T](conn, next)
 				if err != nil {
 					break
 				}
 
-				responseChan <- response
+				responseChan <- next
 			}
 		}
 	}(response, responseChan, conn)
@@ -60,35 +56,34 @@ func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, reques
 
 func sendWS(conn *websocket.Conn, request []byte) error {
 	if err := conn.WriteMessage(websocket.TextMessage, request); err != nil {
-		return fmt.Errorf("error with sending message: %v", err)
+		return fmt.Errorf("error with sending message: %w", err)
 	}
 	return nil
 }
 
-func recvWS[T proto.Message](conn *websocket.Conn) (T, error) {
+func recvWS[T proto.Message](conn *websocket.Conn, result T) error {
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
-		return nil, fmt.Errorf("error reading WS response: %v", err)
+		return fmt.Errorf("error reading WS response: %w", err)
 	}
 
 	// extract the result
-	var resp response
+	var resp jsonrpc2.Response
 	if err = json.Unmarshal(msg, &resp); err != nil {
-		return nil, fmt.Errorf("error unmarshalling JSON response: %v", err)
+		return fmt.Errorf("error unmarshalling JSON response: %w", err)
 	}
 	if resp.Error.Data != nil {
 		m, err := json.Marshal(resp.Error.Data)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		return nil, errors.New(string(m))
+		return errors.New(string(m))
 	}
 
-	var result T
-	if err = protojson.Unmarshal(resp.Result, result); err != nil {
-		return nil, fmt.Errorf("error unmarshalling message of type %T: %v", result, err)
+	if err = protojson.Unmarshal(*resp.Result, result); err != nil {
+		return fmt.Errorf("error unmarshalling message of type %T: %w", result, err)
 	}
 
-	return result, nil
+	return nil
 }

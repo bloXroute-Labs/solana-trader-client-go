@@ -57,7 +57,13 @@ func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookRe
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[*pb.GetOrderbookResponse](w.conn, request)
+
+	var response pb.GetOrderbookResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
@@ -66,7 +72,7 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit 
 	if err != nil {
 		return err
 	}
-	return connections.WSStream[*pb.GetOrderbooksStreamResponse](ctx, w.conn, request, orderbookChan)
+	return connections.WSStream(ctx, w.conn, request, orderbookChan)
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -75,7 +81,13 @@ func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[*pb.GetTradesResponse](w.conn, request)
+
+	var response pb.GetTradesResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
@@ -84,7 +96,7 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	if err != nil {
 		return err
 	}
-	return connections.WSStream[*pb.GetTradesStreamResponse](ctx, w.conn, request, tradesChan)
+	return connections.WSStream(ctx, w.conn, request, tradesChan)
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
@@ -93,7 +105,13 @@ func (w *WSClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[*pb.GetTickersResponse](w.conn, request)
+
+	var response pb.GetTickersResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetOpenOrders returns all opened orders by owner address and market
@@ -102,7 +120,13 @@ func (w *WSClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrders
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[*pb.GetOpenOrdersResponse](w.conn, request)
+
+	var response pb.GetOpenOrdersResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
@@ -111,7 +135,13 @@ func (w *WSClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledRe
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[*pb.GetUnsettledResponse](w.conn, request)
+
+	var response pb.GetUnsettledResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetMarkets returns the list of all available named markets
@@ -121,7 +151,13 @@ func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return connections.WSRequest[*pb.GetMarketsResponse](w.conn, request)
+
+	var response pb.GetMarketsResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
@@ -141,7 +177,12 @@ func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, types []
 		return nil, err
 	}
 
-	return connections.WSRequest[*pb.PostOrderResponse](w.conn, request)
+	var response pb.PostOrderResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // PostSubmit posts the transaction string to the Solana network.
@@ -151,7 +192,12 @@ func (w *WSClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
 		return nil, err
 	}
 
-	return connections.WSRequest[*pb.PostSubmitResponse](w.conn, request)
+	var response pb.PostSubmitResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // signAndSubmit signs the given transaction and submits it.
@@ -198,7 +244,12 @@ func (w *WSClient) PostCancelOrder(
 		return nil, err
 	}
 
-	return connections.WSRequest[*pb.PostCancelOrderResponse](w.conn, request)
+	var response pb.PostCancelOrderResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
@@ -234,7 +285,12 @@ func (w *WSClient) PostCancelByClientOrderID(
 		return nil, err
 	}
 
-	return connections.WSRequest[*pb.PostCancelOrderResponse](w.conn, request)
+	var response pb.PostCancelOrderResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // SubmitCancelByClientOrderID builds a Serum cancel order by client ID, signs and submits it to the network.
@@ -265,7 +321,12 @@ func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWalle
 		return nil, err
 	}
 
-	return connections.WSRequest[*pb.PostSettleResponse](w.conn, request)
+	var response pb.PostSettleResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
