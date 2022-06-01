@@ -165,13 +165,14 @@ func (h *HTTPClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, string, error) {
 	order, err := h.PostOrder(owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return h.signAndSubmit(order.Transaction)
+	sig, err := h.signAndSubmit(order.Transaction)
+	return sig, order.OpenOrdersAddress, err
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -184,11 +185,11 @@ func (h *HTTPClient) PostCancelOrder(
 ) (*pb.PostCancelOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/cancel", h.baseURL)
 	request := &pb.PostCancelOrderRequest{
-		OrderID:    orderID,
-		Side:       side,
-		Owner:      owner,
-		Market:     market,
-		OpenOrders: openOrders,
+		OrderID:           orderID,
+		Side:              side,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
 	}
 
 	var response pb.PostCancelOrderResponse
@@ -216,19 +217,19 @@ func (h *HTTPClient) SubmitCancelOrder(
 	return h.signAndSubmit(order.Transaction)
 }
 
-// PostCancelOrderByClientID builds a Serum cancel order by client ID.
-func (h *HTTPClient) PostCancelOrderByClientID(
-	clientID uint64,
+// PostCancelByClientOrderID builds a Serum cancel order by client ID.
+func (h *HTTPClient) PostCancelByClientOrderID(
+	clientOrderID uint64,
 	owner,
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/cancelbyid", h.baseURL)
-	request := &pb.PostCancelOrderByClientIDRequest{
-		ClientID:   clientID,
-		Owner:      owner,
-		Market:     market,
-		OpenOrders: openOrders,
+	request := &pb.PostCancelByClientOrderIDRequest{
+		ClientOrderID:     clientOrderID,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
 	}
 
 	var response pb.PostCancelOrderResponse
@@ -240,17 +241,55 @@ func (h *HTTPClient) PostCancelOrderByClientID(
 	return &response, nil
 }
 
-// SubmitCancelOrderByClientID builds a Serum cancel order by client ID, signs and submits it to the network.
-func (h *HTTPClient) SubmitCancelOrderByClientID(
-	clientID uint64,
+// SubmitCancelByClientOrderID builds a Serum cancel order by client ID, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelByClientOrderID(
+	clientOrderID uint64,
 	owner,
 	market,
 	openOrders string,
 ) (string, error) {
-	order, err := h.PostCancelOrderByClientID(clientID, owner, market, openOrders)
+	order, err := h.PostCancelByClientOrderID(clientOrderID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
 	return h.signAndSubmit(order.Transaction)
+}
+
+// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
+func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/settle", h.baseURL)
+	request := &pb.PostSettleRequest{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	}
+
+	var response pb.PostSettleResponse
+	err := connections.HTTPPostWithClient[*pb.PostSettleResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
+func (h *HTTPClient) SettleFunds(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (string, error) {
+	order, err := h.PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, h.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := h.PostSubmit(txBase64)
+	if err != nil {
+		return "", err
+	}
+	return response.Signature, nil
 }

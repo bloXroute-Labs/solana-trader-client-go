@@ -24,21 +24,21 @@ func testGetOrderbook(
 	defer cancel()
 	orderbook := getOrderbookFn(ctx, "SOLUSDC", 0)
 
-	assertSOLUSDCOrderbook(t, "SOLUSDC", orderbook)
+	assertSOLUSDCOrderbook(t, "SOL/USDC", orderbook)
 
 	// try other appearances of orderbook format
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
 	orderbook = getOrderbookFn(ctx, "SOL-USDC", 0)
 
-	assertSOLUSDCOrderbook(t, "SOL-USDC", orderbook)
+	assertSOLUSDCOrderbook(t, "SOL/USDC", orderbook)
 
 	// use limit
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
 	orderbook = getOrderbookFn(ctx, "SOL-USDC", 2)
 
-	assertSOLUSDCOrderbook(t, "SOL-USDC", orderbook)
+	assertSOLUSDCOrderbook(t, "SOL/USDC", orderbook)
 	assert.Equal(t, 2, len(orderbook.Asks))
 	assert.Equal(t, 2, len(orderbook.Bids))
 
@@ -47,7 +47,7 @@ func testGetOrderbook(
 	defer cancel()
 	orderbook = getOrderbookFn(ctx, "SOLUSDC", 2)
 
-	assertOrderbook(t, "SOLUSDC", "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", orderbook)
+	assertOrderbook(t, "SOL/USDC", "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", orderbook)
 	assert.Equal(t, 2, len(orderbook.Asks))
 	assert.Equal(t, 2, len(orderbook.Bids))
 
@@ -62,7 +62,7 @@ func testGetOrderbook(
 	ctx, cancel = context.WithTimeout(context.Background(), publicRequestTimeout)
 	defer cancel()
 	orderbook = getOrderbookFn(ctx, "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", 2)
-	assertOrderbook(t, "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", orderbook)
+	assertOrderbook(t, "SOL/USDC", "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", orderbook)
 	assert.Equal(t, 2, len(orderbook.Asks))
 	assert.Equal(t, 2, len(orderbook.Bids))
 }
@@ -90,7 +90,7 @@ func testGetOpenOrders(t *testing.T, getOrdersFn func(ctx context.Context, marke
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orders := getOrdersFn(ctx, "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
-	assertOpenOrder(t, "SOLUSDC", orders)
+	assertOpenOrder(t, "SOL/USDC", orders)
 }
 
 func testUnsettled(t *testing.T, getUnsettledFn func(ctx context.Context, market string, owner string) *pb.GetUnsettledResponse) {
@@ -104,7 +104,7 @@ func testGetTickers(t *testing.T, getTickersFn func(ctx context.Context, market 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	tickers := getTickersFn(ctx, "SOLUSDC")
-	assertTickers(t, "SOLUSDC", tickers)
+	assertTickers(t, "SOL/USDC", tickers)
 
 }
 

@@ -109,6 +109,20 @@ func main() {
         // ...
     }
 
+    settleTransaction, err := g.SettleFunds(
+        ctx,
+        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
+        "SOL/USDC", // market 
+        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
+        "CbafjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjFun", // quote SPL token wallet address 
+        "neePfCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSJOKE", // open orders account address for this market
+        )
+    // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+
+	if err != nil {
+        // ...
+    }
+
 
     // HTTP
     h := provider.NewHTTPClient()
@@ -153,13 +167,27 @@ func main() {
         float64(0.124), // order price 
         provider.PostOrderOpts{
             ClientOrderID: 5000, // Client controlled OrderID
-        })	
-	// The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+        }) 
+    // The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
     if err != nil {
         // ...
     }
-	
-	
+
+    settleTransaction, err := h.SettleFunds(
+        ctx,
+        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
+        "SOL/USDC", // market 
+        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
+        "CbafjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjFun", // quote SPL token wallet address 
+        "neePfCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSJOKE", // open orders account address for this market
+    )
+    // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+
+if err != nil {
+// ...
+}
+    
+    
     // WS
     w, err := provider.NewWSClient()
     if err != nil {
@@ -209,6 +237,20 @@ func main() {
             ClientOrderID: 5000, // Client controlled OrderID
         })
         // The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
+
+    if err != nil {
+        // ...
+    }
+
+    settleTransaction, err := w.SettleFunds(
+        ctx,
+        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
+        "SOL/USDC", // market 
+        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
+        "CbafjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjFun", // quote SPL token wallet address 
+        "neePfCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSJOKE", // open orders account address for this market
+        )
+    // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
 
     if err != nil {
         // ...

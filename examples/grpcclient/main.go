@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	api "github.com/bloXroute-Labs/serum-api/proto"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	log "github.com/sirupsen/logrus"
 )
@@ -30,14 +29,10 @@ func main() {
 	}
 
 	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set")
-		log.Infof("Skipping Place and Cancel Order examples")
-		return
-	}
 
-	clientID := callPlaceOrderGRPC(ownerAddr, ooAddr)
+	clientID, ooAddr := callPlaceOrderGRPC(ownerAddr, ooAddr)
 	callCancelOrderByClientID(ownerAddr, ooAddr, clientID)
+	callPostSettleGRPC()
 }
 
 func callOrderbookGRPC() {
@@ -154,7 +149,7 @@ func callOrderbookGRPCStream() {
 		return
 	}
 
-	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
+	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -198,19 +193,19 @@ const (
 	// SOL/USDC market
 	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 
-	orderSide   = api.Side_S_ASK
-	orderType   = api.OrderType_OT_LIMIT
+	orderSide   = pb.Side_S_ASK
+	orderType   = pb.OrderType_OT_LIMIT
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
+func callPlaceOrderGRPC(ownerAddr, ooAddr string) (uint64, string) {
 	fmt.Println("starting place order")
 
 	g, err := provider.NewGRPCClient()
 	if err != nil {
 		log.Errorf("error dialing GRPC client (%w)", err)
-		return 0
+		return 0, ""
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -218,27 +213,27 @@ func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
 
 	// generate a random clientId for this order
 	rand.Seed(time.Now().UnixNano())
-	clientID := rand.Uint64()
+	clientOrderID := rand.Uint64()
 
 	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientID,
+		ClientOrderID:     clientOrderID,
 		OpenOrdersAddress: ooAddr,
 	}
 
-	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, []api.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, ooAddr, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
+		orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
-		log.Fatalf("failed to submit order (%w)", err)
+		log.Fatalf("failed to submit order (%v)", err)
 	}
 
-	fmt.Printf("placed order %v with clientID %x\n", sig, clientID)
+	fmt.Printf("placed order %v with clientOrderID %x\n", sig, clientOrderID)
 
-	return clientID
+	return clientOrderID, ooAddr
 }
 
 func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
-	fmt.Println("starting cancel order by client ID")
-
+	fmt.Println("starting cancel order by client order ID")
+	time.Sleep(30 * time.Second)
 	g, err := provider.NewGRPCClient()
 	if err != nil {
 		log.Errorf("error dialing GRPC client (%w)", err)
@@ -248,11 +243,32 @@ func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err = g.PostCancelOrderByClientID(ctx, clientID, ownerAddr,
+	_, err = g.PostCancelByClientOrderID(ctx, clientID, ownerAddr,
 		marketAddr, ooAddr)
 	if err != nil {
-		log.Fatalf("failed to cancel order by client ID (%w)", err)
+		log.Fatalf("failed to cancel order by client order ID (%v)", err)
 	}
 
 	fmt.Printf("canceled order for clientID %x\n", clientID)
+}
+
+func callPostSettleGRPC() {
+	fmt.Println("starting post settle")
+	g, err := provider.NewGRPCClient()
+	if err != nil {
+		log.Fatalf("error dialing GRPC client - %v", err)
+		return
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	//publicKey, _ := os.LookupEnv("PUBLIC_KEY")
+	// Stream response
+	sig, err := g.SettleFunds(ctx, "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", "")
+	if err != nil {
+		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
+		return
+	}
+
+	fmt.Printf("response signature received: %v", sig)
 }

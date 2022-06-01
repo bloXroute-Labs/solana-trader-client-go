@@ -61,12 +61,12 @@ func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookRe
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbookStreamResponse) error {
+func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
 	request, err := w.jsonRPCRequest("GetOrderbookStream", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
 		return err
 	}
-	return connections.WSStream[pb.GetOrderbookStreamResponse](ctx, w.conn, request, orderbookChan)
+	return connections.WSStream[pb.GetOrderbooksStreamResponse](ctx, w.conn, request, orderbookChan)
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -116,7 +116,8 @@ func (w *WSClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledRe
 
 // GetMarkets returns the list of all available named markets
 func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
-	request, err := w.jsonRPCRequest("GetMarkets", nil)
+	var params struct{}
+	request, err := w.jsonRPCRequest("GetMarkets", params)
 	if err != nil {
 		return nil, err
 	}
@@ -186,12 +187,12 @@ func (w *WSClient) PostCancelOrder(
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	request, err := w.jsonRPCRequest("CancelOrder", &pb.PostCancelOrderRequest{
-		OrderID:    orderID,
-		Side:       side,
-		Owner:      owner,
-		Market:     market,
-		OpenOrders: openOrders,
+	request, err := w.jsonRPCRequest("PostCancelOrder", &pb.PostCancelOrderRequest{
+		OrderID:           orderID,
+		Side:              side,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
 	})
 	if err != nil {
 		return nil, err
@@ -216,18 +217,18 @@ func (w *WSClient) SubmitCancelOrder(
 	return w.signAndSubmit(order.Transaction)
 }
 
-// PostCancelOrderByClientID builds a Serum cancel order by client ID.
-func (w *WSClient) PostCancelOrderByClientID(
-	clientID uint64,
+// PostCancelByClientOrderID builds a Serum cancel order by client ID.
+func (w *WSClient) PostCancelByClientOrderID(
+	clientOrderID uint64,
 	owner,
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	request, err := w.jsonRPCRequest("CancelOrderByClientID", &pb.PostCancelOrderByClientIDRequest{
-		ClientID:   clientID,
-		Owner:      owner,
-		Market:     market,
-		OpenOrders: openOrders,
+	request, err := w.jsonRPCRequest("PostCancelByClientOrderID", &pb.PostCancelByClientOrderIDRequest{
+		ClientOrderID:     clientOrderID,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
 	})
 	if err != nil {
 		return nil, err
@@ -236,19 +237,54 @@ func (w *WSClient) PostCancelOrderByClientID(
 	return connections.WSRequest[pb.PostCancelOrderResponse](w.conn, request)
 }
 
-// SubmitCancelOrder builds a Serum cancel order by client ID, signs and submits it to the network.
-func (w *WSClient) SubmitCancelOrderByClientID(
-	clientID uint64,
+// SubmitCancelByClientOrderID builds a Serum cancel order by client ID, signs and submits it to the network.
+func (w *WSClient) SubmitCancelByClientOrderID(
+	clientOrderID uint64,
 	owner,
 	market,
 	openOrders string,
 ) (string, error) {
-	order, err := w.PostCancelOrderByClientID(clientID, owner, market, openOrders)
+	order, err := w.PostCancelByClientOrderID(clientOrderID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
 	return w.signAndSubmit(order.Transaction)
+}
+
+// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
+func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	request, err := w.jsonRPCRequest("PostSettle", &pb.PostSettleRequest{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.WSRequest[pb.PostSettleResponse](w.conn, request)
+}
+
+// SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
+func (w *WSClient) SettleFunds(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (string, error) {
+	order, err := w.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, w.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := w.PostSubmit(txBase64)
+	if err != nil {
+		return "", err
+	}
+	return response.Signature, nil
 }
 
 func (w *WSClient) Close() error {

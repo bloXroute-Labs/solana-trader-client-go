@@ -85,12 +85,12 @@ func TestGRPCClient_Requests(t *testing.T) {
 		testSubmitOrder(
 			t,
 			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
-				txHash, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
+				txHash, _, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.Nil(t, err, "unexpected error %v", err)
 				return txHash
 			},
 			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
-				_, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
+				_, _, err := g.SubmitOrder(ctx, owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.NotNil(t, err)
 
 				s, ok := status.FromError(err)
@@ -108,12 +108,12 @@ func TestGRPCClient_Streams(t *testing.T) {
 
 	testGetOrderbookStream(
 		t,
-		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbookStreamResponse) {
+		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
 			err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
 			require.Nil(t, err)
 		},
 		func(ctx context.Context, market string, limit uint32) string {
-			orderbookCh := make(chan *pb.GetOrderbookStreamResponse)
+			orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
 			err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
 			require.NotNil(t, err)
 

@@ -139,7 +139,7 @@ func callOrderbookWSStream() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
+	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
 	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {

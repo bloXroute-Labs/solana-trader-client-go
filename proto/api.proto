@@ -1,14 +1,21 @@
 syntax = "proto3";
-package api;
 option go_package = "github.com/bloXroute-Labs/serum-api/api";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "google/api/visibility.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 service Api {
   rpc GetMarkets(GetMarketsRequest) returns (GetMarketsResponse) {
     option(google.api.http) = {
       get: "/api/v1/market/markets"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns the list of supported markets";
+      summary: "Supported markets";
+      tags: "Market";
     };
   }
 
@@ -16,11 +23,22 @@ service Api {
     option(google.api.http) = {
       get: "/api/v1/market/tickers/{market}"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns updated ticker(s). To receive all tickers use empty string for {market} param value";
+      summary: "List of tickers";
+      tags: "Market";
+    };
   }
 
   rpc GetKline(GetKlineRequest) returns (GetKlineResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option(google.api.http) = {
       get: "/api/v1/market/kline/{market}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns the KLine per market";
+      summary: "Market KLine";
+      tags: "Market";
     };
   }
 
@@ -28,24 +46,46 @@ service Api {
     option (google.api.http) = {
       get: "/api/v1/market/orderbooks/{market}"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns market's orderbook. Use limit param to reduce the number of bids/asks returned";
+      summary: "Market orderbook";
+      tags: "Market";
+    };
   }
 
   rpc GetTrades(GetTradesRequest) returns (GetTradesResponse) {
     option (google.api.http) = {
       get: "/api/v1/market/trades/{market}"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns recent trades on the market";
+      summary: "Market trades";
+      tags: "Market";
+    };
   }
+
 
   rpc GetServerTime(GetServerTimeRequest) returns (GetServerTimeResponse) {
     option (google.api.http) = {
       get: "/api/v1/system/time"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns current time on the server";
+      summary: "Server time";
+      tags: "System";
+    };
   }
 
   // account endpoints
   rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       get: "/api/v1/account/balance"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns the all balances for a wallet";
+      summary: "Account balances markets";
+      tags: "Account";
     };
   }
 
@@ -55,12 +95,22 @@ service Api {
       post: "/api/v1/trade/place"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a NewOrderV3 unsigned transaction object";
+      summary: "Unsigned NewOrderV3 transaction";
+      tags: "Trade";
+    };
   }
 
   rpc PostSubmit(PostSubmitRequest) returns (PostSubmitResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/submit"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Submits a signed transaction";
+      summary: "Transaction submit";
+      tags: "Trade";
     };
   }
 
@@ -69,12 +119,22 @@ service Api {
       post: "/api/v1/trade/cancel"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a CancelOrder unsigned transaction object";
+      summary: "Unsigned CancelOrder transaction";
+      tags: "Trade";
+    };
   }
 
-  rpc PostCancelOrderByClientID(PostCancelOrderByClientIDRequest) returns (PostCancelOrderResponse) {
+  rpc PostCancelByClientOrderID(PostCancelByClientOrderIDRequest) returns (PostCancelOrderResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/cancelbyid"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a CancelOrderByID unsigned transaction object";
+      summary: "Unsigned CancelOrderByID transaction";
+      tags: "Trade";
     };
   }
 
@@ -83,6 +143,11 @@ service Api {
       post: "/api/v1/trade/cancelall"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a CancelAll unsigned transaction object";
+      summary: "Unsigned CancelAll transaction";
+      tags: "Trade";
+    };
   }
 
   rpc PostSettle(PostSettleRequest) returns (PostSettleResponse) {
@@ -90,11 +155,22 @@ service Api {
       post: "/api/v1/trade/settle"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a SettleFunds unsigned transaction object";
+      summary: "Unsigned SettleFunds transaction";
+      tags: "Trade";
+    };
   }
 
   rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       get: "/api/v1/trade/orders/{market}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns all user's orders";
+      summary: "List of user's orders";
+      tags: "Trade";
     };
   }
 
@@ -102,11 +178,21 @@ service Api {
     option (google.api.http) = {
       get: "/api/v1/trade/openorders/{market}"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns the list of open orders per user per market";
+      summary: "List of user's open orders";
+      tags: "Trade";
+    };
   }
 
   rpc GetOrderByID(GetOrderByIDRequest) returns (GetOrderByIDResponse) {
     option (google.api.http) = {
       get: "/api/v1/trade/orderbyid/{orderID}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns an order by ID";
+      summary: "Order by ID";
+      tags: "Trade";
     };
   }
 
@@ -114,23 +200,36 @@ service Api {
     option (google.api.http) = {
       get: "/api/v1/trade/unsettled/{market}"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns the unsettled amounts of user in a market";
+      summary: "Unsettled amounts";
+      tags: "Trade";
+    };
   }
 
   // streaming endpoints
-  rpc GetOrderbookStream(GetOrderBookRequest) returns (stream GetOrderbookStreamResponse) {
-
+  rpc GetOrderbooksStream(GetOrderBookRequest) returns (stream GetOrderbooksStreamResponse) {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "Trade";
+    };
   }
 
-  rpc GetTickersStream(GetTickersRequest) returns (stream GetTickerStreamResponse) {
-
+  rpc GetTickersStream(GetTickersRequest) returns (stream GetTickersStreamResponse) {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "Trade";
+    };
   }
 
   rpc GetMarketDepthStream(GetMarketsRequest) returns (stream GetMarketDepthStreamResponse) {
-
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "Trade";
+    };
   }
 
-  rpc GetTradeStream(GetTradesRequest) returns (stream GetTradesStreamResponse) {
-
+  rpc GetTradesStream(GetTradesRequest) returns (stream GetTradesStreamResponse) {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "Trade";
+    };
   }
 }
 
@@ -153,7 +252,7 @@ enum MarketStatus {
 }
 
 message GetTickersRequest {
-  string market = 1; // empty for ALL
+  string market = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use empty string for all markets"}];
 }
 
 message GetTickersResponse {
@@ -162,17 +261,11 @@ message GetTickersResponse {
 
 message Ticker {
   string market = 1;
-  MarketStatus status = 2;
-  string marketAddress = 3;
-  double close = 4;
-  double open = 5;
-  double amount = 6;
-  double volume = 7;
-  double count = 8;
-  double bid = 9;
-  double bidSize = 10;
-  double ask = 11;
-  double askSize = 12;
+  string marketAddress = 2;
+  double bid = 3;
+  double bidSize = 4;
+  double ask = 5;
+  double askSize = 6;
 }
 
 message GetKlineRequest {
@@ -203,30 +296,24 @@ message Candle {
 
 message GetOrderBookRequest {
   string market = 1;
-  uint32 limit = 2;
+  uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }
 
 message GetOrderbookResponse {
   string market = 1;
   string marketAddress = 2;
-  repeated OrderbookBid bids = 3;
-  repeated OrderbookAsk asks = 4;
+  repeated OrderbookItem bids = 3;
+  repeated OrderbookItem asks = 4;
 }
 
-message OrderbookBid {
-  double price = 1;
-  double size = 2;
-}
-
-message OrderbookAsk {
+message OrderbookItem {
   double price = 1;
   double size = 2;
 }
 
 message GetTradesRequest {
   string market = 1;
-  google.protobuf.Timestamp from = 2;
-  uint32 limit = 3;
+  uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }
 
 message GetTradesResponse {
@@ -237,13 +324,12 @@ message Trade {
   Side side = 1;
   double size = 2;
   double price = 3;
-  google.protobuf.Timestamp createdAt = 4;
 }
 
 message GetServerTimeRequest {}
 
 message GetServerTimeResponse {
-  google.protobuf.Timestamp timestamp = 1;
+  string timestamp = 1;
 }
 
 message GetAccountBalanceRequest {}
@@ -258,15 +344,15 @@ message TokenBalance {
 }
 
 message PostOrderRequest {
-  string ownerAddress = 1;
-  string payerAddress = 2;
-  string market = 3;
-  Side side = 4;
-  repeated OrderType type = 5;
-  double amount = 6;
-  double price = 7;
-  string openOrdersAddress = 8;
-  uint64 clientOrderID = 9;
+  string ownerAddress = 1 [(google.api.field_behavior) = REQUIRED];
+  string payerAddress = 2 [(google.api.field_behavior) = REQUIRED];
+  string market = 3 [(google.api.field_behavior) = REQUIRED];
+  Side side = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated OrderType type = 5 [(google.api.field_behavior) = REQUIRED];
+  double amount = 6 [(google.api.field_behavior) = REQUIRED];
+  double price = 7 [(google.api.field_behavior) = REQUIRED];
+  string openOrdersAddress = 8 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "If left empty the Serum API will lookup the account which can be time consuming"}];
+  uint64 clientOrderID = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Client defined OrderID"}];
 }
 
 enum Side {
@@ -288,18 +374,18 @@ message PostOrderResponse {
 }
 
 message PostCancelOrderRequest {
-  string orderID = 1;
-  Side side = 2;
-  string market = 3;
-  string owner = 4;
-  string openOrders = 5;
+  string orderID = 1 [(google.api.field_behavior) = REQUIRED];
+  Side side = 2 [(google.api.field_behavior) = REQUIRED];
+  string marketAddress = 3 [(google.api.field_behavior) = REQUIRED];
+  string ownerAddress = 4 [(google.api.field_behavior) = REQUIRED];
+  string openOrdersAddress = 5 [(google.api.field_behavior) = REQUIRED];
 }
 
-message PostCancelOrderByClientIDRequest {
-  uint64 clientID = 1;
-  string market = 2;
-  string owner = 3;
-  string openOrders = 4;
+message PostCancelByClientOrderIDRequest {
+  uint64 clientOrderID = 1 [(google.api.field_behavior) = REQUIRED];
+  string marketAddress = 2 [(google.api.field_behavior) = REQUIRED];
+  string ownerAddress = 3 [(google.api.field_behavior) = REQUIRED];
+  string openOrdersAddress = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message PostCancelOrderResponse {
@@ -307,19 +393,25 @@ message PostCancelOrderResponse {
 }
 
 message PostCancelAllRequest {
-  string market = 1;
+  string market = 1 [(google.api.field_behavior) = REQUIRED];
+  string ownerAddress = 2 [(google.api.field_behavior) = REQUIRED];
+  string openOrderAddress = 3;
 }
 
 message PostCancelAllResponse {
-  repeated string orderIDs = 1;
+  repeated string transactions = 1;
 }
 
 message PostSettleRequest {
-  string symbol = 1;
+  string ownerAddress = 1 [(google.api.field_behavior) = REQUIRED];
+  string market = 2 [(google.api.field_behavior) = REQUIRED];
+  string baseTokenWallet = 3 [(google.api.field_behavior) = REQUIRED];
+  string quoteTokenWallet = 4 [(google.api.field_behavior) = REQUIRED];
+  string openOrdersAddress = 5 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "If left empty the Serum API will lookup the account which can be time consuming"}];
 }
 
 message PostSettleResponse {
-  Settlement settlement = 1;
+  string transaction = 1;
 }
 
 message Settlement {
@@ -363,14 +455,15 @@ message Order {
   Side side = 3;
   repeated OrderType types = 4;
   double price = 5;
-  double size = 6;
-  double remainingSize = 7;
-  google.protobuf.Timestamp createdAt = 8;
-  OrderStatus status = 9;
+  double remainingSize = 6;
+  google.protobuf.Timestamp createdAt = 7;
+  string clientOrderID = 8;
+  string openOrderAccount = 9;
 }
 
 message PostSubmitRequest {
-  string transaction = 1;
+  string transaction = 1 [(google.api.field_behavior) = REQUIRED];
+  bool skipPreFlight = 2;
 }
 
 message PostSubmitResponse {
@@ -378,32 +471,27 @@ message PostSubmitResponse {
 }
 
 message GetOpenOrdersRequest {
-  string market = 1;
-  Side side = 2;
-  repeated OrderType types = 3;
-  google.protobuf.Timestamp from = 4;
-  uint32 limit = 5;
-  Direction direction = 6;
-  string address = 7;
+  string market = 1 [(google.api.field_behavior) = REQUIRED];
+  uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
+  string address = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetOpenOrdersResponse {
-  OrderStatus status = 1;
-  repeated Order orders = 2;
+  repeated Order orders = 1;
 }
 
 message GetOrderByIDRequest {
-  string orderID = 1;
+  string orderID = 1 [(google.api.field_behavior) = REQUIRED];
+  string market = 2;
 }
 
 message GetOrderByIDResponse {
-  OrderStatus status = 1;
-  Order order = 2;
+  Order order = 1;
 }
 
 message GetUnsettledRequest {
-  string market = 1;
-  string owner = 2;
+  string market = 1 [(google.api.field_behavior) = REQUIRED];
+  string owner = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 message UnsettledAccountToken {
@@ -422,19 +510,19 @@ message GetUnsettledResponse {
   repeated UnsettledAccount unsettled = 2;
 }
 
-message GetOrderbookStreamResponse {
+message GetOrderbooksStreamResponse {
   int64 blockHeight = 1;
   GetOrderbookResponse orderbook = 2;
 }
 
-message GetTickerStreamResponse {
+message GetTickersStreamResponse {
   int64 blockHeight = 1;
   GetTickersResponse ticker = 2;
 }
 
 message GetMarketDepthRequest {
-  string market = 1;
-  int32 depth = 2;
+  string market = 1 [(google.api.field_behavior) = REQUIRED];
+  int32 depth = 2 [(google.api.field_behavior) = REQUIRED];
   Step step = 3;
 }
 
@@ -452,8 +540,8 @@ message GetMarketDepthStreamResponse {
 
 message MarketDepthTick {
   int64 prevBlockHeight = 1;
-  repeated OrderbookAsk asks = 2;
-  repeated OrderbookBid bids = 3;
+  repeated OrderbookItem asks = 2;
+  repeated OrderbookItem bids = 3;
 }
 
 message GetTradesStreamResponse {

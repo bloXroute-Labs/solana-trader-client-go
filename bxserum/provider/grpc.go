@@ -50,13 +50,13 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetOrderbookStreamResponse) error {
-	stream, err := g.apiClient.GetOrderbookStream(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
+	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
 	if err != nil {
 		return err
 	}
 
-	return connections.GRPCStream[pb.GetOrderbookStreamResponse](stream, market, outputChan)
+	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, market, outputChan)
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -66,7 +66,7 @@ func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32)
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetTradesStreamResponse) error {
-	stream, err := g.apiClient.GetTradeStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
+	stream, err := g.apiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
 	if err != nil {
 		return err
 	}
@@ -130,13 +130,14 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string) (*pb.PostS
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, string, error) {
 	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction)
+	sig, err := g.signAndSubmit(ctx, order.Transaction)
+	return sig, order.OpenOrdersAddress, err
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -149,11 +150,11 @@ func (g *GRPCClient) PostCancelOrder(
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
 	return g.apiClient.PostCancelOrder(ctx, &pb.PostCancelOrderRequest{
-		OrderID:    orderID,
-		Side:       side,
-		Owner:      owner,
-		Market:     market,
-		OpenOrders: openOrders,
+		OrderID:           orderID,
+		Side:              side,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
 	})
 }
 
@@ -174,34 +175,64 @@ func (g *GRPCClient) SubmitCancelOrder(
 	return g.signAndSubmit(ctx, order.Transaction)
 }
 
-// PostCancelOrderByClientID builds a Serum cancel order by client ID.
-func (g *GRPCClient) PostCancelOrderByClientID(
+// PostCancelByClientOrderID builds a Serum cancel order by client ID.
+func (g *GRPCClient) PostCancelByClientOrderID(
 	ctx context.Context,
-	clientID uint64,
+	clientOrderID uint64,
 	owner,
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	return g.apiClient.PostCancelOrderByClientID(ctx, &pb.PostCancelOrderByClientIDRequest{
-		ClientID:   clientID,
-		Owner:      owner,
-		Market:     market,
-		OpenOrders: openOrders,
+	return g.apiClient.PostCancelByClientOrderID(ctx, &pb.PostCancelByClientOrderIDRequest{
+		ClientOrderID:     clientOrderID,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
 	})
 }
 
-// SubmitCancelOrderByClientID builds a Serum cancel order by client ID, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelOrderByClientID(
+// SubmitCancelByClientOrderID builds a Serum cancel order by client ID, signs and submits it to the network.
+func (g *GRPCClient) SubmitCancelByClientOrderID(
 	ctx context.Context,
-	clientID uint64,
+	clientOrderID uint64,
 	owner,
 	market,
 	openOrders string,
 ) (string, error) {
-	order, err := g.PostCancelOrderByClientID(ctx, clientID, owner, market, openOrders)
+	order, err := g.PostCancelByClientOrderID(ctx, clientOrderID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
 	return g.signAndSubmit(ctx, order.Transaction)
+}
+
+// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
+func (g *GRPCClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	return g.apiClient.PostSettle(ctx, &pb.PostSettleRequest{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	})
+}
+
+// SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
+func (g *GRPCClient) SettleFunds(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (string, error) {
+	order, err := g.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, g.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := g.PostSubmit(ctx, txBase64)
+	if err != nil {
+		return "", err
+	}
+	return response.Signature, nil
 }
