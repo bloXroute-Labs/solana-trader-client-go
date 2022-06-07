@@ -11,15 +11,17 @@ import (
 func main() {
 	callOrderbookWS()
 	callOpenOrdersWS()
-	callTradesWS()
 	callTickersWS()
+	callUnsettledWS()
+
 	callOrderbookWSStream()
 	callTradesWSStream()
-	callUnsettledWS()
 }
 
 // Unary response
 func callOrderbookWS() {
+	fmt.Println("fetching orderbooks...")
+
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -56,6 +58,8 @@ func callOrderbookWS() {
 }
 
 func callOpenOrdersWS() {
+	fmt.Println("fetching open orders...")
+
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -74,6 +78,8 @@ func callOpenOrdersWS() {
 }
 
 func callUnsettledWS() {
+	fmt.Println("fetching unsettled...")
+
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -91,25 +97,9 @@ func callUnsettledWS() {
 	fmt.Println()
 }
 
-func callTradesWS() {
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
-
-	trades, err := w.GetTrades("SOLUSDC", 2)
-	if err != nil {
-		log.Errorf("error with GetTrades request for SOL-USDT: %v", err)
-	} else {
-		fmt.Println(trades)
-	}
-
-	fmt.Println()
-}
-
 func callTickersWS() {
+	fmt.Println("fetching tickers...")
+
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -130,6 +120,7 @@ func callTickersWS() {
 // Stream response
 func callOrderbookWSStream() {
 	fmt.Println("starting orderbook stream")
+
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
@@ -139,7 +130,7 @@ func callOrderbookWSStream() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
+	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
 	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
@@ -154,6 +145,7 @@ func callOrderbookWSStream() {
 
 func callTradesWSStream() {
 	fmt.Println("starting trades stream")
+
 	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)

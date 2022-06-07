@@ -27,14 +27,9 @@ func main() {
 	}
 
 	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set")
-		log.Infof("Skipping Place and Cancel Order examples")
-		return
-	}
 
-	clientID := callPlaceOrderGRPC(ownerAddr, ooAddr)
-	callCancelOrderByClientID(ownerAddr, ooAddr, clientID)
+	clientOrderID, ooAddr := callPlaceOrderGRPC(ownerAddr, ooAddr)
+	callCancelByClientOrderID(ownerAddr, ooAddr, clientOrderID)
 }
 
 func callOrderbookHTTP() {
@@ -133,42 +128,43 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
+func callPlaceOrderGRPC(ownerAddr, ooAddr string) (uint64, string) {
 	client := &http.Client{Timeout: time.Second * 30}
 	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	// generate a random clientId for this order
+	// generate a random clientOrderId for this order
 	rand.Seed(time.Now().UnixNano())
-	clientID := rand.Uint64()
+	clientOrderID := rand.Uint64()
 
 	orderOpts := provider.PostOrderOpts{
-		ClientOrderID:     clientID,
+		ClientOrderID:     clientOrderID,
 		OpenOrdersAddress: ooAddr,
 	}
 
-	response, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
+	response, ooAddr, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
 		orderSide, []api.OrderType{orderType}, orderAmount,
 		orderPrice, orderOpts)
 	if err != nil {
-		log.Fatalf("failed to submit order (%w)", err)
+		log.Fatalf("failed to submit order (%v)", err)
 	}
 
-	fmt.Printf("placed order %v with clientID %x\n", response, clientID)
+	fmt.Printf("placed order %v with clientOrderID %x\n", response, clientOrderID)
 
-	return clientID
+	return clientOrderID, ooAddr
 }
 
-func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
+func callCancelByClientOrderID(ownerAddr, ooAddr string, clientOrderID uint64) {
+	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
 	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	_, err = h.SubmitCancelOrderByClientID(clientID, ownerAddr,
+	_, err = h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
 		marketAddr, ooAddr)
 	if err != nil {
-		log.Fatalf("failed to cancel order by client ID (%w)", err)
+		log.Fatalf("failed to cancel order by client ID (%v)", err)
 	}
 
-	fmt.Printf("canceled order for clientID %x\n", clientID)
+	fmt.Printf("canceled order for clientOrderID %x\n", clientOrderID)
 }
