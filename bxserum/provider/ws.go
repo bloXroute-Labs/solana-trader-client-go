@@ -186,8 +186,11 @@ func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, types []
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
-	request, err := w.jsonRPCRequest("PostSubmit", &pb.PostSubmitRequest{Transaction: txBase64})
+func (w *WSClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	request, err := w.jsonRPCRequest("PostSubmit", &pb.PostSubmitRequest{
+		Transaction:   txBase64,
+		SkipPreFlight: skipPreFlight,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -201,13 +204,13 @@ func (w *WSClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
 }
 
 // signAndSubmit signs the given transaction and submits it.
-func (w *WSClient) signAndSubmit(tx string) (string, error) {
+func (w *WSClient) signAndSubmit(tx string, skipPreFlight bool) (string, error) {
 	txBase64, err := transaction.SignTxWithPrivateKey(tx, w.privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	response, err := w.PostSubmit(txBase64)
+	response, err := w.PostSubmit(txBase64, skipPreFlight)
 	if err != nil {
 		return "", err
 	}
@@ -222,7 +225,7 @@ func (w *WSClient) SubmitOrder(owner, payer, market string, side pb.Side, types 
 		return "", err
 	}
 
-	return w.signAndSubmit(order.Transaction)
+	return w.signAndSubmit(order.Transaction, opts.SkipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -265,7 +268,7 @@ func (w *WSClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return w.signAndSubmit(order.Transaction)
+	return w.signAndSubmit(order.Transaction, true)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -305,7 +308,7 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return w.signAndSubmit(order.Transaction)
+	return w.signAndSubmit(order.Transaction, true)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
@@ -341,7 +344,7 @@ func (w *WSClient) SettleFunds(ctx context.Context, owner, market, baseTokenWall
 		return "", err
 	}
 
-	response, err := w.PostSubmit(txBase64)
+	response, err := w.PostSubmit(txBase64, true)
 	if err != nil {
 		return "", err
 	}

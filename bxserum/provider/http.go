@@ -114,13 +114,13 @@ func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettled
 }
 
 // signAndSubmit signs the given transaction and submits it.
-func (h *HTTPClient) signAndSubmit(tx string) (string, error) {
+func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error) {
 	txBase64, err := transaction.SignTxWithPrivateKey(tx, h.privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	response, err := h.PostSubmit(txBase64)
+	response, err := h.PostSubmit(txBase64, skipPreFlight)
 	if err != nil {
 		return "", err
 	}
@@ -152,9 +152,9 @@ func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types 
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmit(txBase64 string) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: txBase64}
+	request := &pb.PostSubmitRequest{Transaction: txBase64, SkipPreFlight: skipPreFlight}
 
 	var response pb.PostSubmitResponse
 	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response)
@@ -171,7 +171,7 @@ func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, type
 		return "", "", err
 	}
 
-	sig, err := h.signAndSubmit(order.Transaction)
+	sig, err := h.signAndSubmit(order.Transaction, opts.SkipPreFlight)
 	return sig, order.OpenOrdersAddress, err
 }
 
@@ -214,7 +214,7 @@ func (h *HTTPClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return h.signAndSubmit(order.Transaction)
+	return h.signAndSubmit(order.Transaction, true)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -253,7 +253,7 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return h.signAndSubmit(order.Transaction)
+	return h.signAndSubmit(order.Transaction, true)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
@@ -287,7 +287,7 @@ func (h *HTTPClient) SettleFunds(owner, market, baseTokenWallet, quoteTokenWalle
 		return "", err
 	}
 
-	response, err := h.PostSubmit(txBase64)
+	response, err := h.PostSubmit(txBase64, false)
 	if err != nil {
 		return "", err
 	}

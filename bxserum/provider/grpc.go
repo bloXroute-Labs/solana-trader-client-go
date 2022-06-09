@@ -95,13 +95,13 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 }
 
 // signAndSubmit signs the given transaction and submits it.
-func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string) (string, error) {
+func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
 	txBase64, err := transaction.SignTxWithPrivateKey(tx, g.privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	response, err := g.PostSubmit(ctx, txBase64)
+	response, err := g.PostSubmit(ctx, txBase64, skipPreFlight)
 	if err != nil {
 		return "", err
 	}
@@ -125,8 +125,9 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string) (*pb.PostSubmitResponse, error) {
-	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: txBase64})
+func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: txBase64,
+		SkipPreFlight: skipPreFlight})
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -136,7 +137,7 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 		return "", "", err
 	}
 
-	sig, err := g.signAndSubmit(ctx, order.Transaction)
+	sig, err := g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 	return sig, order.OpenOrdersAddress, err
 }
 
@@ -172,7 +173,7 @@ func (g *GRPCClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction)
+	return g.signAndSubmit(ctx, order.Transaction, true)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -204,7 +205,7 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction)
+	return g.signAndSubmit(ctx, order.Transaction, true)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
@@ -230,7 +231,7 @@ func (g *GRPCClient) SettleFunds(ctx context.Context, owner, market, baseTokenWa
 		return "", err
 	}
 
-	response, err := g.PostSubmit(ctx, txBase64)
+	response, err := g.PostSubmit(ctx, txBase64, false)
 	if err != nil {
 		return "", err
 	}

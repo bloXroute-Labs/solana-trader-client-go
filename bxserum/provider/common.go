@@ -1,9 +1,10 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
 	"github.com/gagliardetto/solana-go"
-	"time"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 type PostOrderOpts struct {
 	OpenOrdersAddress string
 	ClientOrderID     uint64
+	SkipPreFlight     bool
 }
 
 type RPCOpts struct {

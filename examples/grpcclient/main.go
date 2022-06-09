@@ -204,7 +204,7 @@ func callPlaceOrderGRPC(ownerAddr, ooAddr string) (uint64, string) {
 
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Errorf("error dialing GRPC client (%w)", err)
+		log.Errorf("error dialing GRPC client (%v)", err)
 		return 0, ""
 	}
 
@@ -236,7 +236,7 @@ func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
 	time.Sleep(30 * time.Second)
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Errorf("error dialing GRPC client (%w)", err)
+		log.Errorf("error dialing GRPC client (%v)", err)
 		return
 	}
 

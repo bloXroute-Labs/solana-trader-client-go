@@ -7,3 +7,7 @@ proto: proto-build-api
 proto-build-api:
 	docker run -v $(CURDIR)/proto:/go/protobuf $(IMAGE_NAME) \
 		protoc --go_out=. --go_opt=paths=source_relative  --go-grpc_out=. --go-grpc_opt=paths=source_relative api.proto
+
+.PHONY: test
+test:
+	go test -v ./...
