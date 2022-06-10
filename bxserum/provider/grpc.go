@@ -131,14 +131,14 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, string, error) {
+func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	sig, err := g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
-	return sig, order.OpenOrdersAddress, err
+	return sig, err
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -167,13 +167,14 @@ func (g *GRPCClient) SubmitCancelOrder(
 	owner,
 	market,
 	openOrders string,
+	skipPreFlight bool,
 ) (string, error) {
 	order, err := g.PostCancelOrder(ctx, orderID, side, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, true)
+	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -199,13 +200,14 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 	owner,
 	market,
 	openOrders string,
+	skipPreFlight bool,
 ) (string, error) {
 	order, err := g.PostCancelByClientOrderID(ctx, clientOrderID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, true)
+	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.

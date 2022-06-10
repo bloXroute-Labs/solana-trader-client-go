@@ -2,11 +2,12 @@ package integration
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestHTTPClient_Requests(t *testing.T) {
@@ -84,12 +85,12 @@ func TestHTTPClient_Requests(t *testing.T) {
 		testSubmitOrder(
 			t,
 			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
-				txHash, _, err := h.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
+				txHash, err := h.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.Nil(t, err, "unexpected error %v", err)
 				return txHash
 			},
 			func(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts provider.PostOrderOpts) string {
-				_, _, err := h.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
+				_, err := h.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.NotNil(t, err)
 
 				return err.Error()

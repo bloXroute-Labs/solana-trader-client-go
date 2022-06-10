@@ -165,14 +165,14 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, string, error) {
+func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrder(owner, payer, market, side, types, amount, price, opts)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	sig, err := h.signAndSubmit(order.Transaction, opts.SkipPreFlight)
-	return sig, order.OpenOrdersAddress, err
+	return sig, err
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -208,13 +208,14 @@ func (h *HTTPClient) SubmitCancelOrder(
 	owner,
 	market,
 	openOrders string,
+	skipPreFlight bool,
 ) (string, error) {
 	order, err := h.PostCancelOrder(orderID, side, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return h.signAndSubmit(order.Transaction, true)
+	return h.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -247,13 +248,14 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 	owner,
 	market,
 	openOrders string,
+	skipPreFlight bool,
 ) (string, error) {
 	order, err := h.PostCancelByClientOrderID(clientOrderID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return h.signAndSubmit(order.Transaction, true)
+	return h.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.

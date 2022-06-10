@@ -262,13 +262,14 @@ func (w *WSClient) SubmitCancelOrder(
 	owner,
 	market,
 	openOrders string,
+	skipPreFlight bool,
 ) (string, error) {
 	order, err := w.PostCancelOrder(orderID, side, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(order.Transaction, true)
+	return w.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -302,13 +303,14 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 	owner,
 	market,
 	openOrders string,
+	skipPreFlight bool,
 ) (string, error) {
 	order, err := w.PostCancelByClientOrderID(clientOrderID, owner, market, openOrders)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(order.Transaction, true)
+	return w.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.

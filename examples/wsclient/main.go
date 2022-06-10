@@ -2,7 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"os"
+	"time"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
+	api "github.com/bloXroute-Labs/serum-api/proto"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -16,6 +21,23 @@ func main() {
 
 	callOrderbookWSStream()
 	callTradesWSStream()
+
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	if !ok {
+		log.Infof("PUBLIC_KEY environment variable not set")
+		log.Infof("Skipping Place and Cancel Order examples")
+		return
+	}
+
+	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Infof("OPEN_ORDERS environment variable not set")
+		log.Infof("Skipping Place and Cancel Order examples")
+		return
+	}
+
+	clientOrderID := callPlaceOrderWS(ownerAddr, ooAddr)
+	callCancelByClientOrderIDWS(ownerAddr, ooAddr, clientOrderID)
 }
 
 // Unary response
@@ -166,4 +188,63 @@ func callTradesWSStream() {
 			fmt.Printf("response %v received\n", i)
 		}
 	}
+}
+
+const (
+	// SOL/USDC market
+	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
+
+	orderSide   = api.Side_S_ASK
+	orderType   = api.OrderType_OT_LIMIT
+	orderPrice  = float64(170200)
+	orderAmount = float64(0.1)
+)
+
+func callPlaceOrderWS(ownerAddr, ooAddr string) uint64 {
+	fmt.Println("trying to place an order")
+
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+	}
+	defer w.Close()
+
+	// generate a random clientOrderId for this order
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID,
+		OpenOrdersAddress: ooAddr,
+	}
+
+	sig, err := w.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
+		orderSide, []api.OrderType{orderType}, orderAmount,
+		orderPrice, opts)
+	if err != nil {
+		log.Fatalf("failed to submit order (%v)", err)
+	}
+
+	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
+
+	return clientOrderID
+}
+
+func callCancelByClientOrderIDWS(ownerAddr, ooAddr string, clientOrderID uint64) {
+	fmt.Println("trying to cancel order")
+
+	w, err := provider.NewWSClient()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	_, err = w.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
+		marketAddr, ooAddr, true)
+	if err != nil {
+		log.Fatalf("failed to cancel order by client ID (%v)", err)
+	}
+
+	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
 }
