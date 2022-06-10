@@ -28,8 +28,8 @@ func main() {
 
 	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
 
-	clientOrderID, ooAddr := callPlaceOrderGRPC(ownerAddr, ooAddr)
-	callCancelByClientOrderID(ownerAddr, ooAddr, clientOrderID)
+	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
+	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
 }
 
 func callOrderbookHTTP() {
@@ -128,43 +128,43 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderGRPC(ownerAddr, ooAddr string) (uint64, string) {
+func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 	client := &http.Client{Timeout: time.Second * 30}
-	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
-	h := provider.NewHTTPClientWithOpts(client, opts)
+	rpcOpts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	// generate a random clientOrderId for this order
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID := rand.Uint64()
 
-	orderOpts := provider.PostOrderOpts{
+	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID,
 		OpenOrdersAddress: ooAddr,
 	}
 
-	response, ooAddr, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
+	sig, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
 		orderSide, []api.OrderType{orderType}, orderAmount,
-		orderPrice, orderOpts)
+		orderPrice, opts)
 	if err != nil {
 		log.Fatalf("failed to submit order (%v)", err)
 	}
 
-	fmt.Printf("placed order %v with clientOrderID %x\n", response, clientOrderID)
+	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
 
-	return clientOrderID, ooAddr
+	return clientOrderID
 }
 
-func callCancelByClientOrderID(ownerAddr, ooAddr string, clientOrderID uint64) {
+func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
 	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	_, err = h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
-		marketAddr, ooAddr)
+		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client ID (%v)", err)
 	}
 
-	fmt.Printf("canceled order for clientOrderID %x\n", clientOrderID)
+	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
 }

@@ -1,4 +1,5 @@
 syntax = "proto3";
+package api;
 option go_package = "github.com/bloXroute-Labs/serum-api/api";
 
 import "google/api/annotations.proto";

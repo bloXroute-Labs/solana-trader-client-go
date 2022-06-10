@@ -28,10 +28,15 @@ func main() {
 		return
 	}
 
-	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
+	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Infof("OPEN_ORDERS environment variable not set")
+		log.Infof("Skipping Place, Cancel and Settle examples")
+		return
+	}
 
-	clientID, ooAddr := callPlaceOrderGRPC(ownerAddr, ooAddr)
-	callCancelOrderByClientID(ownerAddr, ooAddr, clientID)
+	clientID := callPlaceOrderGRPC(ownerAddr, ooAddr)
+	callCancelByClientOrderIDGRPC(ownerAddr, ooAddr, clientID)
 	callPostSettleGRPC()
 }
 
@@ -199,13 +204,13 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderGRPC(ownerAddr, ooAddr string) (uint64, string) {
+func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
 	fmt.Println("starting place order")
 
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Errorf("error dialing GRPC client (%w)", err)
-		return 0, ""
+		log.Errorf("error dialing GRPC client (%v)", err)
+		return 0
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -220,36 +225,36 @@ func callPlaceOrderGRPC(ownerAddr, ooAddr string) (uint64, string) {
 		OpenOrdersAddress: ooAddr,
 	}
 
-	sig, ooAddr, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
+	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
 		orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatalf("failed to submit order (%v)", err)
 	}
 
-	fmt.Printf("placed order %v with clientOrderID %x\n", sig, clientOrderID)
+	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
 
-	return clientOrderID, ooAddr
+	return clientOrderID
 }
 
-func callCancelOrderByClientID(ownerAddr, ooAddr string, clientID uint64) {
+func callCancelByClientOrderIDGRPC(ownerAddr, ooAddr string, clientID uint64) {
 	fmt.Println("starting cancel order by client order ID")
 	time.Sleep(30 * time.Second)
 	g, err := provider.NewGRPCClient()
 	if err != nil {
-		log.Errorf("error dialing GRPC client (%w)", err)
+		log.Errorf("error dialing GRPC client (%v)", err)
 		return
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err = g.PostCancelByClientOrderID(ctx, clientID, ownerAddr,
-		marketAddr, ooAddr)
+	_, err = g.SubmitCancelByClientOrderID(ctx, clientID, ownerAddr,
+		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client order ID (%v)", err)
 	}
 
-	fmt.Printf("canceled order for clientID %x\n", clientID)
+	fmt.Printf("canceled order for clientID %v\n", clientID)
 }
 
 func callPostSettleGRPC() {
