@@ -11,3 +11,7 @@ proto-build-api:
 .PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: unit
+unit:
+	 go test -v ./bxserum/provider_test/.
