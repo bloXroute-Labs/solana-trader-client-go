@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -10,9 +11,17 @@ import (
 )
 
 func TestGRPC_New(t *testing.T) {
+	pk, err := solana.NewRandomPrivateKey()
+	assert.NotNil(t, pk)
+	assert.Nil(t, err)
+
+	os.Setenv("PRIVATE_KEY", pk.String())
+
 	c, err := provider.NewGRPCClient()
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
+
+	os.Unsetenv("PRIVATE_KEY")
 }
 
 func TestGRPC_NewWithOpts(t *testing.T) {
