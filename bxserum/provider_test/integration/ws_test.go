@@ -2,11 +2,12 @@ package integration
 
 import (
 	"context"
+	"testing"
+
 	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
 	pb "github.com/bloXroute-Labs/serum-api/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestWSClient_Requests(t *testing.T) {
@@ -93,9 +94,7 @@ func TestWSClient_Requests(t *testing.T) {
 				_, err := w.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.NotNil(t, err)
 
-				// TODO: fix websockets including extra quotes
-				errString := err.Error()
-				return errString[1 : len(errString)-1]
+				return err.Error()
 			})
 	})
 }

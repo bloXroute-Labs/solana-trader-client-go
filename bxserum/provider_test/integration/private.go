@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	pb "github.com/bloXroute-Labs/serum-api/proto"
-	"github.com/gagliardetto/solana-go"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
+	pb "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/gagliardetto/solana-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -30,7 +31,8 @@ func init() {
 
 	publicKey, ok = os.LookupEnv("PUBLIC_KEY")
 	if !ok {
-		panic("env variable `PUBLIC_KEY` must be set")
+		fmt.Printf("env variable `PUBLIC_KEY` must be set")
+		os.Exit(0)
 	}
 }
 
