@@ -29,7 +29,11 @@ func NewGRPCClient() (*GRPCClient, error) {
 
 // NewGRPCTestnet connects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	panic("implement me")
+	opts, err := DefaultRPCOpts(TestnetSerumAPIGRPC)
+	if err != nil {
+		return nil, err
+	}
+	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCClientWithOpts connects to custom Serum API

@@ -31,7 +31,11 @@ func NewHTTPClient() (*HTTPClient, error) {
 
 // NewHTTPTestnet connects to Testnet Serum API
 func NewHTTPTestnet() (*HTTPClient, error) {
-	panic("implement me")
+	opts, err := DefaultRPCOpts(TestnetSerumAPIHTTP)
+	if err != nil {
+		return nil, err
+	}
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
 // NewHTTPClientWithOpts connects to custom Serum API (set client to nil to use default client)

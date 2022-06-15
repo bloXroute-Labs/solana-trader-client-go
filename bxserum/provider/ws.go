@@ -33,7 +33,11 @@ func NewWSClient() (*WSClient, error) {
 
 // NewWSClientTestnet connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
-	panic("implement me")
+	opts, err := DefaultRPCOpts(TestnetSerumAPIWS)
+	if err != nil {
+		return nil, err
+	}
+	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientWithOpts connects to custom Serum API

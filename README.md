@@ -183,9 +183,9 @@ func main() {
     )
     // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
 
-if err != nil {
-// ...
-}
+    if err != nil {
+    // ...
+    }
     
     
     // WS
