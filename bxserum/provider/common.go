@@ -9,7 +9,7 @@ import (
 const (
 	MainnetSerumAPIHTTP = "http://virginia.solana.dex.blxrbdn.com"
 	MainnetSerumAPIWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
-	MainnetSerumAPIGRPC = "107.22.159.156:1610" // TODO: setup load balancer
+	MainnetSerumAPIGRPC = "107.22.159.156:1810" // TODO: setup load balancer
 	TestnetSerumAPIHTTP = "http://50.19.176.139:1609"
 	TestnetSerumAPIWS   = "ws://50.19.176.139:1609/ws"
 	TestnetSerumAPIGRPC = "50.19.176.139:1610"
