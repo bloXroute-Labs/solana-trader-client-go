@@ -11,9 +11,9 @@ const (
 	MainnetSerumAPIHTTP = "https://virginia.solana.dex.blxrbdn.com"
 	MainnetSerumAPIWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
 	MainnetSerumAPIGRPC = "virginia.solana.dex.blxrbdn.com:9000"
-	TestnetSerumAPIHTTP = "http://44.200.244.204:80"
-	TestnetSerumAPIWS   = "ws://44.200.244.204:80/ws"
-	TestnetSerumAPIGRPC = "44.200.244.204:443"
+	TestnetSerumAPIHTTP = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
+	TestnetSerumAPIWS   = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
+	TestnetSerumAPIGRPC = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:9000"
 	defaultRPCTimeout   = 7 * time.Second
 )
 
