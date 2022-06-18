@@ -14,11 +14,22 @@ import (
 )
 
 func main() {
-	callOrderbookWS()
-	callOpenOrdersWS()
-	callTickersWS()
-	callUnsettledWS()
+	w, err := provider.NewWSClientTestnet()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
 
+	// unary
+	callMarketsWS(w)
+	callOrderbookWS(w)
+	callTradesWS(w)
+	callOpenOrdersWS(w)
+	callTickersWS(w)
+	callUnsettledWS(w)
+
+	// streaming (use their own provider)
 	callOrderbookWSStream()
 	callTradesWSStream()
 
@@ -36,20 +47,27 @@ func main() {
 		return
 	}
 
-	clientOrderID := callPlaceOrderWS(ownerAddr, ooAddr)
-	callCancelByClientOrderIDWS(ownerAddr, ooAddr, clientOrderID)
+	clientOrderID := callPlaceOrderWS(w, ownerAddr, ooAddr)
+	callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
+	callPostSettleWS(w, ownerAddr, ooAddr)
 }
 
 // Unary response
-func callOrderbookWS() {
-	fmt.Println("fetching orderbooks...")
+func callMarketsWS(w *provider.WSClient) {
+	fmt.Println("fetching markets...")
 
-	w, err := provider.NewWSClient()
+	markets, err := w.GetMarkets()
 	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
+		log.Errorf("error with GetMarkets request: %v", err)
+	} else {
+		fmt.Println(markets)
 	}
-	defer w.Close()
+
+	fmt.Println()
+}
+
+func callOrderbookWS(w *provider.WSClient) {
+	fmt.Println("fetching orderbooks...")
 
 	orderbook, err := w.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
@@ -79,15 +97,21 @@ func callOrderbookWS() {
 	fmt.Println()
 }
 
-func callOpenOrdersWS() {
-	fmt.Println("fetching open orders...")
+func callTradesWS(w *provider.WSClient) {
+	fmt.Println("fetching trades...")
 
-	w, err := provider.NewWSClient()
+	trades, err := w.GetTrades("SOLUSDC", 3)
 	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
+		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
+	} else {
+		fmt.Println(trades)
 	}
-	defer w.Close()
+
+	fmt.Println()
+}
+
+func callOpenOrdersWS(w *provider.WSClient) {
+	fmt.Println("fetching open orders...")
 
 	orders, err := w.GetOpenOrders("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
@@ -99,15 +123,8 @@ func callOpenOrdersWS() {
 	fmt.Println()
 }
 
-func callUnsettledWS() {
+func callUnsettledWS(w *provider.WSClient) {
 	fmt.Println("fetching unsettled...")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
 
 	response, err := w.GetUnsettled("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
@@ -119,15 +136,8 @@ func callUnsettledWS() {
 	fmt.Println()
 }
 
-func callTickersWS() {
+func callTickersWS(w *provider.WSClient) {
 	fmt.Println("fetching tickers...")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
 
 	tickers, err := w.GetTickers("SOLUSDC")
 	if err != nil {
@@ -143,7 +153,7 @@ func callTickersWS() {
 func callOrderbookWSStream() {
 	fmt.Println("starting orderbook stream")
 
-	w, err := provider.NewWSClient()
+	w, err := provider.NewWSClientTestnet()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
@@ -168,13 +178,13 @@ func callOrderbookWSStream() {
 func callTradesWSStream() {
 	fmt.Println("starting trades stream")
 
-	w, err := provider.NewWSClient()
+	w, err := provider.NewWSClientTestnet()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
 	}
-	defer w.Close()
 
+	defer w.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
@@ -200,14 +210,8 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderWS(ownerAddr, ooAddr string) uint64 {
+func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) uint64 {
 	fmt.Println("trying to place an order")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-	}
-	defer w.Close()
 
 	// generate a random clientOrderId for this order
 	rand.Seed(time.Now().UnixNano())
@@ -230,21 +234,29 @@ func callPlaceOrderWS(ownerAddr, ooAddr string) uint64 {
 	return clientOrderID
 }
 
-func callCancelByClientOrderIDWS(ownerAddr, ooAddr string, clientOrderID uint64) {
+func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64) {
 	fmt.Println("trying to cancel order")
 
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
-
-	_, err = w.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
+	_, err := w.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
 		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client ID (%v)", err)
 	}
 
 	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
+}
+
+func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) {
+	fmt.Println("starting post settle")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SettleFunds(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
+	if err != nil {
+		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
+		return
+	}
+
+	fmt.Printf("response signature received: %v", sig)
 }
