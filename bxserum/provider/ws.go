@@ -76,7 +76,9 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit 
 	if err != nil {
 		return err
 	}
-	return connections.WSStream(ctx, w.conn, request, orderbookChan)
+
+	var response pb.GetOrderbooksStreamResponse
+	return connections.WSStream(ctx, w.conn, request, orderbookChan, &response)
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -100,7 +102,9 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	if err != nil {
 		return err
 	}
-	return connections.WSStream(ctx, w.conn, request, tradesChan)
+
+	var response pb.GetTradesStreamResponse
+	return connections.WSStream(ctx, w.conn, request, tradesChan, &response)
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
