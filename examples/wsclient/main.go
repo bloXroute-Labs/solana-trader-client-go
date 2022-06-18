@@ -113,7 +113,7 @@ func callTradesWS(w *provider.WSClient) {
 func callOpenOrdersWS(w *provider.WSClient) {
 	fmt.Println("fetching open orders...")
 
-	orders, err := w.GetOpenOrders("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	orders, err := w.GetOpenOrders("SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 	} else {
