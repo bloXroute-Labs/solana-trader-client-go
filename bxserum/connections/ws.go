@@ -80,7 +80,6 @@ func recvWS[T proto.Message](conn *websocket.Conn, result T) error {
 	}
 
 	if err = protojson.Unmarshal(*resp.Result, result); err != nil {
-		fmt.Println(resp.Result)
 		return fmt.Errorf("error unmarshalling message of type %T: %w", result, err)
 	}
 
