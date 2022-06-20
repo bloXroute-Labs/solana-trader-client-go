@@ -72,11 +72,13 @@ func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookRe
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
-	request, err := w.jsonRPCRequest("GetOrderbookStream", map[string]interface{}{"market": market, "limit": limit})
+	request, err := w.jsonRPCRequest("GetOrderbooksStream", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
 		return err
 	}
-	return connections.WSStream(ctx, w.conn, request, orderbookChan)
+
+	var response pb.GetOrderbooksStreamResponse
+	return connections.WSStream(ctx, w.conn, request, orderbookChan, &response)
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -96,11 +98,13 @@ func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, tradesChan chan *pb.GetTradesStreamResponse) error {
-	request, err := w.jsonRPCRequest("GetTradeStream", map[string]interface{}{"market": market, "limit": limit})
+	request, err := w.jsonRPCRequest("GetTradesStream", map[string]interface{}{"market": market, "limit": limit})
 	if err != nil {
 		return err
 	}
-	return connections.WSStream(ctx, w.conn, request, tradesChan)
+
+	var response pb.GetTradesStreamResponse
+	return connections.WSStream(ctx, w.conn, request, tradesChan, &response)
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.

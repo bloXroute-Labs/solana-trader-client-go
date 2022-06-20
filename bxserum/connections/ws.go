@@ -20,13 +20,12 @@ func WSRequest[T proto.Message](conn *websocket.Conn, request []byte, response T
 	return recvWS[T](conn, response)
 }
 
-func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan T) error {
+func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan T, response T) error {
 	err := sendWS(conn, request)
 	if err != nil {
 		return err
 	}
 
-	var response T
 	err = recvWS[T](conn, response)
 	if err != nil {
 		return err
@@ -40,13 +39,12 @@ func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, reques
 			case <-ctx.Done():
 				return
 			default:
-				var next T
-				err = recvWS[T](conn, next)
+				err = recvWS[T](conn, response)
 				if err != nil {
 					break
 				}
 
-				responseChan <- next
+				responseChan <- response
 			}
 		}
 	}(response, responseChan, conn)

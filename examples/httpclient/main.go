@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	callMarketsHTTP()
 	callOrderbookHTTP()
 	callOpenOrdersHTTP()
 	callTradesHTTP()
@@ -30,6 +31,21 @@ func main() {
 
 	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
+	callPostSettleHTTP(ownerAddr, ooAddr)
+}
+
+func callMarketsHTTP() {
+	h, _ := provider.NewHTTPClient()
+
+	// Unary response
+	markets, err := h.GetMarkets()
+	if err != nil {
+		log.Errorf("error with GetMarkets request: %v", err)
+	} else {
+		fmt.Println(markets)
+	}
+
+	fmt.Println()
 }
 
 func callOrderbookHTTP() {
@@ -167,4 +183,19 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 	}
 
 	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
+}
+
+func callPostSettleHTTP(ownerAddr, ooAddr string) {
+	time.Sleep(60 * time.Second)
+	client := &http.Client{Timeout: time.Second * 30}
+	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, opts)
+
+	sig, err := h.SettleFunds(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
+	if err != nil {
+		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
+		return
+	}
+
+	fmt.Printf("response signature received: %v", sig)
 }

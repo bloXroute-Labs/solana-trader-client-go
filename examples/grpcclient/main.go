@@ -13,13 +13,20 @@ import (
 )
 
 func main() {
-	callOrderbookGRPC()
-	callOpenOrdersGRPC()
-	callTradesGRPC()
-	callTickersGRPC()
-	callOrderbookGRPCStream()
-	callTradesGRPCStream()
-	callUnsettledGRPC()
+	g, err := provider.NewGRPCTestnet()
+	if err != nil {
+		log.Fatalf("error dialing GRPC client: %v", err)
+		return
+	}
+
+	callMarketsGRPC(g)
+	callOrderbookGRPC(g)
+	callOpenOrdersGRPC(g)
+	callTradesGRPC(g)
+	callTickersGRPC(g)
+	callOrderbookGRPCStream(g)
+	callTradesGRPCStream(g)
+	callUnsettledGRPC(g)
 
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
@@ -35,18 +42,23 @@ func main() {
 		return
 	}
 
-	clientID := callPlaceOrderGRPC(ownerAddr, ooAddr)
-	callCancelByClientOrderIDGRPC(ownerAddr, ooAddr, clientID)
-	callPostSettleGRPC()
+	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
+	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
+	callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 
-func callOrderbookGRPC() {
-	g, err := provider.NewGRPCClient()
+func callMarketsGRPC(g *provider.GRPCClient) {
+	markets, err := g.GetMarkets(context.Background())
 	if err != nil {
-		log.Fatalf("error dialing GRPC client: %v", err)
-		return
+		log.Errorf("error with GetMarkets request: %v", err)
+	} else {
+		fmt.Println(markets)
 	}
 
+	fmt.Println()
+}
+
+func callOrderbookGRPC(g *provider.GRPCClient) {
 	// Unary response
 	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT", 0)
 	if err != nil {
@@ -76,14 +88,8 @@ func callOrderbookGRPC() {
 	fmt.Println()
 }
 
-func callOpenOrdersGRPC() {
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client: %v", err)
-		return
-	}
-
-	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+func callOpenOrdersGRPC(g *provider.GRPCClient) {
+	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 	} else {
@@ -91,16 +97,9 @@ func callOpenOrdersGRPC() {
 	}
 
 	fmt.Println()
-
 }
 
-func callUnsettledGRPC() {
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client: %v", err)
-		return
-	}
-
+func callUnsettledGRPC(g *provider.GRPCClient) {
 	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
@@ -112,13 +111,7 @@ func callUnsettledGRPC() {
 
 }
 
-func callTradesGRPC() {
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client: %v", err)
-		return
-	}
-
+func callTradesGRPC(g *provider.GRPCClient) {
 	trades, err := g.GetTrades(context.Background(), "SOLUSDC", 5)
 	if err != nil {
 		log.Errorf("error with GetTrades request for SOLUSDC: %v", err)
@@ -129,13 +122,7 @@ func callTradesGRPC() {
 	fmt.Println()
 }
 
-func callTickersGRPC() {
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client: %v", err)
-		return
-	}
-
+func callTickersGRPC(g *provider.GRPCClient) {
 	orders, err := g.GetTickers(context.Background(), "SOLUSDC")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDC: %v", err)
@@ -146,20 +133,15 @@ func callTickersGRPC() {
 	fmt.Println()
 }
 
-func callOrderbookGRPCStream() {
+func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	fmt.Println("starting orderbook stream")
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client - %v", err)
-		return
-	}
 
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Stream response
-	err = g.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err := g.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
 	} else {
@@ -170,24 +152,19 @@ func callOrderbookGRPCStream() {
 	}
 }
 
-func callTradesGRPCStream() {
+func callTradesGRPCStream(g *provider.GRPCClient) {
 	fmt.Println("starting trades stream")
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client - %v", err)
-		return
-	}
 
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Stream response
-	err = g.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
+	err := g.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
 	if err != nil {
 		log.Errorf("error with GetTrades stream request for SOL/USDC: %v", err)
 	} else {
-		for i := 1; i <= 5; i++ {
+		for i := 1; i <= 3; i++ {
 			<-tradesChan
 			fmt.Printf("response %v received\n", i)
 		}
@@ -204,14 +181,8 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
+func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64 {
 	fmt.Println("starting place order")
-
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Errorf("error dialing GRPC client (%v)", err)
-		return 0
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -236,19 +207,14 @@ func callPlaceOrderGRPC(ownerAddr, ooAddr string) uint64 {
 	return clientOrderID
 }
 
-func callCancelByClientOrderIDGRPC(ownerAddr, ooAddr string, clientID uint64) {
+func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string, clientID uint64) {
 	fmt.Println("starting cancel order by client order ID")
 	time.Sleep(30 * time.Second)
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Errorf("error dialing GRPC client (%v)", err)
-		return
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err = g.SubmitCancelByClientOrderID(ctx, clientID, ownerAddr,
+	_, err := g.SubmitCancelByClientOrderID(ctx, clientID, ownerAddr,
 		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client order ID (%v)", err)
@@ -257,19 +223,13 @@ func callCancelByClientOrderIDGRPC(ownerAddr, ooAddr string, clientID uint64) {
 	fmt.Printf("canceled order for clientID %v\n", clientID)
 }
 
-func callPostSettleGRPC() {
+func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 	fmt.Println("starting post settle")
-	g, err := provider.NewGRPCClient()
-	if err != nil {
-		log.Fatalf("error dialing GRPC client - %v", err)
-		return
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	//publicKey, _ := os.LookupEnv("PUBLIC_KEY")
-	// Stream response
-	sig, err := g.SettleFunds(ctx, "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", "")
+
+	sig, err := g.SettleFunds(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return
