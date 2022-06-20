@@ -32,7 +32,7 @@ func TestWS_NewWithOpts(t *testing.T) {
 	o := provider.RPCOpts{
 		Endpoint:   provider.MainnetSerumAPIWS,
 		Timeout:    time.Second,
-		PrivateKey: pk,
+		PrivateKey: &pk,
 	}
 
 	c, err := provider.NewWSClientWithOpts(o)

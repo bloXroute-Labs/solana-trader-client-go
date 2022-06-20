@@ -32,7 +32,7 @@ func TestGRPC_NewWithOpts(t *testing.T) {
 	o := provider.RPCOpts{
 		Endpoint:   provider.MainnetSerumAPIGRPC,
 		Timeout:    time.Second,
-		PrivateKey: pk,
+		PrivateKey: &pk,
 	}
 	c, err := provider.NewGRPCClientWithOpts(o)
 	assert.NotNil(t, c)

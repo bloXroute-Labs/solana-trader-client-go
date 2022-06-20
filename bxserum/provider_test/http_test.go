@@ -17,7 +17,7 @@ func TestHTTP_New(t *testing.T) {
 
 	os.Setenv("PRIVATE_KEY", pk.String())
 
-	c, err := provider.NewHTTPClient()
+	c := provider.NewHTTPClient()
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
@@ -32,7 +32,7 @@ func TestHTTP_NewWithOpts(t *testing.T) {
 	o := provider.RPCOpts{
 		Endpoint:   provider.MainnetSerumAPIHTTP,
 		Timeout:    time.Second,
-		PrivateKey: pk,
+		PrivateKey: &pk,
 	}
 
 	c := provider.NewHTTPClientWithOpts(nil, o)
