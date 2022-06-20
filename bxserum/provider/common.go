@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"errors"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
@@ -17,6 +18,8 @@ const (
 	defaultRPCTimeout   = 7 * time.Second
 )
 
+var ErrPrivateKeyNotFound = errors.New("private key not provided for signing transaction")
+
 type PostOrderOpts struct {
 	OpenOrdersAddress string
 	ClientOrderID     uint64
@@ -26,17 +29,18 @@ type PostOrderOpts struct {
 type RPCOpts struct {
 	Endpoint   string
 	Timeout    time.Duration
-	PrivateKey solana.PrivateKey
+	PrivateKey *solana.PrivateKey
 }
 
-func DefaultRPCOpts(endpoint string) (RPCOpts, error) {
+func DefaultRPCOpts(endpoint string) RPCOpts {
+	var spk *solana.PrivateKey
 	privateKey, err := transaction.LoadPrivateKeyFromEnv()
-	if err != nil {
-		return RPCOpts{}, err
+	if err == nil {
+		spk = &privateKey
 	}
 	return RPCOpts{
 		Endpoint:   endpoint,
 		Timeout:    defaultRPCTimeout,
-		PrivateKey: privateKey,
-	}, nil
+		PrivateKey: spk,
+	}
 }

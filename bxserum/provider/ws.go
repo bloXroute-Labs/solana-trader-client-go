@@ -19,24 +19,18 @@ type WSClient struct {
 	addr       string
 	conn       *websocket.Conn
 	requestID  utils.RequestID
-	privateKey solana.PrivateKey
+	privateKey *solana.PrivateKey
 }
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	opts, err := DefaultRPCOpts(MainnetSerumAPIWS)
-	if err != nil {
-		return nil, err
-	}
+	opts := DefaultRPCOpts(MainnetSerumAPIWS)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
-	opts, err := DefaultRPCOpts(TestnetSerumAPIWS)
-	if err != nil {
-		return nil, err
-	}
+	opts := DefaultRPCOpts(TestnetSerumAPIWS)
 	return NewWSClientWithOpts(opts)
 }
 
@@ -213,7 +207,11 @@ func (w *WSClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubm
 
 // signAndSubmit signs the given transaction and submits it.
 func (w *WSClient) signAndSubmit(tx string, skipPreFlight bool) (string, error) {
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, w.privateKey)
+	if w.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -321,7 +319,7 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 	return w.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
-// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
+// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
 	request, err := w.jsonRPCRequest("PostSettle", &pb.PostSettleRequest{
 		OwnerAddress:      owner,
@@ -342,23 +340,13 @@ func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWalle
 	return &response, nil
 }
 
-// SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
-func (w *WSClient) SettleFunds(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (string, error) {
+// SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
 	order, err := w.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
 	if err != nil {
 		return "", err
 	}
-
-	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, w.privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	response, err := w.PostSubmit(txBase64, true)
-	if err != nil {
-		return "", err
-	}
-	return response.Signature, nil
+	return w.signAndSubmit(order.Transaction, skipPreflight)
 }
 
 func (w *WSClient) Close() error {

@@ -2,36 +2,7 @@
 
 ## Objective
 This SDK is designed to make it easy for you to use the [bloXroute Labs Serum API](https://github.com/bloXroute-Labs/serum-api)
-in Go. As we continue to develop the Serum API, we will update the methods here as well. Currently, the methods supported are:
-
-#### GRPC/WS:
-```
-GetOrderbook
-GetTrades
-GetTickers
-GetOpenOrders
-GetUnsettled
-GetMarkets
-PostOrder
-PostSubmit
-GetOrderbookStream
-GetTradesStream
-```
-
-#### HTTP:
-```
-GetOrderbook
-GetTrades
-GetTickers
-GetOpenOrders
-GetMarkets
-GetUnsettled
-PostOrder
-PostSubmit
-```
-Methods that end in `Stream` continuously stream responses through a channel, while other methods return a one and done response.
-
-Furthermore, the HTTP client only supports unary/non-streaming methods.
+in Go. 
 
 ## Installation
 ```
@@ -40,14 +11,14 @@ go get github.com/bloXroute-Labs/serum-api/proto
 ```
 
 ## Usage
-Note: Markets can be provided in different formats:
-1. `A/B` (only for GRPC/WS clients) --> `ETH/USDT`
-2. `A:B` --> `ETH:USDT`
-3. `A-B` --> `ETH-USDT`
-4. `AB` --> `ETHUSDT`
 
-#### Unary Response:
+This library supports HTTP, websockets, and GRPC interfaces. You must use websockets or GRPC for any streaming methods, 
+but any simple request/response calls are universally supported.
+
+#### Request:
 ```go
+package main
+
 import (
     "github.com/bloXroute-Labs/serum-api/bxserum/provider"
     pb "github.com/bloXroute-Labs/serum-api/proto"
@@ -92,7 +63,7 @@ func main() {
     }
 	
     newOrderUnsignedTransaction, err := g.SubmitOrder(
-        ctx, 
+        context.Background(), 
         "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
         "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
         "SOL/USDC", // market 
@@ -110,7 +81,7 @@ func main() {
     }
 
     settleTransaction, err := g.SettleFunds(
-        ctx,
+        context.Background(),
         "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
         "SOL/USDC", // market 
         "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
@@ -157,7 +128,7 @@ func main() {
     }
 
     newOrderUnsignedTransaction, err := h.SubmitOrder(
-        ctx,
+        context.Background(),
         "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
         "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
         "SOL/USDC", // market 
@@ -174,7 +145,7 @@ func main() {
     }
 
     settleTransaction, err := h.SettleFunds(
-        ctx,
+        context.Background(),
         "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
         "SOL/USDC", // market 
         "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
@@ -225,7 +196,7 @@ func main() {
     }
 
     newOrderUnsignedTransaction, err := w.SubmitOrder(
-        ctx,
+        context.Background(),
         "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
         "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
         "SOL/USDC", // market 
@@ -243,7 +214,7 @@ func main() {
     }
 
     settleTransaction, err := w.SettleFunds(
-        ctx,
+        context.Background(),
         "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
         "SOL/USDC", // market 
         "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
@@ -258,7 +229,7 @@ func main() {
 }
 
 ```
-#### Stream response (only in GRPC/WS):
+#### Stream (only in GRPC/WS):
 ```go
 import (
     "github.com/bloXroute-Labs/serum-api/bxserum/provider"
@@ -296,4 +267,11 @@ func main() {
 }
 ```
 
-To run some working code samples, please visit the `examples` directory where you can see examples of code for each client.
+More code samples are provided in the `examples/` directory.
+
+**A quick note on market names:**
+You can use a couple of different formats, with restrictions: 
+1. `A/B` (only for GRPC/WS clients) --> `ETH/USDT`
+2. `A:B` --> `ETH:USDT`
+3. `A-B` --> `ETH-USDT`
+4. `AB` --> `ETHUSDT`

@@ -22,7 +22,6 @@ func main() {
 	callMarketsGRPC(g)
 	callOrderbookGRPC(g)
 	callOpenOrdersGRPC(g)
-	callTradesGRPC(g)
 	callTickersGRPC(g)
 	callOrderbookGRPCStream(g)
 	callTradesGRPCStream(g)
@@ -109,17 +108,6 @@ func callUnsettledGRPC(g *provider.GRPCClient) {
 
 	fmt.Println()
 
-}
-
-func callTradesGRPC(g *provider.GRPCClient) {
-	trades, err := g.GetTrades(context.Background(), "SOLUSDC", 5)
-	if err != nil {
-		log.Errorf("error with GetTrades request for SOLUSDC: %v", err)
-	} else {
-		fmt.Println(trades)
-	}
-
-	fmt.Println()
 }
 
 func callTickersGRPC(g *provider.GRPCClient) {
@@ -229,7 +217,7 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sig, err := g.SettleFunds(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
+	sig, err := g.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return

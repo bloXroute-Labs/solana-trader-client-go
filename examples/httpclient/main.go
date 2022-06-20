@@ -35,7 +35,7 @@ func main() {
 }
 
 func callMarketsHTTP() {
-	h, _ := provider.NewHTTPClient()
+	h := provider.NewHTTPClient()
 
 	// Unary response
 	markets, err := h.GetMarkets()
@@ -49,7 +49,7 @@ func callMarketsHTTP() {
 }
 
 func callOrderbookHTTP() {
-	h, _ := provider.NewHTTPClient()
+	h := provider.NewHTTPClient()
 
 	// Unary response
 	orderbook, err := h.GetOrderbook("ETH-USDT", 0)
@@ -80,7 +80,7 @@ func callOrderbookHTTP() {
 
 func callOpenOrdersHTTP() {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
@@ -95,7 +95,7 @@ func callOpenOrdersHTTP() {
 
 func callUnsettledHTTP() {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
@@ -109,7 +109,7 @@ func callUnsettledHTTP() {
 }
 
 func callTradesHTTP() {
-	h, _ := provider.NewHTTPClient()
+	h := provider.NewHTTPClient()
 
 	trades, err := h.GetTrades("SOLUSDT", 5)
 	if err != nil {
@@ -122,7 +122,7 @@ func callTradesHTTP() {
 }
 
 func callTickersHTTP() {
-	h, _ := provider.NewHTTPClient()
+	h := provider.NewHTTPClient()
 
 	tickers, err := h.GetTickers("SOLUSDT")
 	if err != nil {
@@ -146,7 +146,7 @@ const (
 
 func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	// generate a random clientOrderId for this order
@@ -173,10 +173,10 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	_, err = h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
+	_, err := h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
 		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client ID (%v)", err)
@@ -188,10 +188,10 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 func callPostSettleHTTP(ownerAddr, ooAddr string) {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	sig, err := h.SettleFunds(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
+	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return

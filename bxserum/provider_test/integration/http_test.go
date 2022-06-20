@@ -11,9 +11,7 @@ import (
 )
 
 func TestHTTPClient_Requests(t *testing.T) {
-	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
-	require.Nil(t, err)
-
+	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	opts.Timeout = 60 * time.Second
 	h := provider.NewHTTPClientWithOpts(nil, opts)
 

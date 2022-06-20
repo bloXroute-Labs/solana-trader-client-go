@@ -17,25 +17,19 @@ type HTTPClient struct {
 	baseURL    string
 	httpClient *http.Client
 	requestID  utils.RequestID
-	privateKey solana.PrivateKey
+	privateKey *solana.PrivateKey
 }
 
 // NewHTTPClient connects to Mainnet Serum API
-func NewHTTPClient() (*HTTPClient, error) {
-	opts, err := DefaultRPCOpts(MainnetSerumAPIHTTP)
-	if err != nil {
-		return nil, err
-	}
-	return NewHTTPClientWithOpts(nil, opts), nil
+func NewHTTPClient() *HTTPClient {
+	opts := DefaultRPCOpts(MainnetSerumAPIHTTP)
+	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPTestnet connects to Testnet Serum API
-func NewHTTPTestnet() (*HTTPClient, error) {
-	opts, err := DefaultRPCOpts(TestnetSerumAPIHTTP)
-	if err != nil {
-		return nil, err
-	}
-	return NewHTTPClientWithOpts(nil, opts), nil
+func NewHTTPTestnet() *HTTPClient {
+	opts := DefaultRPCOpts(TestnetSerumAPIHTTP)
+	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPClientWithOpts connects to custom Serum API (set client to nil to use default client)
@@ -119,7 +113,10 @@ func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettled
 
 // signAndSubmit signs the given transaction and submits it.
 func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error) {
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, h.privateKey)
+	if h.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -262,7 +259,7 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 	return h.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
-// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
+// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/settle", h.baseURL)
 	request := &pb.PostSettleRequest{
@@ -281,21 +278,12 @@ func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet
 	return &response, nil
 }
 
-// SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
-func (h *HTTPClient) SettleFunds(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (string, error) {
+// SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (h *HTTPClient) SubmitSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
 	order, err := h.PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
 	if err != nil {
 		return "", err
 	}
 
-	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, h.privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	response, err := h.PostSubmit(txBase64, false)
-	if err != nil {
-		return "", err
-	}
-	return response.Signature, nil
+	return h.signAndSubmit(order.Transaction, skipPreflight)
 }
