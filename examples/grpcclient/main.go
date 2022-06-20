@@ -22,7 +22,6 @@ func main() {
 	callMarketsGRPC(g)
 	callOrderbookGRPC(g)
 	callOpenOrdersGRPC(g)
-	callTradesGRPC(g)
 	callTickersGRPC(g)
 	callOrderbookGRPCStream(g)
 	callTradesGRPCStream(g)
@@ -109,17 +108,6 @@ func callUnsettledGRPC(g *provider.GRPCClient) {
 
 	fmt.Println()
 
-}
-
-func callTradesGRPC(g *provider.GRPCClient) {
-	trades, err := g.GetTrades(context.Background(), "SOLUSDC", 5)
-	if err != nil {
-		log.Errorf("error with GetTrades request for SOLUSDC: %v", err)
-	} else {
-		fmt.Println(trades)
-	}
-
-	fmt.Println()
 }
 
 func callTickersGRPC(g *provider.GRPCClient) {
