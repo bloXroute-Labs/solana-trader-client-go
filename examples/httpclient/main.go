@@ -191,7 +191,7 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) {
 	opts, err := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	sig, err := h.SettleFunds(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
+	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return

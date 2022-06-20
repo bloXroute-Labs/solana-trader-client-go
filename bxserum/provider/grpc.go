@@ -15,24 +15,18 @@ type GRPCClient struct {
 	pb.UnimplementedApiServer
 
 	apiClient  pb.ApiClient
-	privateKey solana.PrivateKey
+	privateKey *solana.PrivateKey
 }
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts, err := DefaultRPCOpts(MainnetSerumAPIGRPC)
-	if err != nil {
-		return nil, err
-	}
+	opts := DefaultRPCOpts(MainnetSerumAPIGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCTestnet connects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	opts, err := DefaultRPCOpts(TestnetSerumAPIGRPC)
-	if err != nil {
-		return nil, err
-	}
+	opts := DefaultRPCOpts(TestnetSerumAPIGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -100,7 +94,10 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 
 // signAndSubmit signs the given transaction and submits it.
 func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, g.privateKey)
+	if g.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, *g.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -141,8 +138,7 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 		return "", err
 	}
 
-	sig, err := g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
-	return sig, err
+	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -214,7 +210,7 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
-// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SettleFunds instead of this.
+// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (g *GRPCClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
 	return g.apiClient.PostSettle(ctx, &pb.PostSettleRequest{
 		OwnerAddress:      owner,
@@ -225,21 +221,12 @@ func (g *GRPCClient) PostSettle(ctx context.Context, owner, market, baseTokenWal
 	})
 }
 
-// SettleFunds builds a market SettleFunds transaction, signs it, and submits to the network.
-func (g *GRPCClient) SettleFunds(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (string, error) {
+// SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (g *GRPCClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
 	order, err := g.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
 	if err != nil {
 		return "", err
 	}
 
-	txBase64, err := transaction.SignTxWithPrivateKey(order.Transaction, g.privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	response, err := g.PostSubmit(ctx, txBase64, false)
-	if err != nil {
-		return "", err
-	}
-	return response.Signature, nil
+	return g.signAndSubmit(ctx, order.Transaction, skipPreflight)
 }
