@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	pb "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

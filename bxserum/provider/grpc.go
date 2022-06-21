@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

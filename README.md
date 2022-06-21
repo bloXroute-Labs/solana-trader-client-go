@@ -6,8 +6,7 @@ in Go.
 
 ## Installation
 ```
-go get github.com/bloXroute-Labs/serum-api/bxserum/provider
-go get github.com/bloXroute-Labs/serum-api/proto
+go get github.com/bloXroute-Labs/serum-client-go
 ```
 
 ## Usage
@@ -20,8 +19,8 @@ but any simple request/response calls are universally supported.
 package main
 
 import (
-    "github.com/bloXroute-Labs/serum-api/bxserum/provider"
-    pb "github.com/bloXroute-Labs/serum-api/proto"
+    "github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+    pb "github.com/bloXroute-Labs/serum-client-go/proto"
     "context"
 )
 

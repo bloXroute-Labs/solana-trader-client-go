@@ -6,22 +6,22 @@ import (
 	"os"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	api "github.com/bloXroute-Labs/serum-api/proto"
-	pb "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	api "github.com/bloXroute-Labs/serum-client-go/proto"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
 func main() {
-	w, err := provider.NewWSClientTestnet()
+	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
 	}
 	defer w.Close()
 
-	// unary
+	// informational requests
 	callMarketsWS(w)
 	callOrderbookWS(w)
 	callTradesWS(w)
@@ -29,10 +29,15 @@ func main() {
 	callTickersWS(w)
 	callUnsettledWS(w)
 
-	// streaming (use their own provider)
+	// streaming methods
 	callOrderbookWSStream()
 	callTradesWSStream()
 
+	// calls below this place an order and immediately cancel it
+	// you must specify:
+	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
+	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set")
@@ -52,7 +57,6 @@ func main() {
 	callPostSettleWS(w, ownerAddr, ooAddr)
 }
 
-// Unary response
 func callMarketsWS(w *provider.WSClient) {
 	fmt.Println("fetching markets...")
 
