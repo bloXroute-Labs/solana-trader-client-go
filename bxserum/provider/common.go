@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	"github.com/gagliardetto/solana-go"
 )
 

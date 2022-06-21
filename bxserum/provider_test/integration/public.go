@@ -2,7 +2,7 @@ package integration
 
 import (
 	"context"
-	pb "github.com/bloXroute-Labs/serum-api/proto"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"

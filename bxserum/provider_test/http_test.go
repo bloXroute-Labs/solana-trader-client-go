@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 )

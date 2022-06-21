@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/provider"
-	api "github.com/bloXroute-Labs/serum-api/proto"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	api "github.com/bloXroute-Labs/serum-client-go/proto"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bloXroute-Labs/serum-api/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-api/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-api/proto"
-	"github.com/bloXroute-Labs/serum-api/utils"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 )
 

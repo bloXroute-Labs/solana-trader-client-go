@@ -6,8 +6,7 @@ in Go.
 
 ## Installation
 ```
-go get github.com/bloXroute-Labs/serum-api/bxserum/provider
-go get github.com/bloXroute-Labs/serum-api/proto
+go get github.com/bloXroute-Labs/serum-client-go
 ```
 
 ## Usage

@@ -1,10 +1,9 @@
-module github.com/bloXroute-Labs/serum-api
+module github.com/bloXroute-Labs/serum-client-go
 
 go 1.18
 
 require (
 	github.com/gagliardetto/solana-go v1.4.0
-	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2
 	github.com/sirupsen/logrus v1.2.0
