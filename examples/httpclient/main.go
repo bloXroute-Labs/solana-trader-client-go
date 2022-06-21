@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	// informational methods
 	callMarketsHTTP()
 	callOrderbookHTTP()
 	callOpenOrdersHTTP()
@@ -20,6 +21,11 @@ func main() {
 	callTickersHTTP()
 	callUnsettledHTTP()
 
+	// calls below this place an order and immediately cancel it
+	// you must specify:
+	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
+	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set")
@@ -37,7 +43,6 @@ func main() {
 func callMarketsHTTP() {
 	h := provider.NewHTTPClient()
 
-	// Unary response
 	markets, err := h.GetMarkets()
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
@@ -51,7 +56,6 @@ func callMarketsHTTP() {
 func callOrderbookHTTP() {
 	h := provider.NewHTTPClient()
 
-	// Unary response
 	orderbook, err := h.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)

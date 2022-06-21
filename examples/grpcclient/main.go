@@ -13,12 +13,13 @@ import (
 )
 
 func main() {
-	g, err := provider.NewGRPCTestnet()
+	g, err := provider.NewGRPCClient()
 	if err != nil {
 		log.Fatalf("error dialing GRPC client: %v", err)
 		return
 	}
 
+	// informational methods
 	callMarketsGRPC(g)
 	callOrderbookGRPC(g)
 	callOpenOrdersGRPC(g)
@@ -27,6 +28,11 @@ func main() {
 	callTradesGRPCStream(g)
 	callUnsettledGRPC(g)
 
+	// calls below this place an order and immediately cancel it
+	// you must specify:
+	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
+	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set")
@@ -58,7 +64,6 @@ func callMarketsGRPC(g *provider.GRPCClient) {
 }
 
 func callOrderbookGRPC(g *provider.GRPCClient) {
-	// Unary response
 	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
@@ -175,7 +180,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// generate a random clientId for this order
+	// generate a random clientOrderID for this order
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID := rand.Uint64()
 
