@@ -17,8 +17,11 @@ but any simple request/response calls are universally supported.
 For any methods involving transaction creation you will need to provide your Solana private key. You can provide this 
 via the environment variable `PRIVATE_KEY`, or specify it via the provider configuration if you want to load it with
 some other mechanism. See samples for more information. As a general note on this: methods named `Post*` (e.g. 
-`PostOrder`) typically do not yet sign/submit the transaction, only return the raw unsigned transaction. To sign/submit,
-use the similarly named `Submit*` methods (e.g. `SubmitOrder`).
+`PostOrder`) typically do not sign/submit the transaction, only return the raw unsigned transaction. This isn't 
+very useful to most users (unless you want to write a signer in a different language), and you'll typically want the 
+similarly named `submit_*` methods (e.g. `submit_order`). These methods generate, sign, and submit the
+transaction all at once.
+
 
 ## Quickstart
 
