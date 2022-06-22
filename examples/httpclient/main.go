@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	api "github.com/bloXroute-Labs/serum-client-go/proto"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,12 +28,14 @@ func main() {
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set")
-		log.Infof("Skipping Place and Cancel Order examples")
+		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return
 	}
 
-	ooAddr, _ := os.LookupEnv("OPEN_ORDERS")
+	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+	}
 
 	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
@@ -142,8 +144,8 @@ const (
 	// SOL/USDC market
 	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 
-	orderSide   = api.Side_S_ASK
-	orderType   = api.OrderType_OT_LIMIT
+	orderSide   = pb.Side_S_ASK
+	orderType   = pb.OrderType_OT_LIMIT
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
@@ -162,8 +164,16 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 		OpenOrdersAddress: ooAddr,
 	}
 
+	// create order without actually submitting
+	response, err := h.PostOrder(ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatalf("failed to create order (%v)", err)
+	}
+	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+
+	// sign/submit transaction after creation
 	sig, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
-		orderSide, []api.OrderType{orderType}, orderAmount,
+		orderSide, []pb.OrderType{orderType}, orderAmount,
 		orderPrice, opts)
 	if err != nil {
 		log.Fatalf("failed to submit order (%v)", err)

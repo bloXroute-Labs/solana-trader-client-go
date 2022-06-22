@@ -19,7 +19,12 @@ func main() {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
 	}
-	defer w.Close()
+	defer func(w *provider.WSClient) {
+		err := w.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(w)
 
 	// informational requests
 	callMarketsWS(w)
@@ -40,16 +45,13 @@ func main() {
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set")
-		log.Infof("Skipping Place and Cancel Order examples")
+		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
 	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set")
-		log.Infof("Skipping Place and Cancel Order examples")
-		return
+		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
 	clientOrderID := callPlaceOrderWS(w, ownerAddr, ooAddr)
@@ -226,6 +228,14 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) uint64 {
 		OpenOrdersAddress: ooAddr,
 	}
 
+	// create order without actually submitting
+	response, err := w.PostOrder(ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatalf("failed to create order (%v)", err)
+	}
+	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+
+	// sign/submit transaction after creation
 	sig, err := w.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
 		orderSide, []api.OrderType{orderType}, orderAmount,
 		orderPrice, opts)

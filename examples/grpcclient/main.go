@@ -32,19 +32,16 @@ func main() {
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
-	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
+	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set")
-		log.Infof("Skipping Place and Cancel Order examples")
+		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
 	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set")
-		log.Infof("Skipping Place, Cancel and Settle examples")
-		return
+		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
 	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
@@ -189,6 +186,14 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 		OpenOrdersAddress: ooAddr,
 	}
 
+	// create order without actually submitting
+	response, err := g.PostOrder(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatalf("failed to create order (%v)", err)
+	}
+	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+
+	// sign/submit transaction after creation
 	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
 		orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
@@ -196,7 +201,6 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	}
 
 	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
-
 	return clientOrderID
 }
 
