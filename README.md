@@ -19,7 +19,7 @@ via the environment variable `PRIVATE_KEY`, or specify it via the provider confi
 some other mechanism. See samples for more information. As a general note on this: methods named `Post*` (e.g. 
 `PostOrder`) typically do not sign/submit the transaction, only return the raw unsigned transaction. This isn't 
 very useful to most users (unless you want to write a signer in a different language), and you'll typically want the 
-similarly named `submit_*` methods (e.g. `submit_order`). These methods generate, sign, and submit the
+similarly named `Submit*` methods (e.g. `SubmitOrder`). These methods generate, sign, and submit the
 transaction all at once.
 
 
