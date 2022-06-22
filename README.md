@@ -14,217 +14,58 @@ go get github.com/bloXroute-Labs/serum-client-go
 This library supports HTTP, websockets, and GRPC interfaces. You must use websockets or GRPC for any streaming methods, 
 but any simple request/response calls are universally supported.
 
-#### Request:
+For any methods involving transaction creation you will need to provide your Solana private key. You can provide this 
+via the environment variable `PRIVATE_KEY`, or specify it via the provider configuration if you want to load it with
+some other mechanism. See samples for more information. As a general note on this: methods named `Post*` (e.g. 
+`PostOrder`) typically do not yet sign/submit the transaction, only return the raw unsigned transaction. To sign/submit,
+use the similarly named `Submit*` methods (e.g. `SubmitOrder`).
+
+## Quickstart
+
+### Request sample:
+
 ```go
 package main
 
 import (
-    "github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-    pb "github.com/bloXroute-Labs/serum-client-go/proto"
-    "context"
+	"context"
+	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 )
 
 func main() {
-    // GPRC
-    g, err := provider.NewGRPCClient()
-    if err != nil {
-        // ...
-    }
-
-    orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT", 5) // in this case limit to 5 bids and asks. 0 for no limit
-    if err != nil {
-        // ...
-    }
-
-    trades, err := g.GetTrades(context.Background(), "ETH/USDT", 5) // in this case limit to 5 trades. 0 for no limit
-    if err != nil {
-        // ...
-    }
-
-    tickers, err := g.GetTickers(context.Background(), "ETH/USDT") 
-    if err != nil {
-        // ...
-    }
-    
-    openOrders, err := g.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv") 
-    if err != nil {
-        // ...
-    }
-	
-    unsettledFunds, err := g.GetUnsettled(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
-    if err != nil {
-        // ...
-    }
-	
-    supportedMarkets, err := g.GetMarkets(context.Background()) 
-    if err != nil {
-        // ...
-    }
-	
-    newOrderUnsignedTransaction, err := g.SubmitOrder(
-        context.Background(), 
-        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
-        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
-        "SOL/USDC", // market 
-        pb.Side_S_BID, // trade side (Bid/Ask)
-        []pb.OrderType{pb.OrderType_OT_LIMIT}, // OrderType
-        20, // order size
-        float64(0.124), // order price 
-        provider.PostOrderOpts{
-            ClientOrderID: 5000, // Client controlled OrderID
-        })
-	// The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
-    
-    if err != nil {
-        // ...
-    }
-
-    settleTransaction, err := g.SettleFunds(
-        context.Background(),
-        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
-        "SOL/USDC", // market 
-        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
-        "CbafjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjFun", // quote SPL token wallet address 
-        "neePfCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSJOKE", // open orders account address for this market
-        )
-    // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
-
+	// GPRC
+	g, err := provider.NewGRPCClient()
 	if err != nil {
-        // ...
-    }
+		panic(err)
+	}
 
+	orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT", 5) // in this case limit to 5 bids and asks. 0 for no limit
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(orderbook)
 
-    // HTTP
-    h := provider.NewHTTPClient()
-    orderbook, err := h.GetOrderbook("ETH-USDT") // do not use forward slashes for the HTTP market parameter
-    if err != nil {
-        // ...
-    }
-
-    trades, err := h.GetTrades(context.Background(), "ETH/USDT", 5) // in this case limit to 5 trades. 0 for no limit
-    if err != nil {
-        // ...
-    }
-
-    tickers, err := h.GetTickers(context.Background(), "ETH/USDT")
-    if err != nil {
-        // ...
-    }
-
-    openOrders, err := h.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
-    if err != nil {
-        // ...
-    }
+	// HTTP
+	h := provider.NewHTTPClient()
+	tickers, err := h.GetTickers(context.Background(), "ETHUSDT")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(tickers)
 	
-    unsettledFunds, err := h.GetUnsettled(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
-    if err != nil {
-        // ...
-    }
-
-    supportedMarkets, err := h.GetMarkets(context.Background())
-    if err != nil {
-        // ...
-    }
-
-    newOrderUnsignedTransaction, err := h.SubmitOrder(
-        context.Background(),
-        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
-        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
-        "SOL/USDC", // market 
-        pb.Side_S_BID, // trade side (Bid/Ask)
-        []pb.OrderType{pb.OrderType_OT_LIMIT}, // OrderType
-        20, // order size
-        float64(0.124), // order price 
-        provider.PostOrderOpts{
-            ClientOrderID: 5000, // Client controlled OrderID
-        }) 
-    // The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
-    if err != nil {
-        // ...
-    }
-
-    settleTransaction, err := h.SettleFunds(
-        context.Background(),
-        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
-        "SOL/USDC", // market 
-        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
-        "CbafjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjFun", // quote SPL token wallet address 
-        "neePfCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSJOKE", // open orders account address for this market
-    )
-    // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
-
-    if err != nil {
-    // ...
-    }
-    
-    
-    // WS
-    w, err := provider.NewWSClient()
-    if err != nil {
-        // ...
-    }
-
-    orderbook, err := w.GetOrderbook("ETH/USDT")
-    if err != nil {
-        // ...
-    }
-
-    trades, err := w.GetTrades(context.Background(), "ETH/USDT", 5) // in this case limit to 5 trades. 0 for no limit
-    if err != nil {
-        // ...
-    }
-
-    tickers, err := w.GetTickers(context.Background(), "ETH/USDT")
-    if err != nil {
-        // ...
-    }
-
-    openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
-    if err != nil {
-        // ...
-    }
-
-    unsettledFunds, err := w.GetUnsettled(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
-    if err != nil {
-        // ...
-    }
-
-    supportedMarkets, err := w.GetMarkets(context.Background())
-    if err != nil {
-        // ...
-    }
-
-    newOrderUnsignedTransaction, err := w.SubmitOrder(
-        context.Background(),
-        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
-        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // SPL token wallet address 
-        "SOL/USDC", // market 
-        pb.Side_S_BID, // trade side (Bid/Ask)
-        []pb.OrderType{pb.OrderType_OT_LIMIT}, // OrderType
-        20, // order size
-        float64(0.124), // order price 
-        provider.PostOrderOpts{
-            ClientOrderID: 5000, // Client controlled OrderID
-        })
-        // The SubmitOrder relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
-
-    if err != nil {
-        // ...
-    }
-
-    settleTransaction, err := w.SettleFunds(
-        context.Background(),
-        "BraJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgC", //owner solana wallet address
-        "SOL/USDC", // market 
-        "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", // base SPL token wallet address 
-        "CbafjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjFun", // quote SPL token wallet address 
-        "neePfCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSJOKE", // open orders account address for this market
-        )
-    // Settle relies on the PRIVATE_KEY env variable holding your wallet's private key, to sign the transaction
-
-    if err != nil {
-        // ...
-    }
+	// WS
+	w, err := provider.NewWSClient()
+	if err != nil {
+		panic(err)
+	}
+	// note that open orders is a slow function call
+	openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(openOrders)
 }
 
 ```
@@ -237,31 +78,22 @@ import (
 )
 
 func main() {
-    
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()
 
     g, err := provider.NewGRPCClient() // replace this with `NewWSClient()` to use WebSockets
     if err != nil {
-        // ...
+        panic(err)
     }
 	
     orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
     err = g.GetOrderbookStream(ctx, "SOL/USDT", 5,  orderbookChan)
     if err != nil {
-        // ...
+        panic(err)
     }
-    for {
+    for i := 0; i < 3; i++ {
         orderbook := <-orderbookChan
-    }
-
-    tradesChan := make(chan *pb.GetTradesStreamResponse)
-    err = g.GetTradesStream(ctx, "SOL/USDT", 5, tradesChan)
-    if err != nil {
-        // ...
-    }
-    for {
-        trades := <-tradesChan
+		fmt.Println(orderbook)
     }
 }
 ```
