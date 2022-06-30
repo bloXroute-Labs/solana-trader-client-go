@@ -44,3 +44,18 @@ func testGetOrderbookStream(
 	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0) // #2. cleaned up code here
 	assert.Equal(t, "provided market name/address was not found", errMessage)
 }
+
+func testGetOrderStatusStream(t *testing.T, connectFnErr func(ctx context.Context, market string, ownerAddress string) string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// unknown market
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
+	errMessage := connectFnErr(ctx, "market-doesnt-exist", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5") // #2. cleaned up code here
+	assert.Equal(t, "provided market name/address was not found", errMessage)
+
+	errMessage = connectFnErr(ctx, "SOLUSDC", "abcd")
+	assert.Equal(t, "invalid len base58 public key string", errMessage)
+}

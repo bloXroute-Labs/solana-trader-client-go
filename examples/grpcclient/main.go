@@ -44,8 +44,45 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
+	orderLifecycleTest(g, ownerAddr, ooAddr)
+}
+
+func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
+
+	ch := make(chan *pb.GetOrderStatusStreamResponse)
+	err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+	if err != nil {
+		log.Errorf("error getting order status stream %v", err)
+	}
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
+			log.Infof("order went to orderbook (`OPEN`) successfully")
+		} else {
+			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after placing order")
+	}
+
 	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
+			log.Infof("order cancelled (`CANCELLED`) successfully")
+		} else {
+			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after cancelling order")
+	}
+
 	callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 

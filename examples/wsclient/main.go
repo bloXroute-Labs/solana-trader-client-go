@@ -40,7 +40,7 @@ func main() {
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
+	//	- PRIVATE_KEY (by default loaded during provider.NewWSClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
@@ -54,8 +54,45 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
+	orderLifecycleTest(w, ownerAddr, ooAddr)
+}
+
+func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	clientOrderID := callPlaceOrderWS(w, ownerAddr, ooAddr)
+
+	ch := make(chan *pb.GetOrderStatusStreamResponse)
+	err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+	if err != nil {
+		log.Errorf("error getting order status stream %v", err)
+	}
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
+			log.Infof("order went to orderbook (`OPEN`) successfully")
+		} else {
+			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after placing order")
+	}
+
 	callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
+			log.Infof("order cancelled (`CANCELLED`) successfully")
+		} else {
+			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after cancelling order")
+	}
+
 	callPostSettleWS(w, ownerAddr, ooAddr)
 }
 

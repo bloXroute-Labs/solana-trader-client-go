@@ -104,24 +104,42 @@ func TestGRPCClient_Requests(t *testing.T) {
 
 // Stream response
 func TestGRPCClient_Streams(t *testing.T) {
-	g, err := provider.NewGRPCClient()
+	g, err := provider.NewGRPCClientWithOpts(provider.DefaultRPCOpts("44.203.225.191:1810"))
 	require.Nil(t, err)
 
-	testGetOrderbookStream(
-		t,
-		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
-			err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
-			require.Nil(t, err)
-		},
-		func(ctx context.Context, market string, limit uint32) string {
-			orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
-			err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
-			require.NotNil(t, err)
+	t.Run("orderbook stream", func(t *testing.T) {
+		testGetOrderbookStream(
+			t,
+			func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
+				err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
+				require.Nil(t, err)
+			},
+			func(ctx context.Context, market string, limit uint32) string {
+				orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
+				err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
+				require.NotNil(t, err)
 
-			grpcStatus, ok := status.FromError(err)
-			require.True(t, ok)
+				grpcStatus, ok := status.FromError(err)
+				require.True(t, ok)
 
-			return grpcStatus.Message()
-		},
-	)
+				return grpcStatus.Message()
+			},
+		)
+	})
+
+	t.Run("order status stream", func(t *testing.T) {
+		testGetOrderStatusStream(
+			t,
+			func(ctx context.Context, market string, ownerAddress string) string {
+				orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
+				err := g.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
+				require.NotNil(t, err)
+
+				grpcStatus, ok := status.FromError(err)
+				require.True(t, ok)
+
+				return grpcStatus.Message()
+			},
+		)
+	})
 }
