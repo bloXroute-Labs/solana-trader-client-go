@@ -41,6 +41,8 @@ func testGetOrderbookStream(
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0) // #2. cleaned up code here
-	assert.Equal(t, "provided market name/address was not found", errMessage)
+	if connectFnErr != nil {
+		errMessage := connectFnErr(ctx, "market-doesnt-exist", 0) // #2. cleaned up code here
+		assert.Equal(t, "provided market name/address was not found", errMessage)
+	}
 }
