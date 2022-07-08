@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"google.golang.org/grpc/status"
 	"strings"
 	"testing"
 
@@ -102,20 +101,17 @@ func TestWSClient_Requests(t *testing.T) {
 }
 
 func TestGetOrderStatusStream(t *testing.T) {
-	g, err := provider.NewGRPCClient()
+	w, err := provider.NewWSClient()
 	require.Nil(t, err)
 
 	testGetOrderStatusStream(
 		t,
 		func(ctx context.Context, market string, ownerAddress string) string {
 			orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
-			err := g.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
+			err := w.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
 			require.NotNil(t, err)
 
-			grpcStatus, ok := status.FromError(err)
-			require.True(t, ok)
-
-			return grpcStatus.Message()
+			return strings.Trim(err.Error(), "\"")
 		},
 	)
 }
