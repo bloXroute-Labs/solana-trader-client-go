@@ -35,7 +35,7 @@ func main() {
 	callUnsettledWS(w)
 	callAccountBalanceWS(w)
 
-	// streaming methodsß
+	// streaming methods
 	callOrderbookWSStream()
 	callFilteredOrderbookWSStream()
 	callTradesWSStream()
@@ -260,7 +260,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	go func() {
-		secondWSClient, err := provider.NewWSClient()
+		secondWSClient, err := provider.NewWSClient() // TODO use same client when WS streams are seperated
 		if err != nil {
 			log.Fatalf("error dialing WS client: %v", err)
 		}
