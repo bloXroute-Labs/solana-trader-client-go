@@ -79,7 +79,6 @@ service Api {
 
   // account endpoints
   rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse) {
-    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       get: "/api/v1/account/balance"
     };
@@ -187,6 +186,7 @@ service Api {
   }
 
   rpc GetOrderByID(GetOrderByIDRequest) returns (GetOrderByIDResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       get: "/api/v1/trade/orderbyid/{orderID}"
     };
@@ -215,6 +215,12 @@ service Api {
     };
   }
 
+  rpc GetFilteredOrderbooksStream(GetFilteredOrderbooksRequest) returns (stream GetOrderbooksStreamResponse) {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "Trade";
+    };
+  }
+
   rpc GetTickersStream(GetTickersRequest) returns (stream GetTickersStreamResponse) {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       tags: "Trade";
@@ -228,6 +234,12 @@ service Api {
   }
 
   rpc GetTradesStream(GetTradesRequest) returns (stream GetTradesStreamResponse) {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "Trade";
+    };
+  }
+
+  rpc GetOrderStatusStream(GetOrderStatusStreamRequest) returns (stream GetOrderStatusStreamResponse) {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       tags: "Trade";
     };
@@ -300,6 +312,11 @@ message GetOrderBookRequest {
   uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }
 
+message GetFilteredOrderbooksRequest {
+  repeated string markets = 1;
+  uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
+}
+
 message GetOrderbookResponse {
   string market = 1;
   string marketAddress = 2;
@@ -325,6 +342,8 @@ message Trade {
   Side side = 1;
   double size = 2;
   double price = 3;
+  string orderID = 4;
+  bool isMaker = 5;
 }
 
 message GetServerTimeRequest {}
@@ -333,7 +352,9 @@ message GetServerTimeResponse {
   string timestamp = 1;
 }
 
-message GetAccountBalanceRequest {}
+message GetAccountBalanceRequest {
+  string ownerAddress = 1 [(google.api.field_behavior) = REQUIRED];
+}
 
 message GetAccountBalanceResponse {
   repeated TokenBalance tokens = 1;
@@ -341,7 +362,10 @@ message GetAccountBalanceResponse {
 
 message TokenBalance {
   string symbol = 1;
-  double amount = 2;
+  string address = 2;
+  double walletAmount = 3;
+  double unsettledAmount = 4;
+  double openOrdersAmount = 5;
 }
 
 message PostOrderRequest {
@@ -436,9 +460,8 @@ enum OrderStatus {
   OS_UNKNOWN = 0;
   OS_OPEN = 1;
   OS_PARTIAL_FILL = 2;
-  OS_FILLED = 3;
-  OS_CANCELLED = 4;
-  OS_PENDING = 5;
+  OS_CANCELLED = 3;
+  OS_FILLED = 4;
 }
 
 enum Direction {
@@ -460,6 +483,24 @@ message Order {
   google.protobuf.Timestamp createdAt = 7;
   string clientOrderID = 8;
   string openOrderAccount = 9;
+}
+
+message GetOrderStatusStreamRequest {
+  string market = 1;
+  string ownerAddress = 2;
+}
+
+message GetOrderStatusStreamResponse {
+  int64 blockHeight = 1;
+  GetOrderStatusResponse orderInfo = 2;
+}
+
+message GetOrderStatusResponse {
+  string market = 1;
+  string openOrderAddress = 2;
+  string orderID = 3;
+  uint64 clientOrderID = 4;
+  OrderStatus orderStatus = 5;
 }
 
 message PostSubmitRequest {

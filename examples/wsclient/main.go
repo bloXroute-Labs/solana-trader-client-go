@@ -33,9 +33,11 @@ func main() {
 	callOpenOrdersWS(w)
 	callTickersWS(w)
 	callUnsettledWS(w)
+	callAccountBalanceWS(w)
 
-	// streaming methods
+	// streaming methodsß
 	callOrderbookWSStream()
+	callFilteredOrderbookWSStream()
 	callTradesWSStream()
 
 	// calls below this place an order and immediately cancel it
@@ -142,6 +144,19 @@ func callUnsettledWS(w *provider.WSClient) {
 	fmt.Println()
 }
 
+func callAccountBalanceWS(w *provider.WSClient) {
+	fmt.Println("fetching balances...")
+
+	response, err := w.GetAccountBalance("AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	if err != nil {
+		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
+	} else {
+		fmt.Println(response)
+	}
+
+	fmt.Println()
+}
+
 func callTickersWS(w *provider.WSClient) {
 	fmt.Println("fetching tickers...")
 
@@ -173,6 +188,31 @@ func callOrderbookWSStream() {
 	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream request for SOL/USDC: %v", err)
+	} else {
+		for i := 1; i <= 5; i++ {
+			<-orderbookChan
+			fmt.Printf("response %v received\n", i)
+		}
+	}
+}
+
+func callFilteredOrderbookWSStream() {
+	fmt.Println("starting GetFilteredOrderbook stream")
+
+	w, err := provider.NewWSClientTestnet()
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
+		return
+	}
+	defer w.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
+
+	err = w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, orderbookChan)
+	if err != nil {
+		log.Errorf("error with GetFilteredOrderbookStream request for SOL/USDC: %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
 			<-orderbookChan
