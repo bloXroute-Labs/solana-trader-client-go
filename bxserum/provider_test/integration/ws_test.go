@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"google.golang.org/grpc/status"
+	"strings"
 	"testing"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
@@ -94,9 +96,28 @@ func TestWSClient_Requests(t *testing.T) {
 				_, err := w.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.NotNil(t, err)
 
-				return err.Error()
+				return strings.Trim(err.Error(), "\"")
 			})
 	})
+}
+
+func TestGetOrderStatusStream(t *testing.T) {
+	g, err := provider.NewGRPCClient()
+	require.Nil(t, err)
+
+	testGetOrderStatusStream(
+		t,
+		func(ctx context.Context, market string, ownerAddress string) string {
+			orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
+			err := g.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
+			require.NotNil(t, err)
+
+			grpcStatus, ok := status.FromError(err)
+			require.True(t, ok)
+
+			return grpcStatus.Message()
+		},
+	)
 }
 
 // TODO separate WS streams
