@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
@@ -72,6 +73,16 @@ func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit u
 	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market, outputChan)
 }
 
+// GetFilteredOrderbooksStream subscribes to a stream for changes to the requested markets (per supplied filter) updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (g *GRPCClient) GetFilteredOrderbooksStream(ctx context.Context, markets []string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
+	stream, err := g.apiClient.GetFilteredOrderbooksStream(ctx, &pb.GetFilteredOrderbooksRequest{Markets: markets, Limit: limit})
+	if err != nil {
+		return err
+	}
+
+	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets), outputChan)
+}
+
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
 func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, outputChan chan *pb.GetOrderStatusStreamResponse) error {
 	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
@@ -81,7 +92,6 @@ func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddr
 
 	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market, outputChan)
 }
-
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTickersResponse, error) {
 	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
@@ -100,6 +110,11 @@ func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, owner stri
 // GetMarkets returns the list of all available named markets
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
+}
+
+// GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
+func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
+	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
 // signAndSubmit signs the given transaction and submits it.

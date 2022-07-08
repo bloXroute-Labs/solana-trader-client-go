@@ -75,6 +75,17 @@ func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit 
 	return connections.WSStream(ctx, w.conn, request, orderbookChan, &response)
 }
 
+// GetFilteredOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetFilteredOrderbooksStream(ctx context.Context, markets []string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
+	request, err := w.jsonRPCRequest("GetFilteredOrderbooksStream", map[string]interface{}{"markets": markets, "limit": limit})
+	if err != nil {
+		return err
+	}
+
+	var response pb.GetOrderbooksStreamResponse
+	return connections.WSStream(ctx, w.conn, request, orderbookChan, &response)
+}
+
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
 	request, err := w.jsonRPCRequest("GetTrades", map[string]interface{}{"market": market, "limit": limit})
@@ -150,6 +161,21 @@ func (w *WSClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledRe
 	}
 
 	var response pb.GetUnsettledResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetAccountBalance returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (w *WSClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceResponse, error) {
+	request, err := w.jsonRPCRequest("GetAccountBalance", map[string]interface{}{"ownerAddress": owner})
+	if err != nil {
+		return nil, err
+	}
+
+	var response pb.GetAccountBalanceResponse
 	err = connections.WSRequest(w.conn, request, &response)
 	if err != nil {
 		return nil, err
