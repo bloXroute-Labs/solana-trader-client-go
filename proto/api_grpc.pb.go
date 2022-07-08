@@ -39,7 +39,7 @@ type ApiClient interface {
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
-	FilterOrderbooksStream(ctx context.Context, in *FilterOrderbookRequest, opts ...grpc.CallOption) (Api_FilterOrderbooksStreamClient, error)
+	GetFilteredOrderbooksStream(ctx context.Context, in *GetFilteredOrderbooksRequest, opts ...grpc.CallOption) (Api_GetFilteredOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
 	GetMarketDepthStream(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (Api_GetMarketDepthStreamClient, error)
 	GetTradesStream(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (Api_GetTradesStreamClient, error)
@@ -239,12 +239,12 @@ func (x *apiGetOrderbooksStreamClient) Recv() (*GetOrderbooksStreamResponse, err
 	return m, nil
 }
 
-func (c *apiClient) FilterOrderbooksStream(ctx context.Context, in *FilterOrderbookRequest, opts ...grpc.CallOption) (Api_FilterOrderbooksStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[1], "/api.Api/FilterOrderbooksStream", opts...)
+func (c *apiClient) GetFilteredOrderbooksStream(ctx context.Context, in *GetFilteredOrderbooksRequest, opts ...grpc.CallOption) (Api_GetFilteredOrderbooksStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[1], "/api.Api/GetFilteredOrderbooksStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &apiFilterOrderbooksStreamClient{stream}
+	x := &apiGetFilteredOrderbooksStreamClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -254,16 +254,16 @@ func (c *apiClient) FilterOrderbooksStream(ctx context.Context, in *FilterOrderb
 	return x, nil
 }
 
-type Api_FilterOrderbooksStreamClient interface {
+type Api_GetFilteredOrderbooksStreamClient interface {
 	Recv() (*GetOrderbooksStreamResponse, error)
 	grpc.ClientStream
 }
 
-type apiFilterOrderbooksStreamClient struct {
+type apiGetFilteredOrderbooksStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *apiFilterOrderbooksStreamClient) Recv() (*GetOrderbooksStreamResponse, error) {
+func (x *apiGetFilteredOrderbooksStreamClient) Recv() (*GetOrderbooksStreamResponse, error) {
 	m := new(GetOrderbooksStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -424,7 +424,7 @@ type ApiServer interface {
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(*GetOrderBookRequest, Api_GetOrderbooksStreamServer) error
-	FilterOrderbooksStream(*FilterOrderbookRequest, Api_FilterOrderbooksStreamServer) error
+	GetFilteredOrderbooksStream(*GetFilteredOrderbooksRequest, Api_GetFilteredOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
 	GetMarketDepthStream(*GetMarketsRequest, Api_GetMarketDepthStreamServer) error
 	GetTradesStream(*GetTradesRequest, Api_GetTradesStreamServer) error
@@ -490,8 +490,8 @@ func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest
 func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderBookRequest, Api_GetOrderbooksStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderbooksStream not implemented")
 }
-func (UnimplementedApiServer) FilterOrderbooksStream(*FilterOrderbookRequest, Api_FilterOrderbooksStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method FilterOrderbooksStream not implemented")
+func (UnimplementedApiServer) GetFilteredOrderbooksStream(*GetFilteredOrderbooksRequest, Api_GetFilteredOrderbooksStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetFilteredOrderbooksStream not implemented")
 }
 func (UnimplementedApiServer) GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetTickersStream not implemented")
@@ -845,24 +845,24 @@ func (x *apiGetOrderbooksStreamServer) Send(m *GetOrderbooksStreamResponse) erro
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Api_FilterOrderbooksStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(FilterOrderbookRequest)
+func _Api_GetFilteredOrderbooksStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetFilteredOrderbooksRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ApiServer).FilterOrderbooksStream(m, &apiFilterOrderbooksStreamServer{stream})
+	return srv.(ApiServer).GetFilteredOrderbooksStream(m, &apiGetFilteredOrderbooksStreamServer{stream})
 }
 
-type Api_FilterOrderbooksStreamServer interface {
+type Api_GetFilteredOrderbooksStreamServer interface {
 	Send(*GetOrderbooksStreamResponse) error
 	grpc.ServerStream
 }
 
-type apiFilterOrderbooksStreamServer struct {
+type apiGetFilteredOrderbooksStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *apiFilterOrderbooksStreamServer) Send(m *GetOrderbooksStreamResponse) error {
+func (x *apiGetFilteredOrderbooksStreamServer) Send(m *GetOrderbooksStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -1033,8 +1033,8 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "FilterOrderbooksStream",
-			Handler:       _Api_FilterOrderbooksStream_Handler,
+			StreamName:    "GetFilteredOrderbooksStream",
+			Handler:       _Api_GetFilteredOrderbooksStream_Handler,
 			ServerStreams: true,
 		},
 		{
