@@ -122,12 +122,12 @@ func TestWSClient_Streams(t *testing.T) {
 	testGetOrderbookStream(
 		t,
 		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbookStreamResponse) {
-			err := w.GetOrderbookStream(ctx, market, limit, orderbookCh)
+			err := w.GetOrderbooksStream(ctx, market, limit, orderbookCh)
 			require.Nil(t, err)
 		},
 		func(ctx context.Context, market string, limit uint32) string {
 			orderbookCh := make(chan *pb.GetOrderbookStreamResponse)
-			err := w.GetOrderbookStream(ctx, market, limit, orderbookCh)
+			err := w.GetOrderbooksStream(ctx, market, limit, orderbookCh)
 			require.NotNil(t, err)
 			require.Equal(t, "\"provided market name/address was not found\"", err.Error())
 

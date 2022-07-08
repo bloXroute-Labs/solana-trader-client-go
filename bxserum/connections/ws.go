@@ -5,84 +5,227 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"strings"
+	"sync"
 )
 
-func WSRequest[T proto.Message](conn *websocket.Conn, request []byte, response T) error {
-	err := sendWS(conn, request)
-	if err != nil {
-		return err
-	}
+const subscriptionBuffer = 1000
 
-	return recvWS[T](conn, response)
+type subscription struct {
+	ch     chan json.RawMessage
+	cancel context.CancelFunc
 }
 
-func WSStream[T proto.Message](ctx context.Context, conn *websocket.Conn, request []byte, responseChan chan T, response T) error {
-	err := sendWS(conn, request)
+type WS struct {
+	requestID utils.RequestID
+	conn      *websocket.Conn
+	ctx       context.Context
+	cancel    context.CancelFunc
+
+	requestMap map[uint64]chan jsonrpc2.Response
+
+	subscriptionM   sync.Mutex
+	subscriptionMap map[string]subscription
+}
+
+func NewWS(endpoint string) (*WS, error) {
+	conn, _, err := websocket.DefaultDialer.Dial(endpoint, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = recvWS[T](conn, response)
-	if err != nil {
-		return err
+	ctx, cancel := context.WithCancel(context.Background())
+	ws := &WS{
+		requestID: utils.NewRequestID(),
+		conn:      conn,
+		ctx:       ctx,
+		cancel:    cancel,
 	}
+	go ws.readLoop()
+	return ws, nil
+}
 
-	go func(response T, responseChan chan T, conn *websocket.Conn) {
-		responseChan <- response
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				err = recvWS[T](conn, response)
-				if err != nil {
-					break
-				}
-
-				responseChan <- response
-			}
+func (w *WS) readLoop() {
+	for {
+		_, msg, err := w.conn.ReadMessage()
+		if err != nil {
+			w.cancel()
+			return
 		}
-	}(response, responseChan, conn)
 
-	return nil
-}
+		// try JSONRPC response format first
+		var response jsonrpc2.Response
+		err = json.Unmarshal(msg, &response)
+		if err == nil {
+			w.processRPCResponse(response)
+			continue
+		}
 
-func sendWS(conn *websocket.Conn, request []byte) error {
-	if err := conn.WriteMessage(websocket.TextMessage, request); err != nil {
-		return fmt.Errorf("error with sending message: %w", err)
+		// if not, try subscription update
+		var update jsonrpc2.Request
+		err = json.Unmarshal(msg, &update)
+		if err == nil {
+			w.processSubscriptionUpdate(update)
+			continue
+		}
+
+		// TODO: no message format works, not good!
+		w.cancel()
+		return
 	}
-	return nil
 }
 
-func recvWS[T proto.Message](conn *websocket.Conn, result T) error {
-	_, msg, err := conn.ReadMessage()
+func (w *WS) processRPCResponse(response jsonrpc2.Response) {
+	requestID := response.ID.Num
+	responseCh, ok := w.requestMap[requestID]
+	if !ok {
+		// TODO what do?
+		return
+	}
+	// TODO special handling for subscription responses?
+	responseCh <- response
+}
+
+func (w *WS) processSubscriptionUpdate(update jsonrpc2.Request) {
+	w.subscriptionM.Lock()
+	defer w.subscriptionM.Unlock()
+
+	var f feedUpdate
+	err := json.Unmarshal(*update.Params, &f)
 	if err != nil {
-		return fmt.Errorf("error reading WS response: %w", err)
+		return
 	}
 
-	// extract the result
-	var resp jsonrpc2.Response
-	if err = json.Unmarshal(msg, &resp); err != nil {
-		return fmt.Errorf("error unmarshalling JSON response: %w", err)
+	subscription, ok := w.subscriptionMap[f.SubscriptionID]
+	if !ok {
+		// TODO
+		return
 	}
-	if resp.Error != nil {
-		m, err := json.Marshal(resp.Error.Data)
+
+	subscription.ch <- f.Result
+}
+
+func (w *WS) Request(method string, request proto.Message, response proto.Message) error {
+	requestID := w.requestID.Next()
+	rpcRequest := jsonrpc2.Request{
+		Method: method,
+		ID:     jsonrpc2.ID{Num: requestID},
+	}
+	params, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+	rawParams := json.RawMessage(params)
+	rpcRequest.Params = &rawParams
+
+	rpcResponse, err := w.request(rpcRequest)
+	if err != nil {
+		return err
+	}
+
+	if rpcResponse.Error != nil {
+		m, err := json.Marshal(rpcResponse.Error.Data)
 		if err != nil {
 			return err
 		}
-
-		return errors.New(strings.Trim(string(m), "\"")) // Converting from json.RawMessage into a string adds extra double quotes
+		return errors.New(string(m))
 	}
 
-	if err = protojson.Unmarshal(*resp.Result, result); err != nil {
-		return fmt.Errorf("error unmarshalling message of type %T: %w", result, err)
+	if err = protojson.Unmarshal(*rpcRequest.Params, response); err != nil {
+		return fmt.Errorf("error unmarshalling message of type %T: %w", response, err)
 	}
-
 	return nil
+}
+
+func (w *WS) request(request jsonrpc2.Request) (jsonrpc2.Response, error) {
+	b, err := json.Marshal(request)
+	if err != nil {
+		return jsonrpc2.Response{}, err
+	}
+
+	// setup listener for next request ID that matches response
+	responseCh := make(chan jsonrpc2.Response)
+	w.requestMap[request.ID.Num] = responseCh
+	defer func() {
+		delete(w.requestMap, request.ID.Num)
+	}()
+
+	err = w.conn.WriteMessage(websocket.TextMessage, b)
+	if err != nil {
+		return jsonrpc2.Response{}, fmt.Errorf("error with sending message: %w", err)
+	}
+
+	select {
+	case response := <-responseCh:
+		return response, nil
+	case <-w.ctx.Done():
+		// connection closed
+		return jsonrpc2.Response{}, errors.New("websocket connection was closed before response received")
+	}
+}
+
+func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, streamParams proto.Message, resultInitFn func() T) (func() (T, error), error) {
+	streamParamsB, err := proto.Marshal(streamParams)
+	if err != nil {
+		return nil, err
+	}
+	params := subscribeParams{
+		StreamName: streamName,
+		StreamOpts: streamParamsB,
+	}
+	paramsB, err := json.Marshal(params)
+	if err != nil {
+		return nil, err
+	}
+	rawParams := json.RawMessage(paramsB)
+	rpcRequest := jsonrpc2.Request{
+		Method: subscribeMethod,
+		ID:     jsonrpc2.ID{Num: w.requestID.Next()},
+		Params: &rawParams,
+	}
+
+	rpcResponse, err := w.request(rpcRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	var subscriptionID string
+	err = json.Unmarshal(*rpcResponse.Result, &subscriptionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// todo probably causes a deadlock...
+	w.subscriptionM.Lock()
+	defer w.subscriptionM.Unlock()
+
+	ch := make(chan json.RawMessage, subscriptionBuffer)
+	streamCtx, streamCancel := context.WithCancel(ctx)
+	w.subscriptionMap[subscriptionID] = subscription{
+		ch:     ch,
+		cancel: streamCancel,
+	}
+
+	return func() (T, error) {
+		select {
+		case b := <-ch:
+			v := resultInitFn()
+			err := proto.Unmarshal(b, v)
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		case <-streamCtx.Done():
+			return nil, errors.New("channel closed")
+		}
+	}, nil
+}
+
+func (w *WS) Close() error {
+	w.cancel()
+	return w.conn.Close()
 }

@@ -183,9 +183,9 @@ func callOrderbookWSStream() {
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err = w.GetOrderbooksStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
-		log.Errorf("error with GetOrderbookStream request for SOL/USDC: %v", err)
+		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
 			<-orderbookChan
@@ -355,10 +355,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) {
 	fmt.Println("starting post settle")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sig, err := w.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
+	sig, err := w.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return

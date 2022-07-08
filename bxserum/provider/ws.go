@@ -2,22 +2,18 @@ package provider
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
-	"github.com/gorilla/websocket"
-	"github.com/sourcegraph/jsonrpc2"
 )
 
 type WSClient struct {
 	pb.UnimplementedApiServer
 
 	addr       string
-	conn       *websocket.Conn
+	conn       *connections.WS
 	requestID  utils.RequestID
 	privateKey *solana.PrivateKey
 }
@@ -36,7 +32,7 @@ func NewWSClientTestnet() (*WSClient, error) {
 
 // NewWSClientWithOpts connects to custom Serum API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
-	conn, _, err := websocket.DefaultDialer.Dial(opts.Endpoint, nil)
+	conn, err := connections.NewWS(opts.Endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -51,28 +47,37 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (w *WSClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
-	request, err := w.jsonRPCRequest("GetOrderbook", map[string]interface{}{"market": market, "limit": limit})
-	if err != nil {
-		return nil, err
-	}
-
 	var response pb.GetOrderbookResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("GetOrderbook", &pb.GetOrderBookRequest{Market: market, Limit: limit}, &response)
 	if err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-// GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
-	request, err := w.jsonRPCRequest("GetOrderbooksStream", map[string]interface{}{"market": market, "limit": limit})
+// GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
+	generator, err := connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderBookRequest{
+		Market: market,
+		Limit:  limit,
+	}, func() *pb.GetOrderbooksStreamResponse {
+		var v pb.GetOrderbooksStreamResponse
+		return &v
+	})
 	if err != nil {
 		return err
 	}
 
-	var response pb.GetOrderbooksStreamResponse
-	return connections.WSStream(ctx, w.conn, request, orderbookChan, &response)
+	go func() {
+		result, err := generator()
+		if err != nil {
+			close(orderbookChan)
+			return
+		}
+		orderbookChan <- result
+	}()
+
+	return nil
 }
 
 // GetFilteredOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
@@ -88,13 +93,8 @@ func (w *WSClient) GetFilteredOrderbooksStream(ctx context.Context, markets []st
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
-	request, err := w.jsonRPCRequest("GetTrades", map[string]interface{}{"market": market, "limit": limit})
-	if err != nil {
-		return nil, err
-	}
-
 	var response pb.GetTradesResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("GetTrades", &pb.GetTradesRequest{Market: market, Limit: limit}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +103,27 @@ func (w *WSClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, tradesChan chan *pb.GetTradesStreamResponse) error {
-	request, err := w.jsonRPCRequest("GetTradesStream", map[string]interface{}{"market": market, "limit": limit})
+	generator, err := connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
+		Market: market,
+		Limit:  limit,
+	}, func() *pb.GetTradesStreamResponse {
+		var v pb.GetTradesStreamResponse
+		return &v
+	})
 	if err != nil {
 		return err
 	}
 
-	var response pb.GetTradesStreamResponse
-	return connections.WSStream(ctx, w.conn, request, tradesChan, &response)
+	go func() {
+		result, err := generator()
+		if err != nil {
+			close(tradesChan)
+			return
+		}
+		tradesChan <- result
+	}()
+
+	return nil
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
@@ -125,13 +139,8 @@ func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddres
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (w *WSClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
-	request, err := w.jsonRPCRequest("GetTickers", map[string]interface{}{"market": market})
-	if err != nil {
-		return nil, err
-	}
-
 	var response pb.GetTickersResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("GetTickers", &pb.GetTickersRequest{Market: market}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +149,8 @@ func (w *WSClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 
 // GetOpenOrders returns all opened orders by owner address and market
 func (w *WSClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrdersResponse, error) {
-	request, err := w.jsonRPCRequest("GetOpenOrders", map[string]interface{}{"market": market, "address": owner})
-	if err != nil {
-		return nil, err
-	}
-
 	var response pb.GetOpenOrdersResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("GetOpenOrders", &pb.GetOpenOrdersRequest{Market: market, Address: owner}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -155,13 +159,8 @@ func (w *WSClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrders
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (w *WSClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
-	request, err := w.jsonRPCRequest("GetUnsettled", map[string]interface{}{"market": market, "owner": owner})
-	if err != nil {
-		return nil, err
-	}
-
 	var response pb.GetUnsettledResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("GetUnsettled", &pb.GetUnsettledRequest{Market: market, Owner: owner}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -185,14 +184,8 @@ func (w *WSClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceRespons
 
 // GetMarkets returns the list of all available named markets
 func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
-	var params struct{}
-	request, err := w.jsonRPCRequest("GetMarkets", params)
-	if err != nil {
-		return nil, err
-	}
-
 	var response pb.GetMarketsResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("GetMarkets", &pb.GetMarketsRequest{}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +194,7 @@ func (w *WSClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request, err := w.jsonRPCRequest("PostOrder", &pb.PostOrderRequest{
+	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
@@ -211,13 +204,9 @@ func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, types []
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ClientOrderID:     opts.ClientOrderID,
-	})
-	if err != nil {
-		return nil, err
 	}
-
 	var response pb.PostOrderResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("PostOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -226,16 +215,12 @@ func (w *WSClient) PostOrder(owner, payer, market string, side pb.Side, types []
 
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
-	request, err := w.jsonRPCRequest("PostSubmit", &pb.PostSubmitRequest{
+	request := &pb.PostSubmitRequest{
 		Transaction:   txBase64,
 		SkipPreFlight: skipPreFlight,
-	})
-	if err != nil {
-		return nil, err
 	}
-
 	var response pb.PostSubmitResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("PostSubmit", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -279,19 +264,16 @@ func (w *WSClient) PostCancelOrder(
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	request, err := w.jsonRPCRequest("PostCancelOrder", &pb.PostCancelOrderRequest{
+	request := &pb.PostCancelOrderRequest{
 		OrderID:           orderID,
 		Side:              side,
 		OwnerAddress:      owner,
 		MarketAddress:     market,
 		OpenOrdersAddress: openOrders,
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	var response pb.PostCancelOrderResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("PostCancelOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -322,18 +304,14 @@ func (w *WSClient) PostCancelByClientOrderID(
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	request, err := w.jsonRPCRequest("PostCancelByClientOrderID", &pb.PostCancelByClientOrderIDRequest{
+	request := &pb.PostCancelByClientOrderIDRequest{
 		ClientOrderID:     clientOrderID,
 		OwnerAddress:      owner,
 		MarketAddress:     market,
 		OpenOrdersAddress: openOrders,
-	})
-	if err != nil {
-		return nil, err
 	}
-
 	var response pb.PostCancelOrderResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("PostCancelByClientOrderID", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -357,20 +335,16 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
-func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
-	request, err := w.jsonRPCRequest("PostSettle", &pb.PostSettleRequest{
+func (w *WSClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	request := &pb.PostSettleRequest{
 		OwnerAddress:      owner,
 		Market:            market,
 		BaseTokenWallet:   baseTokenWallet,
 		QuoteTokenWallet:  quoteTokenWallet,
 		OpenOrdersAddress: openOrdersAccount,
-	})
-	if err != nil {
-		return nil, err
 	}
-
 	var response pb.PostSettleResponse
-	err = connections.WSRequest(w.conn, request, &response)
+	err := w.conn.Request("PostSettle", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -378,31 +352,10 @@ func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWalle
 }
 
 // SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
-func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
-	order, err := w.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+func (w *WSClient) SubmitSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
+	order, err := w.PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
 	if err != nil {
 		return "", err
 	}
 	return w.signAndSubmit(order.Transaction, skipPreflight)
-}
-
-func (w *WSClient) Close() error {
-	err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	if err != nil {
-		return fmt.Errorf("error writing close msg -  %v", err)
-	}
-	return nil
-}
-
-func (w *WSClient) jsonRPCRequest(method string, params interface{}) ([]byte, error) {
-	id := w.requestID.Next()
-	req := jsonrpc2.Request{
-		Method: method,
-		ID:     jsonrpc2.ID{Num: id},
-	}
-	if err := req.SetParams(params); err != nil {
-		return nil, err
-	}
-
-	return req.MarshalJSON()
 }
