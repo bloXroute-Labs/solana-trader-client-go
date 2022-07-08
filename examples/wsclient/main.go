@@ -59,45 +59,6 @@ func main() {
 	orderLifecycleTest(w, ownerAddr, ooAddr)
 }
 
-func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	clientOrderID := callPlaceOrderWS(w, ownerAddr, ooAddr)
-
-	ch := make(chan *pb.GetOrderStatusStreamResponse)
-	err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
-	if err != nil {
-		log.Errorf("error getting order status stream %v", err)
-	}
-
-	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
-			log.Infof("order went to orderbook (`OPEN`) successfully")
-		} else {
-			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
-		}
-	case <-time.After(time.Second * 30):
-		log.Error("no updates after placing order")
-	}
-
-	callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
-
-	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
-			log.Infof("order cancelled (`CANCELLED`) successfully")
-		} else {
-			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
-		}
-	case <-time.After(time.Second * 30):
-		log.Error("no updates after cancelling order")
-	}
-
-	callPostSettleWS(w, ownerAddr, ooAddr)
-}
-
 func callMarketsWS(w *provider.WSClient) {
 	fmt.Println("fetching markets...")
 
@@ -293,6 +254,56 @@ const (
 	orderAmount = float64(0.1)
 )
 
+func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan *pb.GetOrderStatusStreamResponse)
+	go func() {
+		secondWSClient, err := provider.NewWSClient()
+		if err != nil {
+			log.Fatalf("error dialing WS client: %v", err)
+		}
+
+		err = secondWSClient.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+		if err != nil {
+			log.Fatalf("error getting order status stream %v", err)
+		}
+	}()
+
+	time.Sleep(time.Second * 5)
+
+	clientOrderID := callPlaceOrderWS(w, ownerAddr, ooAddr)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
+			log.Infof("order went to orderbook (`OPEN`) successfully")
+		} else {
+			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after placing order")
+		return
+	}
+
+	callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
+			log.Infof("order cancelled (`CANCELLED`) successfully")
+		} else {
+			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after cancelling order")
+		return
+	}
+
+	callPostSettleWS(w, ownerAddr, ooAddr)
+}
+
 func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) uint64 {
 	fmt.Println("trying to place an order")
 
@@ -310,7 +321,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) uint64 {
 	if err != nil {
 		log.Fatalf("failed to create order (%v)", err)
 	}
-	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := w.SubmitOrder(ownerAddr, ownerAddr, marketAddr,

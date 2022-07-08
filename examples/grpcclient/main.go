@@ -49,45 +49,6 @@ func main() {
 	orderLifecycleTest(g, ownerAddr, ooAddr)
 }
 
-func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
-
-	ch := make(chan *pb.GetOrderStatusStreamResponse)
-	err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
-	if err != nil {
-		log.Errorf("error getting order status stream %v", err)
-	}
-
-	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
-			log.Infof("order went to orderbook (`OPEN`) successfully")
-		} else {
-			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
-		}
-	case <-time.After(time.Second * 30):
-		log.Error("no updates after placing order")
-	}
-
-	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
-
-	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
-			log.Infof("order cancelled (`CANCELLED`) successfully")
-		} else {
-			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
-		}
-	case <-time.After(time.Second * 30):
-		log.Error("no updates after cancelling order")
-	}
-
-	callPostSettleGRPC(g, ownerAddr, ooAddr)
-}
-
 func callMarketsGRPC(g *provider.GRPCClient) {
 	markets, err := g.GetMarkets(context.Background())
 	if err != nil {
@@ -241,6 +202,51 @@ const (
 	orderAmount = float64(0.1)
 )
 
+func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan *pb.GetOrderStatusStreamResponse)
+	go func() {
+		err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+		if err != nil {
+			log.Fatalf("error getting order status stream %v", err)
+		}
+	}()
+
+	time.Sleep(time.Second * 10)
+
+	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
+			log.Infof("order went to orderbook (`OPEN`) successfully")
+		} else {
+			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after placing order")
+		return
+	}
+
+	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
+			log.Infof("order cancelled (`CANCELLED`) successfully")
+		} else {
+			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after cancelling order")
+		return
+	}
+
+	callPostSettleGRPC(g, ownerAddr, ooAddr)
+}
+
 func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64 {
 	fmt.Println("starting place order")
 
@@ -261,7 +267,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	if err != nil {
 		log.Fatalf("failed to create order (%v)", err)
 	}
-	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
