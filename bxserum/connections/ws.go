@@ -77,7 +77,7 @@ func recvWS[T proto.Message](conn *websocket.Conn, result T) error {
 			return err
 		}
 
-		return errors.New(strings.Trim(string(m), "\"")) // Converting json.RawMessage into a string adds extra double quotes
+		return errors.New(strings.Trim(string(m), "\"")) // Converting from json.RawMessage into a string adds extra double quotes
 	}
 
 	if err = protojson.Unmarshal(*resp.Result, result); err != nil {
