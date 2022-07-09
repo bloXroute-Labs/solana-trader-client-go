@@ -271,7 +271,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
 		}
 	}()
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 10)
 
 	clientOrderID := callPlaceOrderWS(w, ownerAddr, ooAddr)
 
