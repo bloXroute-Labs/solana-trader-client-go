@@ -230,6 +230,8 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 		return
 	}
 
+	time.Sleep(time.Second * 5)
+
 	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
 
 	select {

@@ -287,6 +287,8 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
 		return
 	}
 
+	time.Sleep(time.Second * 5)
+
 	callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
 
 	select {
