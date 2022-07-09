@@ -2,12 +2,10 @@ package integration
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,9 +25,8 @@ func TestWSClient_Requests(t *testing.T) {
 			func(ctx context.Context, market string, limit uint32) string {
 				_, err := w.GetOrderbook(market, limit)
 				require.NotNil(t, err)
-				assert.Equal(t, err.Error(), "\"provided market name/address was not found\"")
 
-				return "provided market name/address was not found"
+				return err.Error()
 			},
 		)
 	})
@@ -95,7 +92,7 @@ func TestWSClient_Requests(t *testing.T) {
 				_, err := w.SubmitOrder(owner, payer, market, side, []pb.OrderType{pb.OrderType_OT_LIMIT}, amount, price, opts)
 				require.NotNil(t, err)
 
-				return strings.Trim(err.Error(), "\"")
+				return err.Error()
 			})
 	})
 }
@@ -111,7 +108,7 @@ func TestGetOrderStatusStream(t *testing.T) {
 			err := w.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
 			require.NotNil(t, err)
 
-			return strings.Trim(err.Error(), "\"")
+			return err.Error()
 		},
 	)
 }

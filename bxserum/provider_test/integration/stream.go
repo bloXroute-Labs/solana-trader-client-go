@@ -50,9 +50,6 @@ func testGetOrderStatusStream(t *testing.T, connectFnErr func(ctx context.Contex
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ctx, cancel = context.WithCancel(context.Background())
-	defer cancel()
-
 	// unknown market
 	errMessage := connectFnErr(ctx, "market-doesnt-exist", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	assert.Equal(t, "provided market name/address was not found", errMessage)
