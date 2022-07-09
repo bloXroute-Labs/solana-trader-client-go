@@ -9,6 +9,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"strings"
 )
 
 func WSRequest[T proto.Message](conn *websocket.Conn, request []byte, response T) error {
@@ -76,7 +77,7 @@ func recvWS[T proto.Message](conn *websocket.Conn, result T) error {
 			return err
 		}
 
-		return errors.New(string(m))
+		return errors.New(strings.Trim(string(m), "\"")) // Converting from json.RawMessage into a string adds extra double quotes
 	}
 
 	if err = protojson.Unmarshal(*resp.Result, result); err != nil {

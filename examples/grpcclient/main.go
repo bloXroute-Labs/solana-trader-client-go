@@ -46,9 +46,7 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
-	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
-	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
-	callPostSettleGRPC(g, ownerAddr, ooAddr)
+	orderLifecycleTest(g, ownerAddr, ooAddr)
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) {
@@ -204,6 +202,53 @@ const (
 	orderAmount = float64(0.1)
 )
 
+func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan *pb.GetOrderStatusStreamResponse)
+	go func() {
+		err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+		if err != nil {
+			log.Fatalf("error getting order status stream %v", err)
+		}
+	}()
+
+	time.Sleep(time.Second * 10)
+
+	clientID := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
+			log.Infof("order went to orderbook (`OPEN`) successfully")
+		} else {
+			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after placing order")
+		return
+	}
+
+	time.Sleep(time.Second * 5)
+
+	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
+
+	select {
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
+			log.Infof("order cancelled (`CANCELLED`) successfully")
+		} else {
+			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
+		}
+	case <-time.After(time.Second * 30):
+		log.Error("no updates after cancelling order")
+		return
+	}
+
+	callPostSettleGRPC(g, ownerAddr, ooAddr)
+}
+
 func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64 {
 	fmt.Println("starting place order")
 
@@ -224,7 +269,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	if err != nil {
 		log.Fatalf("failed to create order (%v)", err)
 	}
-	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,

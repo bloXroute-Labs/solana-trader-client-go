@@ -83,6 +83,15 @@ func (g *GRPCClient) GetFilteredOrderbooksStream(ctx context.Context, markets []
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets), outputChan)
 }
 
+// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
+func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, outputChan chan *pb.GetOrderStatusStreamResponse) error {
+	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
+	if err != nil {
+		return err
+	}
+
+	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market, outputChan)
+}
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTickersResponse, error) {
 	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
