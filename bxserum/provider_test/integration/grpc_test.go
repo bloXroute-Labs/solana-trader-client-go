@@ -106,7 +106,8 @@ func TestGRPCClient_Requests(t *testing.T) {
 func TestGRPCClient_Streams(t *testing.T) {
 	g, err := provider.NewGRPCClient()
 	require.Nil(t, err)
-	t.Run("Orderbooks stream ", func(t *testing.T) {
+
+	t.Run("orderbook stream", func(t *testing.T) {
 		testGetOrderbookStream(
 			t,
 			func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
@@ -133,6 +134,22 @@ func TestGRPCClient_Streams(t *testing.T) {
 				err := g.GetFilteredOrderbooksStream(ctx, []string{market}, limit, orderbookCh)
 				require.Nil(t, err)
 			}, nil,
+		)
+	})
+
+	t.Run("order status stream", func(t *testing.T) {
+		testGetOrderStatusStream(
+			t,
+			func(ctx context.Context, market string, ownerAddress string) string {
+				orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
+				err := g.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
+				require.NotNil(t, err)
+
+				grpcStatus, ok := status.FromError(err)
+				require.True(t, ok)
+
+				return grpcStatus.Message()
+			},
 		)
 	})
 }

@@ -500,7 +500,10 @@ message GetOrderStatusResponse {
   string openOrderAddress = 2;
   string orderID = 3;
   uint64 clientOrderID = 4;
-  OrderStatus orderStatus = 5;
+  float quantityReleased = 5;
+  float price = 6;
+  Side side = 7;
+  OrderStatus orderStatus = 8;
 }
 
 message PostSubmitRequest {

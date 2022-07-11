@@ -6,7 +6,6 @@ import (
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,9 +25,8 @@ func TestWSClient_Requests(t *testing.T) {
 			func(ctx context.Context, market string, limit uint32) string {
 				_, err := w.GetOrderbook(market, limit)
 				require.NotNil(t, err)
-				assert.Equal(t, err.Error(), "\"provided market name/address was not found\"")
 
-				return "provided market name/address was not found"
+				return err.Error()
 			},
 		)
 	})
@@ -97,6 +95,22 @@ func TestWSClient_Requests(t *testing.T) {
 				return err.Error()
 			})
 	})
+}
+
+func TestGetOrderStatusStream(t *testing.T) {
+	w, err := provider.NewWSClient()
+	require.Nil(t, err)
+
+	testGetOrderStatusStream(
+		t,
+		func(ctx context.Context, market string, ownerAddress string) string {
+			orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
+			err := w.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
+			require.NotNil(t, err)
+
+			return err.Error()
+		},
+	)
 }
 
 // TODO separate WS streams

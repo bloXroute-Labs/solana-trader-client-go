@@ -112,6 +112,17 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	return connections.WSStream(ctx, w.conn, request, tradesChan, &response)
 }
 
+// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
+func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, statusUpdateChan chan *pb.GetOrderStatusStreamResponse) error {
+	request, err := w.jsonRPCRequest("GetOrderStatusStream", map[string]interface{}{"market": market, "ownerAddress": ownerAddress})
+	if err != nil {
+		return err
+	}
+
+	var response pb.GetOrderStatusStreamResponse
+	return connections.WSStream(ctx, w.conn, request, statusUpdateChan, &response)
+}
+
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (w *WSClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	request, err := w.jsonRPCRequest("GetTickers", map[string]interface{}{"market": market})
