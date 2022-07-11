@@ -111,6 +111,17 @@ func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettled
 	return result, nil
 }
 
+// GetAccountBalance returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/account/balance?ownerAddress=%s", h.baseURL, owner)
+	result := new(pb.GetAccountBalanceResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](url, h.httpClient, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // signAndSubmit signs the given transaction and submits it.
 func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error) {
 	if h.privateKey == nil {
