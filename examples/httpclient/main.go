@@ -20,6 +20,7 @@ func main() {
 	callTradesHTTP()
 	callTickersHTTP()
 	callUnsettledHTTP()
+	callGetAccountBalanceHTTP()
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -107,6 +108,21 @@ func callUnsettledHTTP() {
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+	} else {
+		fmt.Println(response)
+	}
+
+	fmt.Println()
+}
+
+func callGetAccountBalanceHTTP() {
+	client := &http.Client{Timeout: time.Second * 60}
+	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, opts)
+
+	response, err := h.GetAccountBalance("F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
+	if err != nil {
+		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
 	} else {
 		fmt.Println(response)
 	}
