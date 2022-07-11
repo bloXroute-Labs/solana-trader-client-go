@@ -172,7 +172,7 @@ func callTickersWS(w *provider.WSClient) {
 func callOrderbookWSStream() {
 	fmt.Println("starting orderbook stream")
 
-	w, err := provider.NewWSClientTestnet()
+	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
@@ -197,7 +197,7 @@ func callOrderbookWSStream() {
 func callFilteredOrderbookWSStream() {
 	fmt.Println("starting GetFilteredOrderbook stream")
 
-	w, err := provider.NewWSClientTestnet()
+	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
@@ -222,7 +222,7 @@ func callFilteredOrderbookWSStream() {
 func callTradesWSStream() {
 	fmt.Println("starting trades stream")
 
-	w, err := provider.NewWSClientTestnet()
+	w, err := provider.NewWSClient()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
