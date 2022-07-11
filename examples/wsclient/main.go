@@ -208,7 +208,7 @@ func callFilteredOrderbookWSStream() {
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err = w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, orderbookChan)
+	err = w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetFilteredOrderbookStream request for SOL/USDC: %v", err)
 	} else {
@@ -287,7 +287,8 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
 		return
 	}
 
-	time.Sleep(time.Second * 5)
+	fmt.Println()
+	time.Sleep(time.Second * 10)
 
 	callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
 
@@ -303,6 +304,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
 		return
 	}
 
+	fmt.Println()
 	callPostSettleWS(w, ownerAddr, ooAddr)
 }
 

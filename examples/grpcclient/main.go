@@ -162,7 +162,7 @@ func callFilteredOrderbookGRPCStream(g *provider.GRPCClient) {
 	defer cancel()
 
 	// Stream response
-	err := g.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, orderbookChan)
+	err := g.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetFilteredOrderbooks stream request for SOL/USDC: %v", err)
 	} else {
@@ -230,7 +230,8 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 		return
 	}
 
-	time.Sleep(time.Second * 5)
+	fmt.Println()
+	time.Sleep(time.Second * 10)
 
 	callCancelByClientOrderIDGRPC(g, ownerAddr, ooAddr, clientID)
 
@@ -246,6 +247,7 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 		return
 	}
 
+	fmt.Println()
 	callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 
