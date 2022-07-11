@@ -35,7 +35,7 @@ func main() {
 	callUnsettledWS(w)
 	callAccountBalanceWS(w)
 
-	// streaming methodsß
+	// streaming methods
 	callOrderbookWSStream()
 	callFilteredOrderbookWSStream()
 	callTradesWSStream()
