@@ -8,6 +8,7 @@ import (
 
 // entry to track an active subscription on connection: channel to send updates on and reference to cancel the subscription
 type subscriptionEntry struct {
+	active bool
 	ch     chan json.RawMessage
 	cancel context.CancelFunc
 }

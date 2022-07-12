@@ -11,9 +11,13 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"sync"
+	"time"
 )
 
-const subscriptionBuffer = 1000
+const (
+	subscriptionBuffer     = 1000
+	unsubscribeGracePeriod = 3 * time.Second
+)
 
 type WS struct {
 	m         sync.Mutex
@@ -114,6 +118,10 @@ func (w *WS) processSubscriptionUpdate(update jsonrpc2.Request) {
 	sub, ok := w.subscriptionMap[f.SubscriptionID]
 	if !ok {
 		_ = w.Close(fmt.Errorf("unknown subscription ID: %v", f.SubscriptionID))
+		return
+	}
+	// skip message for inactive subscription: will be closed soon
+	if !sub.active {
 		return
 	}
 
@@ -221,14 +229,33 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 	ch := make(chan json.RawMessage, subscriptionBuffer)
 	streamCtx, streamCancel := context.WithCancel(ctx)
 	w.subscriptionMap[subscriptionID] = subscriptionEntry{
+		active: true,
 		ch:     ch,
 		cancel: streamCancel,
 	}
 
 	// set goroutine to unsubscribe when ctx is canceled
 	go func() {
-		<-ctx.Done()
-		// TODO: send unsubscribe message
+		<-streamCtx.Done()
+
+		// immediately mark as inactive
+		w.subscriptionMap[subscriptionID] = subscriptionEntry{active: false}
+
+		up := unsubscribeParams{SubscriptionID: subscriptionID}
+		b, _ := json.Marshal(up)
+		rm := json.RawMessage(b)
+
+		unsubscribeMessage := jsonrpc2.Request{
+			ID:     jsonrpc2.ID{Num: w.requestID.Next()},
+			Method: unsubscribeMethod,
+			Params: &rm,
+		}
+
+		_, _ = w.request(w.ctx, unsubscribeMessage, false)
+
+		// wait for server to process message before forcing errors from unknown subscription IDs
+		time.Sleep(unsubscribeGracePeriod)
+		delete(w.subscriptionMap, subscriptionID)
 	}()
 
 	return func() (T, error) {
