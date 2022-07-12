@@ -16,6 +16,10 @@ func NewRequestID() RequestID {
 	}
 }
 
+func (r *RequestID) Current() uint64 {
+	return r.id
+}
+
 func (r *RequestID) Next() uint64 {
 	r.lock.Lock()
 	defer r.lock.Unlock()
