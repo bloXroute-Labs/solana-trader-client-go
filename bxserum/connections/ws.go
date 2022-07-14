@@ -21,7 +21,7 @@ const (
 
 type WS struct {
 	m         sync.Mutex
-	requestID utils.RequestID
+	requestID *utils.RequestID
 	conn      *websocket.Conn
 	ctx       context.Context
 	cancel    context.CancelFunc
@@ -32,6 +32,7 @@ type WS struct {
 }
 
 func NewWS(endpoint string) (*WS, error) {
+	// TODO: add timeout here
 	conn, _, err := websocket.DefaultDialer.Dial(endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -39,10 +40,12 @@ func NewWS(endpoint string) (*WS, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	ws := &WS{
-		requestID: utils.NewRequestID(),
-		conn:      conn,
-		ctx:       ctx,
-		cancel:    cancel,
+		requestID:       utils.NewRequestID(),
+		conn:            conn,
+		ctx:             ctx,
+		cancel:          cancel,
+		requestMap:      make(map[uint64]requestTracker),
+		subscriptionMap: make(map[string]subscriptionEntry),
 	}
 	go ws.readLoop()
 	return ws, nil
@@ -134,7 +137,7 @@ func (w *WS) Request(ctx context.Context, method string, request proto.Message, 
 		Method: method,
 		ID:     jsonrpc2.ID{Num: requestID},
 	}
-	params, err := proto.Marshal(request)
+	params, err := protojson.Marshal(request)
 	if err != nil {
 		return err
 	}
@@ -146,16 +149,7 @@ func (w *WS) Request(ctx context.Context, method string, request proto.Message, 
 		return err
 	}
 
-	if rpcResponse.Error != nil {
-		var rpcErr string
-		err = json.Unmarshal(*rpcResponse.Error.Data, &rpcErr)
-		if err != nil {
-			return err
-		}
-		return errors.New(rpcErr)
-	}
-
-	if err = protojson.Unmarshal(*rpcRequest.Params, response); err != nil {
+	if err = protojson.Unmarshal(*rpcResponse.Result, response); err != nil {
 		return fmt.Errorf("error unmarshalling message of type %T: %w", response, err)
 	}
 	return nil
@@ -184,6 +178,15 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 
 	select {
 	case response := <-responseCh:
+		rpcResponse := response.v
+		if rpcResponse.Error != nil {
+			var rpcErr string
+			err = json.Unmarshal(*rpcResponse.Error.Data, &rpcErr)
+			if err != nil {
+				return jsonrpc2.Response{}, err
+			}
+			return rpcResponse, errors.New(rpcErr)
+		}
 		return response.v, nil
 	case <-ctx.Done():
 		return jsonrpc2.Response{}, ctx.Err()
@@ -194,7 +197,7 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 }
 
 func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, streamParams proto.Message, resultInitFn func() T) (func() (T, error), error) {
-	streamParamsB, err := proto.Marshal(streamParams)
+	streamParamsB, err := protojson.Marshal(streamParams)
 	if err != nil {
 		return nil, err
 	}
@@ -259,29 +262,37 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 	}()
 
 	return func() (T, error) {
+		var zero T
 		select {
 		case b := <-ch:
 			v := resultInitFn()
 			err := proto.Unmarshal(b, v)
 			if err != nil {
-				return nil, err
+				return zero, err
 			}
 			return v, nil
 		case <-w.ctx.Done():
-			return nil, fmt.Errorf("connection has been closed: %w", w.err)
+			return zero, fmt.Errorf("connection has been closed: %w", w.err)
 		case <-streamCtx.Done():
-			return nil, errors.New("stream context has been closed")
+			return zero, errors.New("stream context has been closed")
 		}
 	}, nil
 }
 
 func (w *WS) Close(reason error) error {
+	w.m.Lock()
+	defer w.m.Unlock()
+
+	if w.ctx.Err() != nil {
+		return nil
+	}
+	
 	w.err = reason
 
 	// cancel main connection ctx
 	w.cancel()
 
-	// cancel  all subscriptions
+	// cancel all subscriptions
 	for _, sub := range w.subscriptionMap {
 		sub.close()
 	}

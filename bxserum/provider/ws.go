@@ -6,7 +6,6 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -15,7 +14,6 @@ type WSClient struct {
 
 	addr       string
 	conn       *connections.WS
-	requestID  utils.RequestID
 	privateKey *solana.PrivateKey
 }
 
@@ -41,7 +39,6 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 	return &WSClient{
 		addr:       opts.Endpoint,
 		conn:       conn,
-		requestID:  utils.NewRequestID(),
 		privateKey: opts.PrivateKey,
 	}, nil
 }

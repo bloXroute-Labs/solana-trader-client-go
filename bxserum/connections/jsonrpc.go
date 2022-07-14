@@ -22,6 +22,16 @@ type subscribeParams struct {
 	StreamOpts json.RawMessage
 }
 
+func (s subscribeParams) MarshalJSON() ([]byte, error) {
+	nameB, err := json.Marshal(s.StreamName)
+	if err != nil {
+		return nil, err
+	}
+
+	params := []json.RawMessage{nameB, s.StreamOpts}
+	return json.Marshal(params)
+}
+
 func (s *subscribeParams) UnmarshalJSON(b []byte) error {
 	var result []json.RawMessage
 	err := json.Unmarshal(b, &result)

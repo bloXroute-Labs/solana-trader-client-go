@@ -9,8 +9,8 @@ type RequestID struct {
 	lock *sync.Mutex
 }
 
-func NewRequestID() RequestID {
-	return RequestID{
+func NewRequestID() *RequestID {
+	return &RequestID{
 		id:   1,
 		lock: &sync.Mutex{},
 	}

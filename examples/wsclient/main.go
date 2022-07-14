@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
@@ -14,7 +13,7 @@ import (
 )
 
 func main() {
-	w, err := provider.NewWSClient()
+	w, err := provider.NewWSClientTestnet()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
@@ -36,9 +35,9 @@ func main() {
 	callAccountBalanceWS(w)
 
 	// streaming methods
-	callOrderbookWSStream()
-	callFilteredOrderbookWSStream()
-	callTradesWSStream()
+	callOrderbookWSStream(w)
+	//callFilteredOrderbookWSStream(w)
+	//callTradesWSStream(w)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -169,21 +168,14 @@ func callTickersWS(w *provider.WSClient) {
 }
 
 // Stream response
-func callOrderbookWSStream() {
+func callOrderbookWSStream(w *provider.WSClient) {
 	fmt.Println("starting orderbook stream")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err = w.GetOrderbooksStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err := w.GetOrderbooksStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 	} else {
@@ -194,21 +186,14 @@ func callOrderbookWSStream() {
 	}
 }
 
-func callFilteredOrderbookWSStream() {
+func callFilteredOrderbookWSStream(w *provider.WSClient) {
 	fmt.Println("starting GetFilteredOrderbook stream")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err = w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
+	err := w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetFilteredOrderbookStream request for SOL/USDC: %v", err)
 	} else {
@@ -219,21 +204,14 @@ func callFilteredOrderbookWSStream() {
 	}
 }
 
-func callTradesWSStream() {
+func callTradesWSStream(w *provider.WSClient) {
 	fmt.Println("starting trades stream")
 
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-
-	defer w.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
 
-	err = w.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
+	err := w.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
 	if err != nil {
 		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
 	} else {
