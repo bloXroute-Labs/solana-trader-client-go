@@ -356,6 +356,43 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 	return w.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
+func (w *WSClient) PostCancelAll(market, owner, openOrders string) (*pb.PostCancelAllResponse, error) {
+	request, err := w.jsonRPCRequest("PostCancelAll", &pb.PostCancelAllRequest{
+		Market:           market,
+		OwnerAddress:     owner,
+		OpenOrderAddress: openOrders,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var response pb.PostCancelAllResponse
+	err = connections.WSRequest(w.conn, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (w *WSClient) SubmitCancelAll(market, owner, openOrders string, skipPreFlight bool) ([]string, error) {
+	orders, err := w.PostCancelAll(market, owner, openOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	var signatures []string
+	for _, tx := range orders.Transactions {
+		signature, err := w.signAndSubmit(tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
 	request, err := w.jsonRPCRequest("PostSettle", &pb.PostSettleRequest{
