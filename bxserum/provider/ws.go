@@ -67,12 +67,14 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, market string, limit
 	}
 
 	go func() {
-		result, err := generator()
-		if err != nil {
-			close(orderbookChan)
-			return
+		for {
+			result, err := generator()
+			if err != nil {
+				close(orderbookChan)
+				return
+			}
+			orderbookChan <- result
 		}
-		orderbookChan <- result
 	}()
 
 	return nil
@@ -92,12 +94,14 @@ func (w *WSClient) GetFilteredOrderbooksStream(ctx context.Context, markets []st
 	}
 
 	go func() {
-		result, err := generator()
-		if err != nil {
-			close(orderbookChan)
-			return
+		for {
+			result, err := generator()
+			if err != nil {
+				close(orderbookChan)
+				return
+			}
+			orderbookChan <- result
 		}
-		orderbookChan <- result
 	}()
 	return nil
 }
@@ -126,12 +130,14 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	}
 
 	go func() {
-		result, err := generator()
-		if err != nil {
-			close(tradesChan)
-			return
+		for {
+			result, err := generator()
+			if err != nil {
+				close(tradesChan)
+				return
+			}
+			tradesChan <- result
 		}
-		tradesChan <- result
 	}()
 
 	return nil
@@ -151,12 +157,14 @@ func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddres
 	}
 
 	go func() {
-		result, err := generator()
-		if err != nil {
-			close(statusUpdateChan)
-			return
+		for {
+			result, err := generator()
+			if err != nil {
+				close(statusUpdateChan)
+				return
+			}
+			statusUpdateChan <- result
 		}
-		statusUpdateChan <- result
 	}()
 
 	return nil

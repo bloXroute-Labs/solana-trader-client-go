@@ -69,7 +69,7 @@ func (w *WS) readLoop() {
 		// try response format first
 		var response jsonrpc2.Response
 		err = json.Unmarshal(msg, &response)
-		if err == nil {
+		if err == nil && (response.Result != nil || response.Error != nil) {
 			w.processRPCResponse(response)
 			continue
 		}
@@ -77,7 +77,7 @@ func (w *WS) readLoop() {
 		// if not, try subscription format
 		var update jsonrpc2.Request
 		err = json.Unmarshal(msg, &update)
-		if err == nil {
+		if err == nil && update.Params != nil {
 			w.processSubscriptionUpdate(update)
 			continue
 		}
@@ -266,7 +266,7 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 		select {
 		case b := <-ch:
 			v := resultInitFn()
-			err := proto.Unmarshal(b, v)
+			err := protojson.Unmarshal(b, v)
 			if err != nil {
 				return zero, err
 			}
@@ -286,7 +286,7 @@ func (w *WS) Close(reason error) error {
 	if w.ctx.Err() != nil {
 		return nil
 	}
-	
+
 	w.err = reason
 
 	// cancel main connection ctx

@@ -29,12 +29,14 @@ func testGetOrderbookStream(
 	go connectFn(ctx, "SOLUSDC", 0, orderbookCh)
 
 	for i := 0; i < streamExpectEntries; i++ {
-		orderbook := bxassert.ReadChan[*pb.GetOrderbooksStreamResponse](t, orderbookCh, streamExpectTimeout)
+		orderbook := bxassert.ReadChanWithTimeout[*pb.GetOrderbooksStreamResponse](t, orderbookCh, streamExpectTimeout)
 		require.NotNil(t, orderbook)
 
 		assertSOLUSDCOrderbook(t, "SOL/USDC", orderbook.Orderbook)
 	}
 	cancel()
+
+	bxassert.ChanEmpty(t, orderbookCh)
 
 	// unknown market
 	ctx, cancel = context.WithCancel(context.Background())
