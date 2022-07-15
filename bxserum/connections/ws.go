@@ -254,7 +254,10 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 			Params: &rm,
 		}
 
-		_, _ = w.request(w.ctx, unsubscribeMessage, false)
+		_, err = w.request(w.ctx, unsubscribeMessage, false)
+		if err != nil {
+			_ = w.Close(fmt.Errorf("unsubscribe requested rejected: %w", err))
+		}
 
 		// wait for server to process message before forcing errors from unknown subscription IDs
 		time.Sleep(unsubscribeGracePeriod)

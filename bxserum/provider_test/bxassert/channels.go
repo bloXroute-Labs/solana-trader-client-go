@@ -47,9 +47,30 @@ Loop:
 
 func ChanEmpty[T any](t *testing.T, ch chan T) {
 	select {
-	case <-ch:
-		assert.Fail(t, "unexpected message on channel")
+	case v, ok := <-ch:
+		if ok {
+			assert.Fail(t, "unexpected message on channel", "message=%v", v)
+		}
 	case <-time.After(defaultChanTimeout):
 		return
+	}
+}
+
+func ChanEmptyAfterTimeout[T any](t *testing.T, ch chan T, duration time.Duration) {
+	ChanConsume(ch, duration)
+	ChanEmpty(t, ch)
+}
+
+// ChanConsume consumes all messages on a channel for the duration
+func ChanConsume[T any](ch chan T, duration time.Duration) {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ch:
+			continue
+		case <-timer.C:
+			return
+		}
 	}
 }

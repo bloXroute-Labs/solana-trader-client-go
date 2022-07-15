@@ -12,7 +12,8 @@ import (
 
 const (
 	streamExpectEntries = 3
-	streamExpectTimeout = 60 * time.Second // longer timeout than stream.go in serum-api
+	streamExpectTimeout = 60 * time.Second       // longer timeout than stream.go in serum-api
+	cancelGracePeriod   = 100 * time.Millisecond // timeout after cancel() call to continue consuming channel messages
 )
 
 func testGetOrderbookStream(
@@ -36,16 +37,16 @@ func testGetOrderbookStream(
 	}
 	cancel()
 
-	bxassert.ChanEmpty(t, orderbookCh)
+	bxassert.ChanEmptyAfterTimeout(t, orderbookCh, cancelGracePeriod)
 
 	// unknown market
-	ctx, cancel = context.WithCancel(context.Background())
-	defer cancel()
-
-	if connectFnErr != nil {
-		errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
-		assert.Equal(t, "provided market name/address was not found", errMessage)
-	}
+	//ctx, cancel = context.WithCancel(context.Background())
+	//defer cancel()
+	//
+	//if connectFnErr != nil {
+	//	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
+	//	assert.Equal(t, "provided market name/address was not found", errMessage)
+	//}
 }
 
 func testGetOrderStatusStream(t *testing.T, connectFnErr func(ctx context.Context, market string, ownerAddress string) string) {

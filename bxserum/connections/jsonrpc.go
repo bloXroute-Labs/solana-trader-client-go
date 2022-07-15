@@ -57,6 +57,11 @@ type unsubscribeParams struct {
 	SubscriptionID string
 }
 
+func (s unsubscribeParams) MarshalJSON() ([]byte, error) {
+	params := []string{s.SubscriptionID}
+	return json.Marshal(params)
+}
+
 func (s *unsubscribeParams) UnmarshalJSON(b []byte) error {
 	var result []json.RawMessage
 	err := json.Unmarshal(b, &result)
