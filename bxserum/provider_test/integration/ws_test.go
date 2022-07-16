@@ -30,6 +30,9 @@ func providerForEnv(t *testing.T) *provider.WSClient {
 
 func TestWSClient_Requests(t *testing.T) {
 	w := providerForEnv(t)
+	defer func(w *provider.WSClient) {
+		_ = w.Close()
+	}(w)
 
 	t.Run("orderbook", func(t *testing.T) {
 		testGetOrderbook(
@@ -115,37 +118,38 @@ func TestWSClient_Requests(t *testing.T) {
 	})
 }
 
-func TestGetOrderStatusStream(t *testing.T) {
-	w := providerForEnv(t)
-
-	testGetOrderStatusStream(
-		t,
-		func(ctx context.Context, market string, ownerAddress string) string {
-			orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
-			err := w.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
-			require.NotNil(t, err)
-
-			return err.Error()
-		},
-	)
-}
-
 func TestWSClient_Streams(t *testing.T) {
 	w := providerForEnv(t)
+	defer func(w *provider.WSClient) {
+		_ = w.Close()
+	}(w)
 
-	testGetOrderbookStream(
-		t,
-		func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
-			err := w.GetOrderbooksStream(ctx, market, limit, orderbookCh)
-			require.Nil(t, err)
-		},
-		func(ctx context.Context, market string, limit uint32) string {
-			orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
-			err := w.GetOrderbooksStream(ctx, market, limit, orderbookCh)
-			require.NotNil(t, err)
-			require.Equal(t, "\"provided market name/address was not found\"", err.Error())
+	t.Run("orderbooks stream", func(t *testing.T) {
+		testGetOrderbookStream(
+			t,
+			func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
+				err := w.GetOrderbooksStream(ctx, market, limit, orderbookCh)
+				require.Nil(t, err)
+			},
+			func(ctx context.Context, market string, limit uint32) string {
+				orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
+				err := w.GetOrderbooksStream(ctx, market, limit, orderbookCh)
+				require.NotNil(t, err)
+				return err.Error()
+			},
+		)
+	})
 
-			return "provided market name/address was not found"
-		},
-	)
+	t.Run("order status stream", func(t *testing.T) {
+		testGetOrderStatusStream(
+			t,
+			func(ctx context.Context, market string, ownerAddress string) string {
+				orderbookCh := make(chan *pb.GetOrderStatusStreamResponse)
+				err := w.GetOrderStatusStream(ctx, market, ownerAddress, orderbookCh)
+				require.NotNil(t, err)
+
+				return err.Error()
+			},
+		)
+	})
 }

@@ -15,25 +15,28 @@ import (
 )
 
 const (
+	handshakeTimeout       = 5 * time.Second
 	subscriptionBuffer     = 1000
 	unsubscribeGracePeriod = 3 * time.Second
 )
 
 type WS struct {
-	m         sync.Mutex
-	requestID *utils.RequestID
-	conn      *websocket.Conn
-	ctx       context.Context
-	cancel    context.CancelFunc
-	err       error
+	messageM      sync.Mutex
+	subscriptionM sync.RWMutex
+	requestID     *utils.RequestID
+	conn          *websocket.Conn
+	ctx           context.Context
+	cancel        context.CancelFunc
+	err           error
+	writeCh       chan []byte
 
 	requestMap      map[uint64]requestTracker
 	subscriptionMap map[string]subscriptionEntry
 }
 
 func NewWS(endpoint string) (*WS, error) {
-	// TODO: add timeout here
-	conn, _, err := websocket.DefaultDialer.Dial(endpoint, nil)
+	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
+	conn, _, err := dialer.Dial(endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -44,10 +47,12 @@ func NewWS(endpoint string) (*WS, error) {
 		conn:            conn,
 		ctx:             ctx,
 		cancel:          cancel,
+		writeCh:         make(chan []byte, 100),
 		requestMap:      make(map[uint64]requestTracker),
 		subscriptionMap: make(map[string]subscriptionEntry),
 	}
 	go ws.readLoop()
+	go ws.writeLoop()
 	return ws, nil
 }
 
@@ -57,8 +62,8 @@ func (w *WS) readLoop() {
 	for {
 		// if lock is held by another processing routine, then wait for release before processing any further messages
 		// typically, messages can be dispatched independently, but in some cases it may be important to finish processing a single message before allowing the socket to read any more (e.g. subscription response before processing potential updates)
-		w.m.Lock()
-		w.m.Unlock()
+		w.messageM.Lock()
+		w.messageM.Unlock()
 
 		_, msg, err := w.conn.ReadMessage()
 		if err != nil {
@@ -88,6 +93,17 @@ func (w *WS) readLoop() {
 	}
 }
 
+func (w *WS) writeLoop() {
+	for {
+		m := <-w.writeCh
+		err := w.conn.WriteMessage(websocket.TextMessage, m)
+		if err != nil {
+			_ = w.Close(fmt.Errorf("error sending message: %w", err))
+			return
+		}
+	}
+}
+
 func (w *WS) processRPCResponse(response jsonrpc2.Response) {
 	requestID := response.ID.Num
 	rt, ok := w.requestMap[requestID]
@@ -103,7 +119,7 @@ func (w *WS) processRPCResponse(response jsonrpc2.Response) {
 
 	// hold lock: now it's the responsibility of the listening channel to release the lock for the next loop
 	if rt.lockRequired {
-		w.m.Lock()
+		w.messageM.Lock()
 		ru.lockHeld = true
 	}
 
@@ -111,13 +127,15 @@ func (w *WS) processRPCResponse(response jsonrpc2.Response) {
 }
 
 func (w *WS) processSubscriptionUpdate(update jsonrpc2.Request) {
-	var f feedUpdate
+	var f FeedUpdate
 	err := json.Unmarshal(*update.Params, &f)
 	if err != nil {
 		_ = w.Close(fmt.Errorf("could not deserialize feed update: %w", err))
 		return
 	}
 
+	w.subscriptionM.RLock()
+	defer w.subscriptionM.RUnlock()
 	sub, ok := w.subscriptionMap[f.SubscriptionID]
 	if !ok {
 		_ = w.Close(fmt.Errorf("unknown subscription ID: %v", f.SubscriptionID))
@@ -171,10 +189,7 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 		delete(w.requestMap, request.ID.Num)
 	}()
 
-	err = w.conn.WriteMessage(websocket.TextMessage, b)
-	if err != nil {
-		return jsonrpc2.Response{}, fmt.Errorf("error with sending message: %w", err)
-	}
+	w.writeCh <- b
 
 	select {
 	case response := <-responseCh:
@@ -201,7 +216,7 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 	if err != nil {
 		return nil, err
 	}
-	params := subscribeParams{
+	params := SubscribeParams{
 		StreamName: streamName,
 		StreamOpts: streamParamsB,
 	}
@@ -221,7 +236,7 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 	if err != nil {
 		return nil, err
 	}
-	defer w.m.Unlock()
+	defer w.messageM.Unlock()
 
 	var subscriptionID string
 	err = json.Unmarshal(*rpcResponse.Result, &subscriptionID)
@@ -231,20 +246,25 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 
 	ch := make(chan json.RawMessage, subscriptionBuffer)
 	streamCtx, streamCancel := context.WithCancel(ctx)
+
+	w.subscriptionM.Lock()
 	w.subscriptionMap[subscriptionID] = subscriptionEntry{
 		active: true,
 		ch:     ch,
 		cancel: streamCancel,
 	}
+	w.subscriptionM.Unlock()
 
 	// set goroutine to unsubscribe when ctx is canceled
 	go func() {
 		<-streamCtx.Done()
 
 		// immediately mark as inactive
+		w.subscriptionM.Lock()
 		w.subscriptionMap[subscriptionID] = subscriptionEntry{active: false}
+		w.subscriptionM.Unlock()
 
-		up := unsubscribeParams{SubscriptionID: subscriptionID}
+		up := UnsubscribeParams{SubscriptionID: subscriptionID}
 		b, _ := json.Marshal(up)
 		rm := json.RawMessage(b)
 
@@ -261,7 +281,9 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 
 		// wait for server to process message before forcing errors from unknown subscription IDs
 		time.Sleep(unsubscribeGracePeriod)
+		w.subscriptionM.Lock()
 		delete(w.subscriptionMap, subscriptionID)
+		w.subscriptionM.Unlock()
 	}()
 
 	return func() (T, error) {
@@ -283,8 +305,10 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 }
 
 func (w *WS) Close(reason error) error {
-	w.m.Lock()
-	defer w.m.Unlock()
+	w.messageM.Lock()
+	defer w.messageM.Unlock()
+	w.subscriptionM.Lock()
+	defer w.subscriptionM.Unlock()
 
 	if w.ctx.Err() != nil {
 		return nil

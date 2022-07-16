@@ -10,19 +10,19 @@ const (
 	unsubscribeMethod = "unsubscribe"
 )
 
-// feedUpdate wraps the result from any particular stream with the subscription ID it's associated with
-type feedUpdate struct {
+// FeedUpdate wraps the result from any particular stream with the subscription ID it's associated with
+type FeedUpdate struct {
 	SubscriptionID string          `json:"subscription"`
 	Result         json.RawMessage `json:"result"`
 }
 
-// subscribeParams exist because subscribe arguments usually look like ["streamName", {"some": "opts"}], which doesn't map elegantly to Go structs
-type subscribeParams struct {
+// SubscribeParams exist because subscribe arguments usually look like ["streamName", {"some": "opts"}], which doesn't map elegantly to Go structs
+type SubscribeParams struct {
 	StreamName string
 	StreamOpts json.RawMessage
 }
 
-func (s subscribeParams) MarshalJSON() ([]byte, error) {
+func (s SubscribeParams) MarshalJSON() ([]byte, error) {
 	nameB, err := json.Marshal(s.StreamName)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (s subscribeParams) MarshalJSON() ([]byte, error) {
 	return json.Marshal(params)
 }
 
-func (s *subscribeParams) UnmarshalJSON(b []byte) error {
+func (s *SubscribeParams) UnmarshalJSON(b []byte) error {
 	var result []json.RawMessage
 	err := json.Unmarshal(b, &result)
 	if err != nil {
@@ -52,17 +52,17 @@ func (s *subscribeParams) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// unsubscribeParams exist because unsubscribe arguments usually look like ["subscriptionID"], which doesn't map elegantly to Go structs
-type unsubscribeParams struct {
+// UnsubscribeParams exist because unsubscribe arguments usually look like ["subscriptionID"], which doesn't map elegantly to Go structs
+type UnsubscribeParams struct {
 	SubscriptionID string
 }
 
-func (s unsubscribeParams) MarshalJSON() ([]byte, error) {
+func (s UnsubscribeParams) MarshalJSON() ([]byte, error) {
 	params := []string{s.SubscriptionID}
 	return json.Marshal(params)
 }
 
-func (s *unsubscribeParams) UnmarshalJSON(b []byte) error {
+func (s *UnsubscribeParams) UnmarshalJSON(b []byte) error {
 	var result []json.RawMessage
 	err := json.Unmarshal(b, &result)
 	if err != nil {

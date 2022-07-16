@@ -40,13 +40,13 @@ func testGetOrderbookStream(
 	bxassert.ChanEmptyAfterTimeout(t, orderbookCh, cancelGracePeriod)
 
 	// unknown market
-	//ctx, cancel = context.WithCancel(context.Background())
-	//defer cancel()
-	//
-	//if connectFnErr != nil {
-	//	errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
-	//	assert.Equal(t, "provided market name/address was not found", errMessage)
-	//}
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
+	if connectFnErr != nil {
+		errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
+		assert.Equal(t, "provided market name/address was not found", errMessage)
+	}
 }
 
 func testGetOrderStatusStream(t *testing.T, connectFnErr func(ctx context.Context, market string, ownerAddress string) string) {
