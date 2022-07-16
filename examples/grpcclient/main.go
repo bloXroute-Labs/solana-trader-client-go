@@ -47,8 +47,14 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
+	payerAddr, ok := os.LookupEnv("PAYER")
+	if !ok {
+		log.Infof("PAYER environment variable not set: will be set to owner address")
+		payerAddr = ownerAddr
+	}
+
 	orderLifecycleTest(g, ownerAddr, ooAddr)
-	cancelAll(g, ownerAddr, ownerAddr, ooAddr)
+	cancelAll(g, ownerAddr, payerAddr, ooAddr)
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) {
@@ -330,7 +336,7 @@ func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
 		SkipPreFlight:     true,
 	}
 
-	// Make 2 orders in ob
+	// Place 2 orders in orderbook
 	fmt.Println("placing orders")
 	sig, err := g.SubmitOrder(ctx, owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
@@ -349,8 +355,12 @@ func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
 
 	// Check orders are there
 	orders, err := g.GetOpenOrders(ctx, marketAddr, owner)
+	if err != nil {
+		log.Fatal(err)
+	}
 	found1 := false
 	found2 := false
+
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
 			found1 = true
@@ -360,13 +370,13 @@ func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
 			found2 = true
 		}
 	}
-
 	if !(found1 && found2) {
 		log.Fatal("both orders not found in orderbook")
 	}
 	fmt.Println("2 orders placed successfully")
 
-	// Cancel all of them
+	// Cancel all the orders
+	fmt.Println("\ncancelling all orders")
 	sigs, err := g.SubmitCancelAll(ctx, marketAddr, owner, ooAddr, true)
 	if err != nil {
 		log.Fatal(err)
@@ -380,7 +390,8 @@ func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
 		log.Fatal(err)
 	}
 	if len(orders.Orders) != 0 {
-		log.Fatal("all orders in ob not cancelled")
+		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
+		return
 	}
 	fmt.Println("all orders in ob cancelled")
 }

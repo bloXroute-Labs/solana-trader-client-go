@@ -57,8 +57,14 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
+	payerAddr, ok := os.LookupEnv("PAYER")
+	if !ok {
+		log.Infof("PAYER environment variable not set: will be set to owner address")
+		payerAddr = ownerAddr
+	}
+
 	orderLifecycleTest(w, ownerAddr, ooAddr)
-	cancelAll(w, ownerAddr, ownerAddr, ooAddr)
+	cancelAll(w, ownerAddr, payerAddr, ooAddr)
 }
 
 func callMarketsWS(w *provider.WSClient) {
@@ -379,7 +385,7 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 		SkipPreFlight:     true,
 	}
 
-	// Make 2 orders in ob
+	// Place 2 orders in orderbook
 	fmt.Println("placing orders")
 	sig, err := w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
@@ -398,8 +404,12 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 
 	// Check orders are there
 	orders, err := w.GetOpenOrders(marketAddr, owner)
+	if err != nil {
+		log.Fatal(err)
+	}
 	found1 := false
 	found2 := false
+
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
 			found1 = true
@@ -415,12 +425,13 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 	}
 	fmt.Println("2 orders placed successfully")
 
-	// Cancel all of them
+	// Cancel all the orders
+	fmt.Println("\ncancelling all orders")
 	sigs, err := w.SubmitCancelAll(marketAddr, owner, ooAddr, true)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("submitting cancel order(s) %s", strings.Join(sigs, ", "))
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
 
 	time.Sleep(time.Minute)
 
@@ -429,7 +440,8 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 		log.Fatal(err)
 	}
 	if len(orders.Orders) != 0 {
-		log.Fatal("all orders in ob not cancelled")
+		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
+		return
 	}
 	fmt.Println("all orders in ob cancelled")
 }

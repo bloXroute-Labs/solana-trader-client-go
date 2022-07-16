@@ -39,11 +39,17 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
+	payerAddr, ok := os.LookupEnv("PAYER")
+	if !ok {
+		log.Infof("PAYER environment variable not set: will be set to owner address")
+		payerAddr = ownerAddr
+	}
+
 	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
 	callPostSettleHTTP(ownerAddr, ooAddr)
 
-	cancelAll(ownerAddr, ownerAddr, ooAddr)
+	cancelAll(ownerAddr, payerAddr, ooAddr)
 }
 
 func callMarketsHTTP() {
@@ -246,7 +252,9 @@ func cancelAll(owner, payer, ooAddr string) {
 		OpenOrdersAddress: ooAddr,
 		SkipPreFlight:     true,
 	}
-	// Make 2 orders in ob
+
+	// Place 2 orders in orderbook
+	fmt.Println("placing orders")
 	sig, err := h.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
@@ -264,8 +272,12 @@ func cancelAll(owner, payer, ooAddr string) {
 
 	// Check orders are there
 	orders, err := h.GetOpenOrders(marketAddr, owner)
+	if err != nil {
+		log.Fatal(err)
+	}
 	found1 := false
 	found2 := false
+
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
 			found1 = true
@@ -275,18 +287,18 @@ func cancelAll(owner, payer, ooAddr string) {
 			found2 = true
 		}
 	}
-
 	if !(found1 && found2) {
 		log.Fatal("both orders not found in orderbook")
 	}
 	fmt.Println("2 orders placed successfully")
 
-	// Cancel all of them
+	// Cancel all the orders
+	fmt.Println("\ncancelling all orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, owner, ooAddr, true)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("submitting cancel order(s) %s", strings.Join(sigs, ", "))
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
 
 	time.Sleep(time.Minute)
 
@@ -295,6 +307,8 @@ func cancelAll(owner, payer, ooAddr string) {
 		log.Fatal(err)
 	}
 	if len(orders.Orders) != 0 {
-		log.Fatal("all orders in ob not cancelled")
+		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
+		return
 	}
+	fmt.Println("all orders in ob cancelled")
 }
