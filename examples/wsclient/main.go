@@ -376,22 +376,25 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
+		SkipPreFlight:     true,
 	}
+
 	// Make 2 orders in ob
-	sig, err := w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderPrice, orderAmount, opts)
+	fmt.Println("placing orders")
+	sig, err := w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderPrice, orderAmount, opts)
+	sig, err = w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("submitting cancel order #2, signature %s", sig)
+	log.Infof("submitting place order #2, signature %s", sig)
 
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Minute)
 
 	// Check orders are there
 	orders, err := w.GetOpenOrders(marketAddr, owner)
@@ -410,15 +413,16 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 	if !(found1 && found2) {
 		log.Fatal("both orders not found in orderbook")
 	}
+	fmt.Println("2 orders placed successfully")
 
 	// Cancel all of them
 	sigs, err := w.SubmitCancelAll(marketAddr, owner, ooAddr, true)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	log.Infof("submitting cancel order(s) %s", strings.Join(sigs, ", "))
 
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Minute)
 
 	orders, err = w.GetOpenOrders(marketAddr, owner)
 	if err != nil {
@@ -427,4 +431,5 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 	if len(orders.Orders) != 0 {
 		log.Fatal("all orders in ob not cancelled")
 	}
+	fmt.Println("all orders in ob cancelled")
 }
