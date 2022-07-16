@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
@@ -57,6 +58,7 @@ func main() {
 	}
 
 	orderLifecycleTest(w, ownerAddr, ooAddr)
+	cancelAll(w, ownerAddr, ownerAddr, ooAddr)
 }
 
 func callMarketsWS(w *provider.WSClient) {
@@ -365,4 +367,64 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) {
 	}
 
 	fmt.Printf("response signature received: %v", sig)
+}
+
+func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID1 := rand.Uint64()
+	clientOrderID2 := rand.Uint64()
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID1,
+		OpenOrdersAddress: ooAddr,
+	}
+	// Make 2 orders in ob
+	sig, err := w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderPrice, orderAmount, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #1, signature %s", sig)
+
+	opts.ClientOrderID = clientOrderID2
+	sig, err = w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderPrice, orderAmount, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting cancel order #2, signature %s", sig)
+
+	time.Sleep(time.Second * 30)
+
+	// Check orders are there
+	orders, err := w.GetOpenOrders(marketAddr, owner)
+	found1 := false
+	found2 := false
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
+			found1 = true
+			continue
+		}
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
+			found2 = true
+		}
+	}
+
+	if !(found1 && found2) {
+		log.Fatal("both orders not found in orderbook")
+	}
+
+	// Cancel all of them
+	sigs, err := w.SubmitCancelAll(marketAddr, owner, ooAddr, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+
+	time.Sleep(time.Second * 30)
+
+	orders, err = w.GetOpenOrders(marketAddr, owner)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(orders.Orders) != 0 {
+		log.Fatal("all orders in ob not cancelled")
+	}
 }

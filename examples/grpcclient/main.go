@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
@@ -47,6 +48,7 @@ func main() {
 	}
 
 	orderLifecycleTest(g, ownerAddr, ooAddr)
+	cancelAll(g, ownerAddr, ownerAddr, ooAddr)
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) {
@@ -313,4 +315,67 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 	}
 
 	fmt.Printf("response signature received: %v", sig)
+}
+
+func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID1 := rand.Uint64()
+	clientOrderID2 := rand.Uint64()
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID1,
+		OpenOrdersAddress: ooAddr,
+	}
+	// Make 2 orders in ob
+	sig, err := g.SubmitOrder(ctx, owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderPrice, orderAmount, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #1, signature %s", sig)
+
+	opts.ClientOrderID = clientOrderID2
+	sig, err = g.SubmitOrder(ctx, owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderPrice, orderAmount, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting cancel order #2, signature %s", sig)
+
+	time.Sleep(time.Second * 30)
+
+	// Check orders are there
+	orders, err := g.GetOpenOrders(ctx, marketAddr, owner)
+	found1 := false
+	found2 := false
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
+			found1 = true
+			continue
+		}
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
+			found2 = true
+		}
+	}
+
+	if !(found1 && found2) {
+		log.Fatal("both orders not found in orderbook")
+	}
+
+	// Cancel all of them
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, owner, ooAddr, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+
+	time.Sleep(time.Second * 30)
+
+	orders, err = g.GetOpenOrders(ctx, marketAddr, owner)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(orders.Orders) != 0 {
+		log.Fatal("all orders in ob not cancelled")
+	}
 }
