@@ -288,7 +288,7 @@ func cancelAll(owner, payer, ooAddr string) {
 		}
 	}
 	if !(found1 && found2) {
-		log.Fatal("both orders not found in orderbook")
+		log.Fatal("one/both orders not found in orderbook")
 	}
 	fmt.Println("2 orders placed successfully")
 

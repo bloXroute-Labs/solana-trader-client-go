@@ -419,9 +419,8 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 			found2 = true
 		}
 	}
-
 	if !(found1 && found2) {
-		log.Fatal("both orders not found in orderbook")
+		log.Fatal("one/both orders not found in orderbook")
 	}
 	fmt.Println("2 orders placed successfully")
 
