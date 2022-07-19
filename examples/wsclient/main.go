@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
@@ -36,8 +37,8 @@ func main() {
 
 	// streaming methods
 	callOrderbookWSStream(w)
-	//callFilteredOrderbookWSStream(w)
-	//callTradesWSStream(w)
+	callFilteredOrderbookWSStream(w)
+	callTradesWSStream(w)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:

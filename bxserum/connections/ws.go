@@ -60,8 +60,12 @@ func (w *WS) readLoop() {
 	defer w.cancel()
 
 	for {
-		// if lock is held by another processing routine, then wait for release before processing any further messages
-		// typically, messages can be dispatched independently, but in some cases it may be important to finish processing a single message before allowing the socket to read any more (e.g. subscription response before processing potential updates)
+		// all message reading is done on a single goroutine, while message processing is dispatched on independent
+		// goroutines in parallel. in most cases this is fine, but if not message processors can request to hold the lock
+		// (see lockHeld attribute usage) to force sequential processing
+		//
+		// main scenario for this is for subscription messages: we want to process the initial response to register
+		// a subscription ID before processing any potential updates which would otherwise be discarded
 		w.messageM.Lock()
 		w.messageM.Unlock()
 
