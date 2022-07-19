@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
@@ -15,13 +16,15 @@ func TestWS_New(t *testing.T) {
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
-	os.Setenv("PRIVATE_KEY", pk.String())
+	err = os.Setenv("PRIVATE_KEY", pk.String())
+	require.Nil(t, err)
 
 	c, err := provider.NewWSClient()
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	os.Unsetenv("PRIVATE_KEY")
+	err = os.Unsetenv("PRIVATE_KEY")
+	require.Nil(t, err)
 }
 
 func TestWS_NewWithOpts(t *testing.T) {

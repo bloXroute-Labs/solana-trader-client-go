@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	w, err := provider.NewWSClient()
+	w, err := provider.NewWSClientTestnet()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return
@@ -36,9 +36,9 @@ func main() {
 	callAccountBalanceWS(w)
 
 	// streaming methods
-	callOrderbookWSStream()
-	callFilteredOrderbookWSStream()
-	callTradesWSStream()
+	callOrderbookWSStream(w)
+	callFilteredOrderbookWSStream(w)
+	callTradesWSStream(w)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -62,7 +62,7 @@ func main() {
 func callMarketsWS(w *provider.WSClient) {
 	fmt.Println("fetching markets...")
 
-	markets, err := w.GetMarkets()
+	markets, err := w.GetMarkets(context.Background())
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 	} else {
@@ -75,7 +75,7 @@ func callMarketsWS(w *provider.WSClient) {
 func callOrderbookWS(w *provider.WSClient) {
 	fmt.Println("fetching orderbooks...")
 
-	orderbook, err := w.GetOrderbook("ETH-USDT", 0)
+	orderbook, err := w.GetOrderbook(context.Background(), "ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
 	} else {
@@ -84,7 +84,7 @@ func callOrderbookWS(w *provider.WSClient) {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook("SOLUSDT", 2)
+	orderbook, err = w.GetOrderbook(context.Background(), "SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 	} else {
@@ -93,7 +93,7 @@ func callOrderbookWS(w *provider.WSClient) {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook("SOL:USDC", 3)
+	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 	} else {
@@ -106,7 +106,7 @@ func callOrderbookWS(w *provider.WSClient) {
 func callTradesWS(w *provider.WSClient) {
 	fmt.Println("fetching trades...")
 
-	trades, err := w.GetTrades("SOLUSDC", 3)
+	trades, err := w.GetTrades(context.Background(), "SOLUSDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 	} else {
@@ -119,7 +119,7 @@ func callTradesWS(w *provider.WSClient) {
 func callOpenOrdersWS(w *provider.WSClient) {
 	fmt.Println("fetching open orders...")
 
-	orders, err := w.GetOpenOrders("SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
+	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 	} else {
@@ -132,7 +132,7 @@ func callOpenOrdersWS(w *provider.WSClient) {
 func callUnsettledWS(w *provider.WSClient) {
 	fmt.Println("fetching unsettled...")
 
-	response, err := w.GetUnsettled("SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 	} else {
@@ -145,7 +145,7 @@ func callUnsettledWS(w *provider.WSClient) {
 func callAccountBalanceWS(w *provider.WSClient) {
 	fmt.Println("fetching balances...")
 
-	response, err := w.GetAccountBalance("AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
 	} else {
@@ -158,7 +158,7 @@ func callAccountBalanceWS(w *provider.WSClient) {
 func callTickersWS(w *provider.WSClient) {
 	fmt.Println("fetching tickers...")
 
-	tickers, err := w.GetTickers("SOLUSDC")
+	tickers, err := w.GetTickers(context.Background(), "SOLUSDC")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOL-USDT: %v", err)
 	} else {
@@ -169,23 +169,16 @@ func callTickersWS(w *provider.WSClient) {
 }
 
 // Stream response
-func callOrderbookWSStream() {
+func callOrderbookWSStream(w *provider.WSClient) {
 	fmt.Println("starting orderbook stream")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err = w.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err := w.GetOrderbooksStream(ctx, "SOL/USDC", 3, orderbookChan)
 	if err != nil {
-		log.Errorf("error with GetOrderbookStream request for SOL/USDC: %v", err)
+		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
 			<-orderbookChan
@@ -194,21 +187,14 @@ func callOrderbookWSStream() {
 	}
 }
 
-func callFilteredOrderbookWSStream() {
+func callFilteredOrderbookWSStream(w *provider.WSClient) {
 	fmt.Println("starting GetFilteredOrderbook stream")
-
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-	defer w.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err = w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
+	err := w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetFilteredOrderbookStream request for SOL/USDC: %v", err)
 	} else {
@@ -219,21 +205,14 @@ func callFilteredOrderbookWSStream() {
 	}
 }
 
-func callTradesWSStream() {
+func callTradesWSStream(w *provider.WSClient) {
 	fmt.Println("starting trades stream")
 
-	w, err := provider.NewWSClient()
-	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-		return
-	}
-
-	defer w.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
 
-	err = w.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
+	err := w.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
 	if err != nil {
 		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
 	} else {
@@ -321,14 +300,14 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) uint64 {
 	}
 
 	// create order without actually submitting
-	response, err := w.PostOrder(ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	response, err := w.PostOrder(context.Background(), ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatalf("failed to create order (%v)", err)
 	}
 	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
 
 	// sign/submit transaction after creation
-	sig, err := w.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
+	sig, err := w.SubmitOrder(context.Background(), ownerAddr, ownerAddr, marketAddr,
 		orderSide, []api.OrderType{orderType}, orderAmount,
 		orderPrice, opts)
 	if err != nil {
@@ -343,7 +322,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) uint64 {
 func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64) {
 	fmt.Println("trying to cancel order")
 
-	_, err := w.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
+	_, err := w.SubmitCancelByClientOrderID(context.Background(), clientOrderID, ownerAddr,
 		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client ID (%v)", err)
@@ -355,10 +334,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) {
 	fmt.Println("starting post settle")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sig, err := w.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
+	sig, err := w.SubmitSettle(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return
