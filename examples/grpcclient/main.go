@@ -377,7 +377,7 @@ func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
 
 	// Cancel all the orders
 	fmt.Println("\ncancelling all orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, owner, ooAddr, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, owner, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}

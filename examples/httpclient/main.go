@@ -294,7 +294,7 @@ func cancelAll(owner, payer, ooAddr string) {
 
 	// Cancel all the orders
 	fmt.Println("\ncancelling all orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, owner, ooAddr, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, owner, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
