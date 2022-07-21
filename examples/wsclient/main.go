@@ -354,9 +354,12 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) {
 	fmt.Printf("response signature received: %v\n", sig)
 }
 
-func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
+func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println("\nstarting cancel all test")
 	fmt.Println()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -369,14 +372,14 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 
 	// Place 2 orders in orderbook
 	fmt.Println("placing orders")
-	sig, err := w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err = w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -385,7 +388,7 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := w.GetOpenOrders(marketAddr, owner)
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -407,8 +410,8 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 	fmt.Println("2 orders placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling all orders")
-	sigs, err := w.SubmitCancelAll(marketAddr, owner, []string{ooAddr}, true)
+	fmt.Println("\ncancelling the orders")
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -416,7 +419,7 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 
 	time.Sleep(time.Minute)
 
-	orders, err = w.GetOpenOrders(marketAddr, owner)
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -425,4 +428,7 @@ func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
 		return
 	}
 	fmt.Println("all orders in ob cancelled")
+
+	fmt.Println()
+	callPostSettleWS(w, ownerAddr, ooAddr)
 }
