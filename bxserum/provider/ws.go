@@ -356,11 +356,11 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 	return w.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
-func (w *WSClient) PostCancelAll(market, owner, openOrders string) (*pb.PostCancelAllResponse, error) {
+func (w *WSClient) PostCancelAll(market, owner string, openOrdersAddresses []string) (*pb.PostCancelAllResponse, error) {
 	request, err := w.jsonRPCRequest("PostCancelAll", &pb.PostCancelAllRequest{
-		Market:           market,
-		OwnerAddress:     owner,
-		OpenOrderAddress: openOrders,
+		Market:              market,
+		OwnerAddress:        owner,
+		OpenOrdersAddresses: openOrdersAddresses,
 	})
 	if err != nil {
 		return nil, err
@@ -374,8 +374,8 @@ func (w *WSClient) PostCancelAll(market, owner, openOrders string) (*pb.PostCanc
 	return &response, nil
 }
 
-func (w *WSClient) SubmitCancelAll(market, owner, openOrders string, skipPreFlight bool) ([]string, error) {
-	orders, err := w.PostCancelAll(market, owner, openOrders)
+func (w *WSClient) SubmitCancelAll(market, owner string, openOrdersAddresses []string, skipPreFlight bool) ([]string, error) {
+	orders, err := w.PostCancelAll(market, owner, openOrdersAddresses)
 	if err != nil {
 		return nil, err
 	}

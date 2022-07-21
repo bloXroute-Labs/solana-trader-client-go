@@ -270,12 +270,12 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 	return h.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
-func (h *HTTPClient) PostCancelAll(market, owner, openOrders string) (*pb.PostCancelAllResponse, error) {
+func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []string) (*pb.PostCancelAllResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/cancelall", h.baseURL)
 	request := &pb.PostCancelAllRequest{
-		Market:           market,
-		OwnerAddress:     owner,
-		OpenOrderAddress: openOrders,
+		Market:              market,
+		OwnerAddress:        owner,
+		OpenOrdersAddresses: openOrdersAddresses,
 	}
 
 	var response pb.PostCancelAllResponse
@@ -287,7 +287,7 @@ func (h *HTTPClient) PostCancelAll(market, owner, openOrders string) (*pb.PostCa
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitCancelAll(market, owner, openOrders string, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, skipPreFlight bool) ([]string, error) {
 	orders, err := h.PostCancelAll(market, owner, openOrders)
 	if err != nil {
 		return nil, err

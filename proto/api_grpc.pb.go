@@ -21,7 +21,7 @@ type ApiClient interface {
 	GetMarkets(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (*GetMarketsResponse, error)
 	GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error)
 	GetKline(ctx context.Context, in *GetKlineRequest, opts ...grpc.CallOption) (*GetKlineResponse, error)
-	GetOrderbook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error)
+	GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error)
 	GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error)
 	GetServerTime(ctx context.Context, in *GetServerTimeRequest, opts ...grpc.CallOption) (*GetServerTimeResponse, error)
 	// account endpoints
@@ -38,7 +38,7 @@ type ApiClient interface {
 	GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, opts ...grpc.CallOption) (*GetOrderByIDResponse, error)
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
 	// streaming endpoints
-	GetOrderbooksStream(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
+	GetOrderbooksStream(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
 	GetFilteredOrderbooksStream(ctx context.Context, in *GetFilteredOrderbooksRequest, opts ...grpc.CallOption) (Api_GetFilteredOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
 	GetMarketDepthStream(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (Api_GetMarketDepthStreamClient, error)
@@ -81,7 +81,7 @@ func (c *apiClient) GetKline(ctx context.Context, in *GetKlineRequest, opts ...g
 	return out, nil
 }
 
-func (c *apiClient) GetOrderbook(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error) {
+func (c *apiClient) GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error) {
 	out := new(GetOrderbookResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetOrderbook", in, out, opts...)
 	if err != nil {
@@ -207,7 +207,7 @@ func (c *apiClient) GetUnsettled(ctx context.Context, in *GetUnsettledRequest, o
 	return out, nil
 }
 
-func (c *apiClient) GetOrderbooksStream(ctx context.Context, in *GetOrderBookRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error) {
+func (c *apiClient) GetOrderbooksStream(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error) {
 	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[0], "/api.Api/GetOrderbooksStream", opts...)
 	if err != nil {
 		return nil, err
@@ -406,7 +406,7 @@ type ApiServer interface {
 	GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error)
 	GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error)
 	GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error)
-	GetOrderbook(context.Context, *GetOrderBookRequest) (*GetOrderbookResponse, error)
+	GetOrderbook(context.Context, *GetOrderbookRequest) (*GetOrderbookResponse, error)
 	GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error)
 	GetServerTime(context.Context, *GetServerTimeRequest) (*GetServerTimeResponse, error)
 	// account endpoints
@@ -423,7 +423,7 @@ type ApiServer interface {
 	GetOrderByID(context.Context, *GetOrderByIDRequest) (*GetOrderByIDResponse, error)
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
 	// streaming endpoints
-	GetOrderbooksStream(*GetOrderBookRequest, Api_GetOrderbooksStreamServer) error
+	GetOrderbooksStream(*GetOrderbookRequest, Api_GetOrderbooksStreamServer) error
 	GetFilteredOrderbooksStream(*GetFilteredOrderbooksRequest, Api_GetFilteredOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
 	GetMarketDepthStream(*GetMarketsRequest, Api_GetMarketDepthStreamServer) error
@@ -445,7 +445,7 @@ func (UnimplementedApiServer) GetTickers(context.Context, *GetTickersRequest) (*
 func (UnimplementedApiServer) GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetKline not implemented")
 }
-func (UnimplementedApiServer) GetOrderbook(context.Context, *GetOrderBookRequest) (*GetOrderbookResponse, error) {
+func (UnimplementedApiServer) GetOrderbook(context.Context, *GetOrderbookRequest) (*GetOrderbookResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrderbook not implemented")
 }
 func (UnimplementedApiServer) GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error) {
@@ -487,7 +487,7 @@ func (UnimplementedApiServer) GetOrderByID(context.Context, *GetOrderByIDRequest
 func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnsettled not implemented")
 }
-func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderBookRequest, Api_GetOrderbooksStreamServer) error {
+func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderbookRequest, Api_GetOrderbooksStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderbooksStream not implemented")
 }
 func (UnimplementedApiServer) GetFilteredOrderbooksStream(*GetFilteredOrderbooksRequest, Api_GetFilteredOrderbooksStreamServer) error {
@@ -573,7 +573,7 @@ func _Api_GetKline_Handler(srv interface{}, ctx context.Context, dec func(interf
 }
 
 func _Api_GetOrderbook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrderBookRequest)
+	in := new(GetOrderbookRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -585,7 +585,7 @@ func _Api_GetOrderbook_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/api.Api/GetOrderbook",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).GetOrderbook(ctx, req.(*GetOrderBookRequest))
+		return srv.(ApiServer).GetOrderbook(ctx, req.(*GetOrderbookRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -825,7 +825,7 @@ func _Api_GetUnsettled_Handler(srv interface{}, ctx context.Context, dec func(in
 }
 
 func _Api_GetOrderbooksStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetOrderBookRequest)
+	m := new(GetOrderbookRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
