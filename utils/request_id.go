@@ -9,11 +9,15 @@ type RequestID struct {
 	lock *sync.Mutex
 }
 
-func NewRequestID() RequestID {
-	return RequestID{
+func NewRequestID() *RequestID {
+	return &RequestID{
 		id:   1,
 		lock: &sync.Mutex{},
 	}
+}
+
+func (r *RequestID) Current() uint64 {
+	return r.id
 }
 
 func (r *RequestID) Next() uint64 {
