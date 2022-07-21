@@ -263,6 +263,9 @@ const (
 )
 
 func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
+	fmt.Println("\nstarting order lifecycle test")
+	fmt.Println()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -372,10 +375,13 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) {
 		return
 	}
 
-	fmt.Printf("response signature received: %v", sig)
+	fmt.Printf("response signature received: %v\n", sig)
 }
 
 func cancelAll(w *provider.WSClient, owner, payer, ooAddr string) {
+	fmt.Println("\nstarting cancel all test")
+	fmt.Println()
+
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
 	clientOrderID2 := rand.Uint64()

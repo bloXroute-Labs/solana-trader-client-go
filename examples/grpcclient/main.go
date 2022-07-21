@@ -211,6 +211,9 @@ const (
 )
 
 func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) {
+	fmt.Println("\nstarting order lifecycle test")
+	fmt.Println()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -320,10 +323,13 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 		return
 	}
 
-	fmt.Printf("response signature received: %v", sig)
+	fmt.Printf("response signature received: %v\n", sig)
 }
 
 func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
+	fmt.Println("\nstarting cancel all test")
+	fmt.Println()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

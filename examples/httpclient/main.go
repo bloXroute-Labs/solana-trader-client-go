@@ -240,6 +240,9 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) {
 }
 
 func cancelAll(owner, payer, ooAddr string) {
+	fmt.Println("\nstarting cancel all test")
+	fmt.Println()
+
 	client := &http.Client{Timeout: time.Second * 30}
 	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
