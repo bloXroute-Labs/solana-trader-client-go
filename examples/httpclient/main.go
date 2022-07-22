@@ -239,7 +239,7 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) {
 	fmt.Printf("response signature received: %v", sig)
 }
 
-func cancelAll(owner, payer, ooAddr string) {
+func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println("\nstarting cancel all test")
 	fmt.Println()
 
@@ -258,14 +258,14 @@ func cancelAll(owner, payer, ooAddr string) {
 
 	// Place 2 orders in orderbook
 	fmt.Println("placing orders")
-	sig, err := h.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitOrder(owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err = h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -274,7 +274,7 @@ func cancelAll(owner, payer, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, owner)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -296,8 +296,8 @@ func cancelAll(owner, payer, ooAddr string) {
 	fmt.Println("2 orders placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling all orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, owner, []string{ooAddr}, true)
+	fmt.Println("\ncancelling the orders")
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -305,7 +305,7 @@ func cancelAll(owner, payer, ooAddr string) {
 
 	time.Sleep(time.Minute)
 
-	orders, err = h.GetOpenOrders(marketAddr, owner)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -313,5 +313,9 @@ func cancelAll(owner, payer, ooAddr string) {
 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
 		return
 	}
-	fmt.Println("all orders in ob cancelled")
+	fmt.Println("orders cancelled")
+
+	fmt.Println()
+	callPostSettleHTTP(ownerAddr, ooAddr)
+
 }

@@ -326,7 +326,7 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 	fmt.Printf("response signature received: %v\n", sig)
 }
 
-func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
+func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println("\nstarting cancel all test")
 	fmt.Println()
 
@@ -344,7 +344,7 @@ func cancelAll(g *provider.GRPCClient, owner, payer, ooAddr string) {
 
 	// Place 2 orders in orderbook
 	fmt.Println("placing orders")
-	sig, err := g.SubmitOrder(ctx, owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}

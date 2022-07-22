@@ -427,7 +427,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
 		return
 	}
-	fmt.Println("all orders in ob cancelled")
+	fmt.Println("orders cancelled")
 
 	fmt.Println()
 	callPostSettleWS(w, ownerAddr, ooAddr)
