@@ -45,12 +45,12 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponse, error) {
-	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
+	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
-	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderBookRequest{Market: market, Limit: limit})
+	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
 	if err != nil {
 		return err
 	}
@@ -92,6 +92,7 @@ func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddr
 
 	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market, outputChan)
 }
+
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTickersResponse, error) {
 	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
@@ -233,6 +234,33 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 	}
 
 	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, openOrders []string) (*pb.PostCancelAllResponse, error) {
+	return g.apiClient.PostCancelAll(ctx, &pb.PostCancelAllRequest{
+		Market:              market,
+		OwnerAddress:        owner,
+		OpenOrdersAddresses: openOrders,
+	})
+}
+
+func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, skipPreFlight bool) ([]string, error) {
+	orders, err := g.PostCancelAll(ctx, market, owner, openOrdersAddresses)
+	if err != nil {
+		return nil, err
+	}
+
+	var signatures []string
+	for _, tx := range orders.Transactions {
+		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

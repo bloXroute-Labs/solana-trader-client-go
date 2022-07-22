@@ -46,7 +46,7 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	var response pb.GetOrderbookResponse
-	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderBookRequest{Market: market, Limit: limit}, &response)
+	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderbookRequest{Market: market, Limit: limit}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetOrderbooksStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
-	generator, err := connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderBookRequest{
+	generator, err := connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbookRequest{
 		Market: market,
 		Limit:  limit,
 	}, func() *pb.GetOrderbooksStreamResponse {
@@ -364,6 +364,50 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 	}
 
 	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+func (w *WSClient) PostCancelAll(
+	ctx context.Context,
+	market,
+	owner string,
+	openOrdersAddresses []string,
+) (*pb.PostCancelAllResponse, error) {
+	request := &pb.PostCancelAllRequest{
+		Market:              market,
+		OwnerAddress:        owner,
+		OpenOrdersAddresses: openOrdersAddresses,
+	}
+	var response pb.PostCancelAllResponse
+	err := w.conn.Request(ctx, "PostCancelAll", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (w *WSClient) SubmitCancelAll(
+	ctx context.Context,
+	market,
+	owner string,
+	openOrdersAddresses []string,
+	skipPreFlight bool,
+) ([]string, error) {
+	orders, err := w.PostCancelAll(ctx, market, owner, openOrdersAddresses)
+	if err != nil {
+		return nil, err
+	}
+
+	var signatures []string
+	for _, tx := range orders.Transactions {
+		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

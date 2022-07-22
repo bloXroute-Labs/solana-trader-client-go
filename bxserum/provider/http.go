@@ -270,6 +270,42 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 	return h.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
+func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []string) (*pb.PostCancelAllResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/cancelall", h.baseURL)
+	request := &pb.PostCancelAllRequest{
+		Market:              market,
+		OwnerAddress:        owner,
+		OpenOrdersAddresses: openOrdersAddresses,
+	}
+
+	var response pb.PostCancelAllResponse
+	err := connections.HTTPPostWithClient[*pb.PostCancelAllResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, skipPreFlight bool) ([]string, error) {
+	orders, err := h.PostCancelAll(market, owner, openOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	var signatures []string
+	for _, tx := range orders.Transactions {
+		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/settle", h.baseURL)
