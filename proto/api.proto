@@ -209,13 +209,7 @@ service Api {
   }
 
   // streaming endpoints
-  rpc GetOrderbooksStream(GetOrderbookRequest) returns (stream GetOrderbooksStreamResponse) {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      tags: "Trade";
-    };
-  }
-
-  rpc GetFilteredOrderbooksStream(GetFilteredOrderbooksRequest) returns (stream GetOrderbooksStreamResponse) {
+  rpc GetOrderbooksStream(GetOrderbooksRequest) returns (stream GetOrderbooksStreamResponse) {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       tags: "Trade";
     };
@@ -312,7 +306,7 @@ message GetOrderbookRequest {
   uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }
 
-message GetFilteredOrderbooksRequest {
+message GetOrderbooksRequest {
   repeated string markets = 1;
   uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }

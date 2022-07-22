@@ -18,8 +18,8 @@ const (
 
 func testGetOrderbookStream(
 	t *testing.T,
-	connectFn func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse),
-	connectFnErr func(ctx context.Context, market string, limit uint32) string,
+	connectFn func(ctx context.Context, markets []string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse),
+	connectFnErr func(ctx context.Context, markets []string, limit uint32) string,
 ) {
 	// no timeout: channel read timeouts are sufficient
 	ctx, cancel := context.WithCancel(context.Background())
@@ -27,7 +27,7 @@ func testGetOrderbookStream(
 
 	// normal subscription
 	orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
-	go connectFn(ctx, "SOLUSDC", 0, orderbookCh)
+	go connectFn(ctx, []string{"SOLUSDC"}, 0, orderbookCh)
 
 	for i := 0; i < streamExpectEntries; i++ {
 		orderbook := bxassert.ReadChanWithTimeout[*pb.GetOrderbooksStreamResponse](t, orderbookCh, streamExpectTimeout)
@@ -44,7 +44,7 @@ func testGetOrderbookStream(
 	defer cancel()
 
 	if connectFnErr != nil {
-		errMessage := connectFnErr(ctx, "market-doesnt-exist", 0)
+		errMessage := connectFnErr(ctx, []string{"market-doesnt-exist"}, 0)
 		assert.Equal(t, "provided market name/address was not found", errMessage)
 	}
 }

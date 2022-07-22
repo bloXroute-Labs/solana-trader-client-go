@@ -54,35 +54,8 @@ func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32
 }
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, market string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
-	generator, err := connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbookRequest{
-		Market: market,
-		Limit:  limit,
-	}, func() *pb.GetOrderbooksStreamResponse {
-		var v pb.GetOrderbooksStreamResponse
-		return &v
-	})
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			result, err := generator()
-			if err != nil {
-				close(orderbookChan)
-				return
-			}
-			orderbookChan <- result
-		}
-	}()
-
-	return nil
-}
-
-// GetFilteredOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetFilteredOrderbooksStream(ctx context.Context, markets []string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
-	generator, err := connections.WSStream(w.conn, ctx, "GetFilteredOrderbooksStream", &pb.GetFilteredOrderbooksRequest{
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
+	generator, err := connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
 		Markets: markets,
 		Limit:   limit,
 	}, func() *pb.GetOrderbooksStreamResponse {

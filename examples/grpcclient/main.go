@@ -26,7 +26,6 @@ func main() {
 	callOpenOrdersGRPC(g)
 	callTickersGRPC(g)
 	callOrderbookGRPCStream(g)
-	callFilteredOrderbookGRPCStream(g)
 	callTradesGRPCStream(g)
 	callUnsettledGRPC(g)
 	callGetAccountBalanceGRPC(g)
@@ -151,32 +150,13 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	defer cancel()
 
 	// Stream response
-	err := g.GetOrderbookStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx", "SOL-USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
-			<-orderbookChan
-			fmt.Printf("response %v received\n", i)
-		}
-	}
-}
-
-func callFilteredOrderbookGRPCStream(g *provider.GRPCClient) {
-	fmt.Println("starting orderbook stream")
-
-	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Stream response
-	err := g.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
-	if err != nil {
-		log.Errorf("error with GetFilteredOrderbooks stream request for SOL/USDC: %v", err)
-	} else {
-		for i := 1; i <= 5; i++ {
-			<-orderbookChan
-			fmt.Printf("response %v received\n", i)
+			data := <-orderbookChan
+			fmt.Printf("response %v received, data %v \n", i, data)
 		}
 	}
 }

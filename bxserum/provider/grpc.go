@@ -49,13 +49,13 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
-	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
+	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
 	if err != nil {
 		return err
 	}
 
-	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, market, outputChan)
+	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets), outputChan)
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -71,16 +71,6 @@ func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit u
 	}
 
 	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market, outputChan)
-}
-
-// GetFilteredOrderbooksStream subscribes to a stream for changes to the requested markets (per supplied filter) updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetFilteredOrderbooksStream(ctx context.Context, markets []string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
-	stream, err := g.apiClient.GetFilteredOrderbooksStream(ctx, &pb.GetFilteredOrderbooksRequest{Markets: markets, Limit: limit})
-	if err != nil {
-		return err
-	}
-
-	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets), outputChan)
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders

@@ -38,7 +38,6 @@ func main() {
 
 	// streaming methods
 	callOrderbookWSStream(w)
-	callFilteredOrderbookWSStream(w)
 	callTradesWSStream(w)
 
 	// calls below this place an order and immediately cancel it
@@ -184,27 +183,9 @@ func callOrderbookWSStream(w *provider.WSClient) {
 	defer cancel()
 	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err := w.GetOrderbooksStream(ctx, "SOL/USDC", 3, orderbookChan)
+	err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
-	} else {
-		for i := 1; i <= 5; i++ {
-			<-orderbookChan
-			fmt.Printf("response %v received\n", i)
-		}
-	}
-}
-
-func callFilteredOrderbookWSStream(w *provider.WSClient) {
-	fmt.Println("starting GetFilteredOrderbook stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
-
-	err := w.GetFilteredOrderbooksStream(ctx, []string{"SOL/USDC", "SOL/USDT"}, 3, orderbookChan)
-	if err != nil {
-		log.Errorf("error with GetFilteredOrderbookStream request for SOL/USDC: %v", err)
 	} else {
 		for i := 1; i <= 5; i++ {
 			<-orderbookChan
