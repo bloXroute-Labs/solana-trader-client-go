@@ -351,7 +351,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitOrder(ctx, owner, payer, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err = g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -360,7 +360,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, owner)
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -382,8 +382,8 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println("2 orders placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling all orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, owner, []string{ooAddr}, true)
+	fmt.Println("\ncancelling the orders")
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -391,7 +391,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 
 	time.Sleep(time.Second * 30)
 
-	orders, err = g.GetOpenOrders(ctx, marketAddr, owner)
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -399,5 +399,8 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
 		return
 	}
-	fmt.Println("all orders in ob cancelled")
+	fmt.Println("orders cancelled")
+
+	fmt.Println()
+	callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
