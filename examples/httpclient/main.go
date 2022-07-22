@@ -45,6 +45,7 @@ func main() {
 		payerAddr = ownerAddr
 	}
 
+	// Order lifecycle
 	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
 	callPostSettleHTTP(ownerAddr, ooAddr)
@@ -236,7 +237,7 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) {
 		return
 	}
 
-	fmt.Printf("response signature received: %v", sig)
+	fmt.Printf("response signature received: %v\n", sig)
 }
 
 func cancelAll(ownerAddr, payerAddr, ooAddr string) {
