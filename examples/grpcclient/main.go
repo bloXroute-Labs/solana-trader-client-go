@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
@@ -45,7 +46,14 @@ func main() {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
+	payerAddr, ok := os.LookupEnv("PAYER")
+	if !ok {
+		log.Infof("PAYER environment variable not set: will be set to owner address")
+		payerAddr = ownerAddr
+	}
+
 	orderLifecycleTest(g, ownerAddr, ooAddr)
+	cancelAll(g, ownerAddr, payerAddr, ooAddr)
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) {
@@ -183,6 +191,9 @@ const (
 )
 
 func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) {
+	fmt.Println("\nstarting order lifecycle test")
+	fmt.Println()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -292,5 +303,84 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 		return
 	}
 
-	fmt.Printf("response signature received: %v", sig)
+	fmt.Printf("response signature received: %v\n", sig)
+}
+
+func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
+	fmt.Println("\nstarting cancel all test")
+	fmt.Println()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID1 := rand.Uint64()
+	clientOrderID2 := rand.Uint64()
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID1,
+		OpenOrdersAddress: ooAddr,
+		SkipPreFlight:     true,
+	}
+
+	// Place 2 orders in orderbook
+	fmt.Println("placing orders")
+	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #1, signature %s", sig)
+
+	opts.ClientOrderID = clientOrderID2
+	sig, err = g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #2, signature %s", sig)
+
+	time.Sleep(time.Minute)
+
+	// Check orders are there
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	found1 := false
+	found2 := false
+
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
+			found1 = true
+			continue
+		}
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
+			found2 = true
+		}
+	}
+	if !(found1 && found2) {
+		log.Fatal("one/both orders not found in orderbook")
+	}
+	fmt.Println("2 orders placed successfully")
+
+	// Cancel all the orders
+	fmt.Println("\ncancelling the orders")
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+
+	time.Sleep(time.Second * 30)
+
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(orders.Orders) != 0 {
+		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
+		return
+	}
+	fmt.Println("orders cancelled")
+
+	fmt.Println()
+	callPostSettleGRPC(g, ownerAddr, ooAddr)
 }

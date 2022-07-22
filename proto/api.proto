@@ -414,7 +414,7 @@ message PostCancelOrderResponse {
 message PostCancelAllRequest {
   string market = 1 [(google.api.field_behavior) = REQUIRED];
   string ownerAddress = 2 [(google.api.field_behavior) = REQUIRED];
-  string openOrderAddress = 3;
+  repeated string openOrdersAddresses = 3;
 }
 
 message PostCancelAllResponse {

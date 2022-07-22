@@ -226,6 +226,33 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
+func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, openOrders []string) (*pb.PostCancelAllResponse, error) {
+	return g.apiClient.PostCancelAll(ctx, &pb.PostCancelAllRequest{
+		Market:              market,
+		OwnerAddress:        owner,
+		OpenOrdersAddresses: openOrders,
+	})
+}
+
+func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, skipPreFlight bool) ([]string, error) {
+	orders, err := g.PostCancelAll(ctx, market, owner, openOrdersAddresses)
+	if err != nil {
+		return nil, err
+	}
+
+	var signatures []string
+	for _, tx := range orders.Transactions {
+		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (g *GRPCClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
 	return g.apiClient.PostSettle(ctx, &pb.PostSettleRequest{
