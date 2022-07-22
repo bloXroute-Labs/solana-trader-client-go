@@ -43,7 +43,7 @@ service Api {
     };
   }
 
-  rpc GetOrderbook(GetOrderBookRequest) returns (GetOrderbookResponse) {
+  rpc GetOrderbook(GetOrderbookRequest) returns (GetOrderbookResponse) {
     option (google.api.http) = {
       get: "/api/v1/market/orderbooks/{market}"
     };
@@ -209,13 +209,7 @@ service Api {
   }
 
   // streaming endpoints
-  rpc GetOrderbooksStream(GetOrderBookRequest) returns (stream GetOrderbooksStreamResponse) {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      tags: "Trade";
-    };
-  }
-
-  rpc GetFilteredOrderbooksStream(GetFilteredOrderbooksRequest) returns (stream GetOrderbooksStreamResponse) {
+  rpc GetOrderbooksStream(GetOrderbooksRequest) returns (stream GetOrderbooksStreamResponse) {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       tags: "Trade";
     };
@@ -307,12 +301,12 @@ message Candle {
   double count = 9;
 }
 
-message GetOrderBookRequest {
+message GetOrderbookRequest {
   string market = 1;
   uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }
 
-message GetFilteredOrderbooksRequest {
+message GetOrderbooksRequest {
   repeated string markets = 1;
   uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
 }

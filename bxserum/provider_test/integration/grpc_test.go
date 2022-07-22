@@ -110,13 +110,13 @@ func TestGRPCClient_Streams(t *testing.T) {
 	t.Run("orderbook stream", func(t *testing.T) {
 		testGetOrderbookStream(
 			t,
-			func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
-				err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
+			func(ctx context.Context, markets []string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
+				err := g.GetOrderbookStream(ctx, markets, limit, orderbookCh)
 				require.Nil(t, err)
 			},
-			func(ctx context.Context, market string, limit uint32) string {
+			func(ctx context.Context, markets []string, limit uint32) string {
 				orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
-				err := g.GetOrderbookStream(ctx, market, limit, orderbookCh)
+				err := g.GetOrderbookStream(ctx, markets, limit, orderbookCh)
 				require.NotNil(t, err)
 
 				grpcStatus, ok := status.FromError(err)
@@ -124,16 +124,6 @@ func TestGRPCClient_Streams(t *testing.T) {
 
 				return grpcStatus.Message()
 			},
-		)
-	})
-
-	t.Run("filtered orderbooks stream", func(t *testing.T) {
-		testGetOrderbookStream(
-			t,
-			func(ctx context.Context, market string, limit uint32, orderbookCh chan *pb.GetOrderbooksStreamResponse) {
-				err := g.GetFilteredOrderbooksStream(ctx, []string{market}, limit, orderbookCh)
-				require.Nil(t, err)
-			}, nil,
 		)
 	})
 
