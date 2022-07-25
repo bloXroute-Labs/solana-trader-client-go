@@ -142,7 +142,7 @@ func (q *StatusQuerier) Fetch(ctx context.Context, signature solana.Signature) (
 		opts := &solanarpc.GetBlockOpts{TransactionDetails: solanarpc.TransactionDetailsSignatures}
 		block, err = q.client.GetBlockWithOpts(ctx, tx.Slot, opts)
 		if err != nil {
-			return ts, nil
+			return ts, err
 		}
 
 		q.blocks[ts.Slot] = block
