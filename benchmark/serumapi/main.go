@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
 	"github.com/pkg/errors"
@@ -27,7 +28,7 @@ func main() {
 			SerumWSEndpointFlag,
 			MarketAddrFlag,
 			DurationFlag,
-			OutputFileFlag,
+			utils.OutputFileFlag,
 			RemoveUnmatchedFlag,
 		},
 		Action: run,
@@ -150,8 +151,16 @@ Loop:
 	Print(datapoints, removeUnmatched)
 
 	// write results to csv
-	outputFile := c.String(OutputFileFlag.Name)
-	err = Write(outputFile, datapoints, removeUnmatched)
+	outputFile := c.String(utils.OutputFileFlag.Name)
+	header := []string{"slot", "diff", "seq", "serum-time", "solana-side", "solana-time"}
+	err = csv.Write(outputFile, header, datapoints, func(line []string) bool {
+		if removeUnmatched {
+			for _, col := range line {
+				return col == "n/a"
+			}
+		}
+		return false
+	})
 	if err != nil {
 		return err
 	}
@@ -173,11 +182,6 @@ var (
 	DurationFlag = &cli.DurationFlag{
 		Name:     "run-time",
 		Usage:    "amount of time to run script for (seconds)",
-		Required: true,
-	}
-	OutputFileFlag = &cli.StringFlag{
-		Name:     "output",
-		Usage:    "file to output CSV results to",
 		Required: true,
 	}
 	RemoveUnmatchedFlag = &cli.BoolFlag{
