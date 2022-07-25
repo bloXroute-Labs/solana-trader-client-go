@@ -4,8 +4,6 @@ This folder contains a series of scripts that can be run for the purposes of ben
 to the functioning of Serum API.
 
 ## Scripts List
- - `serumapi`: 
- - `solanageyser`:
- - `solanaws`:
+ - `serumapi`: Compares performance of Serum API against fetching data directly from a reference Solana node.
 
 You can read through the `main.go` files for more information.
