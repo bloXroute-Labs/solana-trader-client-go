@@ -9,6 +9,8 @@ import (
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
+	"strconv"
+	"sync"
 	"time"
 )
 
@@ -48,45 +50,50 @@ func NewSubmitterWithOpts(endpoints []string, txBuilder Builder, opts SubmitterO
 	return ts
 }
 
-// tracks each concurrent submission for reassembly
-type submissionResult struct {
-	index int
-	hash  solana.Signature
-}
-
-// SubmitIterations submits n iterations of transactions created by the builder to each of the endpoints and returns all signatures
-func (ts Submitter) SubmitIterations(ctx context.Context, iterations int) ([][]solana.Signature, error) {
+// SubmitIterations submits n iterations of transactions created by the builder to each of the endpoints and returns all signatures and creation times
+func (ts Submitter) SubmitIterations(ctx context.Context, iterations int) ([][]solana.Signature, []time.Time, error) {
 	signatures := make([][]solana.Signature, 0, iterations)
+	creationTimes := make([]time.Time, 0, iterations)
 	for i := 0; i < iterations; i++ {
-		iterationSignatures, err := ts.SubmitIteration(ctx)
+		iterationSignatures, creationTime, err := ts.SubmitIteration(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
+		creationTimes = append(creationTimes, creationTime)
 		signatures = append(signatures, iterationSignatures)
 		logger.Log().Debugw("submitted iteration of transactions", "iteration", i, "count", len(iterationSignatures))
 
 		time.Sleep(ts.opts.SubmissionInterval)
 	}
 
-	return signatures, nil
+	return signatures, creationTimes, nil
 }
 
 // SubmitIteration uses the builder function to construct transactions for each endpoint, then sends all transactions concurrently (to be as fair as possible)
-func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, error) {
+func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, time.Time, error) {
 	// assume that in order transaction building is ok
 	txs := make([]string, 0, len(ts.clients))
 	for range ts.clients {
 		tx, err := ts.txBuilder()
 		if err != nil {
-			return nil, err
+			return nil, time.Time{}, err
 		}
 		txs = append(txs, tx)
 	}
+	creationTime := time.Now()
 
-	return utils.AsyncGather(ctx, txs, func(i int, ctx context.Context, tx string) (solana.Signature, error) {
+	results, err := utils.AsyncGather(ctx, txs, func(i int, ctx context.Context, tx string) (solana.Signature, error) {
 		return ts.submit(ctx, tx, i)
 	})
+	if err != nil {
+		return nil, creationTime, err
+	}
+
+	for _, result := range results {
+		logger.Log().Debugw("submitted transaction", "signature", result)
+	}
+	return results, creationTime, nil
 }
 
 func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (solana.Signature, error) {
@@ -115,13 +122,23 @@ const (
 	market = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 )
 
+var (
+	orderID  = 1
+	orderIDM = sync.Mutex{}
+)
+
 // SerumBuilder builds a transaction that's expected to fail (canceling a not found order from Serum). Transactions are submitted with `skipPreflight` however, so it should still be "executed."
 func SerumBuilder(ctx context.Context, g *provider.GRPCClient, publicKey solana.PublicKey, ooAddress solana.PublicKey, privateKey solana.PrivateKey) Builder {
 	return func() (string, error) {
-		response, err := g.PostCancelOrder(ctx, "123", pb.Side_S_ASK, publicKey.String(), market, ooAddress.String())
+		orderIDM.Lock()
+		defer orderIDM.Unlock()
+
+		response, err := g.PostCancelOrder(ctx, strconv.Itoa(orderID), pb.Side_S_ASK, publicKey.String(), market, ooAddress.String())
 		if err != nil {
 			return "", err
 		}
+
+		orderID++
 
 		signedTx, err := transaction.SignTxWithPrivateKey(response.Transaction, privateKey)
 		if err != nil {

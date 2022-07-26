@@ -5,6 +5,7 @@ import (
 	"fmt"
 	transaction2 "github.com/bloXroute-Labs/serum-client-go/benchmark/internal/transaction"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/utils"
 	"github.com/gagliardetto/solana-go"
@@ -70,39 +71,53 @@ func run(c *cli.Context) error {
 	submitter := transaction2.NewSubmitter(endpoints, transaction2.SerumBuilder(ctx, g, publicKey, ooPk, *opts.PrivateKey))
 	querier := transaction2.NewStatusQuerier(queryEndpoint)
 
-	signatures, err := submitter.SubmitIterations(ctx, iterations)
+	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
 	if err != nil {
 		return err
 	}
 
+	datapoints := make([]Datapoint, 0)
+	best := make([]int, len(endpoints))
 	for i, iterationSignatures := range signatures {
 		summary, statuses, err := querier.FetchBatch(ctx, iterationSignatures)
 		if err != nil {
 			return err
 		}
 
-		logger.Log().Debugw("iteration results found", "iteration", i, "winner", endpoints[summary.Best])
+		if summary.Best >= 0 {
+			logger.Log().Debugw("iteration results found", "iteration", i, "winner", endpoints[summary.Best])
+			best[summary.Best]++
+		} else {
+			logger.Log().Debugw("iteration no transactions confirmed", "iteration", i)
+		}
 		for j, status := range statuses {
-			logger.Log().Debugw("iteration transaction result", "iteration", i, "slot", status.Slot, "position", status.Position, "signature", iterationSignatures[j])
+			dp := Datapoint{
+				Iteration:     i,
+				CreationTime:  creationTimes[i],
+				Signature:     iterationSignatures[j].String(),
+				Endpoint:      endpoints[j],
+				Executed:      status.Found,
+				ExecutionTime: status.ExecutionTime,
+				Slot:          status.Slot,
+				Position:      status.Position,
+			}
+			datapoints = append(datapoints, dp)
+
+			logger.Log().Debugw("iteration transaction result", "iteration", i, "endpoint", dp.Endpoint, "slot", dp.Slot, "position", dp.Position, "signature", dp.Signature)
 		}
 	}
 
-	for i := 0; i < iterations; i++ {
-		signatures, err := submitter.SubmitIteration(ctx)
-		if err != nil {
-			return err
-		}
+	for i, endpoint := range endpoints {
+		logger.Log().Infow("endpoint was best", "endpoint", endpoint, "bestcount", best[i])
+	}
 
-		logger.Log().Debugw("submitted iteration of transactions", "iteration", i, "count", len(signatures))
-
-		for j, signature := range signatures {
-			status, err := querier.Fetch(ctx, signature)
-			if err != nil {
-				return err
-			}
-
-			logger.Log().Infow("found submitted transaction", "iteration", i, "endpoint", endpoints[j], "status", status, "signature", signature)
-		}
+	outputFile := c.String(utils.OutputFileFlag.Name)
+	header := []string{"iteration", "creation-time", "signature", "endpoint", "executed", "execution-time", "slot", "position"}
+	err = csv.Write(outputFile, header, datapoints, func(line []string) bool {
+		return false
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

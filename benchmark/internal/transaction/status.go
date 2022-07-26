@@ -3,6 +3,7 @@ package transaction
 import (
 	"context"
 	"errors"
+	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/utils"
 	"github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
@@ -53,7 +54,47 @@ func (q *StatusQuerier) FetchBatch(ctx context.Context, signatures []solana.Sign
 		return BatchSummary{}, nil, err
 	}
 
-	return BatchSummary{}, statuses, err
+	bestSlot := -1
+	bestPosition := -1
+	bestIndex := -1
+	lostTransactions := make([]int, 0)
+
+	for i, status := range statuses[1:] {
+		if !status.Found {
+			lostTransactions = append(lostTransactions, i)
+			continue
+		}
+
+		replace := func() {
+			bestSlot = int(status.Slot)
+			bestPosition = status.Position
+			bestIndex = i
+		}
+
+		// first found transaction: always best
+		if bestSlot == -1 {
+			replace()
+			continue
+		}
+
+		// better slot: replace
+		if int(status.Slot) < bestSlot {
+			replace()
+			continue
+		}
+
+		// same slot but better position: replace
+		if int(status.Slot) == bestSlot && status.Position < bestPosition {
+			replace()
+			continue
+		}
+	}
+
+	summary := BatchSummary{
+		Best:            bestIndex,
+		LostTransaction: lostTransactions,
+	}
+	return summary, statuses, err
 }
 
 // Fetch retrieve a transaction's slot in a block and its position within the block. This call blocks until timeout or success.
@@ -78,7 +119,8 @@ func (q *StatusQuerier) Fetch(ctx context.Context, signature solana.Signature) (
 	}
 
 	if tx == nil {
-		return ts, solanarpc.ErrNotFound
+		logger.Log().Debugw("transaction failed execution", "signature", signature)
+		return ts, nil
 	}
 
 	ts.Slot = tx.Slot
@@ -108,5 +150,6 @@ func (q *StatusQuerier) Fetch(ctx context.Context, signature solana.Signature) (
 		return ts, errors.New("transaction signature was not found in expected block")
 	}
 
+	ts.ExecutionTime = block.BlockTime.Time()
 	return ts, nil
 }

@@ -2,7 +2,7 @@ package csv
 
 import (
 	"encoding/csv"
-	"errors"
+	"fmt"
 	"os"
 )
 
@@ -37,7 +37,7 @@ func Write[T LinesSegment](outputFile string, header []string, linesSegments []T
 			}
 
 			if len(line) != len(header) {
-				return errors.New("invalid CSV: line length differed from header")
+				return fmt.Errorf("invalid CSV: line length (%v) differed from header (%v)", len(line), len(header))
 			}
 
 			err := w.Write(line)
