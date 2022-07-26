@@ -334,3 +334,66 @@ func (h *HTTPClient) SubmitSettle(owner, market, baseTokenWallet, quoteTokenWall
 
 	return h.signAndSubmit(order.Transaction, skipPreflight)
 }
+
+func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/replacebyclientid", h.baseURL)
+	request := &pb.PostOrderRequest{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              types,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (h *HTTPClient) SubmitReplaceByClientOrderID(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := h.PostReplaceByClientOrderID(owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(order.Transaction, opts.SkipPreFlight)
+}
+
+func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/replace", h.baseURL)
+	request := &pb.PostReplaceOrderRequest{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              types,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+		OrderID:           orderID,
+	}
+
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (h *HTTPClient) SubmitReplaceOrder(orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := h.PostReplaceOrder(orderID, owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(order.Transaction, opts.SkipPreFlight)
+}

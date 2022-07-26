@@ -32,6 +32,8 @@ type ApiClient interface {
 	PostCancelOrder(ctx context.Context, in *PostCancelOrderRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelByClientOrderID(ctx context.Context, in *PostCancelByClientOrderIDRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelAll(ctx context.Context, in *PostCancelAllRequest, opts ...grpc.CallOption) (*PostCancelAllResponse, error)
+	PostReplaceByClientOrderID(ctx context.Context, in *PostOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error)
+	PostReplaceOrder(ctx context.Context, in *PostReplaceOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error)
 	PostSettle(ctx context.Context, in *PostSettleRequest, opts ...grpc.CallOption) (*PostSettleResponse, error)
 	GetOrders(ctx context.Context, in *GetOrdersRequest, opts ...grpc.CallOption) (*GetOrdersResponse, error)
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
@@ -155,6 +157,24 @@ func (c *apiClient) PostCancelByClientOrderID(ctx context.Context, in *PostCance
 func (c *apiClient) PostCancelAll(ctx context.Context, in *PostCancelAllRequest, opts ...grpc.CallOption) (*PostCancelAllResponse, error) {
 	out := new(PostCancelAllResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/PostCancelAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) PostReplaceByClientOrderID(ctx context.Context, in *PostOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error) {
+	out := new(PostOrderResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostReplaceByClientOrderID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) PostReplaceOrder(ctx context.Context, in *PostReplaceOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error) {
+	out := new(PostOrderResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostReplaceOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -384,6 +404,8 @@ type ApiServer interface {
 	PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error)
 	PostCancelByClientOrderID(context.Context, *PostCancelByClientOrderIDRequest) (*PostCancelOrderResponse, error)
 	PostCancelAll(context.Context, *PostCancelAllRequest) (*PostCancelAllResponse, error)
+	PostReplaceByClientOrderID(context.Context, *PostOrderRequest) (*PostOrderResponse, error)
+	PostReplaceOrder(context.Context, *PostReplaceOrderRequest) (*PostOrderResponse, error)
 	PostSettle(context.Context, *PostSettleRequest) (*PostSettleResponse, error)
 	GetOrders(context.Context, *GetOrdersRequest) (*GetOrdersResponse, error)
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
@@ -437,6 +459,12 @@ func (UnimplementedApiServer) PostCancelByClientOrderID(context.Context, *PostCa
 }
 func (UnimplementedApiServer) PostCancelAll(context.Context, *PostCancelAllRequest) (*PostCancelAllResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostCancelAll not implemented")
+}
+func (UnimplementedApiServer) PostReplaceByClientOrderID(context.Context, *PostOrderRequest) (*PostOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostReplaceByClientOrderID not implemented")
+}
+func (UnimplementedApiServer) PostReplaceOrder(context.Context, *PostReplaceOrderRequest) (*PostOrderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostReplaceOrder not implemented")
 }
 func (UnimplementedApiServer) PostSettle(context.Context, *PostSettleRequest) (*PostSettleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostSettle not implemented")
@@ -697,6 +725,42 @@ func _Api_PostCancelAll_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_PostReplaceByClientOrderID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostReplaceByClientOrderID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostReplaceByClientOrderID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostReplaceByClientOrderID(ctx, req.(*PostOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_PostReplaceOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostReplaceOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostReplaceOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostReplaceOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostReplaceOrder(ctx, req.(*PostReplaceOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Api_PostSettle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostSettleRequest)
 	if err := dec(in); err != nil {
@@ -946,6 +1010,14 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostCancelAll",
 			Handler:    _Api_PostCancelAll_Handler,
+		},
+		{
+			MethodName: "PostReplaceByClientOrderID",
+			Handler:    _Api_PostReplaceByClientOrderID_Handler,
+		},
+		{
+			MethodName: "PostReplaceOrder",
+			Handler:    _Api_PostReplaceOrder_Handler,
 		},
 		{
 			MethodName: "PostSettle",
