@@ -21,14 +21,14 @@ func main() {
 	}
 
 	// informational methods
-	/*callMarketsGRPC(g)
+	callMarketsGRPC(g)
 	callOrderbookGRPC(g)
 	callOpenOrdersGRPC(g)
 	callTickersGRPC(g)
 	callOrderbookGRPCStream(g)
 	callTradesGRPCStream(g)
 	callUnsettledGRPC(g)
-	callGetAccountBalanceGRPC(g)*/
+	callGetAccountBalanceGRPC(g)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -52,9 +52,9 @@ func main() {
 		payerAddr = ownerAddr
 	}
 
-	/*orderLifecycleTest(g, ownerAddr, ooAddr)
+	orderLifecycleTest(g, ownerAddr, ooAddr)
 	cancelAll(g, ownerAddr, payerAddr, ooAddr)
-	callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)*/
+	callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
 	callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
 }
 

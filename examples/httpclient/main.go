@@ -15,13 +15,13 @@ import (
 
 func main() {
 	// informational methods
-	/*callMarketsHTTP()
+	callMarketsHTTP()
 	callOrderbookHTTP()
 	callOpenOrdersHTTP()
 	callTradesHTTP()
 	callTickersHTTP()
 	callUnsettledHTTP()
-	callGetAccountBalanceHTTP()*/
+	callGetAccountBalanceHTTP()
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -46,11 +46,11 @@ func main() {
 	}
 
 	// Order lifecycle
-	/*clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
+	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
 	callPostSettleHTTP(ownerAddr, ooAddr)
 
-	cancelAll(ownerAddr, payerAddr, ooAddr)*/
+	cancelAll(ownerAddr, payerAddr, ooAddr)
 	callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
 	callReplaceOrder(ownerAddr, payerAddr, ooAddr)
 }

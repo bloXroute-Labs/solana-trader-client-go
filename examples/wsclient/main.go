@@ -28,7 +28,7 @@ func main() {
 	}(w)
 
 	// informational requests
-	/*callMarketsWS(w)
+	callMarketsWS(w)
 	callOrderbookWS(w)
 	callTradesWS(w)
 	callOpenOrdersWS(w)
@@ -38,7 +38,7 @@ func main() {
 
 	// streaming methods
 	callOrderbookWSStream(w)
-	callTradesWSStream(w)*/
+	callTradesWSStream(w)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -62,8 +62,8 @@ func main() {
 		payerAddr = ownerAddr
 	}
 
-	/*orderLifecycleTest(w, ownerAddr, ooAddr)
-	cancelAll(w, ownerAddr, payerAddr, ooAddr)*/
+	orderLifecycleTest(w, ownerAddr, ooAddr)
+	cancelAll(w, ownerAddr, payerAddr, ooAddr)
 	callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
 	callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
 }
