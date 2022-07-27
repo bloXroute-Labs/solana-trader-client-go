@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/arrival"
-	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/logger"
-	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/utils"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	"os"

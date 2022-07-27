@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"
 	"golang.org/x/exp/maps"
 	"os"

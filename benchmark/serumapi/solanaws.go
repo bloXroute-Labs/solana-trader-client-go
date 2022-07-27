@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/arrival"
-	"github.com/bloXroute-Labs/serum-client-go/examples/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
