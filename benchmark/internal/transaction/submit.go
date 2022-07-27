@@ -148,3 +148,47 @@ func SerumBuilder(ctx context.Context, g *provider.GRPCClient, publicKey solana.
 		return signedTx, nil
 	}
 }
+
+var (
+	memoID  = 0
+	memoIDM = sync.Mutex{}
+)
+
+// MemoBuilder builds a transaction with a simple memo
+func MemoBuilder(publicKey solana.PublicKey, privateKey solana.PrivateKey) Builder {
+	return func() (string, error) {
+		memoIDM.Lock()
+		memoID++
+		memoIDM.Unlock()
+
+		builder := solana.NewTransactionBuilder()
+		am := []*solana.AccountMeta{
+			solana.Meta(publicKey).WRITE().SIGNER(),
+		}
+
+		instruction := &solana.GenericInstruction{
+			AccountValues: am,
+			ProgID:        solana.MemoProgramID,
+			DataBytes:     []byte(strconv.Itoa(memoID)),
+		}
+
+		builder.AddInstruction(instruction)
+		tx, err := builder.Build()
+		if err != nil {
+			return "", err
+		}
+
+		_, err = tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+			if key == publicKey {
+				return &privateKey
+			}
+			return nil
+		})
+
+		if err != nil {
+			return "", nil
+		}
+
+		return tx.ToBase64()
+	}
+}

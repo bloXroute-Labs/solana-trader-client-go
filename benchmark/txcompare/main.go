@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
-	transaction2 "github.com/bloXroute-Labs/serum-client-go/benchmark/internal/transaction"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/transaction"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli/v2"
 	"os"
 )
@@ -55,21 +54,15 @@ func run(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ooAddress := os.Getenv("OPEN_ORDERS")
-	ooPk, err := solana.PublicKeyFromBase58(ooAddress)
-	if err != nil {
-		return err
-	}
 	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIGRPC)
 	publicKey := opts.PrivateKey.PublicKey()
-	g, err := provider.NewGRPCClientWithOpts(opts)
 
 	iterations := c.Int(IterationCountFlag.Name)
 	endpoints := c.StringSlice(SolanaHTTPEndpointsFlag.Name)
 	queryEndpoint := c.String(SolanaQueryEndpointsFlag.Name)
 
-	submitter := transaction2.NewSubmitter(endpoints, transaction2.SerumBuilder(ctx, g, publicKey, ooPk, *opts.PrivateKey))
-	querier := transaction2.NewStatusQuerier(queryEndpoint)
+	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(publicKey, *opts.PrivateKey))
+	querier := transaction.NewStatusQuerier(queryEndpoint)
 
 	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
 	if err != nil {
