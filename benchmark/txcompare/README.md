@@ -10,7 +10,10 @@ Go:
 $ PRIVATE_KEY=... go run ./benchmark/txcompare --iterations 4 --output result.csv --endpoint [rpc-endpoint-1] --endpoint [rpc-endpoint-2] --query-endpoint [rpc-endpoint-with-tx-indexing]
 ```
 
-You can specify as many `--endpoint` arguments as you would like. For `--query-endpoint` you need an RPC node with transaction
+You can specify as many `--endpoint` arguments as you would like. `PRIVATE_KEY` must be provided to sign transactions. 
+By default, this is a simple transaction with a [Memo Program](https://spl.solana.com/memo) instruction.
+
+For `--query-endpoint` you need an RPC node with transaction
 history enabled, as this script calls the `getBlock` and `getTransaction` endpoints. You can test this yourself:
 
 ```
