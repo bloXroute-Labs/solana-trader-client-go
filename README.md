@@ -52,7 +52,7 @@ func main() {
 
 	// HTTP
 	h := provider.NewHTTPClient()
-	tickers, err := h.GetTickers(context.Background(), "ETHUSDT")
+	tickers, err := h.GetTickers("ETHUSDT")
 	if err != nil {
 		panic(err)
 	}
@@ -73,31 +73,38 @@ func main() {
 
 ```
 #### Stream (only in GRPC/WS):
+
 ```go
+package main
+
 import (
-    "github.com/bloXroute-Labs/serum-api/bxserum/provider"
-    pb "github.com/bloXroute-Labs/serum-api/proto"
-    "context"
+	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"context"
 )
 
 func main() {
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-    g, err := provider.NewGRPCClient() // replace this with `NewWSClient()` to use WebSockets
-    if err != nil {
-        panic(err)
-    }
+	g, err := provider.NewGRPCClient() // replace this with `NewWSClient()` to use WebSockets
+	if err != nil {
+		panic(err)
+	}
+
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDT"}, 5)
+	if err != nil {
+		panic(err)
+	}
 	
-    orderbookChan := make(chan *pb.GetOrderbookStreamResponse)
-    err = g.GetOrderbookStream(ctx, "SOL/USDT", 5,  orderbookChan)
-    if err != nil {
-        panic(err)
-    }
-    for i := 0; i < 3; i++ {
-        orderbook := <-orderbookChan
+	// wrap result in channel for easy of use
+	orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
+	stream.Into(orderbookCh)
+	for i := 0; i < 3; i++ {
+		orderbook := <-orderbookCh
 		fmt.Println(orderbook)
-    }
+	}
 }
 ```
 
