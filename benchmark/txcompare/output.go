@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -30,4 +31,27 @@ func (d Datapoint) FormatCSV() [][]string {
 		strconv.Itoa(int(d.Slot)),
 		strconv.Itoa(d.Position),
 	}}
+}
+
+func Print(iterations int, endpoints []string, bests []int, lost []int) {
+	fmt.Println("Iterations: ", iterations)
+	fmt.Println("Endpoints:")
+
+	for _, endpoint := range endpoints {
+		fmt.Println("    ", endpoint)
+	}
+
+	fmt.Println()
+	fmt.Println("Win counts: ")
+
+	for i, endpoint := range endpoints {
+		fmt.Println(fmt.Sprintf("    %-3d  %v", bests[i], endpoint))
+	}
+
+	fmt.Println()
+	fmt.Println("Lost transactions: ")
+
+	for i, endpoint := range endpoints {
+		fmt.Println(fmt.Sprintf("    %-3d  %v", lost[i], endpoint))
+	}
 }

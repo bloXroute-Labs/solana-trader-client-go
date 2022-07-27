@@ -59,7 +59,7 @@ func (q *StatusQuerier) FetchBatch(ctx context.Context, signatures []solana.Sign
 	bestIndex := -1
 	lostTransactions := make([]int, 0)
 
-	for i, status := range statuses[1:] {
+	for i, status := range statuses {
 		if !status.Found {
 			lostTransactions = append(lostTransactions, i)
 			continue

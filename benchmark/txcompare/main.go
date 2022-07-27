@@ -78,6 +78,7 @@ func run(c *cli.Context) error {
 
 	datapoints := make([]Datapoint, 0)
 	best := make([]int, len(endpoints))
+	lost := make([]int, len(endpoints))
 	for i, iterationSignatures := range signatures {
 		summary, statuses, err := querier.FetchBatch(ctx, iterationSignatures)
 		if err != nil {
@@ -103,13 +104,15 @@ func run(c *cli.Context) error {
 			}
 			datapoints = append(datapoints, dp)
 
+			if !status.Found {
+				lost[j]++
+			}
+
 			logger.Log().Debugw("iteration transaction result", "iteration", i, "endpoint", dp.Endpoint, "slot", dp.Slot, "position", dp.Position, "signature", dp.Signature)
 		}
 	}
 
-	for i, endpoint := range endpoints {
-		logger.Log().Infow("endpoint was best", "endpoint", endpoint, "bestcount", best[i])
-	}
+	Print(iterations, endpoints, best, lost)
 
 	outputFile := c.String(utils.OutputFileFlag.Name)
 	header := []string{"iteration", "creation-time", "signature", "endpoint", "executed", "execution-time", "slot", "position"}
