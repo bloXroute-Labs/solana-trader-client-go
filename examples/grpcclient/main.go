@@ -147,7 +147,6 @@ func callTickersGRPC(g *provider.GRPCClient) {
 func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	fmt.Println("starting orderbook stream")
 
-	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -158,9 +157,9 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 		return
 	}
 
-	stream.Into(orderbookChan)
+	orderbookCh := stream.Channel(0)
 	for i := 1; i <= 5; i++ {
-		data, ok := <-orderbookChan
+		data, ok := <-orderbookCh
 		if !ok {
 			// channel closed
 			return
