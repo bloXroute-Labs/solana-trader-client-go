@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/transaction"
@@ -11,15 +11,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"os"
 )
-
-/*
-
-benchmark/txcompare/main.go
-
-PRIVATE_KEY=...
-OPEN_ORDERS=...
-
-*/
 
 func main() {
 	app := &cli.App{
@@ -31,17 +22,13 @@ func main() {
 			SolanaQueryEndpointsFlag,
 			utils.OutputFileFlag,
 		},
-
 		Action: run,
 	}
 
 	err := app.Run(os.Args)
 	defer func() {
 		if logger.Log() != nil {
-			err := logger.Log().Sync()
-			if err != nil {
-				fmt.Println("error flushing log, may not have logged all messages: ", err)
-			}
+			_ = logger.Log().Sync()
 		}
 	}()
 
@@ -55,6 +42,9 @@ func run(c *cli.Context) error {
 	defer cancel()
 
 	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIGRPC)
+	if opts.PrivateKey == nil {
+		return errors.New("PRIVATE_KEY environment variable must be set")
+	}
 	publicKey := opts.PrivateKey.PublicKey()
 
 	iterations := c.Int(IterationCountFlag.Name)
