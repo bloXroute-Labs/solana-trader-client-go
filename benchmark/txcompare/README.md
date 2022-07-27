@@ -1,7 +1,9 @@
 # benchmark/txcompare
 
 Simultaneously submits transactions to each of the provided endpoints, then determines which transactions were accepted
-into blocks first and which were lost. Judges speed based on block number and position within block.
+into blocks first and which were lost. Judges speed based on block number and position within block. Note that there is
+no correction for RPC endpoint distance, so you may find it informative to ping each endpoint beforehand to determine
+the fairness of this analysis
 
 ## Usage
 
@@ -89,4 +91,4 @@ Lost transactions:
     4    https://my-rpc-endpoint.com
 ```
 
-A CSV file for also be generated at the `--output` location, with details of each transaction.
+A CSV file will also be generated at the `--output` location, with details of each transaction.
