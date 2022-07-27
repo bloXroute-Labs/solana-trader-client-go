@@ -8,6 +8,7 @@ reliability.
 
 ## Usage
 
+Go:
 ```
 $ go run ./benchmark/serumapi --run-time 10s --output result.csv
 ```
@@ -24,7 +25,7 @@ $ docker run --name cmp --rm 033969152235.dkr.ecr.us-east-1.amazonaws.com/serum-
 2022-06-30T16:54:20.476-0500	DEBUG	serumapi/solanaws.go:64	connection established	{"source": "solanaws", "address": "ws://34.203.186.197:8900/ws", "market": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"}
 2022-06-30T16:54:20.476-0500	DEBUG	serumapi/serumws.go:67	subscription created	{"source": "serum", "address": "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws", "market": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"}
 2022-06-30T16:54:20.483-0500	DEBUG	serumapi/solanaws.go:87	subscription created	{"source": "solanaws", "address": "ws://34.203.186.197:8900/ws", "market": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"}
-^[^[k2022-06-30T16:54:30.477-0500	INFO	serumapi/main.go:132	waited 10s out of 10s...
+2022-06-30T16:54:30.477-0500	INFO	serumapi/main.go:132	waited 10s out of 10s...
 2022-06-30T16:54:30.477-0500	DEBUG	serumapi/solanaws.go:100	closing asks subscription	{"source": "solanaws", "address": "ws://34.203.186.197:8900/ws", "market": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", "err": "read tcp 10.0.41.87:49403->34.203.186.197:8900: use of closed network connection"}
 2022-06-30T16:54:30.477-0500	DEBUG	serumapi/serumws.go:78	closing connection	{"source": "serum", "address": "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws", "market": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", "err": "read tcp 10.0.41.87:49401->44.205.114.20:80: use of closed network connection"}
 2022-06-30T16:54:30.477-0500	INFO	serumapi/main.go:137	finished collecting data points	{"serumcount": 10, "solanacount": 24}
