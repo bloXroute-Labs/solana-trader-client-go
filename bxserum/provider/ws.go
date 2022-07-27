@@ -409,6 +409,65 @@ func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWal
 	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
+func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	request := &pb.PostOrderRequest{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              types,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+	var response pb.PostOrderResponse
+	err := w.conn.Request(ctx, "PostReplaceByClientOrderID", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostReplaceByClientOrderID(ctx, owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	request := &pb.PostReplaceOrderRequest{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              types,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+		OrderID:           orderID,
+	}
+	var response pb.PostOrderResponse
+	err := w.conn.Request(ctx, "PostReplaceOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostReplaceOrder(ctx, orderID, owner, payer, market, side, types, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
 func (w *WSClient) Close() error {
 	return w.conn.Close(errors.New("shutdown requested"))
 }

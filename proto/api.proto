@@ -150,6 +150,30 @@ service Api {
     };
   }
 
+  rpc PostReplaceByClientOrderID(PostOrderRequest) returns (PostOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/replacebyclientid"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a ReplaceByClientOrderID unsigned transaction object";
+      summary: "Unsigned ReplaceByClientOrderID transaction";
+      tags: "Trade";
+    };
+  }
+
+  rpc PostReplaceOrder(PostReplaceOrderRequest) returns (PostOrderResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trade/replace"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Generates a ReplaceOrder unsigned transaction object";
+      summary: "Unsigned ReplaceOrder transaction";
+      tags: "Trade";
+    };
+  }
+
   rpc PostSettle(PostSettleRequest) returns (PostSettleResponse) {
     option (google.api.http) = {
       post: "/api/v1/trade/settle"
@@ -372,6 +396,19 @@ message PostOrderRequest {
   double price = 7 [(google.api.field_behavior) = REQUIRED];
   string openOrdersAddress = 8 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "If left empty the Serum API will lookup the account which can be time consuming"}];
   uint64 clientOrderID = 9 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Client defined OrderID"}];
+}
+
+message PostReplaceOrderRequest {
+  string ownerAddress = 1 [(google.api.field_behavior) = REQUIRED];
+  string payerAddress = 2 [(google.api.field_behavior) = REQUIRED];
+  string market = 3 [(google.api.field_behavior) = REQUIRED];
+  Side side = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated OrderType type = 5 [(google.api.field_behavior) = REQUIRED];
+  double amount = 6 [(google.api.field_behavior) = REQUIRED];
+  double price = 7 [(google.api.field_behavior) = REQUIRED];
+  string openOrdersAddress = 8 [(google.api.field_behavior) = REQUIRED, (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "If left empty the Serum API will lookup the account which can be time consuming"}];
+  uint64 clientOrderID = 9;
+  string orderID = 10 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Serum generated OrderID"}];
 }
 
 enum Side {

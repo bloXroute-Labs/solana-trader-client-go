@@ -64,6 +64,8 @@ func main() {
 
 	orderLifecycleTest(w, ownerAddr, ooAddr)
 	cancelAll(w, ownerAddr, payerAddr, ooAddr)
+	callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
+	callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
 }
 
 func callMarketsWS(w *provider.WSClient) {
@@ -412,4 +414,161 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
 
 	fmt.Println()
 	callPostSettleWS(w, ownerAddr, ooAddr)
+}
+
+func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
+	fmt.Println("\nstarting replace by client order ID test")
+	fmt.Println()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID1 := rand.Uint64()
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID1,
+		OpenOrdersAddress: ooAddr,
+		SkipPreFlight:     true,
+	}
+
+	// Place order in orderbook
+	fmt.Println("placing order")
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Infof("submitting place order #1, signature %s", sig)
+	}
+	time.Sleep(time.Minute)
+	// Check order is there
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	found1 := false
+
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
+			found1 = true
+			continue
+		}
+	}
+	if !(found1) {
+		log.Fatal("order not found in orderbook")
+	}
+	fmt.Println("order placed successfully")
+
+	// replacing order
+	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #2, signature %s", sig)
+
+	time.Sleep(time.Minute)
+
+	// Check order #2 is in orderbook
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	found2 := false
+
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) && order.Price == orderPrice/2 {
+			found2 = true
+		}
+	}
+	if !(found2) {
+		log.Fatal("order #2 not found in orderbook")
+	} else {
+		fmt.Println("order #2 placed successfully")
+	}
+	time.Sleep(time.Minute)
+	// Cancel all the orders
+	fmt.Println("\ncancelling the orders")
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+}
+
+func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
+	fmt.Println("\nstarting replace order test")
+	fmt.Println()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID1 := rand.Uint64()
+	clientOrderID2 := rand.Uint64()
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID1,
+		OpenOrdersAddress: ooAddr,
+		SkipPreFlight:     true,
+	}
+
+	// Place order in orderbook
+	fmt.Println("placing order")
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #1, signature %s", sig)
+
+	// Check orders are there
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var found1 *pb.Order
+
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
+			found1 = order
+			continue
+		}
+	}
+	if found1 == nil {
+		log.Fatal("order not found in orderbook")
+	} else {
+		fmt.Println("order placed successfully")
+	}
+
+	opts.ClientOrderID = clientOrderID2
+	sig, err = w.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("submitting place order #2, signature %s", sig)
+
+	time.Sleep(time.Minute)
+
+	// Check orders are there
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var found2 *pb.Order
+
+	for _, order := range orders.Orders {
+		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
+			found2 = order
+		}
+	}
+	if found2 == nil {
+		log.Fatal("order 2 not found in orderbook")
+	} else {
+		fmt.Println("order 2 placed successfully")
+	}
+
+	// Cancel all the orders
+	fmt.Println("\ncancelling the orders")
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
 }
