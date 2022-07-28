@@ -45,50 +45,42 @@ $ curl [endpoint] -X POST -H "Content-Type: application/json" -d '...'
 Logs should look this:
 
 ```
-2022-07-27T14:41:39.399-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "24DHDPwTaCz3UJsdkXM2of1oFVoS15KUXpNn8upfWkuTVa7L2SiS11NxvmAEQ9Wpor73CxpKW3GcEaG5ySVqxQGH"}
-2022-07-27T14:41:39.400-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "4efHFGHSJ9qQbtf35L4uZdf6Nt6nHnFwkFkbPURnjubGWvMi6sbXqxbSot523Ty7FxXgTqrNSg8e5kkff8iSxqMu"}
-2022-07-27T14:41:39.400-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 0, "count": 2}
-2022-07-27T14:41:41.443-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "3DhCLYeENXAuMnwrTyew7hNprofJShSGB4GGGfpPx58YzVswZwEX7wC1EGjezLrNfdBxY8pXsdFAzVvKMC97Wt6J"}
-2022-07-27T14:41:41.443-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "5weRaUwR3m7NiA3s8kdzWjJQinBT58XVr3BcjBn9QmE5EFXGuteKq1d3Ms3mD6eHc7jTo7aG7ybAye57tskTfgEr"}
-2022-07-27T14:41:41.443-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 1, "count": 2}
-2022-07-27T14:41:43.487-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "2M6KGkLoof371zNmZfnYeNnfyDh1beePzbRnZGpXhugM1zqgjouSZiVVZDhomej4HDV1hPhNwVLk1MDKHNn1nig5"}
-2022-07-27T14:41:43.487-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "5odrbxxoPFsUHsnssm7W26YDgvhM3cfgToxFj9dTDBiMtEyLhLdVC3u17h3CNWB9KNbxR6X6KHsWwEhCDFM4Leaz"}
-2022-07-27T14:41:43.487-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 2, "count": 2}
-2022-07-27T14:41:45.531-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "2a9Rs95ikWwM7PtXQLxk5fWadKcKemc1dJyrRs2Q2L95ep61zGv8gKqaCZ2tC5FoEsrQMdpMpuxaJxQ57GW8ZCF8"}
-2022-07-27T14:41:45.531-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "5P1nLzay7DMnFThKobhz18G5P6Gbjnoai5ia2Fk8xeurajgLjvZnB2uiQF5u2WXkxjk6xTUGYF7gtCKMCn6v3MD8"}
-2022-07-27T14:41:45.531-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 3, "count": 2}
-2022-07-27T14:43:28.051-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "24DHDPwTaCz3UJsdkXM2of1oFVoS15KUXpNn8upfWkuTVa7L2SiS11NxvmAEQ9Wpor73CxpKW3GcEaG5ySVqxQGH"}
-2022-07-27T14:43:28.055-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "4efHFGHSJ9qQbtf35L4uZdf6Nt6nHnFwkFkbPURnjubGWvMi6sbXqxbSot523Ty7FxXgTqrNSg8e5kkff8iSxqMu"}
-2022-07-27T14:43:28.055-0500    DEBUG   txcompare/main.go:85    iteration no transactions confirmed     {"iteration": 0}
-2022-07-27T14:43:28.055-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 0, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 0, "position": -1, "signature": "24DHDPwTaCz3UJsdkXM2of1oFVoS15KUXpNn8upfWkuTVa7L2SiS11NxvmAEQ9Wpor73CxpKW3GcEaG5ySVqxQGH"}
-2022-07-27T14:43:28.055-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 0, "endpoint": "https://my-rpc-endpoint.com", "slot": 0, "position": -1, "signature": "4efHFGHSJ9qQbtf35L4uZdf6Nt6nHnFwkFkbPURnjubGWvMi6sbXqxbSot523Ty7FxXgTqrNSg8e5kkff8iSxqMu"}
-2022-07-27T14:45:08.515-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "5weRaUwR3m7NiA3s8kdzWjJQinBT58XVr3BcjBn9QmE5EFXGuteKq1d3Ms3mD6eHc7jTo7aG7ybAye57tskTfgEr"}
-2022-07-27T14:45:08.520-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "3DhCLYeENXAuMnwrTyew7hNprofJShSGB4GGGfpPx58YzVswZwEX7wC1EGjezLrNfdBxY8pXsdFAzVvKMC97Wt6J"}
-2022-07-27T14:45:08.521-0500    DEBUG   txcompare/main.go:85    iteration no transactions confirmed     {"iteration": 1}
-2022-07-27T14:45:08.521-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 1, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 0, "position": -1, "signature": "3DhCLYeENXAuMnwrTyew7hNprofJShSGB4GGGfpPx58YzVswZwEX7wC1EGjezLrNfdBxY8pXsdFAzVvKMC97Wt6J"}
-2022-07-27T14:45:08.521-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 1, "endpoint": "https://my-rpc-endpoint.com", "slot": 0, "position": -1, "signature": "5weRaUwR3m7NiA3s8kdzWjJQinBT58XVr3BcjBn9QmE5EFXGuteKq1d3Ms3mD6eHc7jTo7aG7ybAye57tskTfgEr"}
-2022-07-27T14:46:48.966-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "5odrbxxoPFsUHsnssm7W26YDgvhM3cfgToxFj9dTDBiMtEyLhLdVC3u17h3CNWB9KNbxR6X6KHsWwEhCDFM4Leaz"}
-2022-07-27T14:46:48.966-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "2M6KGkLoof371zNmZfnYeNnfyDh1beePzbRnZGpXhugM1zqgjouSZiVVZDhomej4HDV1hPhNwVLk1MDKHNn1nig5"}
-2022-07-27T14:46:48.966-0500    DEBUG   txcompare/main.go:85    iteration no transactions confirmed     {"iteration": 2}
-2022-07-27T14:46:48.966-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 2, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 0, "position": -1, "signature": "2M6KGkLoof371zNmZfnYeNnfyDh1beePzbRnZGpXhugM1zqgjouSZiVVZDhomej4HDV1hPhNwVLk1MDKHNn1nig5"}
-2022-07-27T14:46:48.966-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 2, "endpoint": "https://my-rpc-endpoint.com", "slot": 0, "position": -1, "signature": "5odrbxxoPFsUHsnssm7W26YDgvhM3cfgToxFj9dTDBiMtEyLhLdVC3u17h3CNWB9KNbxR6X6KHsWwEhCDFM4Leaz"}
-2022-07-27T14:48:29.517-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "5P1nLzay7DMnFThKobhz18G5P6Gbjnoai5ia2Fk8xeurajgLjvZnB2uiQF5u2WXkxjk6xTUGYF7gtCKMCn6v3MD8"}
-2022-07-27T14:48:29.517-0500    DEBUG   transaction/status.go:122       transaction failed execution    {"signature": "2a9Rs95ikWwM7PtXQLxk5fWadKcKemc1dJyrRs2Q2L95ep61zGv8gKqaCZ2tC5FoEsrQMdpMpuxaJxQ57GW8ZCF8"}
-2022-07-27T14:48:29.517-0500    DEBUG   txcompare/main.go:85    iteration no transactions confirmed     {"iteration": 3}
-2022-07-27T14:48:29.517-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 3, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 0, "position": -1, "signature": "2a9Rs95ikWwM7PtXQLxk5fWadKcKemc1dJyrRs2Q2L95ep61zGv8gKqaCZ2tC5FoEsrQMdpMpuxaJxQ57GW8ZCF8"}
-2022-07-27T14:48:29.517-0500    DEBUG   txcompare/main.go:104   iteration transaction result    {"iteration": 3, "endpoint": "https://my-rpc-endpoint.com", "slot": 0, "position": -1, "signature": "5P1nLzay7DMnFThKobhz18G5P6Gbjnoai5ia2Fk8xeurajgLjvZnB2uiQF5u2WXkxjk6xTUGYF7gtCKMCn6v3MD8"}
+    2022-07-28T11:29:28.154-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "2UiE9gyTdYH4nFWP1ir92WXqqkX7WSRSAfN6NyCYgVfR29jmsqs1K1ZkK8KAMwWYp4mMR5tj5sfGQN9UgQxiQkKe"}
+2022-07-28T11:29:28.154-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "5SPCcCYgdsiXSdQeTmibc265YeiiQeeGe6WbdGPDNjo1gjVEf6D9DSmBesV1py6ipPoRtMMUUeah7pK38q9e7w8Y"}
+2022-07-28T11:29:28.154-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 0, "count": 2}
+2022-07-28T11:29:30.251-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "2Y4hVUejyNM9mymrseuFrvmmj1RFwpV59uxRXgn1LCB9VYnVjn2sFoGnjSmKA4vRxBT13ZkNe6h6SHhGd2jfgUnQ"}
+2022-07-28T11:29:30.252-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "2BLCkuL2U6iKTpGCxNZUCn8zyBYx8254kJibu39mtve43UstBkAQYZXYRjtiwMVybihDaKwq4MJUUy3K18YeqEUi"}
+2022-07-28T11:29:30.252-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 1, "count": 2}
+2022-07-28T11:29:32.346-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "5eyRvD6KtQ7qLs28aafUS3DXZzhnpLEhzByQVJscYFd6QuUFakvEnKLUVmUVJfHD5aJvCTbjpqSaM2rYQjninje7"}
+2022-07-28T11:29:32.347-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "3PJdb5STnCnJ4aBBYgxhq1RaayTaF8P1Dvub8GnDPYC8kd7Dui94VBKqDuAznwy4LJLKBgwuWg3S5vNuPsjv9yHt"}
+2022-07-28T11:29:32.347-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 2, "count": 2}
+2022-07-28T11:29:34.439-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "5ofkDQsaEm4PrpG1v9u8t7JhDcXx2pAPtZscPrGLUfUdCDymSGNCfyrc85tAzjhM6KkSRh8kiXucP79A8HZSzMYu"}
+2022-07-28T11:29:34.440-0500    DEBUG   transaction/submit.go:94        submitted transaction   {"signature": "2gej52a1hEF715UyqDD5Q8CSuvQ8tBhY3twNoV7jCqoJXqxLtCiayVVZAMgW8iSF2DcA2b3TMztysEXnKnigiNFq"}
+2022-07-28T11:29:34.440-0500    DEBUG   transaction/submit.go:65        submitted iteration of transactions     {"iteration": 3, "count": 2}
+2022-07-28T11:30:47.107-0500    DEBUG   txcompare/main.go:76    iteration results found {"iteration": 0, "winner": "https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf"}
+2022-07-28T11:30:47.107-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 0, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 143533719, "position": 894, "signature": "2UiE9gyTdYH4nFWP1ir92WXqqkX7WSRSAfN6NyCYgVfR29jmsqs1K1ZkK8KAMwWYp4mMR5tj5sfGQN9UgQxiQkKe"}
+2022-07-28T11:30:47.107-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 0, "endpoint": "https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf", "slot": 143533718, "position": 877, "signature": "5SPCcCYgdsiXSdQeTmibc265YeiiQeeGe6WbdGPDNjo1gjVEf6D9DSmBesV1py6ipPoRtMMUUeah7pK38q9e7w8Y"}
+2022-07-28T11:30:47.151-0500    DEBUG   txcompare/main.go:76    iteration results found {"iteration": 1, "winner": "https://api.mainnet-beta.solana.com"}
+2022-07-28T11:30:47.151-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 1, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 143533718, "position": 1057, "signature": "2Y4hVUejyNM9mymrseuFrvmmj1RFwpV59uxRXgn1LCB9VYnVjn2sFoGnjSmKA4vRxBT13ZkNe6h6SHhGd2jfgUnQ"}
+2022-07-28T11:30:47.151-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 1, "endpoint": "https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf", "slot": 143533718, "position": 1354, "signature": "2BLCkuL2U6iKTpGCxNZUCn8zyBYx8254kJibu39mtve43UstBkAQYZXYRjtiwMVybihDaKwq4MJUUy3K18YeqEUi"}
+2022-07-28T11:30:47.392-0500    DEBUG   txcompare/main.go:76    iteration results found {"iteration": 2, "winner": "https://api.mainnet-beta.solana.com"}
+2022-07-28T11:30:47.392-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 2, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 143533720, "position": 286, "signature": "5eyRvD6KtQ7qLs28aafUS3DXZzhnpLEhzByQVJscYFd6QuUFakvEnKLUVmUVJfHD5aJvCTbjpqSaM2rYQjninje7"}
+2022-07-28T11:30:47.393-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 2, "endpoint": "https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf", "slot": 143533720, "position": 569, "signature": "3PJdb5STnCnJ4aBBYgxhq1RaayTaF8P1Dvub8GnDPYC8kd7Dui94VBKqDuAznwy4LJLKBgwuWg3S5vNuPsjv9yHt"}
+2022-07-28T11:30:57.717-0500    DEBUG   txcompare/main.go:76    iteration results found {"iteration": 3, "winner": "https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf"}
+2022-07-28T11:30:57.718-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 3, "endpoint": "https://api.mainnet-beta.solana.com", "slot": 143533759, "position": 127, "signature": "5ofkDQsaEm4PrpG1v9u8t7JhDcXx2pAPtZscPrGLUfUdCDymSGNCfyrc85tAzjhM6KkSRh8kiXucP79A8HZSzMYu"}
+2022-07-28T11:30:57.718-0500    DEBUG   txcompare/main.go:98    iteration transaction result    {"iteration": 3, "endpoint": "https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf", "slot": 143533733, "position": 2085, "signature": "2gej52a1hEF715UyqDD5Q8CSuvQ8tBhY3twNoV7jCqoJXqxLtCiayVVZAMgW8iSF2DcA2b3TMztysEXnKnigiNFq"}
 Iterations:  4
 Endpoints:
      https://api.mainnet-beta.solana.com
-     https://my-rpc-endpoint.com
+     https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf
 
 Win counts: 
-    0    https://api.mainnet-beta.solana.com
-    0    https://my-rpc-endpoint.com
+    2    https://api.mainnet-beta.solana.com
+    2    https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf
 
 Lost transactions: 
-    4    https://api.mainnet-beta.solana.com
-    4    https://my-rpc-endpoint.com
+    0    https://api.mainnet-beta.solana.com
+    0    https://nd-223-967-158.p2pify.com/92b9f51421b09d9b68ce6e8cd8d50ebf
 ```
 
 A CSV file will also be generated at the `--output` location, with details of each transaction.
