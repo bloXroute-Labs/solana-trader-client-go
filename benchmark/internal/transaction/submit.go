@@ -20,10 +20,12 @@ type Builder func() (string, error)
 
 type SubmitterOpts struct {
 	SubmissionInterval time.Duration
+	SkipPreflight      bool
 }
 
 var defaultSubmitterOpts = SubmitterOpts{
 	SubmissionInterval: defaultSubmissionInterval,
+	SkipPreflight:      true,
 }
 
 type Submitter struct {
@@ -110,7 +112,7 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (sol
 		return solana.Signature{}, err
 	}
 
-	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, false, "")
+	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, ts.opts.SkipPreflight, "")
 	if err != nil {
 		return solana.Signature{}, err
 	}
