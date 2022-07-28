@@ -152,7 +152,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	defer cancel()
 
 	// Stream response
-	err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx", "SOL-USDT"}, 3, orderbookChan)
+	err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
 	} else {
