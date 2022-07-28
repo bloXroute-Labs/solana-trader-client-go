@@ -45,6 +45,15 @@ func NewStatusQuerierWithOpts(endpoint string, opts StatusQuerierOpts) *StatusQu
 	return tsq
 }
 
+func (q *StatusQuerier) RecentBlockHash(ctx context.Context) (solana.Hash, error) {
+	result, err := q.client.GetRecentBlockhash(ctx, "")
+	if err != nil {
+		return solana.Hash{}, err
+	}
+
+	return result.Value.Blockhash, nil
+}
+
 func (q *StatusQuerier) FetchBatch(ctx context.Context, signatures []solana.Signature) (BatchSummary, []BlockStatus, error) {
 	statuses, err := utils.AsyncGather(ctx, signatures, func(i int, ctx context.Context, signature solana.Signature) (BlockStatus, error) {
 		return q.Fetch(ctx, signature)

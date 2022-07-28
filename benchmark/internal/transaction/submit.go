@@ -110,7 +110,7 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (sol
 		return solana.Signature{}, err
 	}
 
-	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, true, "")
+	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, false, "")
 	if err != nil {
 		return solana.Signature{}, err
 	}
@@ -155,11 +155,13 @@ var (
 )
 
 // MemoBuilder builds a transaction with a simple memo
-func MemoBuilder(publicKey solana.PublicKey, privateKey solana.PrivateKey) Builder {
+func MemoBuilder(privateKey solana.PrivateKey, recentBlockHash solana.Hash) Builder {
 	return func() (string, error) {
 		memoIDM.Lock()
 		memoID++
 		memoIDM.Unlock()
+
+		publicKey := privateKey.PublicKey()
 
 		builder := solana.NewTransactionBuilder()
 		am := []*solana.AccountMeta{
@@ -173,6 +175,9 @@ func MemoBuilder(publicKey solana.PublicKey, privateKey solana.PrivateKey) Build
 		}
 
 		builder.AddInstruction(instruction)
+		builder.SetRecentBlockHash(recentBlockHash)
+		builder.SetFeePayer(publicKey)
+
 		tx, err := builder.Build()
 		if err != nil {
 			return "", err

@@ -45,14 +45,18 @@ func run(c *cli.Context) error {
 	if opts.PrivateKey == nil {
 		return errors.New("PRIVATE_KEY environment variable must be set")
 	}
-	publicKey := opts.PrivateKey.PublicKey()
 
 	iterations := c.Int(IterationCountFlag.Name)
 	endpoints := c.StringSlice(SolanaHTTPEndpointsFlag.Name)
 	queryEndpoint := c.String(SolanaQueryEndpointsFlag.Name)
 
-	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(publicKey, *opts.PrivateKey))
 	querier := transaction.NewStatusQuerier(queryEndpoint)
+
+	recentBlockHash, err := querier.RecentBlockHash(ctx)
+	if err != nil {
+		return err
+	}
+	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(*opts.PrivateKey, recentBlockHash))
 
 	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
 	if err != nil {
