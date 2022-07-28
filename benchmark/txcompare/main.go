@@ -8,6 +8,7 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/transaction"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli/v2"
 	"os"
 )
@@ -52,11 +53,10 @@ func run(c *cli.Context) error {
 
 	querier := transaction.NewStatusQuerier(queryEndpoint)
 
-	recentBlockHash, err := querier.RecentBlockHash(ctx)
-	if err != nil {
-		return err
+	recentBlockHashFn := func() (solana.Hash, error) {
+		return querier.RecentBlockHash(ctx)
 	}
-	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(*opts.PrivateKey, recentBlockHash))
+	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(*opts.PrivateKey, recentBlockHashFn))
 
 	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
 	if err != nil {

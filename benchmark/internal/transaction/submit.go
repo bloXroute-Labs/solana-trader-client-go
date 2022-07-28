@@ -14,7 +14,10 @@ import (
 	"time"
 )
 
-const defaultSubmissionInterval = 2 * time.Second
+const (
+	defaultSubmissionInterval = 2 * time.Second
+	defaultSkipPreflight      = true
+)
 
 type Builder func() (string, error)
 
@@ -25,7 +28,7 @@ type SubmitterOpts struct {
 
 var defaultSubmitterOpts = SubmitterOpts{
 	SubmissionInterval: defaultSubmissionInterval,
-	SkipPreflight:      true,
+	SkipPreflight:      defaultSkipPreflight,
 }
 
 type Submitter struct {
@@ -157,7 +160,7 @@ var (
 )
 
 // MemoBuilder builds a transaction with a simple memo
-func MemoBuilder(privateKey solana.PrivateKey, recentBlockHash solana.Hash) Builder {
+func MemoBuilder(privateKey solana.PrivateKey, recentBlockHashFn func() (solana.Hash, error)) Builder {
 	return func() (string, error) {
 		memoIDM.Lock()
 		memoID++
@@ -177,8 +180,13 @@ func MemoBuilder(privateKey solana.PrivateKey, recentBlockHash solana.Hash) Buil
 		}
 
 		builder.AddInstruction(instruction)
-		builder.SetRecentBlockHash(recentBlockHash)
 		builder.SetFeePayer(publicKey)
+
+		recentBlockHash, err := recentBlockHashFn()
+		if err != nil {
+			return "", err
+		}
+		builder.SetRecentBlockHash(recentBlockHash)
 
 		tx, err := builder.Build()
 		if err != nil {
