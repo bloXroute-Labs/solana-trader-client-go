@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
@@ -54,39 +53,9 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
 }
 
-// GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32, outputChan chan *pb.GetOrderbooksStreamResponse) error {
-	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
-	if err != nil {
-		return err
-	}
-
-	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets), outputChan)
-}
-
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32) (*pb.GetTradesResponse, error) {
 	return g.apiClient.GetTrades(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
-}
-
-// GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32, outputChan chan *pb.GetTradesStreamResponse) error {
-	stream, err := g.apiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
-	if err != nil {
-		return err
-	}
-
-	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market, outputChan)
-}
-
-// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, outputChan chan *pb.GetOrderStatusStreamResponse) error {
-	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
-	if err != nil {
-		return err
-	}
-
-	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market, outputChan)
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
@@ -325,4 +294,34 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	}
 
 	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+}
+
+// GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
+func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
+	stream, err := g.apiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market), nil
+}
+
+// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
+func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
+	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
 }

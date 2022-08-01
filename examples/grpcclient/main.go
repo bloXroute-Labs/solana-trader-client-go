@@ -167,7 +167,6 @@ func callTickersGRPC(g *provider.GRPCClient) {
 func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	fmt.Println("starting orderbook stream")
 
-	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -176,13 +175,21 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 	// Stream response
 	err := g.GetOrderbookStream(authContext, []string{"SOL/USDC", "SOL-USDT"}, 3, orderbookChan)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx", "SOL-USDT"}, 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
-	} else {
-		for i := 1; i <= 5; i++ {
-			data := <-orderbookChan
-			fmt.Printf("response %v received, data %v \n", i, data)
+		return
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 5; i++ {
+		data, ok := <-orderbookCh
+		if !ok {
+			// channel closed
+			return
 		}
+
+		fmt.Printf("response %v received, data %v \n", i, data)
 	}
 }
 
@@ -197,14 +204,18 @@ func callTradesGRPCStream(g *provider.GRPCClient) {
 	defer cancel()
 
 	// Stream response
-	err := g.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
+	stream, err := g.GetTradesStream(ctx, "SOL/USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetTrades stream request for SOL/USDC: %v", err)
-	} else {
-		for i := 1; i <= 3; i++ {
-			<-tradesChan
-			fmt.Printf("response %v received\n", i)
+	}
+	stream.Into(tradesChan)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-tradesChan
+		if !ok {
+			// channel closed
+			return
 		}
+		fmt.Printf("response %v received\n", i)
 	}
 }
 
@@ -231,9 +242,11 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	go func() {
 		err := g.GetOrderStatusStream(authContext, marketAddr, ownerAddr, ch)
+		stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
 		if err != nil {
 			log.Fatalf("error getting order status stream %v", err)
 		}
+		stream.Into(ch)
 	}()
 
 	time.Sleep(time.Second * 10)

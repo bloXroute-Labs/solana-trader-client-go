@@ -183,16 +183,19 @@ func callOrderbookWSStream(w *provider.WSClient) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	orderbookChan := make(chan *pb.GetOrderbooksStreamResponse)
 
-	err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, orderbookChan)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
-	} else {
-		for i := 1; i <= 5; i++ {
-			<-orderbookChan
-			fmt.Printf("response %v received\n", i)
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 5; i++ {
+		_, ok := <-orderbookCh
+		if !ok {
+			return
 		}
+		fmt.Printf("response %v received\n", i)
 	}
 }
 
@@ -201,16 +204,20 @@ func callTradesWSStream(w *provider.WSClient) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	tradesChan := make(chan *pb.GetTradesStreamResponse)
 
-	err := w.GetTradesStream(ctx, "SOL/USDC", 3, tradesChan)
+	tradesChan := make(chan *pb.GetTradesStreamResponse)
+	stream, err := w.GetTradesStream(ctx, "SOL/USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
-	} else {
-		for i := 1; i <= 5; i++ {
-			<-tradesChan
-			fmt.Printf("response %v received\n", i)
+	}
+
+	stream.Into(tradesChan)
+	for i := 1; i <= 5; i++ {
+		_, ok := <-tradesChan
+		if !ok {
+			return
 		}
+		fmt.Printf("response %v received\n", i)
 	}
 }
 
@@ -233,15 +240,11 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) {
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	go func() {
-		secondWSClient, err := provider.NewWSClient() // TODO use same client when WS streams are seperated
-		if err != nil {
-			log.Fatalf("error dialing WS client: %v", err)
-		}
-
-		err = secondWSClient.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+		stream, err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
 		if err != nil {
 			log.Fatalf("error getting order status stream %v", err)
 		}
+		stream.Into(ch)
 	}()
 
 	time.Sleep(time.Second * 10)

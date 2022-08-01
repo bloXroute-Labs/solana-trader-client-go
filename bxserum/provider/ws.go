@@ -59,32 +59,6 @@ func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32
 	return &response, nil
 }
 
-// GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, orderbookChan chan *pb.GetOrderbooksStreamResponse) error {
-	generator, err := connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
-		Markets: markets,
-		Limit:   limit,
-	}, func() *pb.GetOrderbooksStreamResponse {
-		var v pb.GetOrderbooksStreamResponse
-		return &v
-	})
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			result, err := generator()
-			if err != nil {
-				close(orderbookChan)
-				return
-			}
-			orderbookChan <- result
-		}
-	}()
-	return nil
-}
-
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (w *WSClient) GetTrades(ctx context.Context, market string, limit uint32) (*pb.GetTradesResponse, error) {
 	var response pb.GetTradesResponse
@@ -93,60 +67,6 @@ func (w *WSClient) GetTrades(ctx context.Context, market string, limit uint32) (
 		return nil, err
 	}
 	return &response, nil
-}
-
-// GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, tradesChan chan *pb.GetTradesStreamResponse) error {
-	generator, err := connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
-		Market: market,
-		Limit:  limit,
-	}, func() *pb.GetTradesStreamResponse {
-		var v pb.GetTradesStreamResponse
-		return &v
-	})
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			result, err := generator()
-			if err != nil {
-				close(tradesChan)
-				return
-			}
-			tradesChan <- result
-		}
-	}()
-
-	return nil
-}
-
-// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, statusUpdateChan chan *pb.GetOrderStatusStreamResponse) error {
-	generator, err := connections.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
-		Market:       market,
-		OwnerAddress: ownerAddress,
-	}, func() *pb.GetOrderStatusStreamResponse {
-		var v pb.GetOrderStatusStreamResponse
-		return &v
-	})
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			result, err := generator()
-			if err != nil {
-				close(statusUpdateChan)
-				return
-			}
-			statusUpdateChan <- result
-		}
-	}()
-
-	return nil
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
@@ -476,4 +396,37 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 
 func (w *WSClient) Close() error {
 	return w.conn.Close(errors.New("shutdown requested"))
+}
+
+// GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
+		Markets: markets,
+		Limit:   limit,
+	}, func() *pb.GetOrderbooksStreamResponse {
+		var v pb.GetOrderbooksStreamResponse
+		return &v
+	})
+}
+
+// GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
+func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
+		Market: market,
+		Limit:  limit,
+	}, func() *pb.GetTradesStreamResponse {
+		var v pb.GetTradesStreamResponse
+		return &v
+	})
+}
+
+// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
+func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
+		Market:       market,
+		OwnerAddress: ownerAddress,
+	}, func() *pb.GetOrderStatusStreamResponse {
+		var v pb.GetOrderStatusStreamResponse
+		return &v
+	})
 }
