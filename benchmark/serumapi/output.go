@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"
 	"golang.org/x/exp/maps"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -173,46 +171,6 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpda
 	}
 
 	return datapoints, leftoverSerum, leftoverSolana, nil
-}
-
-// Write outputs Serum/Solana comparison data to a CSV file
-func Write(outputFile string, datapoints []Datapoint, removeUnmatched bool) error {
-	f, err := os.Create(outputFile)
-	if err != nil {
-		return err
-	}
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
-
-	w := csv.NewWriter(f)
-	defer w.Flush()
-
-	err = w.Write([]string{"slot", "diff", "seq", "serum-time", "solana-side", "solana-time"})
-	if err != nil {
-		return err
-	}
-
-	for _, datapoint := range datapoints {
-		lines := datapoint.FormatCSV()
-
-	DatapointWrite:
-		for _, line := range lines {
-			if removeUnmatched {
-				for _, col := range line {
-					if col == "n/a" {
-						continue DatapointWrite
-					}
-				}
-			}
-			err := w.Write(line)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func Print(datapoints []Datapoint, removeUnmatched bool) {
