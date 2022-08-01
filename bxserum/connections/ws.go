@@ -215,7 +215,7 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 	}
 }
 
-func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, streamParams proto.Message, resultInitFn func() T) (func() (T, error), error) {
+func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, streamParams proto.Message, resultInitFn func() T) (Streamer[T], error) {
 	streamParamsB, err := protojson.Marshal(streamParams)
 	if err != nil {
 		return nil, err
