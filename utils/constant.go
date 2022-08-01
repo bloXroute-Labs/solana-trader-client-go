@@ -1,3 +1,3 @@
 package utils
 
-const AuthHeader = "YmFjMGRhYWYtOTUyMi00MmFlLTk0ODktNTg2NTJmYjJjNmQwOjc1OWJiYjEyZjI5MzdmZjk2ZjI4MThhYjI0OTNlYThj"
+const AuthHeader = "Your-Auth-Header"
