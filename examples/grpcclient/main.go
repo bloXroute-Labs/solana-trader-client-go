@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
+	"google.golang.org/grpc/metadata"
 	"math/rand"
 	"os"
 	"strings"
@@ -14,7 +16,7 @@ import (
 )
 
 func main() {
-	g, err := provider.NewGRPCTestnet()
+	g, err := provider.NewGRPCLocal()
 	if err != nil {
 		log.Fatalf("error dialing GRPC client: %v", err)
 		return
@@ -59,7 +61,10 @@ func main() {
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) {
-	markets, err := g.GetMarkets(context.Background())
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
+	markets, err := g.GetMarkets(authContext)
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 	} else {
@@ -70,7 +75,10 @@ func callMarketsGRPC(g *provider.GRPCClient) {
 }
 
 func callOrderbookGRPC(g *provider.GRPCClient) {
-	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT", 0)
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
+	orderbook, err := g.GetOrderbook(authContext, "ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
 	} else {
@@ -79,7 +87,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2)
+	orderbook, err = g.GetOrderbook(authContext, "SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 	} else {
@@ -88,7 +96,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3)
+	orderbook, err = g.GetOrderbook(authContext, "SOL:USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 	} else {
@@ -99,7 +107,10 @@ func callOrderbookGRPC(g *provider.GRPCClient) {
 }
 
 func callOpenOrdersGRPC(g *provider.GRPCClient) {
-	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
+	orders, err := g.GetOpenOrders(authContext, "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 	} else {
@@ -110,7 +121,10 @@ func callOpenOrdersGRPC(g *provider.GRPCClient) {
 }
 
 func callUnsettledGRPC(g *provider.GRPCClient) {
-	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
+	response, err := g.GetUnsettled(authContext, "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 	} else {
@@ -122,7 +136,10 @@ func callUnsettledGRPC(g *provider.GRPCClient) {
 }
 
 func callGetAccountBalanceGRPC(g *provider.GRPCClient) {
-	response, err := g.GetAccountBalance(context.Background(), "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
+	response, err := g.GetAccountBalance(authContext, "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
 	} else {
@@ -134,7 +151,10 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) {
 }
 
 func callTickersGRPC(g *provider.GRPCClient) {
-	orders, err := g.GetTickers(context.Background(), "SOLUSDC")
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
+	orders, err := g.GetTickers(authContext, "SOLUSDC")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDC: %v", err)
 	} else {
@@ -151,8 +171,11 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 	// Stream response
-	err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx", "SOL-USDT"}, 3, orderbookChan)
+	err := g.GetOrderbookStream(authContext, []string{"SOL/USDC", "SOL-USDT"}, 3, orderbookChan)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
 	} else {
@@ -166,8 +189,11 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 func callTradesGRPCStream(g *provider.GRPCClient) {
 	fmt.Println("starting trades stream")
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(authContext)
 	defer cancel()
 
 	// Stream response
@@ -199,9 +225,12 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	go func() {
-		err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr, ch)
+		err := g.GetOrderStatusStream(authContext, marketAddr, ownerAddr, ch)
 		if err != nil {
 			log.Fatalf("error getting order status stream %v", err)
 		}
@@ -250,6 +279,10 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
+
 	// generate a random clientOrderID for this order
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID := rand.Uint64()
@@ -260,14 +293,14 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	}
 
 	// create order without actually submitting
-	response, err := g.PostOrder(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	response, err := g.PostOrder(authContext, ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatalf("failed to create order (%v)", err)
 	}
 	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
 
 	// sign/submit transaction after creation
-	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
+	sig, err := g.SubmitOrder(authContext, ownerAddr, ownerAddr, marketAddr,
 		orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatalf("failed to submit order (%v)", err)
@@ -284,7 +317,11 @@ func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr str
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err := g.SubmitCancelByClientOrderID(ctx, clientID, ownerAddr,
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
+
+	_, err := g.SubmitCancelByClientOrderID(authContext, clientID, ownerAddr,
 		marketAddr, ooAddr, true)
 	if err != nil {
 		log.Fatalf("failed to cancel order by client order ID (%v)", err)
@@ -299,7 +336,11 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sig, err := g.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
+
+	sig, err := g.SubmitSettle(authContext, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return
@@ -315,6 +356,10 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
+
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
 	clientOrderID2 := rand.Uint64()
@@ -326,14 +371,14 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 
 	// Place 2 orders in orderbook
 	fmt.Println("placing orders")
-	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(authContext, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err = g.SubmitOrder(authContext, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -342,7 +387,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := g.GetOpenOrders(authContext, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -365,7 +410,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 
 	// Cancel all the orders
 	fmt.Println("\ncancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := g.SubmitCancelAll(authContext, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -373,7 +418,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 
 	time.Sleep(time.Second * 30)
 
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = g.GetOpenOrders(authContext, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -394,6 +439,10 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
+
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
 	opts := provider.PostOrderOpts{
@@ -404,14 +453,14 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Place order in orderbook
 	fmt.Println("placing order")
-	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(authContext, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute * 1)
 	// Check order is there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := g.GetOpenOrders(authContext, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -429,7 +478,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	fmt.Println("order placed successfully")
 
 	// replacing order
-	sig, err = g.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	sig, err = g.SubmitReplaceByClientOrderID(authContext, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -438,7 +487,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = g.GetOpenOrders(authContext, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -457,7 +506,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Cancel all the orders
 	fmt.Println("\ncancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := g.SubmitCancelAll(authContext, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -471,6 +520,10 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	authHeader := make(map[string]string)
+	authHeader["authorization"] = utils.AuthHeader
+	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
+
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
 	clientOrderID2 := rand.Uint64()
@@ -482,14 +535,14 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Place order in orderbook
 	fmt.Println("placing order")
-	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(authContext, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := g.GetOpenOrders(authContext, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -508,7 +561,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	sig, err = g.SubmitReplaceOrder(authContext, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -517,7 +570,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = g.GetOpenOrders(authContext, marketAddr, ownerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -537,7 +590,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Cancel all the orders
 	fmt.Println("\ncancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := g.SubmitCancelAll(authContext, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Fatal(err)
 	}

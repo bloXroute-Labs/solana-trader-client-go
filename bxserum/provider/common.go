@@ -15,6 +15,9 @@ const (
 	TestnetSerumAPIHTTP = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
 	TestnetSerumAPIWS   = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
 	TestnetSerumAPIGRPC = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:9000"
+	LocalSerumAPIWES    = "ws://localhost:9000/ws"
+	LocalSerumAPIGRPC   = "localhost:9001"
+	LocalSerumAPIHTTP   = "http://127.0.0.1:9000"
 	defaultRPCTimeout   = 7 * time.Second
 )
 

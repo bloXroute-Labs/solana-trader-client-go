@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	w, err := provider.NewWSClientTestnet()
+	w, err := provider.NewWSClientLocal()
 	if err != nil {
 		log.Fatalf("error dialing WS client: %v", err)
 		return

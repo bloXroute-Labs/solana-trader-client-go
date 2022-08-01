@@ -56,7 +56,7 @@ func main() {
 }
 
 func callMarketsHTTP() {
-	h := provider.NewHTTPClient()
+	h := provider.NewHTTPLocal()
 
 	markets, err := h.GetMarkets()
 	if err != nil {
@@ -69,7 +69,7 @@ func callMarketsHTTP() {
 }
 
 func callOrderbookHTTP() {
-	h := provider.NewHTTPClient()
+	h := provider.NewHTTPLocal()
 
 	orderbook, err := h.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
@@ -99,7 +99,7 @@ func callOrderbookHTTP() {
 
 func callOpenOrdersHTTP() {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
@@ -114,7 +114,7 @@ func callOpenOrdersHTTP() {
 
 func callUnsettledHTTP() {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
@@ -129,7 +129,7 @@ func callUnsettledHTTP() {
 
 func callGetAccountBalanceHTTP() {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetAccountBalance("F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
@@ -143,7 +143,7 @@ func callGetAccountBalanceHTTP() {
 }
 
 func callTradesHTTP() {
-	h := provider.NewHTTPClient()
+	h := provider.NewHTTPLocal()
 
 	trades, err := h.GetTrades("SOLUSDT", 5)
 	if err != nil {
@@ -156,7 +156,7 @@ func callTradesHTTP() {
 }
 
 func callTickersHTTP() {
-	h := provider.NewHTTPClient()
+	h := provider.NewHTTPLocal()
 
 	tickers, err := h.GetTickers("SOLUSDT")
 	if err != nil {
@@ -180,7 +180,7 @@ const (
 
 func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	// generate a random clientOrderId for this order
@@ -215,7 +215,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	_, err := h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
@@ -230,7 +230,7 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 func callPostSettleHTTP(ownerAddr, ooAddr string) {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
@@ -247,7 +247,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -327,7 +327,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -405,7 +405,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.LocalSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())

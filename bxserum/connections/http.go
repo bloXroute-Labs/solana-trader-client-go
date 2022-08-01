@@ -3,7 +3,9 @@ package connections
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"io/ioutil"
@@ -32,7 +34,9 @@ func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 }
 
 func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T) error {
-	httpResp, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", utils.AuthHeader)
+	httpResp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -54,7 +58,10 @@ func HTTPPostWithClient[T protoreflect.ProtoMessage](url string, client *http.Cl
 		return err
 	}
 
-	httpResp, err := client.Post(url, contentType, bytes.NewBuffer(b))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+	req.Header.Set("Authorization", "")
+	req.Header.Set("Content-Type", contentType)
+	httpResp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -80,13 +87,7 @@ func httpUnmarshalError(httpResp *http.Response) error {
 		return err
 	}
 
-	var httpError HTTPError
-	err = json.Unmarshal(body, &httpError)
-	if err != nil {
-		return err
-	}
-
-	return httpError
+	return errors.New(string(body))
 }
 
 func httpUnmarshal[T protoreflect.ProtoMessage](httpResp *http.Response, val T) error {

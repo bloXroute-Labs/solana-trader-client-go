@@ -31,6 +31,12 @@ func NewGRPCTestnet() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+// NewGRPCLocal connects to Testnet Serum API
+func NewGRPCLocal() (*GRPCClient, error) {
+	opts := DefaultRPCOpts(LocalSerumAPIGRPC)
+	return NewGRPCClientWithOpts(opts)
+}
+
 // NewGRPCClientWithOpts connects to custom Serum API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
