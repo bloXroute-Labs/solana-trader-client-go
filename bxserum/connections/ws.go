@@ -35,10 +35,10 @@ type WS struct {
 	subscriptionMap map[string]subscriptionEntry
 }
 
-func NewWS(endpoint string) (*WS, error) {
+func NewWS(endpoint string, authHeader string) (*WS, error) {
 	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
 	header := http.Header{}
-	header.Set("Authorization", utils.AuthHeader)
+	header.Set("Authorization", authHeader)
 	conn, _, err := dialer.Dial(endpoint, header)
 	if err != nil {
 		return nil, err

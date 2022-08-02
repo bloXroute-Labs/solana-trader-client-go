@@ -33,9 +33,9 @@ func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 	return HTTPGetWithClient[T](url, client, val)
 }
 
-func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T) error {
+func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T, authHeader string) error {
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", utils.AuthHeader)
+	req.Header.Set("Authorization", authHeader)
 	httpResp, err := client.Do(req)
 	if err != nil {
 		return err

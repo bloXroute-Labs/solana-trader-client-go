@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -19,25 +20,25 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIWS)
+	opts := DefaultRPCOpts(MainnetSerumAPIWS, utils.AuthHeader)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIWS)
+	opts := DefaultRPCOpts(TestnetSerumAPIWS, utils.AuthHeader)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientLocal connects to Local Serum API
 func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIWES)
+	opts := DefaultRPCOpts(LocalSerumAPIWES, utils.AuthHeader)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientWithOpts connects to custom Serum API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
-	conn, err := connections.NewWS(opts.Endpoint)
+	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
 	if err != nil {
 		return nil, err
 	}

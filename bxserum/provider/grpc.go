@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -16,42 +17,51 @@ type GRPCClient struct {
 
 	apiClient  pb.ApiClient
 	privateKey *solana.PrivateKey
-	authHeader string
 }
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(MainnetSerumAPIGRPC, utils.AuthHeader)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCTestnet connects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(TestnetSerumAPIGRPC, utils.AuthHeader)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCLocal connects to Testnet Serum API
 func NewGRPCLocal() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIGRPC)
+	opts := DefaultRPCOpts(LocalSerumAPIGRPC, utils.AuthHeader)
 	return NewGRPCClientWithOpts(opts)
+}
+
+type blxrCredentials struct {
+	authorization string
+}
+
+func (bc blxrCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": bc.authorization,
+	}, nil
+}
+
+func (bc blxrCredentials) RequireTransportSecurity() bool {
+	return false
 }
 
 // NewGRPCClientWithOpts connects to custom Serum API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	authOption :=  grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
+	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), authOption)
 	if err != nil {
 		return nil, err
 	}
 	return &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
-		authHeader: opts.AuthHeader,
 	}, nil
-}
-
-func (g *GRPCClient) GetAuthHeader() string {
-	return g.authHeader
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
