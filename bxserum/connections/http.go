@@ -30,7 +30,7 @@ func (h HTTPError) Error() string {
 // HTTP response for GET request
 func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 	client := &http.Client{Timeout: time.Second * 7}
-	return HTTPGetWithClient[T](url, client, val)
+	return HTTPGetWithClient[T](url, client, val, utils.AuthHeader)
 }
 
 func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T, authHeader string) error {
@@ -52,14 +52,14 @@ func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Cli
 	return nil
 }
 
-func HTTPPostWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, body interface{}, val T) error {
+func HTTPPostWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, body interface{}, val T, authHeader string) error {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
-	req.Header.Set("Authorization", "")
+	req.Header.Set("Authorization", authHeader)
 	req.Header.Set("Content-Type", contentType)
 	httpResp, err := client.Do(req)
 	if err != nil {
