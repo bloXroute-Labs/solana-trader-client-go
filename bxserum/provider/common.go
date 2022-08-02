@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
@@ -33,6 +34,7 @@ type RPCOpts struct {
 	Endpoint   string
 	Timeout    time.Duration
 	PrivateKey *solana.PrivateKey
+	AuthHeader string
 }
 
 func DefaultRPCOpts(endpoint string) RPCOpts {
@@ -45,5 +47,6 @@ func DefaultRPCOpts(endpoint string) RPCOpts {
 		Endpoint:   endpoint,
 		Timeout:    defaultRPCTimeout,
 		PrivateKey: spk,
+		AuthHeader: utils.AuthHeader,
 	}
 }

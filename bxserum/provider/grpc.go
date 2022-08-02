@@ -16,6 +16,7 @@ type GRPCClient struct {
 
 	apiClient  pb.ApiClient
 	privateKey *solana.PrivateKey
+	authHeader string
 }
 
 // NewGRPCClient connects to Mainnet Serum API
@@ -45,7 +46,12 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	return &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
+		authHeader: opts.AuthHeader,
 	}, nil
+}
+
+func (g *GRPCClient) GetAuthHeader() string {
+	return g.authHeader
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.

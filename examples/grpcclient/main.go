@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"google.golang.org/grpc/metadata"
 	"math/rand"
 	"os"
@@ -16,7 +15,7 @@ import (
 )
 
 func main() {
-	g, err := provider.NewGRPCLocal()
+	g, err := provider.NewGRPCTestnet()
 	if err != nil {
 		log.Fatalf("error dialing GRPC client: %v", err)
 		return
@@ -62,7 +61,7 @@ func main() {
 
 func callMarketsGRPC(g *provider.GRPCClient) {
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	markets, err := g.GetMarkets(authContext)
 	if err != nil {
@@ -76,7 +75,7 @@ func callMarketsGRPC(g *provider.GRPCClient) {
 
 func callOrderbookGRPC(g *provider.GRPCClient) {
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	orderbook, err := g.GetOrderbook(authContext, "ETH-USDT", 0)
 	if err != nil {
@@ -108,7 +107,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) {
 
 func callOpenOrdersGRPC(g *provider.GRPCClient) {
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	orders, err := g.GetOpenOrders(authContext, "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	if err != nil {
@@ -122,7 +121,7 @@ func callOpenOrdersGRPC(g *provider.GRPCClient) {
 
 func callUnsettledGRPC(g *provider.GRPCClient) {
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	response, err := g.GetUnsettled(authContext, "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
@@ -137,7 +136,7 @@ func callUnsettledGRPC(g *provider.GRPCClient) {
 
 func callGetAccountBalanceGRPC(g *provider.GRPCClient) {
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	response, err := g.GetAccountBalance(authContext, "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
@@ -152,7 +151,7 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) {
 
 func callTickersGRPC(g *provider.GRPCClient) {
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	orders, err := g.GetTickers(authContext, "SOLUSDC")
 	if err != nil {
@@ -171,10 +170,9 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) {
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 	// Stream response
-	err := g.GetOrderbookStream(authContext, []string{"SOL/USDC", "SOL-USDT"}, 3, orderbookChan)
 	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx", "SOL-USDT"}, 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook stream request for SOL/USDC: %v", err)
@@ -197,7 +195,7 @@ func callTradesGRPCStream(g *provider.GRPCClient) {
 	fmt.Println("starting trades stream")
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(context.Background(), metadata.New(authHeader))
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
 	ctx, cancel := context.WithCancel(authContext)
@@ -237,7 +235,7 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	go func() {
@@ -293,7 +291,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) uint64
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 
 	// generate a random clientOrderID for this order
@@ -331,7 +329,7 @@ func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr str
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 
 	_, err := g.SubmitCancelByClientOrderID(authContext, clientID, ownerAddr,
@@ -350,7 +348,7 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) {
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 
 	sig, err := g.SubmitSettle(authContext, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
@@ -370,7 +368,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) {
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 
 	rand.Seed(time.Now().UnixNano())
@@ -453,7 +451,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 
 	rand.Seed(time.Now().UnixNano())
@@ -534,7 +532,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	defer cancel()
 
 	authHeader := make(map[string]string)
-	authHeader["authorization"] = utils.AuthHeader
+	authHeader["authorization"] = g.GetAuthHeader()
 	authContext := metadata.NewOutgoingContext(ctx, metadata.New(authHeader))
 
 	rand.Seed(time.Now().UnixNano())
