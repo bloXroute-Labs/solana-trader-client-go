@@ -72,7 +72,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: $COMMIT_HASH\nAuthor: $COMMIT_AUTHOR\n\n$COMMIT_MESSAGE"
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: $CIRCLE_SHA1\nTriggered by: $CIRCLE_USERNAME"
                   },
                   "accessory": {
                     "type": "button",
