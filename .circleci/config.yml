@@ -56,6 +56,37 @@ jobs:
       - run:
           name: Unit test
           command: make unit
+      - slack/notify:
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "serum-client-go Build failed",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: $COMMIT_HASH\nAuthor: $COMMIT_AUTHOR\n\n$COMMIT_MESSAGE"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "CircleCI",
+                      "emoji": true
+                    },
+                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/serum-client-go?branch=develop"
+                  }
+                }
+              ]
+            }
+          event: fail
 workflows:
   version: 2
   test-branch:

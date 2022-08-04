@@ -12,7 +12,7 @@ import (
 
 func TestGRPC_New(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
-	assert.NotNil(t, pk)
+	assert.Nil(t, pk)
 	assert.Nil(t, err)
 
 	os.Setenv("PRIVATE_KEY", pk.String())
