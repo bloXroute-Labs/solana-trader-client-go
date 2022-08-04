@@ -6,10 +6,10 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"os"
 )
 
 type GRPCClient struct {
@@ -21,19 +21,19 @@ type GRPCClient struct {
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIGRPC, utils.AuthHeader)
+	opts := DefaultRPCOpts(MainnetSerumAPIGRPC, os.Getenv("AUTH_HEADER"))
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCTestnet connects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIGRPC, utils.AuthHeader)
+	opts := DefaultRPCOpts(TestnetSerumAPIGRPC, os.Getenv("AUTH_HEADER"))
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCLocal connects to Testnet Serum API
 func NewGRPCLocal() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIGRPC, utils.AuthHeader)
+	opts := DefaultRPCOpts(LocalSerumAPIGRPC, os.Getenv("AUTH_HEADER"))
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -53,7 +53,7 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 
 // NewGRPCClientWithOpts connects to custom Serum API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	authOption :=  grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
+	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
 	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), authOption)
 	if err != nil {
 		return nil, err

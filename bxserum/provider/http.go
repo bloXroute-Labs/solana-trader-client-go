@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
@@ -27,19 +28,19 @@ func (h *HTTPClient) GetAuthHeader() string {
 
 // NewHTTPClient connects to Mainnet Serum API
 func NewHTTPClient() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetSerumAPIHTTP, utils.AuthHeader)
+	opts := DefaultRPCOpts(MainnetSerumAPIHTTP, os.Getenv("AUTH_HEADER"))
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPTestnet connects to Testnet Serum API
 func NewHTTPTestnet() *HTTPClient {
-	opts := DefaultRPCOpts(TestnetSerumAPIHTTP, utils.AuthHeader)
+	opts := DefaultRPCOpts(TestnetSerumAPIHTTP, os.Getenv("AUTH_HEADER"))
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPLocal connects to Testnet Serum API
 func NewHTTPLocal() *HTTPClient {
-	opts := DefaultRPCOpts(LocalSerumAPIHTTP, utils.AuthHeader)
+	opts := DefaultRPCOpts(LocalSerumAPIHTTP, os.Getenv("AUTH_HEADER"))
 	return NewHTTPClientWithOpts(nil, opts)
 }
 

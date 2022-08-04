@@ -8,6 +8,7 @@ import (
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
+	"os"
 )
 
 type WSClient struct {
@@ -20,19 +21,19 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIWS, utils.AuthHeader)
+	opts := DefaultRPCOpts(MainnetSerumAPIWS, os.Getenv("AUTH_HEADER"))
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIWS, utils.AuthHeader)
+	opts := DefaultRPCOpts(TestnetSerumAPIWS, os.Getenv("AUTH_HEADER"))
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientLocal connects to Local Serum API
 func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIWES, utils.AuthHeader)
+	opts := DefaultRPCOpts(LocalSerumAPIWES, os.Getenv("AUTH_HEADER"))
 	return NewWSClientWithOpts(opts)
 }
 

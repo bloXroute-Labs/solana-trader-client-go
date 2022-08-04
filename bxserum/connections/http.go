@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func (h HTTPError) Error() string {
 // HTTP response for GET request
 func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
 	client := &http.Client{Timeout: time.Second * 7}
-	return HTTPGetWithClient[T](url, client, val, utils.AuthHeader)
+	return HTTPGetWithClient[T](url, client, val, os.Getenv("AUTH_HEADER"))
 }
 
 func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T, authHeader string) error {
