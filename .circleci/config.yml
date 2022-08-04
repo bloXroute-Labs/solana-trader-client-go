@@ -1,0 +1,67 @@
+version: 2.1
+orbs:
+  slack: circleci/slack@4.1
+executors:
+  bxgo:
+    docker:
+      - image: cimg/go:1.18
+    environment:
+      GOPATH: /home/circleci/go
+      WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
+      GOTRACEBACK: all
+      GOPRIVATE: github.com/bloXroute-Labs
+    working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
+jobs:
+  init:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-{{checksum "go.sum"}}
+      - run:
+          name: Update/install packages
+          command: |
+            sudo apt update
+      - run:
+          name: Configure environment
+          command: |
+            make environment-dev
+            TOKEN=$(cat .netrc | grep password | head -n 1 | cut -d ' ' -f 2)
+            git config --global url."https://${TOKEN}:x-oauth-basic@github.com/bloXroute-Labs".insteadOf "https://github.com/bloXroute-Labs" || true
+      - run:
+          name: Download dependencies
+          command: go mod tidy
+      - run:
+          name: Download golint
+          command: go get -u golang.org/x/lint/golint
+      - save_cache:
+          key: go-mod-{{checksum "go.sum"}}
+          paths:
+            - "/home/circleci/go/pkg/mod"
+      - persist_to_workspace:
+          root: /home/circleci/go/
+          paths:
+            - src
+            - pkg
+            - bin
+  unit:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
+      - run:
+          name: Unit test
+          command: make unit
+workflows:
+  version: 2
+  test-branch:
+    jobs:
+      - init:
+          context: circleci
+      - unit:
+          context: slack
+          requires:
+            - init
