@@ -25,6 +25,7 @@ jobs:
           name: Update/install packages
           command: |
             sudo apt update
+            sudo apt install awscli
       - run:
           name: Configure environment
           command: |
