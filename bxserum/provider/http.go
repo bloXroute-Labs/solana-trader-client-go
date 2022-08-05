@@ -28,19 +28,19 @@ func (h *HTTPClient) GetAuthHeader() string {
 
 // NewHTTPClient connects to Mainnet Serum API
 func NewHTTPClient() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetSerumAPIHTTP, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(MainnetSerumAPIHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPTestnet connects to Testnet Serum API
 func NewHTTPTestnet() *HTTPClient {
-	opts := DefaultRPCOpts(TestnetSerumAPIHTTP, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(TestnetSerumAPIHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPLocal connects to Testnet Serum API
 func NewHTTPLocal() *HTTPClient {
-	opts := DefaultRPCOpts(LocalSerumAPIHTTP, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(LocalSerumAPIHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 

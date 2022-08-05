@@ -9,7 +9,6 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
 )
 
 type GRPCClient struct {
@@ -21,19 +20,19 @@ type GRPCClient struct {
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIGRPC, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(MainnetSerumAPIGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCTestnet connects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIGRPC, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(TestnetSerumAPIGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCLocal connects to Testnet Serum API
 func NewGRPCLocal() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIGRPC, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(LocalSerumAPIGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 

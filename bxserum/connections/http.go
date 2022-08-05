@@ -27,12 +27,6 @@ func (h HTTPError) Error() string {
 	return h.Message
 }
 
-// HTTP response for GET request
-func HTTPGet[T protoreflect.ProtoMessage](url string, val T) error {
-	client := &http.Client{Timeout: time.Second * 7}
-	return HTTPGetWithClient[T](url, client, val, os.Getenv("AUTH_HEADER"))
-}
-
 func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T, authHeader string) error {
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", authHeader)

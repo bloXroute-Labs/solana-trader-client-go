@@ -21,19 +21,19 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIWS, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(MainnetSerumAPIWS)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIWS, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(TestnetSerumAPIWS)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientLocal connects to Local Serum API
 func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIWES, os.Getenv("AUTH_HEADER"))
+	opts := DefaultRPCOpts(LocalSerumAPIWES)
 	return NewWSClientWithOpts(opts)
 }
 
