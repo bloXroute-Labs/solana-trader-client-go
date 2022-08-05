@@ -7,7 +7,6 @@ import (
 	"golang.org/x/exp/maps"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -173,23 +172,84 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpda
 	return datapoints, leftoverSerum, leftoverSolana, nil
 }
 
-func Print(datapoints []Datapoint, removeUnmatched bool) {
-	fmt.Println("comparison points:")
+func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint string, datapoints []Datapoint, removeUnmatched bool) {
+	serumFaster := 0
+	solanaFaster := 0
+	totalSerumLead := 0
+	totalSolanaLead := 0
+	serumUnmatched := 0
+	solanaUnmatched := 0
+	total := 0
 
-	unmatchedCount := 0
 	for _, dp := range datapoints {
-		lines := dp.FormatPrint()
-		for _, line := range lines {
-			if removeUnmatched && strings.Contains(line, "n/a") {
-				unmatchedCount++
+		timestamps, _ := dp.OrderedTimestamps()
+
+		for _, matchedTs := range timestamps {
+			total++
+
+			if len(matchedTs) < 2 {
+				serumUnmatched++
 				continue
 			}
-			fmt.Println(line)
+
+			serumTs := matchedTs[0]
+			solanaTs := matchedTs[1]
+
+			// skip cases where one or other timestamp is zero
+			if serumTs.IsZero() {
+				solanaUnmatched++
+				continue
+			}
+
+			if solanaTs.IsZero() {
+				serumUnmatched++
+				continue
+			}
+
+			if serumTs.Before(solanaTs) {
+				serumFaster++
+				totalSerumLead += int(solanaTs.Sub(serumTs).Milliseconds())
+				continue
+			}
+
+			if solanaTs.Before(serumTs) {
+				solanaFaster++
+				totalSolanaLead += int(serumTs.Sub(solanaTs).Milliseconds())
+				continue
+			}
 		}
 	}
 
-	fmt.Println("skipped", unmatchedCount, "events without matches")
+	averageSerumLead := 0
+	if serumFaster > 0 {
+		averageSerumLead = totalSerumLead / serumFaster
+	}
+	averageSolanaLead := 0
+	if solanaFaster > 0 {
+		averageSolanaLead = totalSolanaLead / solanaFaster
+	}
+
+	fmt.Println("Run time: ", runtime)
+	fmt.Println("Endpoints:")
+	fmt.Println("    ", serumEndpoint, " [serum]")
+	fmt.Println("    ", solanaEndpoint, " [solana]")
 	fmt.Println()
+
+	fmt.Println("Total updates: ", total)
+	fmt.Println()
+
+	fmt.Println("Faster counts: ")
+	fmt.Println(fmt.Sprintf("    %-6d  %v", serumFaster, serumEndpoint))
+	fmt.Println(fmt.Sprintf("    %-6d  %v", solanaFaster, solanaEndpoint))
+
+	fmt.Println("Average difference( ms): ")
+	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageSerumLead), serumEndpoint))
+	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageSolanaLead), solanaEndpoint))
+
+	fmt.Println("Unmatched updates: ")
+	fmt.Println("(updates from each stream without a corresponding result on the other)")
+	fmt.Println(fmt.Sprintf("    %-6d  %v", serumUnmatched, serumEndpoint))
+	fmt.Println(fmt.Sprintf("    %-6d  %v", solanaUnmatched, solanaEndpoint))
 }
 
 func formatTS(ts time.Time) string {
