@@ -275,6 +275,10 @@ message Market {
   string market = 1;
   MarketStatus status = 2;
   string address = 3;
+  string baseMint = 4;
+  string quotedMint = 5;
+  int64 baseDecimals = 6;
+  int64 quoteDecimals = 7;
 }
 
 enum MarketStatus {
@@ -550,6 +554,7 @@ message GetOpenOrdersRequest {
   string market = 1 [(google.api.field_behavior) = REQUIRED];
   uint32 limit = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Use 0 for no limits"}];
   string address = 3 [(google.api.field_behavior) = REQUIRED];
+  string openOrdersAddress = 4 [(google.api.field_behavior) = OPTIONAL, (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "If left empty the Serum API will lookup the account which can be time consuming, Setting both address and openOrdersAddress is invalid, openOrdersAddress is preferred."}];
 }
 
 message GetOpenOrdersResponse {
