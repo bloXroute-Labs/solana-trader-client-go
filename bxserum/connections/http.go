@@ -9,8 +9,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"time"
 )
 
 const contentType = "application/json"

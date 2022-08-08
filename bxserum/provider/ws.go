@@ -6,9 +6,7 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
-	"os"
 )
 
 type WSClient struct {
