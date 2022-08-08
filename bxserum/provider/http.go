@@ -2,13 +2,12 @@ package provider
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"github.com/gagliardetto/solana-go"
+	"net/http"
 )
 
 type HTTPClient struct {
@@ -18,6 +17,11 @@ type HTTPClient struct {
 	httpClient *http.Client
 	requestID  utils.RequestID
 	privateKey *solana.PrivateKey
+	authHeader string
+}
+
+func (h *HTTPClient) GetAuthHeader() string {
+	return h.authHeader
 }
 
 // NewHTTPClient connects to Mainnet Serum API
@@ -32,6 +36,12 @@ func NewHTTPTestnet() *HTTPClient {
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
+// NewHTTPLocal connects to Testnet Serum API
+func NewHTTPLocal() *HTTPClient {
+	opts := DefaultRPCOpts(LocalSerumAPIHTTP)
+	return NewHTTPClientWithOpts(nil, opts)
+}
+
 // NewHTTPClientWithOpts connects to custom Serum API (set client to nil to use default client)
 func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	if client == nil {
@@ -42,6 +52,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 		baseURL:    opts.Endpoint,
 		httpClient: client,
 		privateKey: opts.PrivateKey,
+		authHeader: opts.AuthHeader,
 	}
 }
 
@@ -49,7 +60,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v", h.baseURL, market, limit)
 	orderbook := new(pb.GetOrderbookResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponse](url, h.httpClient, orderbook); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponse](url, h.httpClient, orderbook, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -60,7 +71,7 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbook
 func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/trades/%s?limit=%v", h.baseURL, market, limit)
 	marketTrades := new(pb.GetTradesResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetTradesResponse](url, h.httpClient, marketTrades); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetTradesResponse](url, h.httpClient, marketTrades, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -71,7 +82,7 @@ func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesRespon
 func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/tickers/%s", h.baseURL, market)
 	tickers := new(pb.GetTickersResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetTickersResponse](url, h.httpClient, tickers); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetTickersResponse](url, h.httpClient, tickers, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -82,7 +93,7 @@ func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 func (h *HTTPClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrdersResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s", h.baseURL, market, owner)
 	orders := new(pb.GetOpenOrdersResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetOpenOrdersResponse](url, h.httpClient, orders); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetOpenOrdersResponse](url, h.httpClient, orders, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +104,7 @@ func (h *HTTPClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrde
 func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/markets", h.baseURL)
 	markets := new(pb.GetMarketsResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponse](url, h.httpClient, markets); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponse](url, h.httpClient, markets, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -104,7 +115,7 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?owner=%s", h.baseURL, market, owner)
 	result := new(pb.GetUnsettledResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](url, h.httpClient, result); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -115,7 +126,7 @@ func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettled
 func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/account/balance?ownerAddress=%s", h.baseURL, owner)
 	result := new(pb.GetAccountBalanceResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](url, h.httpClient, result); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 
@@ -156,7 +167,7 @@ func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types 
 	}
 
 	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +180,7 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 	request := &pb.PostSubmitRequest{Transaction: txBase64, SkipPreFlight: skipPreFlight}
 
 	var response pb.PostSubmitResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +216,7 @@ func (h *HTTPClient) PostCancelOrder(
 	}
 
 	var response pb.PostCancelOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +257,7 @@ func (h *HTTPClient) PostCancelByClientOrderID(
 	}
 
 	var response pb.PostCancelOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +290,7 @@ func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []s
 	}
 
 	var response pb.PostCancelAllResponse
-	err := connections.HTTPPostWithClient[*pb.PostCancelAllResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostCancelAllResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +329,7 @@ func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet
 	}
 
 	var response pb.PostSettleResponse
-	err := connections.HTTPPostWithClient[*pb.PostSettleResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostSettleResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +361,7 @@ func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, sid
 	}
 
 	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +393,7 @@ func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side
 	}
 
 	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response)
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
 	if err != nil {
 		return nil, err
 	}

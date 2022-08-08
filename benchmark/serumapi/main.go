@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
@@ -37,10 +36,7 @@ func main() {
 	err := app.Run(os.Args)
 	defer func() {
 		if logger.Log() != nil {
-			err := logger.Log().Sync()
-			if err != nil {
-				fmt.Println("error flushing log, may not have logged all messages: ", err)
-			}
+			_ = logger.Log().Sync()
 		}
 	}()
 
@@ -148,7 +144,7 @@ Loop:
 
 	// dump results to stdout
 	removeUnmatched := c.Bool(RemoveUnmatchedFlag.Name)
-	Print(datapoints, removeUnmatched)
+	PrintSummary(duration, serumEndpoint, solanaWSEndpoint, datapoints, removeUnmatched)
 
 	// write results to csv
 	outputFile := c.String(utils.OutputFileFlag.Name)

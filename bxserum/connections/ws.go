@@ -10,6 +10,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -34,9 +35,11 @@ type WS struct {
 	subscriptionMap map[string]subscriptionEntry
 }
 
-func NewWS(endpoint string) (*WS, error) {
+func NewWS(endpoint string, authHeader string) (*WS, error) {
 	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
-	conn, _, err := dialer.Dial(endpoint, nil)
+	header := http.Header{}
+	header.Set("Authorization", authHeader)
+	conn, _, err := dialer.Dial(endpoint, header)
 	if err != nil {
 		return nil, err
 	}
