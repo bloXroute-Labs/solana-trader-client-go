@@ -48,8 +48,8 @@ func TestHTTPClient_Requests(t *testing.T) {
 	t.Run("openOrders", func(t *testing.T) {
 		testGetOpenOrders(
 			t,
-			func(ctx context.Context, market string, owner string) *pb.GetOpenOrdersResponse {
-				orders, err := h.GetOpenOrders(market, owner)
+			func(ctx context.Context, market string, owner string, openOrdersAddress string) *pb.GetOpenOrdersResponse {
+				orders, err := h.GetOpenOrders(market, owner, openOrdersAddress)
 				require.Nil(t, err)
 				return orders
 			},

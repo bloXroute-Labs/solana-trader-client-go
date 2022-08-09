@@ -128,7 +128,7 @@ func callTradesWS(w *provider.WSClient) {
 func callOpenOrdersWS(w *provider.WSClient) {
 	fmt.Println("fetching open orders...")
 
-	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
+	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 	} else {
@@ -374,7 +374,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -405,7 +405,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) {
 
 	time.Sleep(time.Minute)
 
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -444,7 +444,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	}
 	time.Sleep(time.Minute)
 	// Check order is there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -471,7 +471,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -522,7 +522,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	// Check orders are there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -550,7 +550,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
