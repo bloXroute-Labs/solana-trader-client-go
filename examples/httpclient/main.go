@@ -102,7 +102,7 @@ func callOpenOrdersHTTP() {
 	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
 	} else {
@@ -277,7 +277,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -308,7 +308,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 
 	time.Sleep(time.Minute)
 
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -348,7 +348,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 	}
 	time.Sleep(time.Minute)
 	// Check order is there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -375,7 +375,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -427,7 +427,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 	}
 	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -455,7 +455,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Fatal(err)
 	}

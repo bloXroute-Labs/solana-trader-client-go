@@ -64,7 +64,7 @@ func main() {
 		panic(err)
 	}
 	// note that open orders is a slow function call
-	openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv")
+	openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", "")
 	if err != nil {
 		panic(err)
 	}
