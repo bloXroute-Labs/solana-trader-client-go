@@ -112,7 +112,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 }
 
 func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
-	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
+	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 		return true
@@ -415,7 +415,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -449,7 +449,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	time.Sleep(time.Second * 30)
 
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -489,7 +489,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute * 1)
 	// Check order is there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -519,7 +519,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -575,7 +575,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -606,7 +606,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr)
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true

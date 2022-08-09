@@ -79,8 +79,8 @@ func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTick
 }
 
 // GetOpenOrders returns all opened orders by owner address and market
-func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner string) (*pb.GetOpenOrdersResponse, error) {
-	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner})
+func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string) (*pb.GetOpenOrdersResponse, error) {
+	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress})
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds

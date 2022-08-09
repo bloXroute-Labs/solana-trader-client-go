@@ -90,8 +90,8 @@ func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 }
 
 // GetOpenOrders returns all opened orders by owner address and market
-func (h *HTTPClient) GetOpenOrders(market string, owner string) (*pb.GetOpenOrdersResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s", h.baseURL, market, owner)
+func (h *HTTPClient) GetOpenOrders(market string, owner string, openOrdersAddress string) (*pb.GetOpenOrdersResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s&openOrdersAddress=%s", h.baseURL, market, owner, openOrdersAddress)
 	orders := new(pb.GetOpenOrdersResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetOpenOrdersResponse](url, h.httpClient, orders, h.GetAuthHeader()); err != nil {
 		return nil, err

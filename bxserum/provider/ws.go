@@ -80,9 +80,9 @@ func (w *WSClient) GetTickers(ctx context.Context, market string) (*pb.GetTicker
 }
 
 // GetOpenOrders returns all opened orders by owner address and market
-func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner string) (*pb.GetOpenOrdersResponse, error) {
+func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string) (*pb.GetOpenOrdersResponse, error) {
 	var response pb.GetOpenOrdersResponse
-	err := w.conn.Request(ctx, "GetOpenOrders", &pb.GetOpenOrdersRequest{Market: market, Address: owner}, &response)
+	err := w.conn.Request(ctx, "GetOpenOrders", &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress}, &response)
 	if err != nil {
 		return nil, err
 	}

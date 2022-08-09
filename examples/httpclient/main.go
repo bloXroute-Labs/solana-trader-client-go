@@ -116,7 +116,7 @@ func callOpenOrdersHTTP() bool {
 	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
-	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
 		return true
@@ -308,7 +308,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -342,7 +342,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	time.Sleep(time.Minute)
 
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -385,7 +385,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 	time.Sleep(time.Minute)
 	// Check order is there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -415,7 +415,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -472,7 +472,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
@@ -503,7 +503,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr)
+	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
 		log.Error(err)
 		return true
