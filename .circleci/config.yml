@@ -181,7 +181,6 @@ workflows:
           requires:
             - init
             - unit
-
       - notify
           context: circleci
           requires:
