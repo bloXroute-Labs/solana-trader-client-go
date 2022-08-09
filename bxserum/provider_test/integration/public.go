@@ -86,10 +86,10 @@ func testGetMarkets(t *testing.T, getMarketsFn func(ctx context.Context) *pb.Get
 	assertMarketNotPresent(t, "market-doesnt-exist", markets)
 }
 
-func testGetOpenOrders(t *testing.T, getOrdersFn func(ctx context.Context, market string, owner string) *pb.GetOpenOrdersResponse) {
+func testGetOpenOrders(t *testing.T, getOrdersFn func(ctx context.Context, market string, owner string, openOrdersAddress string) *pb.GetOpenOrdersResponse) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	orders := getOrdersFn(ctx, "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	orders := getOrdersFn(ctx, "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", "")
 	assertOpenOrder(t, "SOL/USDC", orders)
 }
 
