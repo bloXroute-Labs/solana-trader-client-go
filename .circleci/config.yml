@@ -131,41 +131,7 @@ jobs:
                 }
               ]
             }
-          event: fail
-  notify:
-    executor: bxgo
-    steps:
-      - slack/notify:
-          custom: |
-            {
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "serum-client-go Build failed",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: $CIRCLE_SHA1\nTriggered by: $CIRCLE_USERNAME"
-                  },
-                  "accessory": {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "CircleCI",
-                      "emoji": true
-                    },
-                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/serum-client-go?branch=develop"
-                  }
-                }
-              ]
-            }
-          event: fail
+          event: fail  
 workflows:
   version: 2
   test-branch:
@@ -181,8 +147,3 @@ workflows:
           requires:
             - init
             - unit
-      - notify
-          context: circleci
-          requires:
-            - unit
-            - integration
