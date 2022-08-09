@@ -30,7 +30,13 @@ func NewGRPCTestnet() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCLocal connects to Testnet Serum API
+// NewGRPCDevnet connects to Devnet Serum API
+func NewGRPCDevnet() (*GRPCClient, error) {
+	opts := DefaultRPCOpts(DevnetSerumAPIGRPC)
+	return NewGRPCClientWithOpts(opts)
+}
+
+// NewGRPCLocal connects to local Serum API
 func NewGRPCLocal() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(LocalSerumAPIGRPC)
 	return NewGRPCClientWithOpts(opts)

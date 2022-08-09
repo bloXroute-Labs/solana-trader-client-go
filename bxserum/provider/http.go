@@ -36,7 +36,13 @@ func NewHTTPTestnet() *HTTPClient {
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPLocal connects to Testnet Serum API
+// NewHTTPDevnet connects to Devnet Serum API
+func NewHTTPDevnet() *HTTPClient {
+	opts := DefaultRPCOpts(DevnetSerumAPIHTTP)
+	return NewHTTPClientWithOpts(nil, opts)
+}
+
+// NewHTTPLocal connects to local Serum API
 func NewHTTPLocal() *HTTPClient {
 	opts := DefaultRPCOpts(LocalSerumAPIHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
