@@ -16,6 +16,18 @@ test:
 unit:
 	 go test -v ./bxserum/provider_test/.
 
+.PHONY: grpc-examples
+grpc-examples:
+	 go run ./examples/grpcclient/main.go
+
+.PHONY: http-examples
+http-examples:
+	 go run ./examples/httpclient/main.go
+
+.PHONY: ws-examples
+ws-examples:
+	 go run ./examples/wsclient/main.go
+
 .PHONY: ssl-testnet ssl-mainnet cred-github environment-dev
 
 environment-dev: ssl-testnet cred-github
