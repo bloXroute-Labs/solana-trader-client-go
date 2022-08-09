@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"math/rand"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 )
 
 func main() {
+	utils.InitLogger()
 	var failed bool
 	// informational methods
 	failed = failed || callMarketsHTTP()
@@ -68,7 +70,7 @@ func callMarketsHTTP() bool {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
 	} else {
-		fmt.Println(markets)
+		log.Info(markets)
 	}
 
 	fmt.Println()
@@ -83,7 +85,7 @@ func callOrderbookHTTP() bool {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
 		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -93,7 +95,7 @@ func callOrderbookHTTP() bool {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -103,7 +105,7 @@ func callOrderbookHTTP() bool {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	return false
@@ -119,7 +121,7 @@ func callOpenOrdersHTTP() bool {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
 		return true
 	} else {
-		fmt.Println(orders)
+		log.Info(orders)
 	}
 
 	fmt.Println()
@@ -136,7 +138,7 @@ func callUnsettledHTTP() bool {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
 		return true
 	} else {
-		fmt.Println(response)
+		log.Info(response)
 	}
 
 	fmt.Println()
@@ -153,7 +155,7 @@ func callGetAccountBalanceHTTP() bool {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
 		return true
 	} else {
-		fmt.Println(response)
+		log.Info(response)
 	}
 
 	fmt.Println()
@@ -168,7 +170,7 @@ func callTradesHTTP() bool {
 		log.Errorf("error with GetTrades request for SOLUSDT: %v", err)
 		return true
 	} else {
-		fmt.Println(trades)
+		log.Info(trades)
 	}
 
 	fmt.Println()
@@ -183,7 +185,7 @@ func callTickersHTTP() bool {
 		log.Errorf("error with GetTickers request for SOLUSDT: %v", err)
 		return true
 	} else {
-		fmt.Println(tickers)
+		log.Info(tickers)
 	}
 
 	fmt.Println()
@@ -270,7 +272,7 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 }
 
 func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting cancel all test")
+	log.Info("\nstarting cancel all test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
@@ -287,7 +289,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	// Place 2 orders in orderbook
-	fmt.Println("placing orders")
+	log.Info("placing orders")
 	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
@@ -327,10 +329,10 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 		log.Error("one/both orders not found in orderbook")
 		return true
 	}
-	fmt.Println("2 orders placed successfully")
+	log.Info("2 orders placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("\ncancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -349,7 +351,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
 		return true
 	}
-	fmt.Println("orders cancelled")
+	log.Info("orders cancelled")
 
 	fmt.Println()
 	callPostSettleHTTP(ownerAddr, ooAddr)
@@ -357,7 +359,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting replace by client order ID test")
+	log.Info("\nstarting replace by client order ID test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 60}
@@ -373,7 +375,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	// Place order in orderbook
-	fmt.Println("placing order")
+	log.Info("placing order")
 	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
@@ -400,7 +402,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 		log.Error("order not found in orderbook")
 		return true
 	}
-	fmt.Println("order placed successfully")
+	log.Info("order placed successfully")
 
 	// replacing order
 	sig, err = h.SubmitReplaceByClientOrderID(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
@@ -429,10 +431,10 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 		log.Error("order #2 not found in orderbook")
 		return true
 	}
-	fmt.Println("order #2 placed successfully")
+	log.Info("order #2 placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("\ncancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -443,7 +445,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting replace order test")
+	log.Info("\nstarting replace order test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
@@ -460,7 +462,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	// Place order in orderbook
-	fmt.Println("placing order")
+	log.Info("placing order")
 	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
@@ -487,7 +489,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 		log.Error("order not found in orderbook")
 		return true
 	} else {
-		fmt.Println("order placed successfully")
+		log.Info("order placed successfully")
 	}
 
 	opts.ClientOrderID = clientOrderID2
@@ -517,11 +519,11 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 		log.Error("order 2 not found in orderbook")
 		return true
 	} else {
-		fmt.Println("order 2 placed successfully")
+		log.Info("order 2 placed successfully")
 	}
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("\ncancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)

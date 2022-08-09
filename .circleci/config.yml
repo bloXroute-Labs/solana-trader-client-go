@@ -54,6 +54,12 @@ jobs:
       - attach_workspace:
           at: /home/circleci/go
       - run:
+          name: Export build details
+          command: |
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
           name: Unit test
           command: make unit
       - slack/notify:
@@ -72,7 +78,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: $CIRCLE_SHA1\nTriggered by: $CIRCLE_USERNAME"
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/serum-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
                   },
                   "accessory": {
                     "type": "button",
@@ -92,6 +98,12 @@ jobs:
     steps:
       - attach_workspace:
           at: /home/circleci/go
+      - run:
+          name: Export build details
+          command: |
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
+            source $BASH_ENV
       - run:
           name: GRPC Examples
           command: make grpc-examples
@@ -117,7 +129,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: $CIRCLE_SHA1\nTriggered by: $CIRCLE_USERNAME"
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/serum-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
                   },
                   "accessory": {
                     "type": "button",

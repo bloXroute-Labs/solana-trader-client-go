@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"math/rand"
 	"os"
 	"strings"
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	utils.InitLogger()
 	w, err := provider.NewWSClientTestnet()
 	var failed bool
 	if err != nil {
@@ -75,14 +77,14 @@ func main() {
 }
 
 func callMarketsWS(w *provider.WSClient) bool {
-	fmt.Println("fetching markets...")
+	log.Info("fetching markets...")
 
 	markets, err := w.GetMarkets(context.Background())
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
 	} else {
-		fmt.Println(markets)
+		log.Info(markets)
 	}
 
 	fmt.Println()
@@ -90,14 +92,14 @@ func callMarketsWS(w *provider.WSClient) bool {
 }
 
 func callOrderbookWS(w *provider.WSClient) bool {
-	fmt.Println("fetching orderbooks...")
+	log.Info("fetching orderbooks...")
 
 	orderbook, err := w.GetOrderbook(context.Background(), "ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
 		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -107,7 +109,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -117,7 +119,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -125,14 +127,14 @@ func callOrderbookWS(w *provider.WSClient) bool {
 }
 
 func callTradesWS(w *provider.WSClient) bool {
-	fmt.Println("fetching trades...")
+	log.Info("fetching trades...")
 
 	trades, err := w.GetTrades(context.Background(), "SOLUSDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
 	} else {
-		fmt.Println(trades)
+		log.Info(trades)
 	}
 
 	fmt.Println()
@@ -140,14 +142,14 @@ func callTradesWS(w *provider.WSClient) bool {
 }
 
 func callOpenOrdersWS(w *provider.WSClient) bool {
-	fmt.Println("fetching open orders...")
+	log.Info("fetching open orders...")
 
 	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 		return true
 	} else {
-		fmt.Println(orders)
+		log.Info(orders)
 	}
 
 	fmt.Println()
@@ -155,14 +157,14 @@ func callOpenOrdersWS(w *provider.WSClient) bool {
 }
 
 func callUnsettledWS(w *provider.WSClient) bool {
-	fmt.Println("fetching unsettled...")
+	log.Info("fetching unsettled...")
 
 	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 		return true
 	} else {
-		fmt.Println(response)
+		log.Info(response)
 	}
 
 	fmt.Println()
@@ -170,14 +172,14 @@ func callUnsettledWS(w *provider.WSClient) bool {
 }
 
 func callAccountBalanceWS(w *provider.WSClient) bool {
-	fmt.Println("fetching balances...")
+	log.Info("fetching balances...")
 
 	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
 		return true
 	} else {
-		fmt.Println(response)
+		log.Info(response)
 	}
 
 	fmt.Println()
@@ -185,14 +187,14 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 }
 
 func callTickersWS(w *provider.WSClient) bool {
-	fmt.Println("fetching tickers...")
+	log.Info("fetching tickers...")
 
 	tickers, err := w.GetTickers(context.Background(), "SOLUSDC")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOL-USDT: %v", err)
 		return true
 	} else {
-		fmt.Println(tickers)
+		log.Info(tickers)
 	}
 
 	fmt.Println()
@@ -201,7 +203,7 @@ func callTickersWS(w *provider.WSClient) bool {
 
 // Stream response
 func callOrderbookWSStream(w *provider.WSClient) bool {
-	fmt.Println("starting orderbook stream")
+	log.Info("starting orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -224,7 +226,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 }
 
 func callTradesWSStream(w *provider.WSClient) bool {
-	fmt.Println("starting trades stream")
+	log.Info("starting trades stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -258,7 +260,7 @@ const (
 )
 
 func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting order lifecycle test")
+	log.Info("\nstarting order lifecycle test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -325,7 +327,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 }
 
 func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, bool) {
-	fmt.Println("trying to place an order")
+	log.Info("trying to place an order")
 
 	// generate a random clientOrderId for this order
 	rand.Seed(time.Now().UnixNano())
@@ -359,7 +361,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, b
 }
 
 func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64) bool {
-	fmt.Println("trying to cancel order")
+	log.Info("trying to cancel order")
 
 	_, err := w.SubmitCancelByClientOrderID(context.Background(), clientOrderID, ownerAddr,
 		marketAddr, ooAddr, true)
@@ -373,7 +375,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 }
 
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
-	fmt.Println("starting post settle")
+	log.Info("starting post settle")
 
 	sig, err := w.SubmitSettle(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
@@ -386,7 +388,7 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 }
 
 func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting cancel all test")
+	log.Info("\nstarting cancel all test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -402,7 +404,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	// Place 2 orders in orderbook
-	fmt.Println("placing orders")
+	log.Info("placing orders")
 	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
@@ -442,10 +444,10 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 		log.Error("one/both orders not found in orderbook")
 		return true
 	}
-	fmt.Println("2 orders placed successfully")
+	log.Info("2 orders placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("\ncancelling the orders")
 	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -464,7 +466,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
 		return true
 	}
-	fmt.Println("orders cancelled")
+	log.Info("orders cancelled")
 
 	fmt.Println()
 	callPostSettleWS(w, ownerAddr, ooAddr)
@@ -472,7 +474,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting replace by client order ID test")
+	log.Info("\nstarting replace by client order ID test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -487,7 +489,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	}
 
 	// Place order in orderbook
-	fmt.Println("placing order")
+	log.Info("placing order")
 	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
@@ -514,7 +516,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 		log.Error("order not found in orderbook")
 		return true
 	}
-	fmt.Println("order placed successfully")
+	log.Info("order placed successfully")
 
 	// replacing order
 	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
@@ -543,11 +545,11 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 		log.Error("order #2 not found in orderbook")
 		return true
 	} else {
-		fmt.Println("order #2 placed successfully")
+		log.Info("order #2 placed successfully")
 	}
 	time.Sleep(time.Minute)
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("\ncancelling the orders")
 	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -558,7 +560,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 }
 
 func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
-	fmt.Println("\nstarting replace order test")
+	log.Info("\nstarting replace order test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -574,7 +576,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	// Place order in orderbook
-	fmt.Println("placing order")
+	log.Info("placing order")
 	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
@@ -600,7 +602,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 		log.Error("order not found in orderbook")
 		return true
 	} else {
-		fmt.Println("order placed successfully")
+		log.Info("order placed successfully")
 	}
 
 	opts.ClientOrderID = clientOrderID2
@@ -629,11 +631,11 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 		log.Error("order 2 not found in orderbook")
 		return true
 	} else {
-		fmt.Println("order 2 placed successfully")
+		log.Info("order 2 placed successfully")
 	}
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("\ncancelling the orders")
 	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
