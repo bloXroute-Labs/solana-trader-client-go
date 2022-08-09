@@ -16,13 +16,13 @@ import (
 func main() {
 	var failed bool
 	// informational methods
-	/*failed = failed || callMarketsHTTP()
+	failed = failed || callMarketsHTTP()
 	failed = failed || callOrderbookHTTP()
 	failed = failed || callOpenOrdersHTTP()
 	failed = failed || callTradesHTTP()
 	failed = failed || callTickersHTTP()
 	failed = failed || callUnsettledHTTP()
-	failed = failed || callGetAccountBalanceHTTP()*/
+	failed = failed || callGetAccountBalanceHTTP()
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -47,12 +47,11 @@ func main() {
 	}
 
 	// Order lifecycle
-	/*clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
+	clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	failed = failed || fail
 	failed = failed || callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
 	failed = failed || callPostSettleHTTP(ownerAddr, ooAddr)
-
-	failed = failed || cancelAll(ownerAddr, payerAddr, ooAddr)*/
+	failed = failed || cancelAll(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
 

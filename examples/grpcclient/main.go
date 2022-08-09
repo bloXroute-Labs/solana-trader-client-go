@@ -22,14 +22,14 @@ func main() {
 	}
 
 	// informational methods
-	/*failed = failed || callMarketsGRPC(g)
+	failed = failed || callMarketsGRPC(g)
 	failed = failed || callOrderbookGRPC(g)
 	failed = failed || callOpenOrdersGRPC(g)
 	failed = failed || callTickersGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
-	failed = failed || callGetAccountBalanceGRPC(g)*/
+	failed = failed || callGetAccountBalanceGRPC(g)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
