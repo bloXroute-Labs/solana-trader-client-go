@@ -65,6 +65,7 @@ jobs:
       - slack/notify:
           custom: |
             {
+              "text": "serum-client-go Build failed [develop]",
               "blocks": [
                 {
                   "type": "header",
@@ -116,6 +117,7 @@ jobs:
       - slack/notify:
           custom: |
             {
+              "text": "serum-client-go Build failed [develop]",
               "blocks": [
                 {
                   "type": "header",
