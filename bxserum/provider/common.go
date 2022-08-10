@@ -19,7 +19,7 @@ const (
 	DevnetSerumAPIHTTP  = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
 	DevnetSerumAPIWS    = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
 	DevnetSerumAPIGRPC  = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:9000"
-	LocalSerumAPIWES    = "ws://localhost:9000/ws"
+	LocalSerumAPIWS     = "ws://localhost:9000/ws"
 	LocalSerumAPIGRPC   = "localhost:9001"
 	LocalSerumAPIHTTP   = "http://127.0.0.1:9000"
 	defaultRPCTimeout   = 7 * time.Second
