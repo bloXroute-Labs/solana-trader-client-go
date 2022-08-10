@@ -116,3 +116,23 @@ You can use a couple of different formats, with restrictions:
 2. `A:B` --> `ETH:USDT`
 3. `A-B` --> `ETH-USDT`
 4. `AB` --> `ETHUSDT`
+
+
+## Development
+
+Regenerate protobuf files (uses a Docker builder for consistency):
+
+```
+$ make proto
+```
+
+Unit tests:
+
+```
+$ make unit
+```
+
+Integration tests:
+```
+$ make test
+```
