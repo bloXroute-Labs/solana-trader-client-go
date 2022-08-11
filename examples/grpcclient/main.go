@@ -16,7 +16,7 @@ import (
 
 func main() {
 	utils.InitLogger()
-	g, err := provider.NewGRPCLocal()
+	g, err := provider.NewGRPCTestnet()
 	var failed bool
 	if err != nil {
 		log.Errorf("error dialing GRPC client: %v", err)
