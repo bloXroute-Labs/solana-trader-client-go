@@ -220,7 +220,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 		if !ok {
 			return true
 		}
-		fmt.Printf("response %v received\n", i)
+		log.Infof("response %v received", i)
 	}
 	return false
 }
@@ -244,7 +244,7 @@ func callTradesWSStream(w *provider.WSClient) bool {
 		if !ok {
 			return true
 		}
-		fmt.Printf("response %v received\n", i)
+		log.Infof("response %v received", i)
 	}
 	return false
 }
@@ -260,7 +260,7 @@ const (
 )
 
 func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) bool {
-	log.Info("\nstarting order lifecycle test")
+	log.Info("starting order lifecycle test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -344,7 +344,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, b
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
 	}
-	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := w.SubmitOrder(context.Background(), ownerAddr, ownerAddr, marketAddr,
@@ -355,7 +355,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, b
 		return 0, true
 	}
 
-	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 
 	return clientOrderID, false
 }
@@ -370,7 +370,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 		return true
 	}
 
-	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
+	log.Infof("canceled order for clientOrderID %v", clientOrderID)
 	return false
 }
 
@@ -383,12 +383,12 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 		return true
 	}
 
-	fmt.Printf("response signature received: %v\n", sig)
+	log.Infof("response signature received: %v", sig)
 	return false
 }
 
 func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting cancel all test")
+	log.Info("starting cancel all test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -447,7 +447,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("2 orders placed successfully")
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -474,7 +474,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting replace by client order ID test")
+	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -549,7 +549,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	}
 	time.Sleep(time.Minute)
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -560,7 +560,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 }
 
 func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting replace order test")
+	log.Info("starting replace order test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -635,7 +635,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)

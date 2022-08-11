@@ -9,7 +9,6 @@ executors:
       GOPATH: /home/circleci/go
       WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
       GOTRACEBACK: all
-      GOPRIVATE: github.com/bloXroute-Labs
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
 jobs:
   init:
@@ -26,12 +25,6 @@ jobs:
           command: |
             sudo apt update
             sudo apt install awscli
-      - run:
-          name: Configure environment
-          command: |
-            make environment-dev
-            TOKEN=$(cat .netrc | grep password | head -n 1 | cut -d ' ' -f 2)
-            git config --global url."https://${TOKEN}:x-oauth-basic@github.com/bloXroute-Labs".insteadOf "https://github.com/bloXroute-Labs" || true
       - run:
           name: Download dependencies
           command: go mod tidy
@@ -54,46 +47,8 @@ jobs:
       - attach_workspace:
           at: /home/circleci/go
       - run:
-          name: Export build details
-          command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
-            source $BASH_ENV
-      - run:
           name: Unit test
           command: make unit
-      - slack/notify:
-          custom: |
-            {
-              "text": "serum-client-go Build failed [develop]",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "serum-client-go Build failed",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/serum-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
-                  },
-                  "accessory": {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "CircleCI",
-                      "emoji": true
-                    },
-                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/serum-client-go?branch=develop"
-                  }
-                }
-              ]
-            }
-          event: fail
   integration:
     executor: bxgo
     steps:

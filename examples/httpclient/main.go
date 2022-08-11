@@ -222,7 +222,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
 	}
-	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
@@ -233,7 +233,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 		return 0, true
 	}
 
-	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 
 	return clientOrderID, false
 }
@@ -251,7 +251,7 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 		return true
 	}
 
-	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
+	log.Infof("canceled order for clientOrderID %v", clientOrderID)
 	return false
 }
 
@@ -267,12 +267,12 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 		return true
 	}
 
-	fmt.Printf("response signature received: %v\n", sig)
+	log.Infof("response signature received: %v", sig)
 	return false
 }
 
 func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting cancel all test")
+	log.Info("starting cancel all test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
@@ -332,7 +332,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("2 orders placed successfully")
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -359,7 +359,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting replace by client order ID test")
+	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 60}
@@ -434,7 +434,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("order #2 placed successfully")
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -445,7 +445,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting replace order test")
+	log.Info("starting replace order test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
@@ -523,7 +523,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)

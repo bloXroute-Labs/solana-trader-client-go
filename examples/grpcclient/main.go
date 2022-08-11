@@ -16,7 +16,7 @@ import (
 
 func main() {
 	utils.InitLogger()
-	g, err := provider.NewGRPCTestnet()
+	g, err := provider.NewGRPCLocal()
 	var failed bool
 	if err != nil {
 		log.Errorf("error dialing GRPC client: %v", err)
@@ -24,14 +24,14 @@ func main() {
 	}
 
 	// informational methods
-	failed = failed || callMarketsGRPC(g)
+	/*failed = failed || callMarketsGRPC(g)
 	failed = failed || callOrderbookGRPC(g)
 	failed = failed || callOpenOrdersGRPC(g)
 	failed = failed || callTickersGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
-	failed = failed || callGetAccountBalanceGRPC(g)
+	failed = failed || callGetAccountBalanceGRPC(g)*/
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -180,6 +180,9 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	if err != nil {
 		//demonstration purposes only. will swallow
 		log.Errorf("subscription error: %v", err)
+	} else {
+		log.Error("subscription should have returned an error")
+		return true
 	}
 
 	// Stream ok response
@@ -203,7 +206,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 			return true
 		}
 
-		fmt.Printf("response %v received, data %v \n", i, data)
+		log.Infof("response %v received, data %v ", i, data)
 	}
 
 	return false
@@ -229,7 +232,7 @@ func callTradesGRPCStream(g *provider.GRPCClient) bool {
 			// channel closed
 			return true
 		}
-		fmt.Printf("response %v received\n", i)
+		log.Infof("response %v received", i)
 	}
 	return false
 }
@@ -245,7 +248,7 @@ const (
 )
 
 func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) bool {
-	log.Info("\nstarting order lifecycle test")
+	log.Info("starting order lifecycle test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -331,7 +334,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) (uint6
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
 	}
-	fmt.Printf("created unsigned place order transaction: %v\n", response.Transaction)
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
@@ -341,7 +344,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) (uint6
 		return 0, true
 	}
 
-	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 	return clientOrderID, false
 }
 
@@ -359,7 +362,7 @@ func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr str
 		return true
 	}
 
-	fmt.Printf("canceled order %v with clientOrderID %v\n", sig, clientID)
+	log.Infof("canceled order %v with clientOrderID %v", sig, clientID)
 	return false
 }
 
@@ -375,12 +378,12 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) bool {
 		return true
 	}
 
-	fmt.Printf("response signature received: %v\n", sig)
+	log.Infof("response signature received: %v", sig)
 	return false
 }
 
 func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting cancel all test")
+	log.Info("starting cancel all test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -439,7 +442,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 	log.Info("2 orders placed successfully")
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -465,7 +468,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 }
 
 func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting replace by client order ID test")
+	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -539,7 +542,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	log.Info("order #2 placed successfully")
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
@@ -550,7 +553,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 }
 
 func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("\nstarting replace order test")
+	log.Info("starting replace order test")
 	fmt.Println()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -627,7 +630,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	}
 
 	// Cancel all the orders
-	log.Info("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
 		log.Error(err)
