@@ -116,3 +116,7 @@ workflows:
           requires:
             - init
             - unit
+          filters:
+            branches:
+              only:
+                - develop
