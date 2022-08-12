@@ -1,0 +1,122 @@
+version: 2.1
+orbs:
+  slack: circleci/slack@4.1
+executors:
+  bxgo:
+    docker:
+      - image: cimg/go:1.18
+    environment:
+      GOPATH: /home/circleci/go
+      WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
+      GOTRACEBACK: all
+    working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
+jobs:
+  init:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-{{checksum "go.sum"}}
+      - run:
+          name: Update/install packages
+          command: |
+            sudo apt update
+            sudo apt install awscli
+      - run:
+          name: Download dependencies
+          command: go mod tidy
+      - run:
+          name: Download golint
+          command: go get -u golang.org/x/lint/golint
+      - save_cache:
+          key: go-mod-{{checksum "go.sum"}}
+          paths:
+            - "/home/circleci/go/pkg/mod"
+      - persist_to_workspace:
+          root: /home/circleci/go/
+          paths:
+            - src
+            - pkg
+            - bin
+  unit:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
+      - run:
+          name: Unit test
+          command: make unit
+  integration:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
+      - run:
+          name: Export build details
+          command: |
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: GRPC Examples
+          command: make grpc-examples
+      - run:
+          name: HTTP Examples
+          command: make http-examples
+      - run:
+          name: WS Examples
+          command: make ws-examples
+      - slack/notify:
+          custom: |
+            {
+              "text": "serum-client-go Build failed [develop]",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "serum-client-go Build failed",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/serum-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "CircleCI",
+                      "emoji": true
+                    },
+                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/serum-client-go?branch=develop"
+                  }
+                }
+              ]
+            }
+          event: fail  
+workflows:
+  version: 2
+  test-branch:
+    jobs:
+      - init:
+          context: circleci
+      - unit:
+          context: slack
+          requires:
+            - init
+      - integration:
+          context: slack
+          requires:
+            - init
+            - unit
+          filters:
+            branches:
+              only:
+                - develop

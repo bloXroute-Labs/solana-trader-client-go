@@ -132,7 +132,11 @@ Unit tests:
 $ make unit
 ```
 
-Integration tests:
+Integration tests per provider:
 ```
-$ make test
+$ make grpc-examples
+
+$ make http-examples
+
+$ make ws-examples
 ```

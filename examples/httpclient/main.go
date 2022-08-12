@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/serum-client-go/utils"
 	"math/rand"
 	"net/http"
 	"os"
@@ -14,14 +15,16 @@ import (
 )
 
 func main() {
+	utils.InitLogger()
+	var failed bool
 	// informational methods
-	callMarketsHTTP()
-	callOrderbookHTTP()
-	callOpenOrdersHTTP()
-	callTradesHTTP()
-	callTickersHTTP()
-	callUnsettledHTTP()
-	callGetAccountBalanceHTTP()
+	failed = failed || callMarketsHTTP()
+	failed = failed || callOrderbookHTTP()
+	failed = failed || callOpenOrdersHTTP()
+	failed = failed || callTradesHTTP()
+	failed = failed || callTickersHTTP()
+	failed = failed || callUnsettledHTTP()
+	failed = failed || callGetAccountBalanceHTTP()
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -46,36 +49,43 @@ func main() {
 	}
 
 	// Order lifecycle
-	clientOrderID := callPlaceOrderHTTP(ownerAddr, ooAddr)
-	callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
-	callPostSettleHTTP(ownerAddr, ooAddr)
+	clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
+	failed = failed || fail
+	failed = failed || callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
+	failed = failed || callPostSettleHTTP(ownerAddr, ooAddr)
+	failed = failed || cancelAll(ownerAddr, payerAddr, ooAddr)
+	failed = failed || callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
+	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
 
-	cancelAll(ownerAddr, payerAddr, ooAddr)
-	callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
-	callReplaceOrder(ownerAddr, payerAddr, ooAddr)
+	if failed {
+		log.Fatal("one or multiple examples failed")
+	}
 }
 
-func callMarketsHTTP() {
-	h := provider.NewHTTPClient()
+func callMarketsHTTP() bool {
+	h := provider.NewHTTPTestnet()
 
 	markets, err := h.GetMarkets()
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
+		return true
 	} else {
-		fmt.Println(markets)
+		log.Info(markets)
 	}
 
 	fmt.Println()
+	return false
 }
 
-func callOrderbookHTTP() {
-	h := provider.NewHTTPClient()
+func callOrderbookHTTP() bool {
+	h := provider.NewHTTPTestnet()
 
 	orderbook, err := h.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
+		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -83,8 +93,9 @@ func callOrderbookHTTP() {
 	orderbook, err = h.GetOrderbook("SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
+		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -92,80 +103,93 @@ func callOrderbookHTTP() {
 	orderbook, err = h.GetOrderbook("SOL:USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
+		return true
 	} else {
-		fmt.Println(orderbook)
+		log.Info(orderbook)
 	}
+
+	return false
 }
 
-func callOpenOrdersHTTP() {
+func callOpenOrdersHTTP() bool {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+		return true
 	} else {
-		fmt.Println(orders)
+		log.Info(orders)
 	}
 
 	fmt.Println()
+	return false
 }
 
-func callUnsettledHTTP() {
+func callUnsettledHTTP() bool {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+		return true
 	} else {
-		fmt.Println(response)
+		log.Info(response)
 	}
 
 	fmt.Println()
+	return false
 }
 
-func callGetAccountBalanceHTTP() {
+func callGetAccountBalanceHTTP() bool {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetAccountBalance("F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
+		return true
 	} else {
-		fmt.Println(response)
+		log.Info(response)
 	}
 
 	fmt.Println()
+	return false
 }
 
-func callTradesHTTP() {
-	h := provider.NewHTTPClient()
+func callTradesHTTP() bool {
+	h := provider.NewHTTPTestnet()
 
 	trades, err := h.GetTrades("SOLUSDT", 5)
 	if err != nil {
 		log.Errorf("error with GetTrades request for SOLUSDT: %v", err)
+		return true
 	} else {
-		fmt.Println(trades)
+		log.Info(trades)
 	}
 
 	fmt.Println()
+	return false
 }
 
-func callTickersHTTP() {
-	h := provider.NewHTTPClient()
+func callTickersHTTP() bool {
+	h := provider.NewHTTPTestnet()
 
 	tickers, err := h.GetTickers("SOLUSDT")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDT: %v", err)
+		return true
 	} else {
-		fmt.Println(tickers)
+		log.Info(tickers)
 	}
 
 	fmt.Println()
+	return false
 }
 
 const (
@@ -178,9 +202,9 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
+func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	// generate a random clientOrderId for this order
@@ -195,59 +219,64 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) uint64 {
 	// create order without actually submitting
 	response, err := h.PostOrder(ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
-		log.Fatalf("failed to create order (%v)", err)
+		log.Errorf("failed to create order (%v)", err)
+		return 0, true
 	}
-	fmt.Printf("created unsigned place order transaction: %v", response.Transaction)
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	// sign/submit transaction after creation
 	sig, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
 		orderSide, []pb.OrderType{orderType}, orderAmount,
 		orderPrice, opts)
 	if err != nil {
-		log.Fatalf("failed to submit order (%v)", err)
+		log.Errorf("failed to submit order (%v)", err)
+		return 0, true
 	}
 
-	fmt.Printf("placed order %v with clientOrderID %v\n", sig, clientOrderID)
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 
-	return clientOrderID
+	return clientOrderID, false
 }
 
-func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) {
+func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) bool {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	_, err := h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
 		marketAddr, ooAddr, true)
 	if err != nil {
-		log.Fatalf("failed to cancel order by client ID (%v)", err)
+		log.Errorf("failed to cancel order by client ID (%v)", err)
+		return true
 	}
 
-	fmt.Printf("canceled order for clientOrderID %v\n", clientOrderID)
+	log.Infof("canceled order for clientOrderID %v", clientOrderID)
+	return false
 }
 
-func callPostSettleHTTP(ownerAddr, ooAddr string) {
+func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
-		return
+		return true
 	}
 
-	fmt.Printf("response signature received: %v\n", sig)
+	log.Infof("response signature received: %v", sig)
+	return false
 }
 
-func cancelAll(ownerAddr, payerAddr, ooAddr string) {
-	fmt.Println("\nstarting cancel all test")
+func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
+	log.Info("starting cancel all test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -260,17 +289,19 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 	}
 
 	// Place 2 orders in orderbook
-	fmt.Println("placing orders")
+	log.Info("placing orders")
 	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
 	sig, err = h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("submitting place order #2, signature %s", sig)
 
@@ -279,7 +310,8 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 	// Check orders are there
 	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	found1 := false
 	found2 := false
@@ -294,15 +326,17 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 		}
 	}
 	if !(found1 && found2) {
-		log.Fatal("one/both orders not found in orderbook")
+		log.Error("one/both orders not found in orderbook")
+		return true
 	}
-	fmt.Println("2 orders placed successfully")
+	log.Info("2 orders placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
 
@@ -310,24 +344,26 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) {
 
 	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	if len(orders.Orders) != 0 {
 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
-		return
+		return true
 	}
-	fmt.Println("orders cancelled")
+	log.Info("orders cancelled")
 
 	fmt.Println()
 	callPostSettleHTTP(ownerAddr, ooAddr)
+	return false
 }
 
-func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
-	fmt.Println("\nstarting replace by client order ID test")
+func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
+	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
-	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	client := &http.Client{Timeout: time.Second * 60}
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -339,10 +375,11 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 	}
 
 	// Place order in orderbook
-	fmt.Println("placing order")
+	log.Info("placing order")
 	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	} else {
 		log.Infof("submitting place order #1, signature %s", sig)
 	}
@@ -350,7 +387,8 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 	// Check order is there
 	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	found1 := false
 
@@ -361,14 +399,16 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 		}
 	}
 	if !(found1) {
-		log.Fatal("order not found in orderbook")
+		log.Error("order not found in orderbook")
+		return true
 	}
-	fmt.Println("order placed successfully")
+	log.Info("order placed successfully")
 
 	// replacing order
 	sig, err = h.SubmitReplaceByClientOrderID(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("submitting place order #2, signature %s", sig)
 
@@ -377,7 +417,8 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 	// Check order #2 is in orderbook
 	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	found2 := false
 
@@ -387,25 +428,28 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) {
 		}
 	}
 	if !(found2) {
-		log.Fatal("order #2 not found in orderbook")
+		log.Error("order #2 not found in orderbook")
+		return true
 	}
-	fmt.Println("order #2 placed successfully")
+	log.Info("order #2 placed successfully")
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	return false
 }
 
-func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
-	fmt.Println("\nstarting replace order test")
+func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
+	log.Info("starting replace order test")
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.MainnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -418,10 +462,11 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 	}
 
 	// Place order in orderbook
-	fmt.Println("placing order")
+	log.Info("placing order")
 	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	} else {
 		log.Infof("submitting place order #1, signature %s", sig)
 	}
@@ -429,7 +474,8 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 	// Check orders are there
 	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	var found1 *pb.Order
 
@@ -440,15 +486,17 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 		}
 	}
 	if found1 == nil {
-		log.Fatal("order not found in orderbook")
+		log.Error("order not found in orderbook")
+		return true
 	} else {
-		fmt.Println("order placed successfully")
+		log.Info("order placed successfully")
 	}
 
 	opts.ClientOrderID = clientOrderID2
 	sig, err = h.SubmitReplaceOrder(found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("submitting place order #2, signature %s", sig)
 
@@ -457,7 +505,8 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 	// Check orders are there
 	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	var found2 *pb.Order
 
@@ -467,16 +516,19 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) {
 		}
 	}
 	if found2 == nil {
-		log.Fatal("order 2 not found in orderbook")
+		log.Error("order 2 not found in orderbook")
+		return true
 	} else {
-		fmt.Println("order 2 placed successfully")
+		log.Info("order 2 placed successfully")
 	}
 
 	// Cancel all the orders
-	fmt.Println("\ncancelling the orders")
+	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return true
 	}
 	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	return false
 }

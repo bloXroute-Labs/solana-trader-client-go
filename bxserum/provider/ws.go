@@ -37,7 +37,7 @@ func NewWSClientDevnet() (*WSClient, error) {
 
 // NewWSClientLocal connects to local Serum API
 func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIWES)
+	opts := DefaultRPCOpts(LocalSerumAPIWS)
 	return NewWSClientWithOpts(opts)
 }
 
