@@ -137,7 +137,7 @@ func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (m
 			return nil, err
 		}
 
-		slot := int(orderbookInc.BlockHeight)
+		slot := int(orderbookInc.Slot)
 		_, ok := results[slot]
 		if !ok {
 			results[slot] = make([]arrival.ProcessedUpdate[serumUpdate], 0)
