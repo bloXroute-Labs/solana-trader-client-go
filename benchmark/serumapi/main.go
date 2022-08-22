@@ -54,7 +54,12 @@ func run(c *cli.Context) error {
 	solanaRPCEndpoint := c.String(utils.SolanaHTTPRPCEndpointFlag.Name)
 	solanaWSEndpoint := c.String(utils.SolanaWSRPCEndpointFlag.Name)
 
-	serumOS, err := newSerumOrderbookStream(serumEndpoint, marketAddr)
+	authHeader, ok := os.LookupEnv("AUTH_HEADER")
+	if !ok {
+		return errors.New("AUTH_HEADER not set in environment")
+	}
+
+	serumOS, err := newSerumOrderbookStream(serumEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
