@@ -28,14 +28,17 @@ type serumOrderbookStream struct {
 	market  string
 }
 
-func newSerumOrderbookStream(address string, market string) (arrival.Source[[]byte, serumUpdate], error) {
+func newSerumOrderbookStream(address, market, authHeader string) (arrival.Source[[]byte, serumUpdate], error) {
 	s := serumOrderbookStream{
 		address: address,
 		market:  market,
 	}
 
+	// ws provider not used to delay message deserialization until all complete
 	dialer := websocket.Dialer{TLSClientConfig: &tls.Config{}}
-	wsConn, resp, err := dialer.Dial(s.address, http.Header{})
+	header := http.Header{}
+	header.Set("Authorization", authHeader)
+	wsConn, resp, err := dialer.Dial(s.address, header)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,7 @@ func (s serumOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpdat
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
-	subscribeRequest := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "subscribe", "params": ["GetOrderbooksStream", {"market": "%v"}]}`, s.market)
+	subscribeRequest := fmt.Sprintf(`{"jsonrpc": "2.0", "id": 1, "method": "subscribe", "params": ["GetOrderbooksStream", {"markets": ["%v"]}]}`, s.market)
 	err := s.wsConn.WriteMessage(websocket.TextMessage, []byte(subscribeRequest))
 	if err != nil {
 		return nil, err
