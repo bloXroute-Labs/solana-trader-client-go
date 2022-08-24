@@ -12,15 +12,15 @@ import (
 const (
 	MainnetSerumAPIHTTP = "https://virginia.solana.dex.blxrbdn.com"
 	MainnetSerumAPIWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
-	MainnetSerumAPIGRPC = "virginia.solana.dex.blxrbdn.com:9000"
+	MainnetSerumAPIGRPC = "virginia.solana.dex.blxrbdn.com:443"
 	TestnetSerumAPIHTTP = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/"
 	TestnetSerumAPIWS   = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
-	TestnetSerumAPIGRPC = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:9000"
+	TestnetSerumAPIGRPC = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
 	DevnetSerumAPIHTTP  = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
 	DevnetSerumAPIWS    = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
-	DevnetSerumAPIGRPC  = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:9000"
+	DevnetSerumAPIGRPC  = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:80"
 	LocalSerumAPIWS     = "ws://localhost:9000/ws"
-	LocalSerumAPIGRPC   = "localhost:9001"
+	LocalSerumAPIGRPC   = "localhost:9000"
 	LocalSerumAPIHTTP   = "http://127.0.0.1:9000"
 	defaultRPCTimeout   = 7 * time.Second
 )
