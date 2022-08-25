@@ -256,14 +256,12 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	errCh := make(chan error)
-	go func() {
-		stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
-		if err != nil {
-			log.Errorf("error getting order status stream %v", err)
-			errCh <- err
-		}
-		stream.Into(ch)
-	}()
+	stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Errorf("error getting order status stream %v", err)
+		errCh <- err
+	}
+	stream.Into(ch)
 
 	time.Sleep(time.Second * 10)
 
