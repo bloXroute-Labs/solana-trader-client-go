@@ -65,7 +65,7 @@ func main() {
 		payerAddr = ownerAddr
 	}
 
-	failed = failed || orderLifecycleTest(w, ownerAddr, ooAddr)
+	failed = failed || orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || cancelAll(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
@@ -259,7 +259,7 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) bool {
+func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting order lifecycle test")
 	fmt.Println()
 
@@ -268,18 +268,16 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	errCh := make(chan error)
-	go func() {
-		stream, err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
-		if err != nil {
-			log.Errorf("error getting order status stream %v", err)
-			errCh <- err
-		}
-		stream.Into(ch)
-	}()
+	stream, err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Errorf("error getting order status stream %v", err)
+		errCh <- err
+	}
+	stream.Into(ch)
 
 	time.Sleep(time.Second * 10)
 
-	clientOrderID, fail := callPlaceOrderWS(w, ownerAddr, ooAddr)
+	clientOrderID, fail := callPlaceOrderWS(w, ownerAddr, payerAddr, ooAddr)
 	if fail {
 		return true
 	}
@@ -326,7 +324,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	return false
 }
 
-func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, bool) {
+func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) (uint64, bool) {
 	log.Info("trying to place an order")
 
 	// generate a random clientOrderId for this order
@@ -339,7 +337,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, b
 	}
 
 	// create order without actually submitting
-	response, err := w.PostOrder(context.Background(), ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	response, err := w.PostOrder(context.Background(), ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -347,7 +345,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, ooAddr string) (uint64, b
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	// sign/submit transaction after creation
-	sig, err := w.SubmitOrder(context.Background(), ownerAddr, ownerAddr, marketAddr,
+	sig, err := w.SubmitOrder(context.Background(), ownerAddr, payerAddr, marketAddr,
 		orderSide, []api.OrderType{orderType}, orderAmount,
 		orderPrice, opts)
 	if err != nil {

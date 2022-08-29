@@ -55,7 +55,7 @@ func main() {
 		payerAddr = ownerAddr
 	}
 
-	failed = failed || orderLifecycleTest(g, ownerAddr, ooAddr)
+	failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
@@ -247,7 +247,7 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string) bool {
+func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting order lifecycle test")
 	fmt.Println()
 
@@ -256,18 +256,16 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	errCh := make(chan error)
-	go func() {
-		stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
-		if err != nil {
-			log.Errorf("error getting order status stream %v", err)
-			errCh <- err
-		}
-		stream.Into(ch)
-	}()
+	stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
+	if err != nil {
+		log.Errorf("error getting order status stream %v", err)
+		errCh <- err
+	}
+	stream.Into(ch)
 
 	time.Sleep(time.Second * 10)
 
-	clientID, failed := callPlaceOrderGRPC(g, ownerAddr, ooAddr)
+	clientID, failed := callPlaceOrderGRPC(g, ownerAddr, payerAddr, ooAddr)
 
 	if failed {
 		return true
@@ -313,7 +311,7 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr string, ooAddr string)
 	return callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 
-func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) (uint64, bool) {
+func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) (uint64, bool) {
 	log.Info("starting place order")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -329,7 +327,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) (uint6
 	}
 
 	// create order without actually submitting
-	response, err := g.PostOrder(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	response, err := g.PostOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
