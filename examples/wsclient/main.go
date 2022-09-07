@@ -69,6 +69,7 @@ func main() {
 	failed = failed || cancelAll(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callRecentBlockHashWSStream(w)
 
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -249,6 +250,30 @@ func callTradesWSStream(w *provider.WSClient) bool {
 	return false
 }
 
+// Stream response
+func callRecentBlockHashWSStream(w *provider.WSClient) bool {
+	log.Info("starting orderbook stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetRecentBlockHashStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
+		return true
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 5; i++ {
+		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
 const (
 	// SOL/USDC market
 	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
@@ -306,12 +331,8 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	}
 
 	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
-			log.Infof("order cancelled (`CANCELLED`) successfully")
-		} else {
-			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
-		}
+	case hash := <-ch:
+		log.Info(hash)
 	case <-errCh:
 		return true
 	case <-time.After(time.Second * 60):

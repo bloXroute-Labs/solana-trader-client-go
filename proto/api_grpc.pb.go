@@ -45,6 +45,7 @@ type ApiClient interface {
 	GetMarketDepthStream(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (Api_GetMarketDepthStreamClient, error)
 	GetTradesStream(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (Api_GetTradesStreamClient, error)
 	GetOrderStatusStream(ctx context.Context, in *GetOrderStatusStreamRequest, opts ...grpc.CallOption) (Api_GetOrderStatusStreamClient, error)
+	GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error)
 }
 
 type apiClient struct {
@@ -386,6 +387,38 @@ func (x *apiGetOrderStatusStreamClient) Recv() (*GetOrderStatusStreamResponse, e
 	return m, nil
 }
 
+func (c *apiClient) GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[5], "/api.Api/GetRecentBlockHashStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &apiGetRecentBlockHashStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Api_GetRecentBlockHashStreamClient interface {
+	Recv() (*GetRecentBlockHashResponse, error)
+	grpc.ClientStream
+}
+
+type apiGetRecentBlockHashStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *apiGetRecentBlockHashStreamClient) Recv() (*GetRecentBlockHashResponse, error) {
+	m := new(GetRecentBlockHashResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -417,6 +450,7 @@ type ApiServer interface {
 	GetMarketDepthStream(*GetMarketsRequest, Api_GetMarketDepthStreamServer) error
 	GetTradesStream(*GetTradesRequest, Api_GetTradesStreamServer) error
 	GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error
+	GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -495,6 +529,9 @@ func (UnimplementedApiServer) GetTradesStream(*GetTradesRequest, Api_GetTradesSt
 }
 func (UnimplementedApiServer) GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderStatusStream not implemented")
+}
+func (UnimplementedApiServer) GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetRecentBlockHashStream not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -956,6 +993,27 @@ func (x *apiGetOrderStatusStreamServer) Send(m *GetOrderStatusStreamResponse) er
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetRecentBlockHashStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetRecentBlockHashRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ApiServer).GetRecentBlockHashStream(m, &apiGetRecentBlockHashStreamServer{stream})
+}
+
+type Api_GetRecentBlockHashStreamServer interface {
+	Send(*GetRecentBlockHashResponse) error
+	grpc.ServerStream
+}
+
+type apiGetRecentBlockHashStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *apiGetRecentBlockHashStreamServer) Send(m *GetRecentBlockHashResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1064,6 +1122,11 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetOrderStatusStream",
 			Handler:       _Api_GetOrderStatusStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetRecentBlockHashStream",
+			Handler:       _Api_GetRecentBlockHashStream_Handler,
 			ServerStreams: true,
 		},
 	},

@@ -436,3 +436,10 @@ func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddres
 		return &v
 	})
 }
+
+// GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
+func (w *WSClient) GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*pb.GetRecentBlockHashResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetRecentBlockHashStream", &pb.GetRecentBlockHashRequest{}, func() *pb.GetRecentBlockHashResponse {
+		return &pb.GetRecentBlockHashResponse{}
+	})
+}

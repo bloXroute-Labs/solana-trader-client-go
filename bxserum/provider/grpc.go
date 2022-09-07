@@ -346,3 +346,13 @@ func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddr
 
 	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
 }
+
+// GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
+func (g *GRPCClient) GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*pb.GetRecentBlockHashResponse], error) {
+	stream, err := g.apiClient.GetRecentBlockHashStream(ctx, &pb.GetRecentBlockHashRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetRecentBlockHashResponse](stream, ""), nil
+}
