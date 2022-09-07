@@ -46,6 +46,7 @@ type ApiClient interface {
 	GetTradesStream(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (Api_GetTradesStreamClient, error)
 	GetOrderStatusStream(ctx context.Context, in *GetOrderStatusStreamRequest, opts ...grpc.CallOption) (Api_GetOrderStatusStreamClient, error)
 	GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error)
+	GetRecentBlockHash(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (*GetRecentBlockHashResponse, error)
 }
 
 type apiClient struct {
@@ -419,6 +420,15 @@ func (x *apiGetRecentBlockHashStreamClient) Recv() (*GetRecentBlockHashResponse,
 	return m, nil
 }
 
+func (c *apiClient) GetRecentBlockHash(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (*GetRecentBlockHashResponse, error) {
+	out := new(GetRecentBlockHashResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetRecentBlockHash", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -451,6 +461,7 @@ type ApiServer interface {
 	GetTradesStream(*GetTradesRequest, Api_GetTradesStreamServer) error
 	GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error
 	GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error
+	GetRecentBlockHash(context.Context, *GetRecentBlockHashRequest) (*GetRecentBlockHashResponse, error)
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -532,6 +543,9 @@ func (UnimplementedApiServer) GetOrderStatusStream(*GetOrderStatusStreamRequest,
 }
 func (UnimplementedApiServer) GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetRecentBlockHashStream not implemented")
+}
+func (UnimplementedApiServer) GetRecentBlockHash(context.Context, *GetRecentBlockHashRequest) (*GetRecentBlockHashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRecentBlockHash not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -1014,6 +1028,24 @@ func (x *apiGetRecentBlockHashStreamServer) Send(m *GetRecentBlockHashResponse) 
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetRecentBlockHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRecentBlockHashRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetRecentBlockHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/GetRecentBlockHash",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetRecentBlockHash(ctx, req.(*GetRecentBlockHashRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1096,6 +1128,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUnsettled",
 			Handler:    _Api_GetUnsettled_Handler,
+		},
+		{
+			MethodName: "GetRecentBlockHash",
+			Handler:    _Api_GetRecentBlockHash_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

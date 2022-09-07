@@ -7,15 +7,24 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/gagliardetto/solana-go"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"sync"
+	"time"
 )
 
 type GRPCClient struct {
 	pb.UnimplementedApiServer
 
+	mutex sync.RWMutex
+
 	apiClient  pb.ApiClient
 	privateKey *solana.PrivateKey
+
+	recentBlockHash               *pb.GetRecentBlockHashResponse
+	recentBlockHashTime           *time.Time
+	recentBlockHashExpiryDuration time.Duration
 }
 
 // NewGRPCClient connects to Mainnet Serum API
@@ -63,10 +72,72 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GRPCClient{
-		apiClient:  pb.NewApiClient(conn),
-		privateKey: opts.PrivateKey,
-	}, nil
+	client := &GRPCClient{
+		apiClient:                     pb.NewApiClient(conn),
+		privateKey:                    opts.PrivateKey,
+		recentBlockHashExpiryDuration: opts.CacheBlockHash,
+	}
+	go func() {
+		ctx := context.Background()
+		stream, err := client.GetRecentBlockHashStream(ctx)
+		if err != nil {
+			log.Error("can't open recent block hash stream")
+			return
+		}
+		ch := stream.Channel(1)
+		for {
+			select {
+			case hash := <-ch:
+				client.updateBlockHash(hash)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return client, nil
+}
+
+func (g *GRPCClient) updateBlockHash(hash *pb.GetRecentBlockHashResponse) {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+	g.recentBlockHash = hash
+	now := time.Now()
+	g.recentBlockHashTime = &now
+}
+
+func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	response := g.getCachedBlockHash()
+	if response != nil {
+		return response, nil
+	}
+
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	now := time.Now()
+	if g.recentBlockHash != nil && g.recentBlockHashTime.Before(now.Add(g.recentBlockHashExpiryDuration)) {
+		hash, err := g.GetRecentBlockHash(ctx)
+		if err != nil {
+			return nil, err
+		}
+		g.recentBlockHash = hash
+		g.recentBlockHashTime = &now
+	}
+	return g.recentBlockHash, nil
+}
+
+func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+}
+
+func (g *GRPCClient) getCachedBlockHash() *pb.GetRecentBlockHashResponse {
+	now := time.Now()
+	g.mutex.RLock()
+	defer g.mutex.RUnlock()
+	if g.recentBlockHash != nil && g.recentBlockHashTime.Before(now.Add(g.recentBlockHashExpiryDuration)) {
+		return g.recentBlockHash
+	}
+	return nil
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.

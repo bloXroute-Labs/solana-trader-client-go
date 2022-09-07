@@ -252,20 +252,20 @@ func callTradesWSStream(w *provider.WSClient) bool {
 
 // Stream response
 func callRecentBlockHashWSStream(w *provider.WSClient) bool {
-	log.Info("starting orderbook stream")
+	log.Info("starting recent block hash stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	stream, err := w.GetRecentBlockHashStream(ctx)
 	if err != nil {
-		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
+		log.Errorf("error with GetRecentBlockHashStream request: %v", err)
 		return true
 	}
 
-	orderbookCh := stream.Channel(0)
+	ch := stream.Channel(0)
 	for i := 1; i <= 5; i++ {
-		_, ok := <-orderbookCh
+		_, ok := <-ch
 		if !ok {
 			return true
 		}

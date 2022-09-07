@@ -34,10 +34,11 @@ type PostOrderOpts struct {
 }
 
 type RPCOpts struct {
-	Endpoint   string
-	Timeout    time.Duration
-	PrivateKey *solana.PrivateKey
-	AuthHeader string
+	Endpoint       string
+	Timeout        time.Duration
+	PrivateKey     *solana.PrivateKey
+	AuthHeader     string
+	CacheBlockHash time.Duration
 }
 
 func DefaultRPCOpts(endpoint string) RPCOpts {
@@ -47,9 +48,10 @@ func DefaultRPCOpts(endpoint string) RPCOpts {
 		spk = &privateKey
 	}
 	return RPCOpts{
-		Endpoint:   endpoint,
-		Timeout:    defaultRPCTimeout,
-		PrivateKey: spk,
-		AuthHeader: os.Getenv("AUTH_HEADER"),
+		Endpoint:       endpoint,
+		Timeout:        defaultRPCTimeout,
+		PrivateKey:     spk,
+		AuthHeader:     os.Getenv("AUTH_HEADER"),
+		CacheBlockHash: time.Second * 45, // to be on safe side
 	}
 }
