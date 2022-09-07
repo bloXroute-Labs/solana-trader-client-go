@@ -56,6 +56,7 @@ func main() {
 	failed = failed || cancelAll(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
+	failed = failed || callGetRecentBlockHash()
 	failed = failed || callTradeSwap(ownerAddr)
 	failed = failed || callGetRecentBlockHash()
 
@@ -532,6 +533,21 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 		return true
 	}
 	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	return false
+}
+
+func callGetRecentBlockHash() bool {
+	h := provider.NewHTTPTestnet()
+
+	hash, err := h.GetRecentBlockHash()
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	} else {
+		log.Info(hash)
+	}
+
+	fmt.Println()
 	return false
 }
 

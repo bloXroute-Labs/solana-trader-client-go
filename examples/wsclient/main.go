@@ -253,20 +253,20 @@ func callTradesWSStream(w *provider.WSClient) bool {
 
 // Stream response
 func callRecentBlockHashWSStream(w *provider.WSClient) bool {
-	log.Info("starting recent block hash stream")
+	log.Info("starting orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	stream, err := w.GetRecentBlockHashStream(ctx)
 	if err != nil {
-		log.Errorf("error with GetRecentBlockHashStream request: %v", err)
+		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 		return true
 	}
 
-	ch := stream.Channel(0)
+	orderbookCh := stream.Channel(0)
 	for i := 1; i <= 5; i++ {
-		_, ok := <-ch
+		_, ok := <-orderbookCh
 		if !ok {
 			return true
 		}
@@ -332,8 +332,12 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	}
 
 	select {
-	case hash := <-ch:
-		log.Info(hash)
+	case update := <-ch:
+		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
+			log.Infof("order cancelled (`CANCELLED`) successfully")
+		} else {
+			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
+		}
 	case <-errCh:
 		return true
 	case <-time.After(time.Second * 60):
