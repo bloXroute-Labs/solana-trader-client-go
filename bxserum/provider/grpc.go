@@ -7,17 +7,24 @@ import (
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/gagliardetto/solana-go"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"sync"
+	"time"
 )
 
 type GRPCClient struct {
 	pb.UnimplementedApiServer
 
-	apiClient pb.ApiClient
+	mutex sync.RWMutex
 
-	privateKey           *solana.PrivateKey
-	recentBlockHashStore *recentBlockHashStore
+	apiClient  pb.ApiClient
+	privateKey *solana.PrivateKey
+
+	recentBlockHash               *pb.GetRecentBlockHashResponse
+	recentBlockHashTime           *time.Time
+	recentBlockHashExpiryDuration time.Duration
 }
 
 // NewGRPCClient connects to Mainnet Serum API
