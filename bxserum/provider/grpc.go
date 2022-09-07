@@ -22,8 +22,8 @@ type GRPCClient struct {
 	apiClient  pb.ApiClient
 	privateKey *solana.PrivateKey
 
-	recentBlockHash               *pb.GetRecentBlockHashResponse
-	recentBlockHashTime           *time.Time
+	recentBlockHash               string
+	recentBlockHashTime           time.Time
 	recentBlockHashExpiryDuration time.Duration
 }
 
@@ -100,9 +100,9 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 func (g *GRPCClient) updateBlockHash(hash *pb.GetRecentBlockHashResponse) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
-	g.recentBlockHash = hash
+	g.recentBlockHash = hash.BlockHash
 	now := time.Now()
-	g.recentBlockHashTime = &now
+	g.recentBlockHashTime = now
 }
 
 func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
@@ -115,15 +115,17 @@ func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHas
 	defer g.mutex.Unlock()
 
 	now := time.Now()
-	if g.recentBlockHash != nil && g.recentBlockHashTime.Before(now.Add(g.recentBlockHashExpiryDuration)) {
+	if g.recentBlockHash != "" && g.recentBlockHashTime.Before(now.Add(g.recentBlockHashExpiryDuration)) {
 		hash, err := g.GetRecentBlockHash(ctx)
 		if err != nil {
 			return nil, err
 		}
-		g.recentBlockHash = hash
-		g.recentBlockHashTime = &now
+		g.recentBlockHash = hash.BlockHash
+		g.recentBlockHashTime = now
 	}
-	return g.recentBlockHash, nil
+	return &pb.GetRecentBlockHashResponse{
+		BlockHash: g.recentBlockHash,
+	}, nil
 }
 
 func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
@@ -134,8 +136,10 @@ func (g *GRPCClient) getCachedBlockHash() *pb.GetRecentBlockHashResponse {
 	now := time.Now()
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
-	if g.recentBlockHash != nil && g.recentBlockHashTime.Before(now.Add(g.recentBlockHashExpiryDuration)) {
-		return g.recentBlockHash
+	if g.recentBlockHash != "" && g.recentBlockHashTime.Before(now.Add(g.recentBlockHashExpiryDuration)) {
+		return &pb.GetRecentBlockHashResponse{
+			BlockHash: g.recentBlockHash,
+		}
 	}
 	return nil
 }
