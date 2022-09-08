@@ -30,8 +30,29 @@ type solanaRawUpdate struct {
 }
 
 type solanaUpdate struct {
-	side   gserum.Side
-	orders []*pb.OrderbookItem
+	side     gserum.Side
+	orders   []*pb.OrderbookItem
+	previous *solanaUpdate
+}
+
+func (s solanaUpdate) isRedundant() bool {
+	if s.previous == nil {
+		return false
+	}
+	return orderbookEqual(s.orders, s.previous.orders)
+}
+
+func orderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
+	if len(o1) != len(o2) {
+		return false
+	}
+
+	for i, o := range o1 {
+		if o.Size != o2[i].Size || o.Price != o2[i].Price {
+			return false
+		}
+	}
+	return true
 }
 
 func newSolanaOrderbookStream(ctx context.Context, rpcAddress string, wsAddress, marketAddr string) (arrival.Source[solanaRawUpdate, solanaUpdate], error) {
@@ -138,15 +159,16 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpda
 	}
 }
 
-func (s solanaOrderbookStream) Process(updates []arrival.StreamUpdate[solanaRawUpdate]) (map[int][]arrival.ProcessedUpdate[solanaUpdate], error) {
+func (s solanaOrderbookStream) Process(updates []arrival.StreamUpdate[solanaRawUpdate], removeDuplicates bool) (map[int][]arrival.ProcessedUpdate[solanaUpdate], map[int][]arrival.ProcessedUpdate[solanaUpdate], error) {
 	results := make(map[int][]arrival.ProcessedUpdate[solanaUpdate])
+	duplicates := make(map[int][]arrival.ProcessedUpdate[solanaUpdate])
 
+	previous := make(map[gserum.Side]*solanaUpdate)
 	for _, update := range updates {
-
 		var orderbook gserum.Orderbook
 		err := bin.NewBinDecoder(update.Data.data.Value.Data.GetBinary()).Decode(&orderbook)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		slot := int(update.Data.data.Context.Slot)
@@ -165,22 +187,33 @@ func (s solanaOrderbookStream) Process(updates []arrival.StreamUpdate[solanaRawU
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
+		side := update.Data.side
 		su := solanaUpdate{
-			side:   update.Data.side,
-			orders: orders,
+			side:     side,
+			orders:   orders,
+			previous: previous[side],
 		}
-
-		results[slot] = append(results[slot], arrival.ProcessedUpdate[solanaUpdate]{
+		pu := arrival.ProcessedUpdate[solanaUpdate]{
 			Timestamp: update.Timestamp,
 			Slot:      slot,
 			Data:      su,
-		})
+		}
+
+		if su.isRedundant() {
+			duplicates[slot] = append(results[slot], pu)
+		} else {
+			previous[side] = &su
+		}
+
+		if !removeDuplicates || !su.isRedundant() {
+			results[slot] = append(results[slot], pu)
+		}
 	}
 
-	return results, nil
+	return results, duplicates, nil
 }
 
 func (s solanaOrderbookStream) fetchMarket(ctx context.Context, marketPk solana.PublicKey) (*gserum.MarketV2, error) {

@@ -29,6 +29,7 @@ func main() {
 			DurationFlag,
 			utils.OutputFileFlag,
 			RemoveUnmatchedFlag,
+			RemoveDuplicatesFlag,
 		},
 		Action: run,
 	}
@@ -126,16 +127,19 @@ Loop:
 	}
 
 	logger.Log().Infow("finished collecting data points", "serumcount", len(serumUpdates), "solanacount", len(solanaUpdates))
+	removeDuplicates := c.Bool(RemoveDuplicatesFlag.Name)
 
-	serumResults, err := serumOS.Process(serumUpdates)
+	serumResults, serumDuplicates, err := serumOS.Process(serumUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process serum updates")
 	}
+	logger.Log().Infow("serum duplicate updates", "count", len(serumDuplicates))
 
-	solanaResults, err := solanaOS.Process(solanaUpdates)
+	solanaResults, solanaDuplicates, err := solanaOS.Process(solanaUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process solana results")
 	}
+	logger.Log().Infow("solana duplicate updates", "count", len(solanaDuplicates))
 
 	slots := SlotRange(serumResults, solanaResults)
 	logger.Log().Infow("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1])
@@ -149,7 +153,7 @@ Loop:
 
 	// dump results to stdout
 	removeUnmatched := c.Bool(RemoveUnmatchedFlag.Name)
-	PrintSummary(duration, serumEndpoint, solanaWSEndpoint, datapoints, removeUnmatched)
+	PrintSummary(duration, serumEndpoint, solanaWSEndpoint, datapoints)
 
 	// write results to csv
 	outputFile := c.String(utils.OutputFileFlag.Name)
@@ -188,5 +192,9 @@ var (
 	RemoveUnmatchedFlag = &cli.BoolFlag{
 		Name:  "remove-unmatched",
 		Usage: "skip events without a match from other source",
+	}
+	RemoveDuplicatesFlag = &cli.BoolFlag{
+		Name:  "remove-duplicates",
+		Usage: "skip events that are identical to the previous",
 	}
 )

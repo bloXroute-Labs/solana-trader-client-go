@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"
 	"golang.org/x/exp/maps"
 	"sort"
@@ -138,6 +139,11 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpda
 		}
 
 		if !serumOK {
+			for _, su := range solanaData {
+				if su.Data.isRedundant() {
+					logger.Log().Infow("redundant data", "slot", slot)
+				}
+			}
 			leftoverSolana[slot] = solanaData
 		}
 
@@ -172,7 +178,7 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpda
 	return datapoints, leftoverSerum, leftoverSolana, nil
 }
 
-func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint string, datapoints []Datapoint, removeUnmatched bool) {
+func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint string, datapoints []Datapoint) {
 	serumFaster := 0
 	solanaFaster := 0
 	totalSerumLead := 0

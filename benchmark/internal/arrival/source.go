@@ -11,7 +11,7 @@ type Source[T any, R any] interface {
 	Run(context.Context) ([]StreamUpdate[T], error)
 
 	// Process deserializes the messages received by Run into useful formats for comparison.
-	Process([]StreamUpdate[T]) (map[int][]ProcessedUpdate[R], error)
+	Process(updates []StreamUpdate[T], removeDuplicates bool) (map[int][]ProcessedUpdate[R], map[int][]ProcessedUpdate[R], error)
 }
 
 type StreamUpdate[T any] struct {

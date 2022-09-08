@@ -18,8 +18,16 @@ import (
 )
 
 type serumUpdate struct {
-	asks []*pb.OrderbookItem
-	bids []*pb.OrderbookItem
+	asks     []*pb.OrderbookItem
+	bids     []*pb.OrderbookItem
+	previous *serumUpdate
+}
+
+func (s serumUpdate) isRedundant() bool {
+	if s.previous == nil {
+		return false
+	}
+	return orderbookEqual(s.previous.bids, s.bids) && orderbookEqual(s.previous.asks, s.asks)
 }
 
 type serumOrderbookStream struct {
@@ -106,10 +114,14 @@ type subscriptionUpdate struct {
 	Result         json.RawMessage `json:"result"`
 }
 
-func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (map[int][]arrival.ProcessedUpdate[serumUpdate], error) {
-	var err error
+func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte], removeDuplicates bool) (map[int][]arrival.ProcessedUpdate[serumUpdate], map[int][]arrival.ProcessedUpdate[serumUpdate], error) {
+	var (
+		err      error
+		previous *serumUpdate
+	)
 
 	results := make(map[int][]arrival.ProcessedUpdate[serumUpdate])
+	duplicates := make(map[int][]arrival.ProcessedUpdate[serumUpdate])
 	allowedFailures := 1 // allowed to skip processing of subscription confirmation message
 
 	for _, update := range updates {
@@ -118,7 +130,7 @@ func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (m
 		if err != nil || rpcUpdate.Params == nil {
 			allowedFailures--
 			if allowedFailures < 0 {
-				return nil, errors.Wrap(err, "too many response errors")
+				return nil, nil, errors.Wrap(err, "too many response errors")
 			}
 			continue
 		}
@@ -128,16 +140,15 @@ func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (m
 		if err != nil {
 			allowedFailures--
 			if allowedFailures < 0 {
-				return nil, errors.Wrap(err, "too many response errors")
+				return nil, nil, errors.Wrap(err, "too many response errors")
 			}
 			continue
 		}
 
-		// note for future: when WS stream follows RPC spec will need to discard subscribe message
 		var orderbookInc pb.GetOrderbooksStreamResponse
 		err = protojson.Unmarshal(subU.Result, &orderbookInc)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		slot := int(orderbookInc.Slot)
@@ -147,15 +158,26 @@ func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (m
 		}
 
 		su := serumUpdate{
-			asks: orderbookInc.Orderbook.Asks,
-			bids: orderbookInc.Orderbook.Bids,
+			asks:     orderbookInc.Orderbook.Asks,
+			bids:     orderbookInc.Orderbook.Bids,
+			previous: previous,
 		}
-		results[slot] = append(results[slot], arrival.ProcessedUpdate[serumUpdate]{
+		pu := arrival.ProcessedUpdate[serumUpdate]{
 			Timestamp: update.Timestamp,
 			Slot:      slot,
 			Data:      su,
-		})
+		}
+
+		if su.isRedundant() {
+			duplicates[slot] = append(results[slot], pu)
+		} else {
+			previous = &su
+		}
+
+		if !removeDuplicates || !su.isRedundant() {
+			results[slot] = append(results[slot], pu)
+		}
 	}
 
-	return results, nil
+	return results, duplicates, nil
 }
