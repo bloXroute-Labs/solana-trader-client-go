@@ -7,6 +7,9 @@ import (
 
 // Source represents any streaming interface that provides timestamped updates for comparison.
 type Source[T any, R any] interface {
+	// Name returns an identifier for the source for printing
+	Name() string
+
 	// Run collects stream updates for the context duration. Run should avoid doing any other work besides collecting updates, so as to have accurate timestamps.
 	Run(context.Context) ([]StreamUpdate[T], error)
 

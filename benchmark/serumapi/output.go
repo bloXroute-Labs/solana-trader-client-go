@@ -90,7 +90,7 @@ func (d Datapoint) FormatCSV() [][]string {
 }
 
 // SlotRange enumerate the superset range of slots used in Serum and Solana updates
-func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[serumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[solanaUpdate]) []int {
+func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
 	serumSlots := maps.Keys(serumResults)
 	sort.Ints(serumSlots)
 
@@ -125,10 +125,10 @@ func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[serumUpdate], sola
 }
 
 // Merge combines Serum and Solana updates over the specified slots, indicating the difference in slot times and any updates that were not included in the other.
-func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[solanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[serumUpdate], map[int][]arrival.ProcessedUpdate[solanaUpdate], error) {
+func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
 	datapoints := make([]Datapoint, 0)
-	leftoverSerum := make(map[int][]arrival.ProcessedUpdate[serumUpdate])
-	leftoverSolana := make(map[int][]arrival.ProcessedUpdate[solanaUpdate])
+	leftoverSerum := make(map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate])
+	leftoverSolana := make(map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate])
 
 	for _, slot := range slots {
 		serumData, serumOK := serumResults[slot]
@@ -140,7 +140,7 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpda
 
 		if !serumOK {
 			for _, su := range solanaData {
-				if su.Data.isRedundant() {
+				if su.Data.IsRedundant() {
 					logger.Log().Infow("redundant data", "slot", slot)
 				}
 			}
@@ -159,9 +159,9 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[serumUpda
 			return nil, nil, nil, fmt.Errorf("(slot %v) solana data unexpectedly had more than 2 entries: %v", slot, solanaData)
 		}
 		for _, su := range solanaData {
-			if su.Data.side == gserum.SideAsk {
+			if su.Data.Side == gserum.SideAsk {
 				dp.SolanaAsk = su.Timestamp
-			} else if su.Data.side == gserum.SideBid {
+			} else if su.Data.Side == gserum.SideBid {
 				dp.SolanaBid = su.Timestamp
 			} else {
 				return nil, nil, nil, fmt.Errorf("(slot %v) solana data unknown side: %v", slot, solanaData)

@@ -60,11 +60,11 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 
-	serumOS, err := newSerumOrderbookStream(serumEndpoint, marketAddr, authHeader)
+	serumOS, err := arrival.NewSerumOrderbookStream(serumEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
-	solanaOS, err := newSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
+	solanaOS, err := arrival.NewSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func run(c *cli.Context) error {
 
 	var (
 		serumUpdates  []arrival.StreamUpdate[[]byte]
-		solanaUpdates []arrival.StreamUpdate[solanaRawUpdate]
+		solanaUpdates []arrival.StreamUpdate[arrival.SolanaRawUpdate]
 	)
 	errCh := make(chan error, 2)
 
