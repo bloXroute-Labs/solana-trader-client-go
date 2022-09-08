@@ -125,6 +125,24 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 	return &response, nil
 }
 
+// TradeSwap returns a partially signed transaction for submitting a swap request
+func (w *WSClient) TradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64) (*pb.TradeSwapResponse, error) {
+	request := &pb.TradeSwapRequest{
+		Owner:    owner,
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: inAmount,
+		Slippage: slippage,
+	}
+
+	var response pb.TradeSwapResponse
+	err := w.conn.Request(ctx, "TradeSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request := &pb.PostOrderRequest{
@@ -177,6 +195,15 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight b
 	}
 
 	return response.Signature, nil
+}
+
+// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, skipPreFlight bool) (string, error) {
+	resp, err := w.TradeSwap(ctx, owner, inToken, outToken, inAmount, slippage)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.

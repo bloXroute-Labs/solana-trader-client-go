@@ -59,6 +59,7 @@ func main() {
 	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callTradeSwap(g, ownerAddr)
 
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -635,5 +636,21 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 		return true
 	}
 	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	return false
+}
+
+func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting trade swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("trade swap")
+	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL", 0.01, 0.1, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("trade swap transaction signature : %s", sig)
 	return false
 }
