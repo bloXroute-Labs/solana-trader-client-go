@@ -12,9 +12,10 @@ import (
 type WSClient struct {
 	pb.UnimplementedApiServer
 
-	addr       string
-	conn       *connections.WS
-	privateKey *solana.PrivateKey
+	addr                 string
+	conn                 *connections.WS
+	privateKey           *solana.PrivateKey
+	recentBlockHashStore *recentBlockHashStore
 }
 
 // NewWSClient connects to Mainnet Serum API
@@ -48,11 +49,23 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 		return nil, err
 	}
 
-	return &WSClient{
+	client := &WSClient{
 		addr:       opts.Endpoint,
 		conn:       conn,
 		privateKey: opts.PrivateKey,
-	}, nil
+	}
+	client.recentBlockHashStore = newRecentBlockHashStore(
+		func(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+			return client.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+		},
+		client.GetRecentBlockHashStream,
+		opts,
+	)
+	return client, nil
+}
+
+func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return w.recentBlockHashStore.recentBlockHash(ctx)
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
