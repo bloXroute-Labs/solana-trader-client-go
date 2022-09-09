@@ -56,6 +56,7 @@ func main() {
 	failed = failed || cancelAll(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
+	failed = failed || callTradeSwap(ownerAddr)
 
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -530,5 +531,23 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 		return true
 	}
 	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	return false
+}
+
+func callTradeSwap(ownerAddr string) bool {
+	log.Info("starting trade swap test")
+
+	client := &http.Client{Timeout: time.Second * 30}
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+
+	log.Info("trade swap")
+	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL",
+		0.01, 0.1, "raydium", false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("trade swap transaction signature : %s", sig)
 	return false
 }

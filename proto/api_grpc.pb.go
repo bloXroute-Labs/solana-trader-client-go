@@ -19,11 +19,13 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApiClient interface {
 	GetMarkets(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (*GetMarketsResponse, error)
+	GetPools(ctx context.Context, in *GetPoolsRequest, opts ...grpc.CallOption) (*GetPoolsResponse, error)
 	GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error)
 	GetKline(ctx context.Context, in *GetKlineRequest, opts ...grpc.CallOption) (*GetKlineResponse, error)
 	GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error)
 	GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error)
 	GetServerTime(ctx context.Context, in *GetServerTimeRequest, opts ...grpc.CallOption) (*GetServerTimeResponse, error)
+	GetRecentBlockHash(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (*GetRecentBlockHashResponse, error)
 	// account endpoints
 	GetAccountBalance(ctx context.Context, in *GetAccountBalanceRequest, opts ...grpc.CallOption) (*GetAccountBalanceResponse, error)
 	// trade endpoints
@@ -39,12 +41,16 @@ type ApiClient interface {
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
 	GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, opts ...grpc.CallOption) (*GetOrderByIDResponse, error)
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
+	// AMMs
+	GetQuotes(ctx context.Context, in *GetQuotesRequest, opts ...grpc.CallOption) (*GetQuotesResponse, error)
+	PostTradeSwap(ctx context.Context, in *TradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(ctx context.Context, in *GetOrderbooksRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
 	GetMarketDepthStream(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (Api_GetMarketDepthStreamClient, error)
 	GetTradesStream(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (Api_GetTradesStreamClient, error)
 	GetOrderStatusStream(ctx context.Context, in *GetOrderStatusStreamRequest, opts ...grpc.CallOption) (Api_GetOrderStatusStreamClient, error)
+	GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error)
 }
 
 type apiClient struct {
@@ -58,6 +64,15 @@ func NewApiClient(cc grpc.ClientConnInterface) ApiClient {
 func (c *apiClient) GetMarkets(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (*GetMarketsResponse, error) {
 	out := new(GetMarketsResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetMarkets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetPools(ctx context.Context, in *GetPoolsRequest, opts ...grpc.CallOption) (*GetPoolsResponse, error) {
+	out := new(GetPoolsResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetPools", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +118,15 @@ func (c *apiClient) GetTrades(ctx context.Context, in *GetTradesRequest, opts ..
 func (c *apiClient) GetServerTime(ctx context.Context, in *GetServerTimeRequest, opts ...grpc.CallOption) (*GetServerTimeResponse, error) {
 	out := new(GetServerTimeResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetServerTime", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetRecentBlockHash(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (*GetRecentBlockHashResponse, error) {
+	out := new(GetRecentBlockHashResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetRecentBlockHash", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -220,6 +244,24 @@ func (c *apiClient) GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, o
 func (c *apiClient) GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error) {
 	out := new(GetUnsettledResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetUnsettled", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetQuotes(ctx context.Context, in *GetQuotesRequest, opts ...grpc.CallOption) (*GetQuotesResponse, error) {
+	out := new(GetQuotesResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetQuotes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) PostTradeSwap(ctx context.Context, in *TradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error) {
+	out := new(TradeSwapResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostTradeSwap", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -386,16 +428,50 @@ func (x *apiGetOrderStatusStreamClient) Recv() (*GetOrderStatusStreamResponse, e
 	return m, nil
 }
 
+func (c *apiClient) GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[5], "/api.Api/GetRecentBlockHashStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &apiGetRecentBlockHashStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Api_GetRecentBlockHashStreamClient interface {
+	Recv() (*GetRecentBlockHashResponse, error)
+	grpc.ClientStream
+}
+
+type apiGetRecentBlockHashStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *apiGetRecentBlockHashStreamClient) Recv() (*GetRecentBlockHashResponse, error) {
+	m := new(GetRecentBlockHashResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
 type ApiServer interface {
 	GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error)
+	GetPools(context.Context, *GetPoolsRequest) (*GetPoolsResponse, error)
 	GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error)
 	GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error)
 	GetOrderbook(context.Context, *GetOrderbookRequest) (*GetOrderbookResponse, error)
 	GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error)
 	GetServerTime(context.Context, *GetServerTimeRequest) (*GetServerTimeResponse, error)
+	GetRecentBlockHash(context.Context, *GetRecentBlockHashRequest) (*GetRecentBlockHashResponse, error)
 	// account endpoints
 	GetAccountBalance(context.Context, *GetAccountBalanceRequest) (*GetAccountBalanceResponse, error)
 	// trade endpoints
@@ -411,12 +487,16 @@ type ApiServer interface {
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
 	GetOrderByID(context.Context, *GetOrderByIDRequest) (*GetOrderByIDResponse, error)
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
+	// AMMs
+	GetQuotes(context.Context, *GetQuotesRequest) (*GetQuotesResponse, error)
+	PostTradeSwap(context.Context, *TradeSwapRequest) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
 	GetMarketDepthStream(*GetMarketsRequest, Api_GetMarketDepthStreamServer) error
 	GetTradesStream(*GetTradesRequest, Api_GetTradesStreamServer) error
 	GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error
+	GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -426,6 +506,9 @@ type UnimplementedApiServer struct {
 
 func (UnimplementedApiServer) GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMarkets not implemented")
+}
+func (UnimplementedApiServer) GetPools(context.Context, *GetPoolsRequest) (*GetPoolsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPools not implemented")
 }
 func (UnimplementedApiServer) GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTickers not implemented")
@@ -441,6 +524,9 @@ func (UnimplementedApiServer) GetTrades(context.Context, *GetTradesRequest) (*Ge
 }
 func (UnimplementedApiServer) GetServerTime(context.Context, *GetServerTimeRequest) (*GetServerTimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServerTime not implemented")
+}
+func (UnimplementedApiServer) GetRecentBlockHash(context.Context, *GetRecentBlockHashRequest) (*GetRecentBlockHashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRecentBlockHash not implemented")
 }
 func (UnimplementedApiServer) GetAccountBalance(context.Context, *GetAccountBalanceRequest) (*GetAccountBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountBalance not implemented")
@@ -481,6 +567,12 @@ func (UnimplementedApiServer) GetOrderByID(context.Context, *GetOrderByIDRequest
 func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnsettled not implemented")
 }
+func (UnimplementedApiServer) GetQuotes(context.Context, *GetQuotesRequest) (*GetQuotesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQuotes not implemented")
+}
+func (UnimplementedApiServer) PostTradeSwap(context.Context, *TradeSwapRequest) (*TradeSwapResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostTradeSwap not implemented")
+}
 func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderbooksStream not implemented")
 }
@@ -495,6 +587,9 @@ func (UnimplementedApiServer) GetTradesStream(*GetTradesRequest, Api_GetTradesSt
 }
 func (UnimplementedApiServer) GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderStatusStream not implemented")
+}
+func (UnimplementedApiServer) GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetRecentBlockHashStream not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -523,6 +618,24 @@ func _Api_GetMarkets_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).GetMarkets(ctx, req.(*GetMarketsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_GetPools_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPoolsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetPools(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/GetPools",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetPools(ctx, req.(*GetPoolsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -613,6 +726,24 @@ func _Api_GetServerTime_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).GetServerTime(ctx, req.(*GetServerTimeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_GetRecentBlockHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRecentBlockHashRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetRecentBlockHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/GetRecentBlockHash",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetRecentBlockHash(ctx, req.(*GetRecentBlockHashRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -851,6 +982,42 @@ func _Api_GetUnsettled_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_GetQuotes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQuotesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetQuotes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/GetQuotes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetQuotes(ctx, req.(*GetQuotesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_PostTradeSwap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TradeSwapRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostTradeSwap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostTradeSwap",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostTradeSwap(ctx, req.(*TradeSwapRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Api_GetOrderbooksStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetOrderbooksRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -956,6 +1123,27 @@ func (x *apiGetOrderStatusStreamServer) Send(m *GetOrderStatusStreamResponse) er
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetRecentBlockHashStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetRecentBlockHashRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ApiServer).GetRecentBlockHashStream(m, &apiGetRecentBlockHashStreamServer{stream})
+}
+
+type Api_GetRecentBlockHashStreamServer interface {
+	Send(*GetRecentBlockHashResponse) error
+	grpc.ServerStream
+}
+
+type apiGetRecentBlockHashStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *apiGetRecentBlockHashStreamServer) Send(m *GetRecentBlockHashResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -966,6 +1154,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMarkets",
 			Handler:    _Api_GetMarkets_Handler,
+		},
+		{
+			MethodName: "GetPools",
+			Handler:    _Api_GetPools_Handler,
 		},
 		{
 			MethodName: "GetTickers",
@@ -986,6 +1178,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetServerTime",
 			Handler:    _Api_GetServerTime_Handler,
+		},
+		{
+			MethodName: "GetRecentBlockHash",
+			Handler:    _Api_GetRecentBlockHash_Handler,
 		},
 		{
 			MethodName: "GetAccountBalance",
@@ -1039,6 +1235,14 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetUnsettled",
 			Handler:    _Api_GetUnsettled_Handler,
 		},
+		{
+			MethodName: "GetQuotes",
+			Handler:    _Api_GetQuotes_Handler,
+		},
+		{
+			MethodName: "PostTradeSwap",
+			Handler:    _Api_PostTradeSwap_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -1064,6 +1268,11 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetOrderStatusStream",
 			Handler:       _Api_GetOrderStatusStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetRecentBlockHashStream",
+			Handler:       _Api_GetRecentBlockHashStream_Handler,
 			ServerStreams: true,
 		},
 	},

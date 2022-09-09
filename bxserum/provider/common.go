@@ -2,7 +2,10 @@ package provider
 
 import (
 	"errors"
+	"fmt"
+	api "github.com/bloXroute-Labs/serum-client-go/proto"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
@@ -52,4 +55,19 @@ func DefaultRPCOpts(endpoint string) RPCOpts {
 		PrivateKey: spk,
 		AuthHeader: os.Getenv("AUTH_HEADER"),
 	}
+}
+
+var stringToAmm = map[string]api.Project{
+	"unknown": api.Project_P_UNKNOWN,
+	"jupiter": api.Project_P_JUPITER,
+	"raydium": api.Project_P_RAYDIUM,
+	"all":     api.Project_P_ALL,
+}
+
+func ProjectFromString(project string) (api.Project, error) {
+	if apiProject, ok := stringToAmm[strings.ToLower(project)]; ok {
+		return apiProject, nil
+	}
+
+	return api.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }

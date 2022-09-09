@@ -157,6 +157,26 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 	return response.Signature, nil
 }
 
+// PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
+func (h *HTTPClient) PostTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/amm/trade-swap", h.baseURL)
+	request := &pb.TradeSwapRequest{
+		Owner:    owner,
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: inAmount,
+		Slippage: slippage,
+		Project:  project,
+	}
+
+	var response pb.TradeSwapResponse
+	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
@@ -191,6 +211,19 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 		return nil, err
 	}
 	return &response, nil
+}
+
+// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) (string, error) {
+	project, err := ProjectFromString(projectStr)
+	if err != nil {
+		return "", err
+	}
+	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
+	if err != nil {
+		return "", err
+	}
+	return h.signAndSubmit(resp.Transaction, skipPreFlight)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
