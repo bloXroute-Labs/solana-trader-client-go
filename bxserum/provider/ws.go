@@ -126,17 +126,22 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 }
 
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64) (*pb.TradeSwapResponse, error) {
+func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
+	project, err := ProjectFromString(projectStr)
+	if err != nil {
+		return nil, err
+	}
 	request := &pb.TradeSwapRequest{
 		Owner:    owner,
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: inAmount,
 		Slippage: slippage,
+		Project:  project,
 	}
 
 	var response pb.TradeSwapResponse
-	err := w.conn.Request(ctx, "PostTradeSwap", request, &response)
+	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +203,8 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight b
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, skipPreFlight bool) (string, error) {
-	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage)
+func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, skipPreFlight bool) (string, error) {
+	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
 		return "", err
 	}

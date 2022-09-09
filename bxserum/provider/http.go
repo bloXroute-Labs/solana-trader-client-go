@@ -157,8 +157,8 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 	return response.Signature, nil
 }
 
-// TradeSwap PostOrder returns a partially signed transaction for submitting a swap request
-func (h *HTTPClient) TradeSwap(owner, inToken, outToken string, inAmount, slippage float64) (*pb.TradeSwapResponse, error) {
+// PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
+func (h *HTTPClient) PostTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/amm/trade-swap", h.baseURL)
 	request := &pb.TradeSwapRequest{
 		Owner:    owner,
@@ -166,6 +166,7 @@ func (h *HTTPClient) TradeSwap(owner, inToken, outToken string, inAmount, slippa
 		OutToken: outToken,
 		InAmount: inAmount,
 		Slippage: slippage,
+		Project:  project,
 	}
 
 	var response pb.TradeSwapResponse
@@ -213,8 +214,12 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, skipPreFlight bool) (string, error) {
-	resp, err := h.TradeSwap(owner, inToken, outToken, inAmount, slippage)
+func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) (string, error) {
+	project, err := ProjectFromString(projectStr)
+	if err != nil {
+		return "", err
+	}
+	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
 		return "", err
 	}
