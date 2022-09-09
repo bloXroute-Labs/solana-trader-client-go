@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApiClient interface {
 	GetMarkets(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (*GetMarketsResponse, error)
+	GetPools(ctx context.Context, in *GetPoolsRequest, opts ...grpc.CallOption) (*GetPoolsResponse, error)
 	GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error)
 	GetKline(ctx context.Context, in *GetKlineRequest, opts ...grpc.CallOption) (*GetKlineResponse, error)
 	GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error)
@@ -42,7 +43,7 @@ type ApiClient interface {
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
 	// AMMs
 	GetQuotes(ctx context.Context, in *GetQuotesRequest, opts ...grpc.CallOption) (*GetQuotesResponse, error)
-	TradeSwap(ctx context.Context, in *TradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error)
+	PostTradeSwap(ctx context.Context, in *TradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(ctx context.Context, in *GetOrderbooksRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
@@ -63,6 +64,15 @@ func NewApiClient(cc grpc.ClientConnInterface) ApiClient {
 func (c *apiClient) GetMarkets(ctx context.Context, in *GetMarketsRequest, opts ...grpc.CallOption) (*GetMarketsResponse, error) {
 	out := new(GetMarketsResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetMarkets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetPools(ctx context.Context, in *GetPoolsRequest, opts ...grpc.CallOption) (*GetPoolsResponse, error) {
+	out := new(GetPoolsResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetPools", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -249,9 +259,9 @@ func (c *apiClient) GetQuotes(ctx context.Context, in *GetQuotesRequest, opts ..
 	return out, nil
 }
 
-func (c *apiClient) TradeSwap(ctx context.Context, in *TradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error) {
+func (c *apiClient) PostTradeSwap(ctx context.Context, in *TradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error) {
 	out := new(TradeSwapResponse)
-	err := c.cc.Invoke(ctx, "/api.Api/TradeSwap", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.Api/PostTradeSwap", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -455,6 +465,7 @@ func (x *apiGetRecentBlockHashStreamClient) Recv() (*GetRecentBlockHashResponse,
 // for forward compatibility
 type ApiServer interface {
 	GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error)
+	GetPools(context.Context, *GetPoolsRequest) (*GetPoolsResponse, error)
 	GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error)
 	GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error)
 	GetOrderbook(context.Context, *GetOrderbookRequest) (*GetOrderbookResponse, error)
@@ -478,7 +489,7 @@ type ApiServer interface {
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
 	// AMMs
 	GetQuotes(context.Context, *GetQuotesRequest) (*GetQuotesResponse, error)
-	TradeSwap(context.Context, *TradeSwapRequest) (*TradeSwapResponse, error)
+	PostTradeSwap(context.Context, *TradeSwapRequest) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
@@ -495,6 +506,9 @@ type UnimplementedApiServer struct {
 
 func (UnimplementedApiServer) GetMarkets(context.Context, *GetMarketsRequest) (*GetMarketsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMarkets not implemented")
+}
+func (UnimplementedApiServer) GetPools(context.Context, *GetPoolsRequest) (*GetPoolsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPools not implemented")
 }
 func (UnimplementedApiServer) GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTickers not implemented")
@@ -556,8 +570,8 @@ func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest
 func (UnimplementedApiServer) GetQuotes(context.Context, *GetQuotesRequest) (*GetQuotesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetQuotes not implemented")
 }
-func (UnimplementedApiServer) TradeSwap(context.Context, *TradeSwapRequest) (*TradeSwapResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TradeSwap not implemented")
+func (UnimplementedApiServer) PostTradeSwap(context.Context, *TradeSwapRequest) (*TradeSwapResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostTradeSwap not implemented")
 }
 func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderbooksStream not implemented")
@@ -604,6 +618,24 @@ func _Api_GetMarkets_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).GetMarkets(ctx, req.(*GetMarketsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_GetPools_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPoolsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetPools(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/GetPools",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetPools(ctx, req.(*GetPoolsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -968,20 +1000,20 @@ func _Api_GetQuotes_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Api_TradeSwap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Api_PostTradeSwap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TradeSwapRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ApiServer).TradeSwap(ctx, in)
+		return srv.(ApiServer).PostTradeSwap(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.Api/TradeSwap",
+		FullMethod: "/api.Api/PostTradeSwap",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).TradeSwap(ctx, req.(*TradeSwapRequest))
+		return srv.(ApiServer).PostTradeSwap(ctx, req.(*TradeSwapRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1124,6 +1156,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Api_GetMarkets_Handler,
 		},
 		{
+			MethodName: "GetPools",
+			Handler:    _Api_GetPools_Handler,
+		},
+		{
 			MethodName: "GetTickers",
 			Handler:    _Api_GetTickers_Handler,
 		},
@@ -1204,8 +1240,8 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Api_GetQuotes_Handler,
 		},
 		{
-			MethodName: "TradeSwap",
-			Handler:    _Api_TradeSwap_Handler,
+			MethodName: "PostTradeSwap",
+			Handler:    _Api_PostTradeSwap_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

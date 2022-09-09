@@ -122,9 +122,9 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight
 	return response.Signature, nil
 }
 
-// TradeSwap returns a partially signed transaction for submitting a swap request
-func (g *GRPCClient) TradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, skipPreFlight bool) (*pb.TradeSwapResponse, error) {
-	return g.apiClient.TradeSwap(ctx, &pb.TradeSwapRequest{
+// PostTradeSwap returns a partially signed transaction for submitting a swap request
+func (g *GRPCClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, skipPreFlight bool) (*pb.TradeSwapResponse, error) {
+	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		Owner:    owner,
 		InToken:  inToken,
 		OutToken: outToken,
@@ -156,7 +156,7 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, skipPreFlight bool) (string, error) {
-	resp, err := g.apiClient.TradeSwap(ctx, &pb.TradeSwapRequest{
+	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		Owner:    owner,
 		InToken:  inToken,
 		OutToken: outToken,
