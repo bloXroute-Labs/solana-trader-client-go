@@ -542,7 +542,8 @@ func callTradeSwap(ownerAddr string) bool {
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL", 0.01, 0.1, false)
+	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL",
+		0.01, 0.1, "raydium", false)
 	if err != nil {
 		log.Error(err)
 		return true

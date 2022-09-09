@@ -651,7 +651,8 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL", 0.01, 0.1, false)
+	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDC",
+		"SOL", 0.01, 0.1, "raydium", false)
 	if err != nil {
 		log.Error(err)
 		return true

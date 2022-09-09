@@ -646,7 +646,8 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL", 0.01, 0.1, false)
+	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDC",
+		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, false)
 	if err != nil {
 		log.Error(err)
 		return true
