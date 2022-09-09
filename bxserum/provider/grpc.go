@@ -139,6 +139,18 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight
 	return response.Signature, nil
 }
 
+// PostTradeSwap returns a partially signed transaction for submitting a swap request
+func (g *GRPCClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
+	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
+		Owner:    owner,
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: inAmount,
+		Slippage: slippage,
+		Project:  project,
+	})
+}
+
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrder(ctx, &pb.PostOrderRequest{
@@ -158,6 +170,22 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: txBase64,
 		SkipPreFlight: skipPreFlight})
+}
+
+// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) (string, error) {
+	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
+		Owner:    owner,
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: inAmount,
+		Slippage: slippage,
+		Project:  project,
+	})
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
