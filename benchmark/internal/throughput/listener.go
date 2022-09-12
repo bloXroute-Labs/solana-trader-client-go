@@ -2,7 +2,7 @@ package throughput
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"time"
 )
 

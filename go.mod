@@ -1,4 +1,4 @@
-module github.com/bloXroute-Labs/serum-client-go
+module github.com/bloXroute-Labs/solana-trader-client-go
 
 go 1.18
 

@@ -5,36 +5,36 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHTTP_New(t *testing.T) {
+func TestGRPC_New(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
 	os.Setenv("PRIVATE_KEY", pk.String())
 
-	c := provider.NewHTTPClient()
+	c, err := provider.NewGRPCClient()
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
 	os.Unsetenv("PRIVATE_KEY")
 }
 
-func TestHTTP_NewWithOpts(t *testing.T) {
+func TestGRPC_NewWithOpts(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
 	o := provider.RPCOpts{
-		Endpoint:   provider.MainnetSerumAPIHTTP,
+		Endpoint:   provider.MainnetGRPC,
 		Timeout:    time.Second,
 		PrivateKey: &pk,
 	}
-
-	c := provider.NewHTTPClientWithOpts(nil, o)
+	c, err := provider.NewGRPCClientWithOpts(o)
 	assert.NotNil(t, c)
+	assert.Nil(t, err)
 }

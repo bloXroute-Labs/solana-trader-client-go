@@ -2,10 +2,10 @@ package provider
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/connections"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/transaction"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 	"net/http"
 )
@@ -26,25 +26,25 @@ func (h *HTTPClient) GetAuthHeader() string {
 
 // NewHTTPClient connects to Mainnet Serum API
 func NewHTTPClient() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetSerumAPIHTTP)
+	opts := DefaultRPCOpts(MainnetHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPTestnet connects to Testnet Serum API
 func NewHTTPTestnet() *HTTPClient {
-	opts := DefaultRPCOpts(TestnetSerumAPIHTTP)
+	opts := DefaultRPCOpts(TestnetHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPDevnet connects to Devnet Serum API
 func NewHTTPDevnet() *HTTPClient {
-	opts := DefaultRPCOpts(DevnetSerumAPIHTTP)
+	opts := DefaultRPCOpts(DevnetHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
 // NewHTTPLocal connects to local Serum API
 func NewHTTPLocal() *HTTPClient {
-	opts := DefaultRPCOpts(LocalSerumAPIHTTP)
+	opts := DefaultRPCOpts(LocalHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 

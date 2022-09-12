@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +33,7 @@ func TestWS_NewWithOpts(t *testing.T) {
 	assert.Nil(t, err)
 
 	o := provider.RPCOpts{
-		Endpoint:   provider.MainnetSerumAPIWS,
+		Endpoint:   provider.MainnetWS,
 		Timeout:    time.Second,
 		PrivateKey: &pk,
 	}

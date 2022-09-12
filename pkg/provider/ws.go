@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 	"errors"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/connections"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/transaction"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -19,25 +19,25 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Serum API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIWS)
+	opts := DefaultRPCOpts(MainnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Serum API
 func NewWSClientTestnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIWS)
+	opts := DefaultRPCOpts(TestnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientDevnet connects to Devnet Serum API
 func NewWSClientDevnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(DevnetSerumAPIWS)
+	opts := DefaultRPCOpts(DevnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientLocal connects to local Serum API
 func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIWS)
+	opts := DefaultRPCOpts(LocalWS)
 	return NewWSClientWithOpts(opts)
 }
 

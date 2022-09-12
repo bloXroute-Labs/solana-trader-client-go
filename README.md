@@ -1,12 +1,12 @@
-# Serum Golang Client
+# Solana Trader Golang Client
 
 ## Objective
-This SDK is designed to make it easy for you to use the [bloXroute Labs Serum API](https://github.com/bloXroute-Labs/serum-api)
+This SDK is designed to make it easy for you to use the bloXroute Labs Solana Trader API
 in Go. 
 
 ## Installation
 ```
-go get github.com/bloXroute-Labs/serum-client-go
+go get github.com/bloXroute-Labs/solana-trader-client-go
 ```
 
 ## Usage

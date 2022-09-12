@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	log "github.com/sirupsen/logrus"
 )
 

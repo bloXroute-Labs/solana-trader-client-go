@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/arrival"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"
 	"golang.org/x/exp/maps"
 	"sort"

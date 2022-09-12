@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/connections"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/transaction"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -20,25 +20,25 @@ type GRPCClient struct {
 
 // NewGRPCClient connects to Mainnet Serum API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(MainnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCTestnet connects to Testnet Serum API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(TestnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCDevnet connects to Devnet Serum API
 func NewGRPCDevnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(DevnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(DevnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCLocal connects to local Serum API
 func NewGRPCLocal() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIGRPC)
+	opts := DefaultRPCOpts(LocalGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
