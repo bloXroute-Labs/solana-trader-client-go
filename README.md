@@ -33,8 +33,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 )
 
 func main() {
@@ -79,8 +79,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"context"
 )
 
