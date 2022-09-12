@@ -26,7 +26,7 @@ func (s SerumUpdate) IsRedundant() bool {
 	if s.previous == nil {
 		return false
 	}
-	return OrderbookEqual(s.previous.Bids, s.Bids) && OrderbookEqual(s.previous.Asks, s.Asks)
+	return orderbookEqual(s.previous.Bids, s.Bids) && orderbookEqual(s.previous.Asks, s.Asks)
 }
 
 type serumOrderbookStream struct {

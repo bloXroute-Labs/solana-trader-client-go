@@ -39,17 +39,10 @@ func (s SolanaUpdate) IsRedundant() bool {
 	if s.previous == nil {
 		return false
 	}
-	return OrderbookEqual(s.Orders, s.previous.Orders)
+	return orderbookEqual(s.Orders, s.previous.Orders)
 }
 
-func (s SolanaUpdate) UnequalIndex() int {
-	if s.previous == nil {
-		return -1
-	}
-	return OrderbookEqualIndex(s.Orders, s.previous.Orders)
-}
-
-func OrderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
+func orderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
 	if len(o1) != len(o2) {
 		return false
 	}
@@ -60,23 +53,6 @@ func OrderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
 		}
 	}
 	return true
-}
-
-func OrderbookEqualIndex(o1, o2 []*pb.OrderbookItem) int {
-	if len(o1) > len(o2) {
-		return len(o1)
-	}
-
-	if len(o2) > len(o1) {
-		return len(o1) + 1
-	}
-
-	for i, o := range o1 {
-		if o.Size != o2[i].Size || o.Price != o2[i].Price {
-			return i
-		}
-	}
-	return -1
 }
 
 func NewSolanaOrderbookStream(ctx context.Context, rpcAddress string, wsAddress, marketAddr string) (Source[SolanaRawUpdate, SolanaUpdate], error) {

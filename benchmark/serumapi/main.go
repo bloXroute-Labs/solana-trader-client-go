@@ -167,8 +167,6 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	arrival.OrderbookEqualIndex(nil, nil)
-
 	return nil
 }
 
