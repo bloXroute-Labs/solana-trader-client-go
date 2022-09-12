@@ -25,12 +25,11 @@ type solanaOrderbookStream struct {
 }
 
 type SolanaRawUpdate struct {
-	data *solanaws.AccountResult
-	side gserum.Side
+	Data *solanaws.AccountResult
+	Side gserum.Side
 }
 
 type SolanaUpdate struct {
-	Slot     int
 	Side     gserum.Side
 	Orders   []*pb.OrderbookItem
 	previous *SolanaUpdate
@@ -40,10 +39,17 @@ func (s SolanaUpdate) IsRedundant() bool {
 	if s.previous == nil {
 		return false
 	}
-	return orderbookEqual(s.Orders, s.previous.Orders)
+	return OrderbookEqual(s.Orders, s.previous.Orders)
 }
 
-func orderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
+func (s SolanaUpdate) UnequalIndex() int {
+	if s.previous == nil {
+		return -1
+	}
+	return OrderbookEqualIndex(s.Orders, s.previous.Orders)
+}
+
+func OrderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
 	if len(o1) != len(o2) {
 		return false
 	}
@@ -54,6 +60,23 @@ func orderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
 		}
 	}
 	return true
+}
+
+func OrderbookEqualIndex(o1, o2 []*pb.OrderbookItem) int {
+	if len(o1) > len(o2) {
+		return len(o1)
+	}
+
+	if len(o2) > len(o1) {
+		return len(o1) + 1
+	}
+
+	for i, o := range o1 {
+		if o.Size != o2[i].Size || o.Price != o2[i].Price {
+			return i
+		}
+	}
+	return -1
 }
 
 func NewSolanaOrderbookStream(ctx context.Context, rpcAddress string, wsAddress, marketAddr string) (Source[SolanaRawUpdate, SolanaUpdate], error) {
@@ -127,8 +150,8 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[Solan
 			}
 
 			messageCh <- NewStreamUpdate(SolanaRawUpdate{
-				data: ar,
-				side: gserum.SideAsk,
+				Data: ar,
+				Side: gserum.SideAsk,
 			})
 		}
 	}()
@@ -146,8 +169,8 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[Solan
 			}
 
 			messageCh <- NewStreamUpdate(SolanaRawUpdate{
-				data: ar,
-				side: gserum.SideBid,
+				Data: ar,
+				Side: gserum.SideBid,
 			})
 		}
 	}()
@@ -171,17 +194,12 @@ func (s solanaOrderbookStream) Process(updates []StreamUpdate[SolanaRawUpdate], 
 	previous := make(map[gserum.Side]*SolanaUpdate)
 	for _, update := range updates {
 		var orderbook gserum.Orderbook
-		err := bin.NewBinDecoder(update.Data.data.Value.Data.GetBinary()).Decode(&orderbook)
+		err := bin.NewBinDecoder(update.Data.Data.Value.Data.GetBinary()).Decode(&orderbook)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		slot := int(update.Data.data.Context.Slot)
-		_, ok := results[slot]
-		if !ok {
-			results[slot] = make([]ProcessedUpdate[SolanaUpdate], 0)
-		}
-
+		slot := int(update.Data.Data.Context.Slot)
 		orders := make([]*pb.OrderbookItem, 0)
 		err = orderbook.Items(false, func(node *gserum.SlabLeafNode) error {
 			// note: price/size are not properly converted into lot sizes
@@ -195,9 +213,8 @@ func (s solanaOrderbookStream) Process(updates []StreamUpdate[SolanaRawUpdate], 
 			return nil, nil, err
 		}
 
-		side := update.Data.side
+		side := update.Data.Side
 		su := SolanaUpdate{
-			Slot:     slot,
 			Side:     side,
 			Orders:   orders,
 			previous: previous[side],
@@ -208,14 +225,19 @@ func (s solanaOrderbookStream) Process(updates []StreamUpdate[SolanaRawUpdate], 
 			Data:      su,
 		}
 
-		if su.IsRedundant() {
+		redundant := su.IsRedundant()
+		if redundant {
 			duplicates[slot] = append(results[slot], pu)
 		} else {
 			previous[side] = &su
 		}
 
-		if !removeDuplicates || !su.IsRedundant() {
+		if !(removeDuplicates && redundant) {
 			results[slot] = append(results[slot], pu)
+			_, ok := results[slot]
+			if !ok {
+				results[slot] = make([]ProcessedUpdate[SolanaUpdate], 0)
+			}
 		}
 	}
 

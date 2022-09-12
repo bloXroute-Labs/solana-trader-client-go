@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"
-	"golang.org/x/exp/maps"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -27,27 +26,13 @@ func (d Datapoint) OrderedTimestamps() ([][]time.Time, gserum.Side) {
 		{time.Time{}, time.Time{}},
 		{time.Time{}, time.Time{}},
 	}
-
-	setBidFirst := func() {
+	if d.SolanaAsk.Before(d.SolanaBid) {
+		tsList[0][1] = d.SolanaAsk
+		tsList[1][1] = d.SolanaBid
+	} else {
 		tsList[1][1] = d.SolanaAsk
 		tsList[0][1] = d.SolanaBid
 		firstSide = gserum.SideBid
-	}
-
-	setAskFirst := func() {
-		tsList[0][1] = d.SolanaAsk
-		tsList[1][1] = d.SolanaBid
-	}
-
-	// zeros should come at end
-	if d.SolanaAsk.IsZero() && !d.SolanaBid.IsZero() {
-		setBidFirst()
-	} else if !d.SolanaAsk.IsZero() && d.SolanaBid.IsZero() {
-		setAskFirst()
-	} else if d.SolanaBid.Before(d.SolanaAsk) {
-		setBidFirst()
-	} else {
-		setAskFirst()
 	}
 
 	for i, ts := range d.SerumTimestamps {
@@ -102,55 +87,13 @@ func (d Datapoint) FormatCSV() [][]string {
 	return lines
 }
 
-func SortRange[T any](slotRange map[int]T) []int {
-	slots := maps.Keys(slotRange)
-	sort.Ints(slots)
-	return slots
-}
-
-func FormatSortRange[T any](slotRange map[int]T) string {
-	sr := SortRange(slotRange)
-	return fmt.Sprintf("%v-%v", sr[0], sr[len(sr)-1])
-}
-
-// SlotRange enumerate the superset range of slots used in Serum and Solana updates
-func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
-	serumSlots := SortRange(serumResults)
-	solanaSlots := SortRange(solanaResults)
-
-	slots := make([]int, 0, len(serumResults))
-	solanaIndex := 0
-	for i := 0; i < len(serumSlots); i++ {
-		serumCandidate := serumSlots[i]
-
-		for j := solanaIndex; j < len(solanaSlots); j++ {
-			solanaCandidate := solanaSlots[j]
-			if solanaCandidate < serumCandidate {
-				slots = append(slots, solanaCandidate)
-				solanaIndex++
-			} else if solanaCandidate == serumCandidate {
-				solanaIndex++
-			} else {
-				break
-			}
-		}
-
-		slots = append(slots, serumCandidate)
-	}
-
-	for j := solanaIndex; j < len(solanaSlots); j++ {
-		slots = append(slots, solanaSlots[j])
-	}
-
-	return slots
-}
-
 // Merge combines Serum and Solana updates over the specified slots, indicating the difference in slot times and any updates that were not included in the other.
 func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
 	datapoints := make([]Datapoint, 0)
 	leftoverSerum := make(map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate])
 	leftoverSolana := make(map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate])
 
+	sum := 0
 	for _, slot := range slots {
 		serumData, serumOK := serumResults[slot]
 		solanaData, solanaOK := solanaResults[slot]
@@ -160,6 +103,12 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.S
 		}
 
 		if !serumOK {
+			for _, su := range solanaData {
+				if su.Data.IsRedundant() {
+					sum++
+					logger.Log().Infow("redundant solana data", "slot", slot)
+				}
+			}
 			leftoverSolana[slot] = solanaData
 		}
 
@@ -191,6 +140,9 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.S
 		datapoints = append(datapoints, dp)
 	}
 
+	logger.Log().Infow("total duplicate solana data", "count", sum)
+	arrival.OrderbookEqualIndex(nil, nil)
+
 	return datapoints, leftoverSerum, leftoverSolana, nil
 }
 
@@ -216,11 +168,6 @@ func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint st
 
 			serumTs := matchedTs[0]
 			solanaTs := matchedTs[1]
-
-			// sometimes only 1 of asks and bids are matched
-			if serumTs.IsZero() && solanaTs.IsZero() {
-				continue
-			}
 
 			// skip cases where one or other timestamp is zero
 			if serumTs.IsZero() {

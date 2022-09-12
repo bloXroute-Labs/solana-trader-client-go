@@ -107,17 +107,13 @@ func run(c *cli.Context) error {
 	completionCount := 0
 	ticker := time.NewTicker(updateInterval)
 
-Loop:
-	for {
+	for completionCount < 2 {
 		select {
 		case runErr := <-errCh:
 			completionCount++
 			if runErr != nil {
 				logger.Log().Errorw("fatal error during runtime: exiting", "err", err)
 				return runErr
-			}
-			if completionCount == 2 {
-				break Loop
 			}
 		case <-ticker.C:
 			elapsedTime := time.Now().Sub(startTime).Round(time.Second)
@@ -127,22 +123,23 @@ Loop:
 	}
 
 	logger.Log().Infow("finished collecting data points", "serumcount", len(serumUpdates), "solanacount", len(solanaUpdates))
-	removeDuplicates := c.Bool(RemoveDuplicatesFlag.Name)
 
+	removeDuplicates := c.Bool(RemoveDuplicatesFlag.Name)
 	serumResults, serumDuplicates, err := serumOS.Process(serumUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process serum updates")
 	}
-	logger.Log().Infow("serum duplicate updates", "count", len(serumDuplicates))
+	logger.Log().Debugw("processed serum results", "range", FormatSortRange(serumResults), "count", len(serumResults), "duplicaterange", FormatSortRange(serumDuplicates), "duplicatecount", len(serumDuplicates))
 
 	solanaResults, solanaDuplicates, err := solanaOS.Process(solanaUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process solana results")
 	}
-	logger.Log().Infow("solana duplicate updates", "count", len(solanaDuplicates))
+
+	logger.Log().Debugw("processed solana results", "range", FormatSortRange(solanaResults), "count", len(solanaResults), "duplicaterange", FormatSortRange(solanaDuplicates), "duplicatecount", len(solanaDuplicates))
 
 	slots := SlotRange(serumResults, solanaResults)
-	logger.Log().Infow("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1])
+	logger.Log().Debugw("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1], "count", len(slots))
 
 	datapoints, _, _, err := Merge(slots, serumResults, solanaResults)
 	if err != nil {
@@ -169,6 +166,8 @@ Loop:
 	if err != nil {
 		return err
 	}
+
+	arrival.OrderbookEqualIndex(nil, nil)
 
 	return nil
 }

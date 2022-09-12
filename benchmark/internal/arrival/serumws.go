@@ -17,7 +17,6 @@ import (
 )
 
 type SerumUpdate struct {
-	Slot     int
 	Asks     []*pb.OrderbookItem
 	Bids     []*pb.OrderbookItem
 	previous *SerumUpdate
@@ -27,7 +26,7 @@ func (s SerumUpdate) IsRedundant() bool {
 	if s.previous == nil {
 		return false
 	}
-	return orderbookEqual(s.previous.Bids, s.Bids) && orderbookEqual(s.previous.Asks, s.Asks)
+	return OrderbookEqual(s.previous.Bids, s.Bids) && OrderbookEqual(s.previous.Asks, s.Asks)
 }
 
 type serumOrderbookStream struct {
@@ -156,13 +155,7 @@ func (s serumOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDupl
 		}
 
 		slot := int(orderbookInc.Slot)
-		_, ok := results[slot]
-		if !ok {
-			results[slot] = make([]ProcessedUpdate[SerumUpdate], 0)
-		}
-
 		su := SerumUpdate{
-			Slot:     slot,
 			Asks:     orderbookInc.Orderbook.Asks,
 			Bids:     orderbookInc.Orderbook.Bids,
 			previous: previous,
@@ -173,13 +166,19 @@ func (s serumOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDupl
 			Data:      su,
 		}
 
-		if su.IsRedundant() {
+		redundant := su.IsRedundant()
+		if redundant {
 			duplicates[slot] = append(results[slot], pu)
 		} else {
 			previous = &su
 		}
 
-		if !removeDuplicates || !su.IsRedundant() {
+		// skip redundant updates if duplicate updates flag is set
+		if !(removeDuplicates && redundant) {
+			_, ok := results[slot]
+			if !ok {
+				results[slot] = make([]ProcessedUpdate[SerumUpdate], 0)
+			}
 			results[slot] = append(results[slot], pu)
 		}
 	}
