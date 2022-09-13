@@ -114,7 +114,7 @@ func FormatSortRange[T any](slotRange map[int]T) string {
 }
 
 // SlotRange enumerate the superset range of slots used in Serum and Solana updates
-func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
+func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
 	serumSlots := SortRange(serumResults)
 	solanaSlots := SortRange(solanaResults)
 
@@ -146,9 +146,9 @@ func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdat
 }
 
 // Merge combines Serum and Solana updates over the specified slots, indicating the difference in slot times and any updates that were not included in the other.
-func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
+func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
 	datapoints := make([]Datapoint, 0)
-	leftoverSerum := make(map[int][]arrival.ProcessedUpdate[arrival.SerumUpdate])
+	leftoverSerum := make(map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate])
 	leftoverSolana := make(map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate])
 
 	for _, slot := range slots {

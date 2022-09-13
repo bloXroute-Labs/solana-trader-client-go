@@ -1,8 +1,8 @@
 FROM golang:1.18 as builder
 
 # setup environment
-RUN mkdir -p /app/serum-client-go
-WORKDIR /app/serum-client-go
+RUN mkdir -p /app/solana-trader-client-go
+WORKDIR /app/solana-trader-client-go
 
 # copy files and download dependencies
 COPY . .
@@ -10,7 +10,7 @@ RUN go mod download
 
 # build
 RUN rm -rf bin
-RUN go build -o bin/ ./benchmark/serumapi
+RUN go build -o bin/ ./benchmark/traderapi
 
 FROM golang:1.18
 
@@ -19,14 +19,14 @@ RUN apt-get install -y net-tools
 RUN rm -rf /var/lib/apt/lists/*
 
 # setup user
-RUN useradd -ms /bin/bash serum-client-go
+RUN useradd -ms /bin/bash solana-trader-client-go
 
 # setup environment
-RUN mkdir -p /app/serum-client-go
-RUN chown -R serum-client-go:serum-client-go /app/serum-client-go
+RUN mkdir -p /app/solana-trader-client-go
+RUN chown -R solana-trader-client-go:solana-trader-client-go /app/solana-trader-client-go
 
-WORKDIR /app/serum-client-go
+WORKDIR /app/solana-trader-client-go
 
-COPY --from=builder /app/serum-client-go/bin /app/serum-client-go/bin
+COPY --from=builder /app/solana-trader-client-go/bin /app/solana-trader-client-go/bin
 
-ENTRYPOINT ["/app/serum-client-go/bin/serumapi"]
+ENTRYPOINT ["/app/solana-trader-client-go/bin/traderapi"]
