@@ -1,4 +1,4 @@
-IMAGE_NAME=bloxroute/bdn-protobuf:v3.19.3-serum
+IMAGE_NAME=bloxroute/bdn-protobuf:v3.19.3-go
 
 .PHONY: proto
 proto: proto-build-api
