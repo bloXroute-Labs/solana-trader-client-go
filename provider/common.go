@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/transaction"
 	"github.com/gagliardetto/solana-go"
 )
 

@@ -2,9 +2,9 @@ package provider
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/connections"
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/transaction"
+	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 	"net/http"

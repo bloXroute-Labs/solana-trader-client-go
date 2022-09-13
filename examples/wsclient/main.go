@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	log "github.com/sirupsen/logrus"

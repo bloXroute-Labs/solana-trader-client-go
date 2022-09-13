@@ -1,40 +1,40 @@
 package provider
 
 import (
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGRPC_New(t *testing.T) {
+func TestHTTP_New(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
 	os.Setenv("PRIVATE_KEY", pk.String())
 
-	c, err := provider.NewGRPCClient()
+	c := provider.NewHTTPClient()
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
 	os.Unsetenv("PRIVATE_KEY")
 }
 
-func TestGRPC_NewWithOpts(t *testing.T) {
+func TestHTTP_NewWithOpts(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
 	o := provider.RPCOpts{
-		Endpoint:   provider.MainnetGRPC,
+		Endpoint:   provider.MainnetHTTP,
 		Timeout:    time.Second,
 		PrivateKey: &pk,
 	}
-	c, err := provider.NewGRPCClientWithOpts(o)
+
+	c := provider.NewHTTPClientWithOpts(nil, o)
 	assert.NotNil(t, c)
-	assert.Nil(t, err)
 }
