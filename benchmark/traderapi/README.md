@@ -15,7 +15,7 @@ $ AUTH_HEADER=... go run ./benchmark/traderapi --run-time 10s --output result.cs
 
 Docker:
 ```
-$ docker run -e AUTH_HEADER=... --name cmp --rm 033969152235.dkr.ecr.us-east-1.amazonaws.com/serum-api:bm-serumapi
+$ docker run -e AUTH_HEADER=... --name cmp --rm bloxroute/solana-trader-client-go:bm-traderapi-v1.0.0
 ```
 
 ## Result
@@ -36,7 +36,7 @@ $ docker run -e AUTH_HEADER=... --name cmp --rm 033969152235.dkr.ecr.us-east-1.a
 2022-09-13T14:24:06.033-0500	INFO	traderapi/main.go:149	completed merging: outputting data...
 Run time:  10s
 Endpoints:
-     ws://54.163.206.248:1809/ws  [serum]
+     ws://54.163.206.248:1809/ws  [traderapi]
      ws://185.209.178.55  [solana]
 
 Total updates:  43
