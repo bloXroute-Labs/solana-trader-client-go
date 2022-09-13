@@ -29,6 +29,7 @@ func main() {
 			DurationFlag,
 			utils.OutputFileFlag,
 			RemoveUnmatchedFlag,
+			RemoveDuplicatesFlag,
 		},
 		Action: run,
 	}
@@ -59,11 +60,11 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 
-	serumOS, err := newSerumOrderbookStream(serumEndpoint, marketAddr, authHeader)
+	serumOS, err := arrival.NewSerumOrderbookStream(serumEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
-	solanaOS, err := newSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
+	solanaOS, err := arrival.NewSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
 	if err != nil {
 		return err
 	}
@@ -75,7 +76,7 @@ func run(c *cli.Context) error {
 
 	var (
 		serumUpdates  []arrival.StreamUpdate[[]byte]
-		solanaUpdates []arrival.StreamUpdate[solanaRawUpdate]
+		solanaUpdates []arrival.StreamUpdate[arrival.SolanaRawUpdate]
 	)
 	errCh := make(chan error, 2)
 
@@ -106,17 +107,13 @@ func run(c *cli.Context) error {
 	completionCount := 0
 	ticker := time.NewTicker(updateInterval)
 
-Loop:
-	for {
+	for completionCount < 2 {
 		select {
 		case runErr := <-errCh:
 			completionCount++
 			if runErr != nil {
 				logger.Log().Errorw("fatal error during runtime: exiting", "err", err)
 				return runErr
-			}
-			if completionCount == 2 {
-				break Loop
 			}
 		case <-ticker.C:
 			elapsedTime := time.Now().Sub(startTime).Round(time.Second)
@@ -127,18 +124,22 @@ Loop:
 
 	logger.Log().Infow("finished collecting data points", "serumcount", len(serumUpdates), "solanacount", len(solanaUpdates))
 
-	serumResults, err := serumOS.Process(serumUpdates)
+	removeDuplicates := c.Bool(RemoveDuplicatesFlag.Name)
+	serumResults, serumDuplicates, err := serumOS.Process(serumUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process serum updates")
 	}
+	logger.Log().Debugw("processed serum results", "range", FormatSortRange(serumResults), "count", len(serumResults), "duplicaterange", FormatSortRange(serumDuplicates), "duplicatecount", len(serumDuplicates))
 
-	solanaResults, err := solanaOS.Process(solanaUpdates)
+	solanaResults, solanaDuplicates, err := solanaOS.Process(solanaUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process solana results")
 	}
 
+	logger.Log().Debugw("processed solana results", "range", FormatSortRange(solanaResults), "count", len(solanaResults), "duplicaterange", FormatSortRange(solanaDuplicates), "duplicatecount", len(solanaDuplicates))
+
 	slots := SlotRange(serumResults, solanaResults)
-	logger.Log().Infow("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1])
+	logger.Log().Debugw("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1], "count", len(slots))
 
 	datapoints, _, _, err := Merge(slots, serumResults, solanaResults)
 	if err != nil {
@@ -149,7 +150,7 @@ Loop:
 
 	// dump results to stdout
 	removeUnmatched := c.Bool(RemoveUnmatchedFlag.Name)
-	PrintSummary(duration, serumEndpoint, solanaWSEndpoint, datapoints, removeUnmatched)
+	PrintSummary(duration, serumEndpoint, solanaWSEndpoint, datapoints)
 
 	// write results to csv
 	outputFile := c.String(utils.OutputFileFlag.Name)
@@ -188,5 +189,9 @@ var (
 	RemoveUnmatchedFlag = &cli.BoolFlag{
 		Name:  "remove-unmatched",
 		Usage: "skip events without a match from other source",
+	}
+	RemoveDuplicatesFlag = &cli.BoolFlag{
+		Name:  "remove-duplicates",
+		Usage: "skip events that are identical to the previous",
 	}
 )

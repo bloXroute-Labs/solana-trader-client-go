@@ -1,8 +1,8 @@
-package main
+package arrival
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
+	"fmt"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	bin "github.com/gagliardetto/binary"
@@ -24,17 +24,38 @@ type solanaOrderbookStream struct {
 	bidPk     solana.PublicKey
 }
 
-type solanaRawUpdate struct {
-	data *solanaws.AccountResult
-	side gserum.Side
+type SolanaRawUpdate struct {
+	Data *solanaws.AccountResult
+	Side gserum.Side
 }
 
-type solanaUpdate struct {
-	side   gserum.Side
-	orders []*pb.OrderbookItem
+type SolanaUpdate struct {
+	Side     gserum.Side
+	Orders   []*pb.OrderbookItem
+	previous *SolanaUpdate
 }
 
-func newSolanaOrderbookStream(ctx context.Context, rpcAddress string, wsAddress, marketAddr string) (arrival.Source[solanaRawUpdate, solanaUpdate], error) {
+func (s SolanaUpdate) IsRedundant() bool {
+	if s.previous == nil {
+		return false
+	}
+	return orderbookEqual(s.Orders, s.previous.Orders)
+}
+
+func orderbookEqual(o1, o2 []*pb.OrderbookItem) bool {
+	if len(o1) != len(o2) {
+		return false
+	}
+
+	for i, o := range o1 {
+		if o.Size != o2[i].Size || o.Price != o2[i].Price {
+			return false
+		}
+	}
+	return true
+}
+
+func NewSolanaOrderbookStream(ctx context.Context, rpcAddress string, wsAddress, marketAddr string) (Source[SolanaRawUpdate, SolanaUpdate], error) {
 	marketPk, err := solana.PublicKeyFromBase58(marketAddr)
 	if err != nil {
 		return nil, nil
@@ -67,8 +88,12 @@ func (s solanaOrderbookStream) log() *zap.SugaredLogger {
 	return logger.Log().With("source", "solanaws", "address", s.wsAddress, "market", s.marketPk.String())
 }
 
+func (s solanaOrderbookStream) Name() string {
+	return fmt.Sprintf("solanaws[%v]", s.wsAddress)
+}
+
 // Run stops when parent ctx is canceled
-func (s solanaOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpdate[solanaRawUpdate], error) {
+func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[SolanaRawUpdate], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -84,7 +109,7 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpda
 
 	s.log().Debug("subscription created")
 
-	messageCh := make(chan arrival.StreamUpdate[solanaRawUpdate], 200)
+	messageCh := make(chan StreamUpdate[SolanaRawUpdate], 200)
 
 	// dispatch ask/bid subs
 	go func() {
@@ -95,14 +120,14 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpda
 
 			ar, err := asksSub.Recv()
 			if err != nil {
-				s.log().Debugw("closing asks subscription", "err", err)
+				s.log().Debugw("closing Asks subscription", "err", err)
 				cancel()
 				return
 			}
 
-			messageCh <- arrival.NewStreamUpdate(solanaRawUpdate{
-				data: ar,
-				side: gserum.SideAsk,
+			messageCh <- NewStreamUpdate(SolanaRawUpdate{
+				Data: ar,
+				Side: gserum.SideAsk,
 			})
 		}
 	}()
@@ -114,19 +139,19 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpda
 
 			ar, err := bidsSub.Recv()
 			if err != nil {
-				s.log().Debugw("closing bids subscription", "err", err)
+				s.log().Debugw("closing Bids subscription", "err", err)
 				cancel()
 				return
 			}
 
-			messageCh <- arrival.NewStreamUpdate(solanaRawUpdate{
-				data: ar,
-				side: gserum.SideBid,
+			messageCh <- NewStreamUpdate(SolanaRawUpdate{
+				Data: ar,
+				Side: gserum.SideBid,
 			})
 		}
 	}()
 
-	messages := make([]arrival.StreamUpdate[solanaRawUpdate], 0)
+	messages := make([]StreamUpdate[SolanaRawUpdate], 0)
 	for {
 		select {
 		case msg := <-messageCh:
@@ -138,23 +163,19 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpda
 	}
 }
 
-func (s solanaOrderbookStream) Process(updates []arrival.StreamUpdate[solanaRawUpdate]) (map[int][]arrival.ProcessedUpdate[solanaUpdate], error) {
-	results := make(map[int][]arrival.ProcessedUpdate[solanaUpdate])
+func (s solanaOrderbookStream) Process(updates []StreamUpdate[SolanaRawUpdate], removeDuplicates bool) (map[int][]ProcessedUpdate[SolanaUpdate], map[int][]ProcessedUpdate[SolanaUpdate], error) {
+	results := make(map[int][]ProcessedUpdate[SolanaUpdate])
+	duplicates := make(map[int][]ProcessedUpdate[SolanaUpdate])
 
+	previous := make(map[gserum.Side]*SolanaUpdate)
 	for _, update := range updates {
-
 		var orderbook gserum.Orderbook
-		err := bin.NewBinDecoder(update.Data.data.Value.Data.GetBinary()).Decode(&orderbook)
+		err := bin.NewBinDecoder(update.Data.Data.Value.Data.GetBinary()).Decode(&orderbook)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		slot := int(update.Data.data.Context.Slot)
-		_, ok := results[slot]
-		if !ok {
-			results[slot] = make([]arrival.ProcessedUpdate[solanaUpdate], 0)
-		}
-
+		slot := int(update.Data.Data.Context.Slot)
 		orders := make([]*pb.OrderbookItem, 0)
 		err = orderbook.Items(false, func(node *gserum.SlabLeafNode) error {
 			// note: price/size are not properly converted into lot sizes
@@ -165,22 +186,38 @@ func (s solanaOrderbookStream) Process(updates []arrival.StreamUpdate[solanaRawU
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		su := solanaUpdate{
-			side:   update.Data.side,
-			orders: orders,
+		side := update.Data.Side
+		su := SolanaUpdate{
+			Side:     side,
+			Orders:   orders,
+			previous: previous[side],
 		}
-
-		results[slot] = append(results[slot], arrival.ProcessedUpdate[solanaUpdate]{
+		pu := ProcessedUpdate[SolanaUpdate]{
 			Timestamp: update.Timestamp,
 			Slot:      slot,
 			Data:      su,
-		})
+		}
+
+		redundant := su.IsRedundant()
+		if redundant {
+			duplicates[slot] = append(duplicates[slot], pu)
+		} else {
+			previous[side] = &su
+		}
+
+		if !(removeDuplicates && redundant) {
+			results[slot] = append(results[slot], pu)
+			_, ok := results[slot]
+			if !ok {
+				results[slot] = make([]ProcessedUpdate[SolanaUpdate], 0)
+			}
+		}
 	}
 
-	return results, nil
+	return results, duplicates, nil
 }
 
 func (s solanaOrderbookStream) fetchMarket(ctx context.Context, marketPk solana.PublicKey) (*gserum.MarketV2, error) {
