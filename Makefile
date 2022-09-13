@@ -15,7 +15,7 @@ test:
 
 .PHONY: unit
 unit:
-	 go test -v ./bxserum/provider_test/.
+	 go test -v ./provider_test/.
 
 .PHONY: grpc-examples
 grpc-examples:

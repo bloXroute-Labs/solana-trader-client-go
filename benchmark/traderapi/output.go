@@ -13,13 +13,13 @@ import (
 const tsFormat = "15:04:05.999999"
 
 type Datapoint struct {
-	Slot            int
-	SerumTimestamps []time.Time
-	SolanaAsk       time.Time
-	SolanaBid       time.Time
+	Slot             int
+	TraderTimestamps []time.Time
+	SolanaAsk        time.Time
+	SolanaBid        time.Time
 }
 
-// OrderedTimestamps returns timestamps pairs of [serumTS, solanaTS] within the slot. For example, the first TS from Serum is matched with the sooner of SolanaAsk and SolanaBid, the second with the later, and the rest with zero values.
+// OrderedTimestamps returns timestamps pairs of [serumTS, solanaTS] within the slot. For example, the first TS from Solana Trader API is matched with the sooner of SolanaAsk and SolanaBid, the second with the later, and the rest with zero values.
 func (d Datapoint) OrderedTimestamps() ([][]time.Time, gserum.Side) {
 	var firstSide gserum.Side = gserum.SideAsk
 
@@ -50,7 +50,7 @@ func (d Datapoint) OrderedTimestamps() ([][]time.Time, gserum.Side) {
 		setAskFirst()
 	}
 
-	for i, ts := range d.SerumTimestamps {
+	for i, ts := range d.TraderTimestamps {
 		if i < 2 {
 			tsList[i][0] = ts
 		} else {
@@ -75,7 +75,7 @@ func (d Datapoint) FormatPrint() []string {
 			side = sides[i]
 		}
 
-		line := fmt.Sprintf("slot %v (%v): serum %v, solana %v, diff %v", d.Slot, side, formatTS(timestamps[0]), formatTS(timestamps[1]), formatDiff(timestamps[0], timestamps[1]))
+		line := fmt.Sprintf("slot %v (%v): solana trader %v, solana %v, diff %v", d.Slot, side, formatTS(timestamps[0]), formatTS(timestamps[1]), formatDiff(timestamps[0], timestamps[1]))
 		lines = append(lines, line)
 	}
 	return lines
@@ -113,29 +113,29 @@ func FormatSortRange[T any](slotRange map[int]T) string {
 	return fmt.Sprintf("%v-%v", sr[0], sr[len(sr)-1])
 }
 
-// SlotRange enumerate the superset range of slots used in Serum and Solana updates
-func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
-	serumSlots := SortRange(serumResults)
+// SlotRange enumerate the superset range of slots used in Trader API and Solana updates
+func SlotRange(traderResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
+	traderSlots := SortRange(traderResults)
 	solanaSlots := SortRange(solanaResults)
 
-	slots := make([]int, 0, len(serumResults))
+	slots := make([]int, 0, len(traderResults))
 	solanaIndex := 0
-	for i := 0; i < len(serumSlots); i++ {
-		serumCandidate := serumSlots[i]
+	for i := 0; i < len(traderSlots); i++ {
+		traderCandidate := traderSlots[i]
 
 		for j := solanaIndex; j < len(solanaSlots); j++ {
 			solanaCandidate := solanaSlots[j]
-			if solanaCandidate < serumCandidate {
+			if solanaCandidate < traderCandidate {
 				slots = append(slots, solanaCandidate)
 				solanaIndex++
-			} else if solanaCandidate == serumCandidate {
+			} else if solanaCandidate == traderCandidate {
 				solanaIndex++
 			} else {
 				break
 			}
 		}
 
-		slots = append(slots, serumCandidate)
+		slots = append(slots, traderCandidate)
 	}
 
 	for j := solanaIndex; j < len(solanaSlots); j++ {
@@ -145,31 +145,31 @@ func SlotRange(serumResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIU
 	return slots
 }
 
-// Merge combines Serum and Solana updates over the specified slots, indicating the difference in slot times and any updates that were not included in the other.
-func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
+// Merge combines Trader API and Solana updates over the specified slots, indicating the difference in slot times and any updates that were not included in the other.
+func Merge(slots []int, traderResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
 	datapoints := make([]Datapoint, 0)
-	leftoverSerum := make(map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate])
+	leftoverTrader := make(map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate])
 	leftoverSolana := make(map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate])
 
 	for _, slot := range slots {
-		serumData, serumOK := serumResults[slot]
+		traderData, traderOK := traderResults[slot]
 		solanaData, solanaOK := solanaResults[slot]
 
-		if !serumOK && !solanaOK {
+		if !traderOK && !solanaOK {
 			return nil, nil, nil, fmt.Errorf("(slot %v) improper slot set provided", slot)
 		}
 
-		if !serumOK {
+		if !traderOK {
 			leftoverSolana[slot] = solanaData
 		}
 
 		if !solanaOK {
-			leftoverSerum[slot] = serumData
+			leftoverTrader[slot] = traderData
 		}
 
 		dp := Datapoint{
-			Slot:            slot,
-			SerumTimestamps: make([]time.Time, 0, len(serumData)),
+			Slot:             slot,
+			TraderTimestamps: make([]time.Time, 0, len(traderData)),
 		}
 		if len(solanaData) > 2 {
 			return nil, nil, nil, fmt.Errorf("(slot %v) solana data unexpectedly had more than 2 entries: %v", slot, solanaData)
@@ -184,22 +184,22 @@ func Merge(slots []int, serumResults map[int][]arrival.ProcessedUpdate[arrival.T
 			}
 		}
 
-		for _, su := range serumData {
-			dp.SerumTimestamps = append(dp.SerumTimestamps, su.Timestamp)
+		for _, su := range traderData {
+			dp.TraderTimestamps = append(dp.TraderTimestamps, su.Timestamp)
 		}
 
 		datapoints = append(datapoints, dp)
 	}
 
-	return datapoints, leftoverSerum, leftoverSolana, nil
+	return datapoints, leftoverTrader, leftoverSolana, nil
 }
 
-func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint string, datapoints []Datapoint) {
-	serumFaster := 0
+func PrintSummary(runtime time.Duration, traderEndpoint string, solanaEndpoint string, datapoints []Datapoint) {
+	traderFaster := 0
 	solanaFaster := 0
-	totalSerumLead := 0
+	totalTraderLead := 0
 	totalSolanaLead := 0
-	serumUnmatched := 0
+	traderUnmatched := 0
 	solanaUnmatched := 0
 	total := 0
 
@@ -210,46 +210,46 @@ func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint st
 			total++
 
 			if len(matchedTs) < 2 {
-				serumUnmatched++
+				traderUnmatched++
 				continue
 			}
 
-			serumTs := matchedTs[0]
+			traderTs := matchedTs[0]
 			solanaTs := matchedTs[1]
 
 			// sometimes only 1 of asks and bids are matched
-			if serumTs.IsZero() && solanaTs.IsZero() {
+			if traderTs.IsZero() && solanaTs.IsZero() {
 				continue
 			}
 
 			// skip cases where one or other timestamp is zero
-			if serumTs.IsZero() {
+			if traderTs.IsZero() {
 				solanaUnmatched++
 				continue
 			}
 
 			if solanaTs.IsZero() {
-				serumUnmatched++
+				traderUnmatched++
 				continue
 			}
 
-			if serumTs.Before(solanaTs) {
-				serumFaster++
-				totalSerumLead += int(solanaTs.Sub(serumTs).Milliseconds())
+			if traderTs.Before(solanaTs) {
+				traderFaster++
+				totalTraderLead += int(solanaTs.Sub(traderTs).Milliseconds())
 				continue
 			}
 
-			if solanaTs.Before(serumTs) {
+			if solanaTs.Before(traderTs) {
 				solanaFaster++
-				totalSolanaLead += int(serumTs.Sub(solanaTs).Milliseconds())
+				totalSolanaLead += int(traderTs.Sub(solanaTs).Milliseconds())
 				continue
 			}
 		}
 	}
 
-	averageSerumLead := 0
-	if serumFaster > 0 {
-		averageSerumLead = totalSerumLead / serumFaster
+	averageTraderLead := 0
+	if traderFaster > 0 {
+		averageTraderLead = totalTraderLead / traderFaster
 	}
 	averageSolanaLead := 0
 	if solanaFaster > 0 {
@@ -258,7 +258,7 @@ func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint st
 
 	fmt.Println("Run time: ", runtime)
 	fmt.Println("Endpoints:")
-	fmt.Println("    ", serumEndpoint, " [serum]")
+	fmt.Println("    ", traderEndpoint, " [traderapi]")
 	fmt.Println("    ", solanaEndpoint, " [solana]")
 	fmt.Println()
 
@@ -266,16 +266,16 @@ func PrintSummary(runtime time.Duration, serumEndpoint string, solanaEndpoint st
 	fmt.Println()
 
 	fmt.Println("Faster counts: ")
-	fmt.Println(fmt.Sprintf("    %-6d  %v", serumFaster, serumEndpoint))
+	fmt.Println(fmt.Sprintf("    %-6d  %v", traderFaster, traderEndpoint))
 	fmt.Println(fmt.Sprintf("    %-6d  %v", solanaFaster, solanaEndpoint))
 
 	fmt.Println("Average difference( ms): ")
-	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageSerumLead), serumEndpoint))
+	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageTraderLead), traderEndpoint))
 	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageSolanaLead), solanaEndpoint))
 
 	fmt.Println("Unmatched updates: ")
 	fmt.Println("(updates from each stream without a corresponding result on the other)")
-	fmt.Println(fmt.Sprintf("    %-6d  %v", serumUnmatched, serumEndpoint))
+	fmt.Println(fmt.Sprintf("    %-6d  %v", traderUnmatched, traderEndpoint))
 	fmt.Println(fmt.Sprintf("    %-6d  %v", solanaUnmatched, solanaEndpoint))
 }
 
@@ -287,10 +287,10 @@ func formatTS(ts time.Time) string {
 	}
 }
 
-func formatDiff(serumTS time.Time, solanaTS time.Time) string {
-	if serumTS.IsZero() || solanaTS.IsZero() {
+func formatDiff(traderTS time.Time, solanaTS time.Time) string {
+	if traderTS.IsZero() || solanaTS.IsZero() {
 		return "n/a"
 	} else {
-		return serumTS.Sub(solanaTS).String()
+		return traderTS.Sub(solanaTS).String()
 	}
 }
