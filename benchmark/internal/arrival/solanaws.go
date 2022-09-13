@@ -203,7 +203,7 @@ func (s solanaOrderbookStream) Process(updates []StreamUpdate[SolanaRawUpdate], 
 
 		redundant := su.IsRedundant()
 		if redundant {
-			duplicates[slot] = append(results[slot], pu)
+			duplicates[slot] = append(duplicates[slot], pu)
 		} else {
 			previous[side] = &su
 		}
