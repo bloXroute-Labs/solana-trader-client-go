@@ -1,11 +1,10 @@
-package main
+package arrival
 
 import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
 	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
 	pb "github.com/bloXroute-Labs/serum-client-go/proto"
 	"github.com/gorilla/websocket"
@@ -17,9 +16,17 @@ import (
 	"net/http"
 )
 
-type serumUpdate struct {
-	asks []*pb.OrderbookItem
-	bids []*pb.OrderbookItem
+type SerumUpdate struct {
+	Asks     []*pb.OrderbookItem
+	Bids     []*pb.OrderbookItem
+	previous *SerumUpdate
+}
+
+func (s SerumUpdate) IsRedundant() bool {
+	if s.previous == nil {
+		return false
+	}
+	return orderbookEqual(s.previous.Bids, s.Bids) && orderbookEqual(s.previous.Asks, s.Asks)
 }
 
 type serumOrderbookStream struct {
@@ -28,7 +35,7 @@ type serumOrderbookStream struct {
 	market  string
 }
 
-func newSerumOrderbookStream(address, market, authHeader string) (arrival.Source[[]byte, serumUpdate], error) {
+func NewSerumOrderbookStream(address, market, authHeader string) (Source[[]byte, SerumUpdate], error) {
 	s := serumOrderbookStream{
 		address: address,
 		market:  market,
@@ -56,8 +63,12 @@ func (s serumOrderbookStream) log() *zap.SugaredLogger {
 	return logger.Log().With("source", "serum", "address", s.address, "market", s.market)
 }
 
+func (s serumOrderbookStream) Name() string {
+	return fmt.Sprintf("serum[%v]", s.address)
+}
+
 // Run stops when parent ctx is canceled
-func (s serumOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpdate[[]byte], error) {
+func (s serumOrderbookStream) Run(parent context.Context) ([]StreamUpdate[[]byte], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -69,7 +80,7 @@ func (s serumOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpdat
 
 	s.log().Debugw("subscription created")
 
-	wsMessages := make(chan arrival.StreamUpdate[[]byte], 100)
+	wsMessages := make(chan StreamUpdate[[]byte], 100)
 	go func() {
 		for {
 			if ctx.Err() != nil {
@@ -82,11 +93,11 @@ func (s serumOrderbookStream) Run(parent context.Context) ([]arrival.StreamUpdat
 				return
 			}
 
-			wsMessages <- arrival.NewStreamUpdate(b)
+			wsMessages <- NewStreamUpdate(b)
 		}
 	}()
 
-	messages := make([]arrival.StreamUpdate[[]byte], 0)
+	messages := make([]StreamUpdate[[]byte], 0)
 	for {
 		select {
 		case msg := <-wsMessages:
@@ -106,10 +117,14 @@ type subscriptionUpdate struct {
 	Result         json.RawMessage `json:"result"`
 }
 
-func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (map[int][]arrival.ProcessedUpdate[serumUpdate], error) {
-	var err error
+func (s serumOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDuplicates bool) (map[int][]ProcessedUpdate[SerumUpdate], map[int][]ProcessedUpdate[SerumUpdate], error) {
+	var (
+		err      error
+		previous *SerumUpdate
+	)
 
-	results := make(map[int][]arrival.ProcessedUpdate[serumUpdate])
+	results := make(map[int][]ProcessedUpdate[SerumUpdate])
+	duplicates := make(map[int][]ProcessedUpdate[SerumUpdate])
 	allowedFailures := 1 // allowed to skip processing of subscription confirmation message
 
 	for _, update := range updates {
@@ -118,7 +133,7 @@ func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (m
 		if err != nil || rpcUpdate.Params == nil {
 			allowedFailures--
 			if allowedFailures < 0 {
-				return nil, errors.Wrap(err, "too many response errors")
+				return nil, nil, errors.Wrap(err, "too many response errors")
 			}
 			continue
 		}
@@ -128,34 +143,45 @@ func (s serumOrderbookStream) Process(updates []arrival.StreamUpdate[[]byte]) (m
 		if err != nil {
 			allowedFailures--
 			if allowedFailures < 0 {
-				return nil, errors.Wrap(err, "too many response errors")
+				return nil, nil, errors.Wrap(err, "too many response errors")
 			}
 			continue
 		}
 
-		// note for future: when WS stream follows RPC spec will need to discard subscribe message
 		var orderbookInc pb.GetOrderbooksStreamResponse
 		err = protojson.Unmarshal(subU.Result, &orderbookInc)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		slot := int(orderbookInc.Slot)
-		_, ok := results[slot]
-		if !ok {
-			results[slot] = make([]arrival.ProcessedUpdate[serumUpdate], 0)
+		su := SerumUpdate{
+			Asks:     orderbookInc.Orderbook.Asks,
+			Bids:     orderbookInc.Orderbook.Bids,
+			previous: previous,
 		}
-
-		su := serumUpdate{
-			asks: orderbookInc.Orderbook.Asks,
-			bids: orderbookInc.Orderbook.Bids,
-		}
-		results[slot] = append(results[slot], arrival.ProcessedUpdate[serumUpdate]{
+		pu := ProcessedUpdate[SerumUpdate]{
 			Timestamp: update.Timestamp,
 			Slot:      slot,
 			Data:      su,
-		})
+		}
+
+		redundant := su.IsRedundant()
+		if redundant {
+			duplicates[slot] = append(results[slot], pu)
+		} else {
+			previous = &su
+		}
+
+		// skip redundant updates if duplicate updates flag is set
+		if !(removeDuplicates && redundant) {
+			_, ok := results[slot]
+			if !ok {
+				results[slot] = make([]ProcessedUpdate[SerumUpdate], 0)
+			}
+			results[slot] = append(results[slot], pu)
+		}
 	}
 
-	return results, nil
+	return results, duplicates, nil
 }
