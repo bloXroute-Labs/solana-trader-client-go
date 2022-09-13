@@ -24,31 +24,31 @@ func (h *HTTPClient) GetAuthHeader() string {
 	return h.authHeader
 }
 
-// NewHTTPClient connects to Mainnet Serum API
+// NewHTTPClient connects to Mainnet Trader API
 func NewHTTPClient() *HTTPClient {
 	opts := DefaultRPCOpts(MainnetHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPTestnet connects to Testnet Serum API
+// NewHTTPTestnet connects to Testnet Trader API
 func NewHTTPTestnet() *HTTPClient {
 	opts := DefaultRPCOpts(TestnetHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPDevnet connects to Devnet Serum API
+// NewHTTPDevnet connects to Devnet Trader API
 func NewHTTPDevnet() *HTTPClient {
 	opts := DefaultRPCOpts(DevnetHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPLocal connects to local Serum API
+// NewHTTPLocal connects to local Trader API
 func NewHTTPLocal() *HTTPClient {
 	opts := DefaultRPCOpts(LocalHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPClientWithOpts connects to custom Serum API (set client to nil to use default client)
+// NewHTTPClientWithOpts connects to custom Trader API (set client to nil to use default client)
 func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	if client == nil {
 		client = &http.Client{Timeout: opts.Timeout}

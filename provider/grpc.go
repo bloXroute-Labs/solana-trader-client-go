@@ -18,25 +18,25 @@ type GRPCClient struct {
 	privateKey *solana.PrivateKey
 }
 
-// NewGRPCClient connects to Mainnet Serum API
+// NewGRPCClient connects to Mainnet Trader API
 func NewGRPCClient() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(MainnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCTestnet connects to Testnet Serum API
+// NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCDevnet connects to Devnet Serum API
+// NewGRPCDevnet connects to Devnet Trader API
 func NewGRPCDevnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(DevnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCLocal connects to local Serum API
+// NewGRPCLocal connects to local Trader API
 func NewGRPCLocal() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(LocalGRPC)
 	return NewGRPCClientWithOpts(opts)
@@ -56,7 +56,7 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// NewGRPCClientWithOpts connects to custom Serum API
+// NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
 	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), authOption)

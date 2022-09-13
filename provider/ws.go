@@ -17,31 +17,31 @@ type WSClient struct {
 	privateKey *solana.PrivateKey
 }
 
-// NewWSClient connects to Mainnet Serum API
+// NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
 	opts := DefaultRPCOpts(MainnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientTestnet connects to Testnet Serum API
+// NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (*WSClient, error) {
 	opts := DefaultRPCOpts(TestnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientDevnet connects to Devnet Serum API
+// NewWSClientDevnet connects to Devnet Trader API
 func NewWSClientDevnet() (*WSClient, error) {
 	opts := DefaultRPCOpts(DevnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientLocal connects to local Serum API
+// NewWSClientLocal connects to local Trader API
 func NewWSClientLocal() (*WSClient, error) {
 	opts := DefaultRPCOpts(LocalWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientWithOpts connects to custom Serum API
+// NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 	conn, err := connections2.NewWS(opts.Endpoint, opts.AuthHeader)
 	if err != nil {
