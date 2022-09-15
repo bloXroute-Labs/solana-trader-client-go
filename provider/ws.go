@@ -203,12 +203,22 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight b
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, skipPreFlight bool) (string, error) {
+func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, skipPreFlight bool) ([]string, error) {
 	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
-	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.

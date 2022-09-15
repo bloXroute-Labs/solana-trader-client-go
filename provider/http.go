@@ -214,16 +214,27 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) (string, error) {
+func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) ([]string, error) {
 	project, err := ProjectFromString(projectStr)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
-	return h.signAndSubmit(resp.Transaction, skipPreFlight)
+
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
