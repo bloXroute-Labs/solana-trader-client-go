@@ -1,40 +1,44 @@
 package provider
 
 import (
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGRPC_New(t *testing.T) {
+func TestWS_New(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
-	os.Setenv("PRIVATE_KEY", pk.String())
+	err = os.Setenv("PRIVATE_KEY", pk.String())
+	require.Nil(t, err)
 
-	c, err := provider.NewGRPCClient()
+	c, err := provider.NewWSClient()
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 
-	os.Unsetenv("PRIVATE_KEY")
+	err = os.Unsetenv("PRIVATE_KEY")
+	require.Nil(t, err)
 }
 
-func TestGRPC_NewWithOpts(t *testing.T) {
+func TestWS_NewWithOpts(t *testing.T) {
 	pk, err := solana.NewRandomPrivateKey()
 	assert.NotNil(t, pk)
 	assert.Nil(t, err)
 
 	o := provider.RPCOpts{
-		Endpoint:   provider.MainnetSerumAPIGRPC,
+		Endpoint:   provider.MainnetWS,
 		Timeout:    time.Second,
 		PrivateKey: &pk,
 	}
-	c, err := provider.NewGRPCClientWithOpts(o)
+
+	c, err := provider.NewWSClientWithOpts(o)
 	assert.NotNil(t, c)
 	assert.Nil(t, err)
 }

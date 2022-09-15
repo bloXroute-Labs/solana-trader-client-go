@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	connections2 "github.com/bloXroute-Labs/solana-trader-client-go/connections"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,27 +18,27 @@ type GRPCClient struct {
 	privateKey *solana.PrivateKey
 }
 
-// NewGRPCClient connects to Mainnet Serum API
+// NewGRPCClient connects to Mainnet Trader API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(MainnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCTestnet connects to Testnet Serum API
+// NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(TestnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCDevnet connects to Devnet Serum API
+// NewGRPCDevnet connects to Devnet Trader API
 func NewGRPCDevnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(DevnetSerumAPIGRPC)
+	opts := DefaultRPCOpts(DevnetGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCLocal connects to local Serum API
+// NewGRPCLocal connects to local Trader API
 func NewGRPCLocal() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIGRPC)
+	opts := DefaultRPCOpts(LocalGRPC)
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -56,7 +56,7 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 	return false
 }
 
-// NewGRPCClientWithOpts connects to custom Serum API
+// NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
 	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), authOption)
@@ -346,31 +346,31 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32) (connections2.Streamer[*pb.GetOrderbooksStreamResponse], error) {
 	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+	return connections2.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
 }
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
+func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections2.Streamer[*pb.GetTradesStreamResponse], error) {
 	stream, err := g.apiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market), nil
+	return connections2.GRPCStream[pb.GetTradesStreamResponse](stream, market), nil
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
+func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections2.Streamer[*pb.GetOrderStatusStreamResponse], error) {
 	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
+	return connections2.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
 }

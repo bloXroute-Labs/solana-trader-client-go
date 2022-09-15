@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 	"errors"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/connections"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	connections2 "github.com/bloXroute-Labs/solana-trader-client-go/connections"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -13,37 +13,37 @@ type WSClient struct {
 	pb.UnimplementedApiServer
 
 	addr       string
-	conn       *connections.WS
+	conn       *connections2.WS
 	privateKey *solana.PrivateKey
 }
 
-// NewWSClient connects to Mainnet Serum API
+// NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetSerumAPIWS)
+	opts := DefaultRPCOpts(MainnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientTestnet connects to Testnet Serum API
+// NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(TestnetSerumAPIWS)
+	opts := DefaultRPCOpts(TestnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientDevnet connects to Devnet Serum API
+// NewWSClientDevnet connects to Devnet Trader API
 func NewWSClientDevnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(DevnetSerumAPIWS)
+	opts := DefaultRPCOpts(DevnetWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientLocal connects to local Serum API
+// NewWSClientLocal connects to local Trader API
 func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalSerumAPIWS)
+	opts := DefaultRPCOpts(LocalWS)
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSClientWithOpts connects to custom Serum API
+// NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
-	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
+	conn, err := connections2.NewWS(opts.Endpoint, opts.AuthHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -437,8 +437,8 @@ func (w *WSClient) Close() error {
 }
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32) (connections2.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+	return connections2.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
 		Markets: markets,
 		Limit:   limit,
 	}, func() *pb.GetOrderbooksStreamResponse {
@@ -448,8 +448,8 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 }
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
+func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections2.Streamer[*pb.GetTradesStreamResponse], error) {
+	return connections2.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
 		Market: market,
 		Limit:  limit,
 	}, func() *pb.GetTradesStreamResponse {
@@ -459,8 +459,8 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
+func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections2.Streamer[*pb.GetOrderStatusStreamResponse], error) {
+	return connections2.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
 		Market:       market,
 		OwnerAddress: ownerAddress,
 	}, func() *pb.GetOrderStatusStreamResponse {

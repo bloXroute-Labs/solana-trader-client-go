@@ -3,29 +3,29 @@ package provider
 import (
 	"errors"
 	"fmt"
-	api "github.com/bloXroute-Labs/serum-client-go/proto"
+	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
 	"github.com/gagliardetto/solana-go"
 )
 
 const (
-	MainnetSerumAPIHTTP = "https://virginia.solana.dex.blxrbdn.com"
-	MainnetSerumAPIWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
-	MainnetSerumAPIGRPC = "virginia.solana.dex.blxrbdn.com:443"
-	TestnetSerumAPIHTTP = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/"
-	TestnetSerumAPIWS   = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
-	TestnetSerumAPIGRPC = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
-	DevnetSerumAPIHTTP  = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
-	DevnetSerumAPIWS    = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
-	DevnetSerumAPIGRPC  = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:80"
-	LocalSerumAPIWS     = "ws://localhost:9000/ws"
-	LocalSerumAPIGRPC   = "localhost:9000"
-	LocalSerumAPIHTTP   = "http://127.0.0.1:9000"
-	defaultRPCTimeout   = 7 * time.Second
+	MainnetHTTP       = "https://virginia.solana.dex.blxrbdn.com"
+	MainnetWS         = "wss://virginia.solana.dex.blxrbdn.com/ws"
+	MainnetGRPC       = "virginia.solana.dex.blxrbdn.com:443"
+	TestnetHTTP       = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/"
+	TestnetWS         = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
+	TestnetGRPC       = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
+	DevnetHTTP        = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
+	DevnetWS          = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
+	DevnetGRPC        = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:80"
+	LocalWS           = "ws://localhost:9000/ws"
+	LocalGRPC         = "localhost:9000"
+	LocalHTTP         = "http://127.0.0.1:9000"
+	defaultRPCTimeout = 7 * time.Second
 )
 
 var ErrPrivateKeyNotFound = errors.New("private key not provided for signing transaction")

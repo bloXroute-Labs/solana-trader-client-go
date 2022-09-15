@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/arrival"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/csv"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/csv"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -19,12 +19,12 @@ const updateInterval = 10 * time.Second
 
 func main() {
 	app := &cli.App{
-		Name:  "benchmark-serumapi",
-		Usage: "Compares Serum API orderbook stream with a direct connection to a Solana node to determine the efficacy of using the Serum API stream",
+		Name:  "benchmark-traderapi",
+		Usage: "Compares Solana Trader API orderbook stream with a direct connection to a Solana node to determine the efficacy of using the Solana Trader API stream",
 		Flags: []cli.Flag{
 			utils.SolanaHTTPRPCEndpointFlag,
 			utils.SolanaWSRPCEndpointFlag,
-			SerumWSEndpointFlag,
+			APIWSEndpoint,
 			MarketAddrFlag,
 			DurationFlag,
 			utils.OutputFileFlag,
@@ -51,7 +51,7 @@ func run(c *cli.Context) error {
 	defer cancel()
 
 	marketAddr := c.String(MarketAddrFlag.Name)
-	serumEndpoint := c.String(SerumWSEndpointFlag.Name)
+	traderAPIEndpoint := c.String(APIWSEndpoint.Name)
 	solanaRPCEndpoint := c.String(utils.SolanaHTTPRPCEndpointFlag.Name)
 	solanaWSEndpoint := c.String(utils.SolanaWSRPCEndpointFlag.Name)
 
@@ -60,7 +60,7 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 
-	serumOS, err := arrival.NewSerumOrderbookStream(serumEndpoint, marketAddr, authHeader)
+	traderOS, err := arrival.NewAPIOrderbookStream(traderAPIEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func run(c *cli.Context) error {
 	defer runCancel()
 
 	var (
-		serumUpdates  []arrival.StreamUpdate[[]byte]
+		tradeUpdates  []arrival.StreamUpdate[[]byte]
 		solanaUpdates []arrival.StreamUpdate[arrival.SolanaRawUpdate]
 	)
 	errCh := make(chan error, 2)
@@ -83,9 +83,9 @@ func run(c *cli.Context) error {
 	go func() {
 		var err error
 
-		serumUpdates, err = serumOS.Run(runCtx)
+		tradeUpdates, err = traderOS.Run(runCtx)
 		if err != nil {
-			errCh <- errors.Wrap(err, "could not collect results from Serum")
+			errCh <- errors.Wrap(err, "could not collect results from trader API")
 			return
 		}
 
@@ -122,14 +122,14 @@ func run(c *cli.Context) error {
 
 	}
 
-	logger.Log().Infow("finished collecting data points", "serumcount", len(serumUpdates), "solanacount", len(solanaUpdates))
+	logger.Log().Infow("finished collecting data points", "tradercount", len(tradeUpdates), "solanacount", len(solanaUpdates))
 
 	removeDuplicates := c.Bool(RemoveDuplicatesFlag.Name)
-	serumResults, serumDuplicates, err := serumOS.Process(serumUpdates, removeDuplicates)
+	traderResults, traderDuplicates, err := traderOS.Process(tradeUpdates, removeDuplicates)
 	if err != nil {
-		return errors.Wrap(err, "could not process serum updates")
+		return errors.Wrap(err, "could not process trader API updates")
 	}
-	logger.Log().Debugw("processed serum results", "range", FormatSortRange(serumResults), "count", len(serumResults), "duplicaterange", FormatSortRange(serumDuplicates), "duplicatecount", len(serumDuplicates))
+	logger.Log().Debugw("processed trader API results", "range", FormatSortRange(traderResults), "count", len(traderResults), "duplicaterange", FormatSortRange(traderDuplicates), "duplicatecount", len(traderDuplicates))
 
 	solanaResults, solanaDuplicates, err := solanaOS.Process(solanaUpdates, removeDuplicates)
 	if err != nil {
@@ -138,10 +138,10 @@ func run(c *cli.Context) error {
 
 	logger.Log().Debugw("processed solana results", "range", FormatSortRange(solanaResults), "count", len(solanaResults), "duplicaterange", FormatSortRange(solanaDuplicates), "duplicatecount", len(solanaDuplicates))
 
-	slots := SlotRange(serumResults, solanaResults)
+	slots := SlotRange(traderResults, solanaResults)
 	logger.Log().Debugw("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1], "count", len(slots))
 
-	datapoints, _, _, err := Merge(slots, serumResults, solanaResults)
+	datapoints, _, _, err := Merge(slots, traderResults, solanaResults)
 	if err != nil {
 		return err
 	}
@@ -150,11 +150,11 @@ func run(c *cli.Context) error {
 
 	// dump results to stdout
 	removeUnmatched := c.Bool(RemoveUnmatchedFlag.Name)
-	PrintSummary(duration, serumEndpoint, solanaWSEndpoint, datapoints)
+	PrintSummary(duration, traderAPIEndpoint, solanaWSEndpoint, datapoints)
 
 	// write results to csv
 	outputFile := c.String(utils.OutputFileFlag.Name)
-	header := []string{"slot", "diff", "seq", "serum-time", "solana-side", "solana-time"}
+	header := []string{"slot", "diff", "seq", "trader-api-time", "solana-side", "solana-time"}
 	err = csv.Write(outputFile, header, datapoints, func(line []string) bool {
 		if removeUnmatched {
 			for _, col := range line {
@@ -171,9 +171,9 @@ func run(c *cli.Context) error {
 }
 
 var (
-	SerumWSEndpointFlag = &cli.StringFlag{
-		Name:  "serum-ws-endpoint",
-		Usage: "Serum API websocket connection endpoint",
+	APIWSEndpoint = &cli.StringFlag{
+		Name:  "solana-trader-ws-endpoint",
+		Usage: "Solana Trader API API websocket connection endpoint",
 		Value: "wss://virginia.solana.dex.blxrbdn.com/ws",
 	}
 	MarketAddrFlag = &cli.StringFlag{

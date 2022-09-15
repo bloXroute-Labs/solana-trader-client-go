@@ -1,4 +1,4 @@
-IMAGE_NAME=bloxroute/bdn-protobuf:v3.19.3-serum
+IMAGE_NAME=bloxroute/bdn-protobuf:v3.19.3-go
 
 .PHONY: proto
 proto: proto-build-api
@@ -15,7 +15,7 @@ test:
 
 .PHONY: unit
 unit:
-	 go test -v ./bxserum/provider_test/.
+	 go test -v ./provider_test/.
 
 .PHONY: grpc-examples
 grpc-examples:

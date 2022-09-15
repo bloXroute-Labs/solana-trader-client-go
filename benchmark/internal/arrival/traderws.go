@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/sourcegraph/jsonrpc2"
@@ -16,27 +16,27 @@ import (
 	"net/http"
 )
 
-type SerumUpdate struct {
+type TraderAPIUpdate struct {
 	Asks     []*pb.OrderbookItem
 	Bids     []*pb.OrderbookItem
-	previous *SerumUpdate
+	previous *TraderAPIUpdate
 }
 
-func (s SerumUpdate) IsRedundant() bool {
+func (s TraderAPIUpdate) IsRedundant() bool {
 	if s.previous == nil {
 		return false
 	}
 	return orderbookEqual(s.previous.Bids, s.Bids) && orderbookEqual(s.previous.Asks, s.Asks)
 }
 
-type serumOrderbookStream struct {
+type apiOrderbookStream struct {
 	wsConn  *websocket.Conn
 	address string
 	market  string
 }
 
-func NewSerumOrderbookStream(address, market, authHeader string) (Source[[]byte, SerumUpdate], error) {
-	s := serumOrderbookStream{
+func NewAPIOrderbookStream(address, market, authHeader string) (Source[[]byte, TraderAPIUpdate], error) {
+	s := apiOrderbookStream{
 		address: address,
 		market:  market,
 	}
@@ -59,16 +59,16 @@ func NewSerumOrderbookStream(address, market, authHeader string) (Source[[]byte,
 	return s, nil
 }
 
-func (s serumOrderbookStream) log() *zap.SugaredLogger {
-	return logger.Log().With("source", "serum", "address", s.address, "market", s.market)
+func (s apiOrderbookStream) log() *zap.SugaredLogger {
+	return logger.Log().With("source", "traderapi", "address", s.address, "market", s.market)
 }
 
-func (s serumOrderbookStream) Name() string {
-	return fmt.Sprintf("serum[%v]", s.address)
+func (s apiOrderbookStream) Name() string {
+	return fmt.Sprintf("traderapi[%v]", s.address)
 }
 
 // Run stops when parent ctx is canceled
-func (s serumOrderbookStream) Run(parent context.Context) ([]StreamUpdate[[]byte], error) {
+func (s apiOrderbookStream) Run(parent context.Context) ([]StreamUpdate[[]byte], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -117,14 +117,14 @@ type subscriptionUpdate struct {
 	Result         json.RawMessage `json:"result"`
 }
 
-func (s serumOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDuplicates bool) (map[int][]ProcessedUpdate[SerumUpdate], map[int][]ProcessedUpdate[SerumUpdate], error) {
+func (s apiOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDuplicates bool) (map[int][]ProcessedUpdate[TraderAPIUpdate], map[int][]ProcessedUpdate[TraderAPIUpdate], error) {
 	var (
 		err      error
-		previous *SerumUpdate
+		previous *TraderAPIUpdate
 	)
 
-	results := make(map[int][]ProcessedUpdate[SerumUpdate])
-	duplicates := make(map[int][]ProcessedUpdate[SerumUpdate])
+	results := make(map[int][]ProcessedUpdate[TraderAPIUpdate])
+	duplicates := make(map[int][]ProcessedUpdate[TraderAPIUpdate])
 	allowedFailures := 1 // allowed to skip processing of subscription confirmation message
 
 	for _, update := range updates {
@@ -155,12 +155,12 @@ func (s serumOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDupl
 		}
 
 		slot := int(orderbookInc.Slot)
-		su := SerumUpdate{
+		su := TraderAPIUpdate{
 			Asks:     orderbookInc.Orderbook.Asks,
 			Bids:     orderbookInc.Orderbook.Bids,
 			previous: previous,
 		}
-		pu := ProcessedUpdate[SerumUpdate]{
+		pu := ProcessedUpdate[TraderAPIUpdate]{
 			Timestamp: update.Timestamp,
 			Slot:      slot,
 			Data:      su,
@@ -177,7 +177,7 @@ func (s serumOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDupl
 		if !(removeDuplicates && redundant) {
 			_, ok := results[slot]
 			if !ok {
-				results[slot] = make([]ProcessedUpdate[SerumUpdate], 0)
+				results[slot] = make([]ProcessedUpdate[TraderAPIUpdate], 0)
 			}
 			results[slot] = append(results[slot], pu)
 		}

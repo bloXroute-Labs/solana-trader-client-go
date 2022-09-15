@@ -1,11 +1,11 @@
 package provider
 
 import (
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,7 +30,7 @@ func TestHTTP_NewWithOpts(t *testing.T) {
 	assert.Nil(t, err)
 
 	o := provider.RPCOpts{
-		Endpoint:   provider.MainnetSerumAPIHTTP,
+		Endpoint:   provider.MainnetHTTP,
 		Timeout:    time.Second,
 		PrivateKey: &pk,
 	}

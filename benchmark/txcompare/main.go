@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/csv"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/transaction"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/csv"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/transaction"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -42,7 +42,7 @@ func run(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	opts := provider.DefaultRPCOpts(provider.MainnetSerumAPIGRPC)
+	opts := provider.DefaultRPCOpts(provider.MainnetGRPC)
 	if opts.PrivateKey == nil {
 		return errors.New("PRIVATE_KEY environment variable must be set")
 	}

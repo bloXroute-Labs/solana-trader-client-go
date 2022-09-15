@@ -2,11 +2,11 @@ package transaction
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/logger"
-	"github.com/bloXroute-Labs/serum-client-go/benchmark/internal/utils"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/transaction"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"strconv"

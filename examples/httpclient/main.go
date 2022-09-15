@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/serum-client-go/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/bloXroute-Labs/serum-client-go/bxserum/provider"
-	pb "github.com/bloXroute-Labs/serum-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -114,7 +114,7 @@ func callOrderbookHTTP() bool {
 
 func callOpenOrdersHTTP() bool {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "")
@@ -131,7 +131,7 @@ func callOpenOrdersHTTP() bool {
 
 func callUnsettledHTTP() bool {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
@@ -148,7 +148,7 @@ func callUnsettledHTTP() bool {
 
 func callGetAccountBalanceHTTP() bool {
 	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	response, err := h.GetAccountBalance("F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
@@ -205,7 +205,7 @@ const (
 
 func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	// generate a random clientOrderId for this order
@@ -242,7 +242,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) bool {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	_, err := h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
@@ -259,7 +259,7 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 	time.Sleep(60 * time.Second)
 	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, opts)
 
 	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
@@ -277,7 +277,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -364,7 +364,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 60}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -450,7 +450,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	fmt.Println()
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	rand.Seed(time.Now().UnixNano())
@@ -538,7 +538,7 @@ func callTradeSwap(ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
 	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetSerumAPIHTTP)
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
 	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	log.Info("trade swap")

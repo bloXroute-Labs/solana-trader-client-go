@@ -7,9 +7,9 @@ executors:
       - image: cimg/go:1.18
     environment:
       GOPATH: /home/circleci/go
-      WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
+      WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
       GOTRACEBACK: all
-    working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/serum-client-go
+    working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
   init:
     executor: bxgo
@@ -72,13 +72,13 @@ jobs:
       - slack/notify:
           custom: |
             {
-              "text": "serum-client-go Build failed [develop]",
+              "text": "solana-trader-client-go Build failed [develop]",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "serum-client-go Build failed",
+                    "text": "solana-trader-client-go Build failed",
                     "emoji": true
                   }
                 },
@@ -86,7 +86,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/serum-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/solana-trader-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
                   },
                   "accessory": {
                     "type": "button",
@@ -95,7 +95,7 @@ jobs:
                       "text": "CircleCI",
                       "emoji": true
                     },
-                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/serum-client-go?branch=develop"
+                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/solana-trader-client-go?branch=develop"
                   }
                 }
               ]
