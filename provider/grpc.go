@@ -156,7 +156,7 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) (string, error) {
+func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		Owner:    owner,
 		InToken:  inToken,
@@ -166,9 +166,20 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outTok
 		Project:  project,
 	})
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
