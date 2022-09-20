@@ -51,6 +51,7 @@ type ApiClient interface {
 	GetTradesStream(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (Api_GetTradesStreamClient, error)
 	GetOrderStatusStream(ctx context.Context, in *GetOrderStatusStreamRequest, opts ...grpc.CallOption) (Api_GetOrderStatusStreamClient, error)
 	GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error)
+	GetQuotesStream(ctx context.Context, in *GetQuotesStreamRequest, opts ...grpc.CallOption) (Api_GetQuotesStreamClient, error)
 }
 
 type apiClient struct {
@@ -460,6 +461,38 @@ func (x *apiGetRecentBlockHashStreamClient) Recv() (*GetRecentBlockHashResponse,
 	return m, nil
 }
 
+func (c *apiClient) GetQuotesStream(ctx context.Context, in *GetQuotesStreamRequest, opts ...grpc.CallOption) (Api_GetQuotesStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[6], "/api.Api/GetQuotesStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &apiGetQuotesStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Api_GetQuotesStreamClient interface {
+	Recv() (*GetQuotesStreamResponse, error)
+	grpc.ClientStream
+}
+
+type apiGetQuotesStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *apiGetQuotesStreamClient) Recv() (*GetQuotesStreamResponse, error) {
+	m := new(GetQuotesStreamResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -497,6 +530,7 @@ type ApiServer interface {
 	GetTradesStream(*GetTradesRequest, Api_GetTradesStreamServer) error
 	GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error
 	GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error
+	GetQuotesStream(*GetQuotesStreamRequest, Api_GetQuotesStreamServer) error
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -590,6 +624,9 @@ func (UnimplementedApiServer) GetOrderStatusStream(*GetOrderStatusStreamRequest,
 }
 func (UnimplementedApiServer) GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetRecentBlockHashStream not implemented")
+}
+func (UnimplementedApiServer) GetQuotesStream(*GetQuotesStreamRequest, Api_GetQuotesStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetQuotesStream not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -1144,6 +1181,27 @@ func (x *apiGetRecentBlockHashStreamServer) Send(m *GetRecentBlockHashResponse) 
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetQuotesStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetQuotesStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ApiServer).GetQuotesStream(m, &apiGetQuotesStreamServer{stream})
+}
+
+type Api_GetQuotesStreamServer interface {
+	Send(*GetQuotesStreamResponse) error
+	grpc.ServerStream
+}
+
+type apiGetQuotesStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *apiGetQuotesStreamServer) Send(m *GetQuotesStreamResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1273,6 +1331,11 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetRecentBlockHashStream",
 			Handler:       _Api_GetRecentBlockHashStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetQuotesStream",
+			Handler:       _Api_GetQuotesStream_Handler,
 			ServerStreams: true,
 		},
 	},

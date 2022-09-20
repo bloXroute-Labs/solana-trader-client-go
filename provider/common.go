@@ -37,10 +37,11 @@ type PostOrderOpts struct {
 }
 
 type RPCOpts struct {
-	Endpoint   string
-	Timeout    time.Duration
-	PrivateKey *solana.PrivateKey
-	AuthHeader string
+	Endpoint       string
+	Timeout        time.Duration
+	PrivateKey     *solana.PrivateKey
+	AuthHeader     string
+	CacheBlockHash time.Duration
 }
 
 func DefaultRPCOpts(endpoint string) RPCOpts {

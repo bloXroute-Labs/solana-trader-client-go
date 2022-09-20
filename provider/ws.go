@@ -12,9 +12,10 @@ import (
 type WSClient struct {
 	pb.UnimplementedApiServer
 
-	addr       string
-	conn       *connections2.WS
-	privateKey *solana.PrivateKey
+	addr                 string
+	conn                 *connections2.WS
+	privateKey           *solana.PrivateKey
+	recentBlockHashStore *recentBlockHashStore
 }
 
 // NewWSClient connects to Mainnet Trader API
@@ -48,11 +49,23 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 		return nil, err
 	}
 
-	return &WSClient{
+	client := &WSClient{
 		addr:       opts.Endpoint,
 		conn:       conn,
 		privateKey: opts.PrivateKey,
-	}, nil
+	}
+	client.recentBlockHashStore = newRecentBlockHashStore(
+		func(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+			return client.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+		},
+		client.GetRecentBlockHashStream,
+		opts,
+	)
+	return client, nil
+}
+
+func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return w.recentBlockHashStore.recentBlockHash(ctx)
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
@@ -476,5 +489,12 @@ func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddres
 	}, func() *pb.GetOrderStatusStreamResponse {
 		var v pb.GetOrderStatusStreamResponse
 		return &v
+	})
+}
+
+// GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
+func (w *WSClient) GetRecentBlockHashStream(ctx context.Context) (connections2.Streamer[*pb.GetRecentBlockHashResponse], error) {
+	return connections2.WSStream(w.conn, ctx, "GetRecentBlockHashStream", &pb.GetRecentBlockHashRequest{}, func() *pb.GetRecentBlockHashResponse {
+		return &pb.GetRecentBlockHashResponse{}
 	})
 }

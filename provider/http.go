@@ -458,3 +458,14 @@ func (h *HTTPClient) SubmitReplaceOrder(orderID, owner, payer, market string, si
 
 	return h.signAndSubmit(order.Transaction, opts.SkipPreFlight)
 }
+
+// GetRecentBlockHash subscribes to a stream for getting recent block hash.
+func (h *HTTPClient) GetRecentBlockHash() (*pb.GetRecentBlockHashResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/system/blockhash", h.baseURL)
+	response := new(pb.GetRecentBlockHashResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponse](url, h.httpClient, response, h.GetAuthHeader()); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}

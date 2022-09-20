@@ -14,8 +14,10 @@ import (
 type GRPCClient struct {
 	pb.UnimplementedApiServer
 
-	apiClient  pb.ApiClient
-	privateKey *solana.PrivateKey
+	apiClient pb.ApiClient
+
+	privateKey           *solana.PrivateKey
+	recentBlockHashStore *recentBlockHashStore
 }
 
 // NewGRPCClient connects to Mainnet Trader API
@@ -63,10 +65,25 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GRPCClient{
+	client := &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
-	}, nil
+	}
+	client.recentBlockHashStore = newRecentBlockHashStore(
+		client.GetRecentBlockHash,
+		client.GetRecentBlockHashStream,
+		opts,
+	)
+	go client.recentBlockHashStore.run()
+	return client, nil
+}
+
+func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return g.recentBlockHashStore.recentBlockHash(ctx)
+}
+
+func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
@@ -384,4 +401,14 @@ func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddr
 	}
 
 	return connections2.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
+}
+
+// GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
+func (g *GRPCClient) GetRecentBlockHashStream(ctx context.Context) (connections2.Streamer[*pb.GetRecentBlockHashResponse], error) {
+	stream, err := g.apiClient.GetRecentBlockHashStream(ctx, &pb.GetRecentBlockHashRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections2.GRPCStream[pb.GetRecentBlockHashResponse](stream, ""), nil
 }

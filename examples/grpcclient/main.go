@@ -32,6 +32,7 @@ func main() {
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
 	failed = failed || callGetAccountBalanceGRPC(g)
+	failed = failed || callRecentBlockHashGRPCStream(g)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -229,6 +230,31 @@ func callTradesGRPCStream(g *provider.GRPCClient) bool {
 	stream.Into(tradesChan)
 	for i := 1; i <= 3; i++ {
 		_, ok := <-tradesChan
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting recent block hash stream")
+
+	ch := make(chan *pb.GetRecentBlockHashResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetRecentBlockHashStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
 		if !ok {
 			// channel closed
 			return true
