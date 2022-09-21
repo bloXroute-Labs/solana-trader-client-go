@@ -32,12 +32,11 @@ func newRecentBlockHashStore(
 		hashStreamProvider: streamProvider,
 		hash:               "",
 		hashTime:           time.Time{},
-		hashExpiryDuration: opts.CacheBlockHash,
+		hashExpiryDuration: opts.BlockHashTtl,
 	}
 }
 
-func (s *recentBlockHashStore) run() {
-	ctx := context.Background()
+func (s *recentBlockHashStore) run(ctx context.Context) {
 	stream, err := s.hashStreamProvider(ctx)
 	if err != nil {
 		log.Error("can't open recent block hash stream")
@@ -47,14 +46,14 @@ func (s *recentBlockHashStore) run() {
 	for {
 		select {
 		case hash := <-ch:
-			s.updateBlockHash(hash)
+			s.update(hash)
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (s *recentBlockHashStore) updateBlockHash(hash *pb.GetRecentBlockHashResponse) {
+func (s *recentBlockHashStore) update(hash *pb.GetRecentBlockHashResponse) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.hash = hash.BlockHash
@@ -62,8 +61,8 @@ func (s *recentBlockHashStore) updateBlockHash(hash *pb.GetRecentBlockHashRespon
 	s.hashTime = now
 }
 
-func (s *recentBlockHashStore) recentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
-	response := s.getCachedBlockHash()
+func (s *recentBlockHashStore) get(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	response := s.cached()
 	if response != nil {
 		return response, nil
 	}
@@ -72,20 +71,18 @@ func (s *recentBlockHashStore) recentBlockHash(ctx context.Context) (*pb.GetRece
 	defer s.mutex.Unlock()
 
 	now := time.Now()
-	if s.hash != "" && s.hashTime.Before(now.Add(s.hashExpiryDuration)) {
-		hash, err := s.hashProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		s.hash = hash.BlockHash
-		s.hashTime = now
+	hash, err := s.hashProvider(ctx)
+	if err != nil {
+		return nil, err
 	}
+	s.hash = hash.BlockHash
+	s.hashTime = now
 	return &pb.GetRecentBlockHashResponse{
 		BlockHash: s.hash,
 	}, nil
 }
 
-func (s *recentBlockHashStore) getCachedBlockHash() *pb.GetRecentBlockHashResponse {
+func (s *recentBlockHashStore) cached() *pb.GetRecentBlockHashResponse {
 	now := time.Now()
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()

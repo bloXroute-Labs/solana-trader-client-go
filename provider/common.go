@@ -41,7 +41,8 @@ type RPCOpts struct {
 	Timeout        time.Duration
 	PrivateKey     *solana.PrivateKey
 	AuthHeader     string
-	CacheBlockHash time.Duration
+	CacheBlockHash bool
+	BlockHashTtl   time.Duration
 }
 
 func DefaultRPCOpts(endpoint string) RPCOpts {

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
-	connections2 "github.com/bloXroute-Labs/solana-trader-client-go/connections"
+	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
@@ -13,7 +13,7 @@ type WSClient struct {
 	pb.UnimplementedApiServer
 
 	addr                 string
-	conn                 *connections2.WS
+	conn                 *connections.WS
 	privateKey           *solana.PrivateKey
 	recentBlockHashStore *recentBlockHashStore
 }
@@ -44,7 +44,7 @@ func NewWSClientLocal() (*WSClient, error) {
 
 // NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
-	conn, err := connections2.NewWS(opts.Endpoint, opts.AuthHeader)
+	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -61,11 +61,14 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 		client.GetRecentBlockHashStream,
 		opts,
 	)
+	if opts.CacheBlockHash {
+		go client.recentBlockHashStore.run(context.Background())
+	}
 	return client, nil
 }
 
 func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
-	return w.recentBlockHashStore.recentBlockHash(ctx)
+	return w.recentBlockHashStore.get(ctx)
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
@@ -460,8 +463,8 @@ func (w *WSClient) Close() error {
 }
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32) (connections2.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	return connections2.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
 		Markets: markets,
 		Limit:   limit,
 	}, func() *pb.GetOrderbooksStreamResponse {
@@ -471,8 +474,8 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 }
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections2.Streamer[*pb.GetTradesStreamResponse], error) {
-	return connections2.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
+func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
 		Market: market,
 		Limit:  limit,
 	}, func() *pb.GetTradesStreamResponse {
@@ -482,8 +485,8 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections2.Streamer[*pb.GetOrderStatusStreamResponse], error) {
-	return connections2.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
+func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
 		Market:       market,
 		OwnerAddress: ownerAddress,
 	}, func() *pb.GetOrderStatusStreamResponse {
@@ -493,8 +496,8 @@ func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddres
 }
 
 // GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
-func (w *WSClient) GetRecentBlockHashStream(ctx context.Context) (connections2.Streamer[*pb.GetRecentBlockHashResponse], error) {
-	return connections2.WSStream(w.conn, ctx, "GetRecentBlockHashStream", &pb.GetRecentBlockHashRequest{}, func() *pb.GetRecentBlockHashResponse {
+func (w *WSClient) GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*pb.GetRecentBlockHashResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetRecentBlockHashStream", &pb.GetRecentBlockHashRequest{}, func() *pb.GetRecentBlockHashResponse {
 		return &pb.GetRecentBlockHashResponse{}
 	})
 }
