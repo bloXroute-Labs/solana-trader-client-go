@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	connections2 "github.com/bloXroute-Labs/solana-trader-client-go/connections"
+	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
@@ -14,8 +14,10 @@ import (
 type GRPCClient struct {
 	pb.UnimplementedApiServer
 
-	apiClient  pb.ApiClient
-	privateKey *solana.PrivateKey
+	apiClient pb.ApiClient
+
+	privateKey           *solana.PrivateKey
+	recentBlockHashStore *recentBlockHashStore
 }
 
 // NewGRPCClient connects to Mainnet Trader API
@@ -63,10 +65,27 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GRPCClient{
+	client := &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
-	}, nil
+	}
+	client.recentBlockHashStore = newRecentBlockHashStore(
+		client.GetRecentBlockHash,
+		client.GetRecentBlockHashStream,
+		opts,
+	)
+	if opts.CacheBlockHash {
+		go client.recentBlockHashStore.run(context.Background())
+	}
+	return client, nil
+}
+
+func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return g.recentBlockHashStore.get(ctx)
+}
+
+func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
+	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
@@ -357,31 +376,41 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32) (connections2.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
 	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections2.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
 }
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections2.Streamer[*pb.GetTradesStreamResponse], error) {
+func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
 	stream, err := g.apiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections2.GRPCStream[pb.GetTradesStreamResponse](stream, market), nil
+	return connections.GRPCStream[pb.GetTradesStreamResponse](stream, market), nil
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections2.Streamer[*pb.GetOrderStatusStreamResponse], error) {
+func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
 	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections2.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
+	return connections.GRPCStream[pb.GetOrderStatusStreamResponse](stream, market), nil
+}
+
+// GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
+func (g *GRPCClient) GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*pb.GetRecentBlockHashResponse], error) {
+	stream, err := g.apiClient.GetRecentBlockHashStream(ctx, &pb.GetRecentBlockHashRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetRecentBlockHashResponse](stream, ""), nil
 }

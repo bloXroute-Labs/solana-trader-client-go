@@ -69,6 +69,7 @@ func main() {
 	failed = failed || cancelAll(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callTradeSwap(w, ownerAddr)
 
 	if failed {
@@ -242,6 +243,30 @@ func callTradesWSStream(w *provider.WSClient) bool {
 	stream.Into(tradesChan)
 	for i := 1; i <= 3; i++ {
 		_, ok := <-tradesChan
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+// Stream response
+func callRecentBlockHashWSStream(w *provider.WSClient) bool {
+	log.Info("starting recent block hash stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetRecentBlockHashStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHashStream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 5; i++ {
+		_, ok := <-ch
 		if !ok {
 			return true
 		}
