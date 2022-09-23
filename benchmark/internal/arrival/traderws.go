@@ -135,6 +135,17 @@ func (s apiOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDuplic
 			if allowedFailures < 0 {
 				return nil, nil, errors.Wrap(err, "too many response errors")
 			}
+
+			var subscriptionResponse jsonrpc2.Response
+			err := json.Unmarshal(update.Data, &subscriptionResponse)
+			if err != nil {
+				return nil, nil, fmt.Errorf("did not receive proper subscription response: %v", string(update.Data))
+			}
+
+			if subscriptionResponse.Error != nil {
+				return nil, nil, fmt.Errorf("did not receive proper subscription response: %v", string(update.Data))
+			}
+
 			continue
 		}
 
