@@ -91,6 +91,16 @@ func (w *WSClient) GetTrades(ctx context.Context, market string, limit uint32) (
 	return &response, nil
 }
 
+// GetPools returns pools for given projects.
+func (w *WSClient) GetPools(ctx context.Context, projects []string) (*pb.GetPoolsResponse, error) {
+	response := pb.GetPoolsResponse{}
+	err := w.conn.Request(ctx, "GetPools", &pb.GetPoolsRequest{Projects: projects}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (w *WSClient) GetTickers(ctx context.Context, market string) (*pb.GetTickersResponse, error) {
 	var response pb.GetTickersResponse
