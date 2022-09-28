@@ -93,6 +93,13 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
 }
 
+// GetPools returns pools for given projects.
+func (g *GRPCClient) GetPools(ctx context.Context, projects []string) (*pb.GetPoolsResponse, error) {
+	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{
+		Projects: projects,
+	})
+}
+
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32) (*pb.GetTradesResponse, error) {
 	return g.apiClient.GetTrades(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})

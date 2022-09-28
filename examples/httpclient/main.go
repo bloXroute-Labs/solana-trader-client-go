@@ -22,6 +22,7 @@ func main() {
 	failed = failed || callOrderbookHTTP()
 	failed = failed || callOpenOrdersHTTP()
 	failed = failed || callTradesHTTP()
+	failed = failed || callPoolsHTTP()
 	failed = failed || callTickersHTTP()
 	failed = failed || callUnsettledHTTP()
 	failed = failed || callGetAccountBalanceHTTP()
@@ -174,6 +175,21 @@ func callTradesHTTP() bool {
 		return true
 	} else {
 		log.Info(trades)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callPoolsHTTP() bool {
+	h := provider.NewHTTPTestnet()
+
+	pools, err := h.GetPools([]string{"Radium"})
+	if err != nil {
+		log.Errorf("error with GetPools request for Radium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
 	}
 
 	fmt.Println()

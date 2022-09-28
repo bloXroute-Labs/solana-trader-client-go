@@ -84,6 +84,28 @@ func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesRespon
 	return marketTrades, nil
 }
 
+// GetPools returns pools for given projects.
+func (h *HTTPClient) GetPools(projects []string) (*pb.GetPoolsResponse, error) {
+	projectsArg := ""
+	if projects != nil && len(projects) > 0 {
+		for i, project := range projects {
+			arg := "projects=" + project
+			if i == 0 {
+				projectsArg = projectsArg + "?" + arg
+			} else {
+				projectsArg = projectsArg + "&" + arg
+			}
+		}
+	}
+	url := fmt.Sprintf("%s/api/v1/market/pools%s", h.baseURL, projectsArg)
+	pools := new(pb.GetPoolsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPoolsResponse](url, h.httpClient, pools, h.GetAuthHeader()); err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/tickers/%s", h.baseURL, market)

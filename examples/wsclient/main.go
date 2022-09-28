@@ -34,6 +34,7 @@ func main() {
 	failed = failed || callMarketsWS(w)
 	failed = failed || callOrderbookWS(w)
 	failed = failed || callTradesWS(w)
+	failed = failed || callPoolsWS(w)
 	failed = failed || callOpenOrdersWS(w)
 	failed = failed || callTickersWS(w)
 	failed = failed || callUnsettledWS(w)
@@ -138,6 +139,21 @@ func callTradesWS(w *provider.WSClient) bool {
 		return true
 	} else {
 		log.Info(trades)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callPoolsWS(w *provider.WSClient) bool {
+	log.Info("fetching pools...")
+
+	pools, err := w.GetPools(context.Background(), []string{"Radium"})
+	if err != nil {
+		log.Errorf("error with GetPools request for Radium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
 	}
 
 	fmt.Println()

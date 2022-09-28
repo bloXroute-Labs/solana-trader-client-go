@@ -28,6 +28,7 @@ func main() {
 	failed = failed || callOrderbookGRPC(g)
 	failed = failed || callOpenOrdersGRPC(g)
 	failed = failed || callTickersGRPC(g)
+	failed = failed || callPoolsGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
@@ -160,6 +161,19 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(orders)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callPoolsGRPC(g *provider.GRPCClient) bool {
+	pools, err := g.GetPools(context.Background(), []string{"Radium"})
+	if err != nil {
+		log.Errorf("error with GetPools request for Radium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
 	}
 
 	fmt.Println()
