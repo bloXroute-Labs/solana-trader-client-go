@@ -565,6 +565,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute * 1)
+
 	// Check order is there
 	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {
