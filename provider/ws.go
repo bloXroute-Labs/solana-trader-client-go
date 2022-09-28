@@ -141,6 +141,18 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 	return &response, nil
 }
 
+func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, projects []pb.Project) (*pb.GetQuotesResponse, error) {
+	var response pb.GetQuotesResponse
+	request := &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Projects: projects}
+
+	err := w.conn.Request(ctx, "GetQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)

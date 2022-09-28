@@ -8,6 +8,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 	"net/http"
+	"strings"
 )
 
 type HTTPClient struct {
@@ -133,6 +134,23 @@ func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceRespo
 	url := fmt.Sprintf("%s/api/v1/account/balance?ownerAddress=%s", h.baseURL, owner)
 	result := new(pb.GetAccountBalanceResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, projects []pb.Project) (*pb.GetQuotesResponse, error) {
+	var projectStrings []string
+	for _, project := range projects {
+		projectStrings = append(projectStrings, project.String())
+	}
+	projectString := "[" + strings.Join(projectStrings, ",") + "]" // TODO do we need to do this, or just add commas?
+
+	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&projects=%v",
+		h.baseURL, inToken, outToken, inAmount, slippage, projectString)
+	result := new(pb.GetQuotesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetQuotesResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
 		return nil, err
 	}
 

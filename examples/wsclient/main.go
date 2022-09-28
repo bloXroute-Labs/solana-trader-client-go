@@ -38,6 +38,7 @@ func main() {
 	failed = failed || callTickersWS(w)
 	failed = failed || callUnsettledWS(w)
 	failed = failed || callAccountBalanceWS(w)
+	failed = failed || callGetQuotes(w)
 
 	// streaming methods
 	failed = failed || callOrderbookWSStream(w)
@@ -197,6 +198,37 @@ func callTickersWS(w *provider.WSClient) bool {
 		return true
 	} else {
 		log.Info(tickers)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetQuotes(w *provider.WSClient) bool {
+	log.Info("fetching quotes...")
+
+	inToken := "SOL"
+	outToken := "USDC"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetQuotes(context.Background(), inToken, outToken, amount, slippage, []pb.Project{pb.Project_P_ALL})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	if len(quotes.Quotes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
+		return true
+	}
+	for _, quote := range quotes.Quotes {
+		if len(quote.Routes) == 0 {
+			log.Errorf("no routes gotten for project %s", quote.Project)
+			return true
+		} else {
+			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
+		}
 	}
 
 	fmt.Println()

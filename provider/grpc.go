@@ -123,6 +123,10 @@ func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
+func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, projects []pb.Project) (*pb.GetQuotesResponse, error) {
+	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Projects: projects})
+}
+
 // signAndSubmit signs the given transaction and submits it.
 func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
 	if g.privateKey == nil {

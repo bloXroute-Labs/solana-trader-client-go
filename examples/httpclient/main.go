@@ -25,6 +25,7 @@ func main() {
 	failed = failed || callTickersHTTP()
 	failed = failed || callUnsettledHTTP()
 	failed = failed || callGetAccountBalanceHTTP()
+	failed = failed || callGetQuotes()
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -188,6 +189,38 @@ func callTickersHTTP() bool {
 		return true
 	} else {
 		log.Info(tickers)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetQuotes() bool {
+	h := provider.NewHTTPTestnet()
+
+	inToken := "SOL"
+	outToken := "USDC"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetQuotes(inToken, outToken, amount, slippage, []pb.Project{pb.Project_P_ALL})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	} else {
+		if len(quotes.Quotes) != 2 {
+			log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
+			return true
+		}
+
+		for _, quote := range quotes.Quotes {
+			if len(quote.Routes) == 0 {
+				log.Errorf("no routes gotten for project %s", quote.Project)
+				return true
+			} else {
+				log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
+			}
+		}
 	}
 
 	fmt.Println()

@@ -32,6 +32,7 @@ func main() {
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
 	failed = failed || callGetAccountBalanceGRPC(g)
+	failed = failed || callGetQuotes(g)
 	failed = failed || callRecentBlockHashGRPCStream(g)
 
 	// calls below this place an order and immediately cancel it
@@ -159,6 +160,40 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(orders)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetQuotes(g *provider.GRPCClient) bool {
+	log.Info("starting get quotes test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDC"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := g.GetQuotes(ctx, inToken, outToken, amount, slippage, []pb.Project{pb.Project_P_ALL})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	if len(quotes.Quotes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
+		return true
+	}
+	for _, quote := range quotes.Quotes {
+		if len(quote.Routes) == 0 {
+			log.Errorf("no routes gotten for project %s", quote.Project)
+			return true
+		} else {
+			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
+		}
 	}
 
 	fmt.Println()
