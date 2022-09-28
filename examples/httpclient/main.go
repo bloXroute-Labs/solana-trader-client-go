@@ -223,19 +223,18 @@ func callGetQuotes() bool {
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
-	} else {
-		if len(quotes.Quotes) != 2 {
-			log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
-			return true
-		}
+	}
 
-		for _, quote := range quotes.Quotes {
-			if len(quote.Routes) == 0 {
-				log.Errorf("no routes gotten for project %s", quote.Project)
-				return true
-			} else {
-				log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
-			}
+	if len(quotes.Quotes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
+		return true
+	}
+	for _, quote := range quotes.Quotes {
+		if len(quote.Routes) == 0 {
+			log.Errorf("no routes gotten for project %s", quote.Project)
+			return true
+		} else {
+			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
 		}
 	}
 

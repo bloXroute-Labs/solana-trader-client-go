@@ -193,7 +193,7 @@ func callGetQuotes(g *provider.GRPCClient) bool {
 
 	quotes, err := g.GetQuotes(ctx, inToken, outToken, amount, slippage, []pb.Project{pb.Project_P_ALL})
 	if err != nil {
-		log.Error(err)
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
