@@ -141,13 +141,12 @@ func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceRespo
 }
 
 func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, projects []pb.Project) (*pb.GetQuotesResponse, error) {
-	var projectStrings []string
+	projectString := ""
 	for _, project := range projects {
-		projectStrings = append(projectStrings, project.String())
+		projectString += fmt.Sprintf("&projects=%s", project)
 	}
-	projectString := "[" + strings.Join(projectStrings, ",") + "]" // TODO do we need to do this, or just add commas?
 
-	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&projects=%v",
+	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v%s",
 		h.baseURL, inToken, outToken, inAmount, slippage, projectString)
 	result := new(pb.GetQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetQuotesResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
