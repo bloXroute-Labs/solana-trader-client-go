@@ -8,7 +8,6 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gagliardetto/solana-go"
 	"net/http"
-	"strings"
 )
 
 type HTTPClient struct {
