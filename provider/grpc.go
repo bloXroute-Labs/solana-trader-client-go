@@ -130,6 +130,11 @@ func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
+// GetPrice returns the USDC price of requested tokens
+func (g *GRPCClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
+	return g.apiClient.GetPrice(ctx, &pb.GetPriceRequest{Tokens: tokens})
+}
+
 // signAndSubmit signs the given transaction and submits it.
 func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
 	if g.privateKey == nil {
