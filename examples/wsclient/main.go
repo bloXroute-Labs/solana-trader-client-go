@@ -35,6 +35,7 @@ func main() {
 	failed = failed || callOrderbookWS(w)
 	failed = failed || callTradesWS(w)
 	failed = failed || callPoolsWS(w)
+	failed = failed || callPriceWS(w)
 	failed = failed || callOpenOrdersWS(w)
 	failed = failed || callTickersWS(w)
 	failed = failed || callUnsettledWS(w)
@@ -150,6 +151,21 @@ func callPoolsWS(w *provider.WSClient) bool {
 	pools, err := w.GetPools(context.Background(), []string{"Radium"})
 	if err != nil {
 		log.Errorf("error with GetPools request for Radium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callPriceWS(w *provider.WSClient) bool {
+	log.Info("fetching prices...")
+
+	pools, err := w.GetPrice(context.Background(), []string{"SOL", "ETH"})
+	if err != nil {
+		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
 		return true
 	} else {
 		log.Info(pools)

@@ -53,6 +53,7 @@ type ApiClient interface {
 	GetOrderStatusStream(ctx context.Context, in *GetOrderStatusStreamRequest, opts ...grpc.CallOption) (Api_GetOrderStatusStreamClient, error)
 	GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error)
 	GetQuotesStream(ctx context.Context, in *GetQuotesStreamRequest, opts ...grpc.CallOption) (Api_GetQuotesStreamClient, error)
+	GetPoolReservesStream(ctx context.Context, in *GetPoolReservesStreamRequest, opts ...grpc.CallOption) (Api_GetPoolReservesStreamClient, error)
 }
 
 type apiClient struct {
@@ -503,6 +504,38 @@ func (x *apiGetQuotesStreamClient) Recv() (*GetQuotesStreamResponse, error) {
 	return m, nil
 }
 
+func (c *apiClient) GetPoolReservesStream(ctx context.Context, in *GetPoolReservesStreamRequest, opts ...grpc.CallOption) (Api_GetPoolReservesStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[7], "/api.Api/GetPoolReservesStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &apiGetPoolReservesStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Api_GetPoolReservesStreamClient interface {
+	Recv() (*GetPoolReservesStreamResponse, error)
+	grpc.ClientStream
+}
+
+type apiGetPoolReservesStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *apiGetPoolReservesStreamClient) Recv() (*GetPoolReservesStreamResponse, error) {
+	m := new(GetPoolReservesStreamResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -542,6 +575,7 @@ type ApiServer interface {
 	GetOrderStatusStream(*GetOrderStatusStreamRequest, Api_GetOrderStatusStreamServer) error
 	GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error
 	GetQuotesStream(*GetQuotesStreamRequest, Api_GetQuotesStreamServer) error
+	GetPoolReservesStream(*GetPoolReservesStreamRequest, Api_GetPoolReservesStreamServer) error
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -641,6 +675,9 @@ func (UnimplementedApiServer) GetRecentBlockHashStream(*GetRecentBlockHashReques
 }
 func (UnimplementedApiServer) GetQuotesStream(*GetQuotesStreamRequest, Api_GetQuotesStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetQuotesStream not implemented")
+}
+func (UnimplementedApiServer) GetPoolReservesStream(*GetPoolReservesStreamRequest, Api_GetPoolReservesStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetPoolReservesStream not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -1234,6 +1271,27 @@ func (x *apiGetQuotesStreamServer) Send(m *GetQuotesStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetPoolReservesStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetPoolReservesStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ApiServer).GetPoolReservesStream(m, &apiGetPoolReservesStreamServer{stream})
+}
+
+type Api_GetPoolReservesStreamServer interface {
+	Send(*GetPoolReservesStreamResponse) error
+	grpc.ServerStream
+}
+
+type apiGetPoolReservesStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *apiGetPoolReservesStreamServer) Send(m *GetPoolReservesStreamResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1372,6 +1430,11 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetQuotesStream",
 			Handler:       _Api_GetQuotesStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetPoolReservesStream",
+			Handler:       _Api_GetPoolReservesStream_Handler,
 			ServerStreams: true,
 		},
 	},

@@ -23,6 +23,7 @@ func main() {
 	failed = failed || callOpenOrdersHTTP()
 	failed = failed || callTradesHTTP()
 	failed = failed || callPoolsHTTP()
+	failed = failed || callPriceHTTP()
 	failed = failed || callTickersHTTP()
 	failed = failed || callUnsettledHTTP()
 	failed = failed || callGetAccountBalanceHTTP()
@@ -189,6 +190,21 @@ func callPoolsHTTP() bool {
 		return true
 	} else {
 		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callPriceHTTP() bool {
+	h := provider.NewHTTPTestnet()
+
+	prices, err := h.GetPrice([]string{"SOL", "ETH"})
+	if err != nil {
+		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(prices)
 	}
 
 	fmt.Println()

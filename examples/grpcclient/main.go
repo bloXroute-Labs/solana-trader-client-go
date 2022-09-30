@@ -29,6 +29,7 @@ func main() {
 	failed = failed || callOpenOrdersGRPC(g)
 	failed = failed || callTickersGRPC(g)
 	failed = failed || callPoolsGRPC(g)
+	failed = failed || callPriceGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
@@ -173,6 +174,19 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callPriceGRPC(g *provider.GRPCClient) bool {
+	prices, err := g.GetPrice(context.Background(), []string{"SOL", "ETH"})
+	if err != nil {
+		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(prices)
 	}
 
 	fmt.Println()

@@ -151,6 +151,16 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 	return &response, nil
 }
 
+// GetPrice returns the USDC price of requested tokens
+func (w *WSClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
+	var response pb.GetPriceResponse
+	err := w.conn.Request(ctx, "GetPrice", &pb.GetPriceRequest{Tokens: tokens}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)
