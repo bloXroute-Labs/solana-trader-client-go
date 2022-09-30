@@ -168,7 +168,7 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 }
 
 func callPoolsGRPC(g *provider.GRPCClient) bool {
-	pools, err := g.GetPools(context.Background(), []string{"Radium"})
+	pools, err := g.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
 		log.Errorf("error with GetPools request for Radium: %v", err)
 		return true
@@ -190,8 +190,9 @@ func callGetQuotes(g *provider.GRPCClient) bool {
 	outToken := "USDC"
 	amount := 0.01
 	slippage := float64(5)
+	limit := 5
 
-	quotes, err := g.GetQuotes(ctx, inToken, outToken, amount, slippage, []pb.Project{pb.Project_P_ALL})
+	quotes, err := g.GetQuotes(ctx, inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true

@@ -148,7 +148,7 @@ func callTradesWS(w *provider.WSClient) bool {
 func callPoolsWS(w *provider.WSClient) bool {
 	log.Info("fetching pools...")
 
-	pools, err := w.GetPools(context.Background(), []string{"Radium"})
+	pools, err := w.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
 		log.Errorf("error with GetPools request for Radium: %v", err)
 		return true
@@ -227,8 +227,9 @@ func callGetQuotes(w *provider.WSClient) bool {
 	outToken := "USDC"
 	amount := 0.01
 	slippage := float64(5)
+	limit := 5
 
-	quotes, err := w.GetQuotes(context.Background(), inToken, outToken, amount, slippage, []pb.Project{pb.Project_P_ALL})
+	quotes, err := w.GetQuotes(context.Background(), inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true

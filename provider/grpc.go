@@ -94,10 +94,8 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 }
 
 // GetPools returns pools for given projects.
-func (g *GRPCClient) GetPools(ctx context.Context, projects []string) (*pb.GetPoolsResponse, error) {
-	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{
-		Projects: projects,
-	})
+func (g *GRPCClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
+	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{Projects: projects})
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
@@ -130,8 +128,8 @@ func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
-func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, projects []pb.Project) (*pb.GetQuotesResponse, error) {
-	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Projects: projects})
+func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
+	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects})
 }
 
 // signAndSubmit signs the given transaction and submits it.

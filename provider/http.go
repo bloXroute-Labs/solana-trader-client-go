@@ -85,11 +85,11 @@ func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesRespon
 }
 
 // GetPools returns pools for given projects.
-func (h *HTTPClient) GetPools(projects []string) (*pb.GetPoolsResponse, error) {
+func (h *HTTPClient) GetPools(projects []pb.Project) (*pb.GetPoolsResponse, error) {
 	projectsArg := ""
 	if projects != nil && len(projects) > 0 {
 		for i, project := range projects {
-			arg := "projects=" + project
+			arg := "projects=" + project.String()
 			if i == 0 {
 				projectsArg = projectsArg + "?" + arg
 			} else {
@@ -161,14 +161,14 @@ func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceRespo
 	return result, nil
 }
 
-func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, projects []pb.Project) (*pb.GetQuotesResponse, error) {
+func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
 	projectString := ""
 	for _, project := range projects {
 		projectString += fmt.Sprintf("&projects=%s", project)
 	}
 
-	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v%s",
-		h.baseURL, inToken, outToken, inAmount, slippage, projectString)
+	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v%s",
+		h.baseURL, inToken, outToken, inAmount, slippage, limit, projectString)
 	result := new(pb.GetQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetQuotesResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
 		return nil, err
