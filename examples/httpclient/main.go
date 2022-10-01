@@ -211,8 +211,11 @@ func callTickersHTTP() bool {
 	return false
 }
 
+// TODO double check this works
 func callGetQuotes() bool {
-	h := provider.NewHTTPTestnet()
+	client := &http.Client{Timeout: time.Second * 60}
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
+	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
 
 	inToken := "SOL"
 	outToken := "USDC"
