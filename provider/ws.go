@@ -151,6 +151,16 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 	return &response, nil
 }
 
+// GetPrice returns the USDC price of requested tokens
+func (w *WSClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
+	var response pb.GetPriceResponse
+	err := w.conn.Request(ctx, "GetPrice", &pb.GetPriceRequest{Tokens: tokens}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
 	var response pb.GetQuotesResponse
 	request := &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects}

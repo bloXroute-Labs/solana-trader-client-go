@@ -128,6 +128,12 @@ func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
+// GetPrice returns the USDC price of requested tokens
+func (g *GRPCClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
+	return g.apiClient.GetPrice(ctx, &pb.GetPriceRequest{Tokens: tokens})
+}
+
+// GetQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it
 func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
 	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects})
 }

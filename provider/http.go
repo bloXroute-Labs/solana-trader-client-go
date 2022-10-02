@@ -161,6 +161,28 @@ func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceRespo
 	return result, nil
 }
 
+// GetPrice returns the USDC price of requested tokens
+func (h *HTTPClient) GetPrice(tokens []string) (*pb.GetPriceResponse, error) {
+	tokensArg := ""
+	if tokens != nil && len(tokens) > 0 {
+		for i, token := range tokens {
+			arg := "tokens=" + token
+			if i == 0 {
+				tokensArg = tokensArg + "?" + arg
+			} else {
+				tokensArg = tokensArg + "&" + arg
+			}
+		}
+	}
+	url := fmt.Sprintf("%s/api/v1/market/price%s", h.baseURL, tokensArg)
+	pools := new(pb.GetPriceResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPriceResponse](url, h.httpClient, pools, h.GetAuthHeader()); err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
 func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
 	projectString := ""
 	for _, project := range projects {
