@@ -211,7 +211,6 @@ func callTickersHTTP() bool {
 	return false
 }
 
-// TODO double check this works
 func callGetQuotes() bool {
 	client := &http.Client{Timeout: time.Second * 60}
 	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
