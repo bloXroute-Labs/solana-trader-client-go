@@ -92,7 +92,7 @@ func (w *WSClient) GetTrades(ctx context.Context, market string, limit uint32) (
 }
 
 // GetPools returns pools for given projects.
-func (w *WSClient) GetPools(ctx context.Context, projects []string) (*pb.GetPoolsResponse, error) {
+func (w *WSClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
 	response := pb.GetPoolsResponse{}
 	err := w.conn.Request(ctx, "GetPools", &pb.GetPoolsRequest{Projects: projects}, &response)
 	if err != nil {
@@ -158,6 +158,19 @@ func (w *WSClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceR
 	if err != nil {
 		return nil, err
 	}
+	return &response, nil
+}
+
+// GetQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it
+func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
+	var response pb.GetQuotesResponse
+	request := &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects}
+
+	err := w.conn.Request(ctx, "GetQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+
 	return &response, nil
 }
 

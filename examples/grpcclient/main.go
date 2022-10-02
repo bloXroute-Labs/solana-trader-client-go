@@ -34,6 +34,7 @@ func main() {
 	failed = failed || callTradesGRPCStream(g)
 	failed = failed || callUnsettledGRPC(g)
 	failed = failed || callGetAccountBalanceGRPC(g)
+	failed = failed || callGetQuotes(g)
 	failed = failed || callRecentBlockHashGRPCStream(g)
 
 	// calls below this place an order and immediately cancel it
@@ -168,7 +169,7 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 }
 
 func callPoolsGRPC(g *provider.GRPCClient) bool {
-	pools, err := g.GetPools(context.Background(), []string{"Radium"})
+	pools, err := g.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
 		log.Errorf("error with GetPools request for Radium: %v", err)
 		return true
@@ -187,6 +188,41 @@ func callPriceGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(prices)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetQuotes(g *provider.GRPCClient) bool {
+	log.Info("starting get quotes test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDC"
+	amount := 0.01
+	slippage := float64(5)
+	limit := 5
+
+	quotes, err := g.GetQuotes(ctx, inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Quotes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
+		return true
+	}
+	for _, quote := range quotes.Quotes {
+		if len(quote.Routes) == 0 {
+			log.Errorf("no routes gotten for project %s", quote.Project)
+			return true
+		} else {
+			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
+		}
 	}
 
 	fmt.Println()
@@ -544,6 +580,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute * 1)
+
 	// Check order is there
 	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
 	if err != nil {

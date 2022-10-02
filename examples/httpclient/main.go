@@ -27,6 +27,7 @@ func main() {
 	failed = failed || callTickersHTTP()
 	failed = failed || callUnsettledHTTP()
 	failed = failed || callGetAccountBalanceHTTP()
+	failed = failed || callGetQuotes()
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -184,7 +185,7 @@ func callTradesHTTP() bool {
 func callPoolsHTTP() bool {
 	h := provider.NewHTTPTestnet()
 
-	pools, err := h.GetPools([]string{"Radium"})
+	pools, err := h.GetPools([]pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
 		log.Errorf("error with GetPools request for Radium: %v", err)
 		return true
@@ -220,6 +221,40 @@ func callTickersHTTP() bool {
 		return true
 	} else {
 		log.Info(tickers)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetQuotes() bool {
+	client := &http.Client{Timeout: time.Second * 60}
+	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
+	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+
+	inToken := "SOL"
+	outToken := "USDC"
+	amount := 0.01
+	slippage := float64(5)
+	limit := 5
+
+	quotes, err := h.GetQuotes(inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Quotes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
+		return true
+	}
+	for _, quote := range quotes.Quotes {
+		if len(quote.Routes) == 0 {
+			log.Errorf("no routes gotten for project %s", quote.Project)
+			return true
+		} else {
+			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
+		}
 	}
 
 	fmt.Println()
