@@ -183,6 +183,7 @@ func (h *HTTPClient) GetPrice(tokens []string) (*pb.GetPriceResponse, error) {
 	return pools, nil
 }
 
+// GetQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it
 func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
 	projectString := ""
 	for _, project := range projects {
