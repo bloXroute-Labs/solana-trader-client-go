@@ -36,6 +36,8 @@ func main() {
 	failed = failed || callGetAccountBalanceGRPC(g)
 	failed = failed || callGetQuotes(g)
 	failed = failed || callRecentBlockHashGRPCStream(g)
+	failed = failed || callQuotesGRPCStream(g)
+	failed = failed || callPoolReservesGRPCStream(g)
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -314,6 +316,62 @@ func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
 	stream, err := g.GetRecentBlockHashStream(ctx)
 	if err != nil {
 		log.Errorf("error with GetRecentBlockHash stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callQuotesGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get quotes stream")
+
+	ch := make(chan *pb.GetQuotesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetQuotesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []*pb.TokenPair{{
+		InToken:  "SOL",
+		OutToken: "USDC",
+		InAmount: 1,
+	}})
+
+	if err != nil {
+		log.Errorf("error with GetQuotes stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get pool reserves stream")
+
+	ch := make(chan *pb.GetPoolReservesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPoolReservesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM})
+
+	if err != nil {
+		log.Errorf("error with GetPoolReserves stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)

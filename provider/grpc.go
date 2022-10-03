@@ -429,3 +429,28 @@ func (g *GRPCClient) GetRecentBlockHashStream(ctx context.Context) (connections.
 
 	return connections.GRPCStream[pb.GetRecentBlockHashResponse](stream, ""), nil
 }
+
+// GetQuotesStream subscribes to a stream for getting recent quotes of tokens of interest.
+func (g *GRPCClient) GetQuotesStream(ctx context.Context, projects []pb.Project, tokenPairs []*pb.TokenPair) (connections.Streamer[*pb.GetQuotesStreamResponse], error) {
+	stream, err := g.apiClient.GetQuotesStream(ctx, &pb.GetQuotesStreamRequest{
+		Projects:   projects,
+		TokenPairs: tokenPairs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetQuotesStreamResponse](stream, ""), nil
+}
+
+// GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
+func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
+	stream, err := g.apiClient.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
+		Projects: projects,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPoolReservesStreamResponse](stream, ""), nil
+}
