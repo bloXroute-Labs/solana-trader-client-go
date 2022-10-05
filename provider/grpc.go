@@ -93,6 +93,12 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
 }
 
+// GetOrderbookWithInfo returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+// This function also adds information of block size and node health
+func (g *GRPCClient) GetOrderbookWithInfo(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookWithInfoResponse, error) {
+	return g.apiClient.GetOrderbookWithInfo(ctx, &pb.GetOrderbookRequestWithInfo{Market: market, Limit: limit})
+}
+
 // GetPools returns pools for given projects.
 func (g *GRPCClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
 	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{Projects: projects})

@@ -23,6 +23,7 @@ type ApiClient interface {
 	GetTickers(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (*GetTickersResponse, error)
 	GetKline(ctx context.Context, in *GetKlineRequest, opts ...grpc.CallOption) (*GetKlineResponse, error)
 	GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error)
+	GetOrderbookWithInfo(ctx context.Context, in *GetOrderbookRequestWithInfo, opts ...grpc.CallOption) (*GetOrderbookWithInfoResponse, error)
 	GetTrades(ctx context.Context, in *GetTradesRequest, opts ...grpc.CallOption) (*GetTradesResponse, error)
 	GetServerTime(ctx context.Context, in *GetServerTimeRequest, opts ...grpc.CallOption) (*GetServerTimeResponse, error)
 	GetRecentBlockHash(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (*GetRecentBlockHashResponse, error)
@@ -103,6 +104,15 @@ func (c *apiClient) GetKline(ctx context.Context, in *GetKlineRequest, opts ...g
 func (c *apiClient) GetOrderbook(ctx context.Context, in *GetOrderbookRequest, opts ...grpc.CallOption) (*GetOrderbookResponse, error) {
 	out := new(GetOrderbookResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetOrderbook", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetOrderbookWithInfo(ctx context.Context, in *GetOrderbookRequestWithInfo, opts ...grpc.CallOption) (*GetOrderbookWithInfoResponse, error) {
+	out := new(GetOrderbookWithInfoResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/GetOrderbookWithInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -545,6 +555,7 @@ type ApiServer interface {
 	GetTickers(context.Context, *GetTickersRequest) (*GetTickersResponse, error)
 	GetKline(context.Context, *GetKlineRequest) (*GetKlineResponse, error)
 	GetOrderbook(context.Context, *GetOrderbookRequest) (*GetOrderbookResponse, error)
+	GetOrderbookWithInfo(context.Context, *GetOrderbookRequestWithInfo) (*GetOrderbookWithInfoResponse, error)
 	GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error)
 	GetServerTime(context.Context, *GetServerTimeRequest) (*GetServerTimeResponse, error)
 	GetRecentBlockHash(context.Context, *GetRecentBlockHashRequest) (*GetRecentBlockHashResponse, error)
@@ -597,6 +608,9 @@ func (UnimplementedApiServer) GetKline(context.Context, *GetKlineRequest) (*GetK
 }
 func (UnimplementedApiServer) GetOrderbook(context.Context, *GetOrderbookRequest) (*GetOrderbookResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrderbook not implemented")
+}
+func (UnimplementedApiServer) GetOrderbookWithInfo(context.Context, *GetOrderbookRequestWithInfo) (*GetOrderbookWithInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrderbookWithInfo not implemented")
 }
 func (UnimplementedApiServer) GetTrades(context.Context, *GetTradesRequest) (*GetTradesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTrades not implemented")
@@ -778,6 +792,24 @@ func _Api_GetOrderbook_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).GetOrderbook(ctx, req.(*GetOrderbookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_GetOrderbookWithInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrderbookRequestWithInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetOrderbookWithInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/GetOrderbookWithInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetOrderbookWithInfo(ctx, req.(*GetOrderbookRequestWithInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1318,6 +1350,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrderbook",
 			Handler:    _Api_GetOrderbook_Handler,
+		},
+		{
+			MethodName: "GetOrderbookWithInfo",
+			Handler:    _Api_GetOrderbookWithInfo_Handler,
 		},
 		{
 			MethodName: "GetTrades",

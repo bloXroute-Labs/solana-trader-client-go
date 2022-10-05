@@ -16,7 +16,7 @@ import (
 
 func main() {
 	utils.InitLogger()
-	g, err := provider.NewGRPCTestnet()
+	g, err := provider.NewGRPCLocal()
 	var failed bool
 	if err != nil {
 		log.Errorf("error dialing GRPC client: %v", err)
@@ -26,6 +26,7 @@ func main() {
 	// informational methods
 	failed = failed || callMarketsGRPC(g)
 	failed = failed || callOrderbookGRPC(g)
+	failed = failed || callOrderbookWithInfoGRPC(g)
 	failed = failed || callOpenOrdersGRPC(g)
 	failed = failed || callTickersGRPC(g)
 	failed = failed || callPoolsGRPC(g)
@@ -113,6 +114,40 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 	}
 
 	fmt.Println()
+	return false
+}
+
+func callOrderbookWithInfoGRPC(g *provider.GRPCClient) bool {
+	orderbook, err := g.GetOrderbookWithInfo(context.Background(), "ETH-USDT", 0)
+	if err != nil {
+		log.Errorf("error with GetOrderbookWithInfo request for ETH-USDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
+	orderbook, err = g.GetOrderbookWithInfo(context.Background(), "SOLUSDT", 2)
+	if err != nil {
+		log.Errorf("error with GetOrderbookWithInfo request for SOLUSDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
+	orderbook, err = g.GetOrderbookWithInfo(context.Background(), "SOL:USDC", 3)
+	if err != nil {
+		log.Errorf("error with GetOrderbookWithInfo request for SOL:USDC: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
 	return false
 }
 

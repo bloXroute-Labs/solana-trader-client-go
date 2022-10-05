@@ -17,7 +17,7 @@ import (
 
 func main() {
 	utils.InitLogger()
-	w, err := provider.NewWSClientTestnet()
+	w, err := provider.NewWSClientLocal()
 	var failed bool
 	if err != nil {
 		log.Errorf("error dialing WS client: %v", err)
@@ -33,6 +33,7 @@ func main() {
 	// informational requests
 	failed = failed || callMarketsWS(w)
 	failed = failed || callOrderbookWS(w)
+	failed = failed || callOrderbookWithInfoWS(w)
 	failed = failed || callTradesWS(w)
 	failed = failed || callPoolsWS(w)
 	failed = failed || callPriceWS(w)
@@ -46,10 +47,10 @@ func main() {
 	failed = failed || callOrderbookWSStream(w)
 	failed = failed || callTradesWSStream(w)
 
-	// calls below this place an order and immediately cancel it
-	// you must specify:
+	//calls below this place an order and immediately cancel it
+	//you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewWSClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
@@ -120,6 +121,41 @@ func callOrderbookWS(w *provider.WSClient) bool {
 	fmt.Println()
 
 	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3)
+	if err != nil {
+		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callOrderbookWithInfoWS(w *provider.WSClient) bool {
+	log.Info("fetching orderbooks...")
+
+	orderbook, err := w.GetOrderbookWithInfo(context.Background(), "ETH-USDT", 0)
+	if err != nil {
+		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
+	orderbook, err = w.GetOrderbookWithInfo(context.Background(), "SOLUSDT", 2)
+	if err != nil {
+		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
+	orderbook, err = w.GetOrderbookWithInfo(context.Background(), "SOL:USDC", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true

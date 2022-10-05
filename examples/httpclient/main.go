@@ -20,6 +20,7 @@ func main() {
 	// informational methods
 	failed = failed || callMarketsHTTP()
 	failed = failed || callOrderbookHTTP()
+	failed = failed || callOrderbookWithInfoHTTP()
 	failed = failed || callOpenOrdersHTTP()
 	failed = failed || callTradesHTTP()
 	failed = failed || callPoolsHTTP()
@@ -29,10 +30,10 @@ func main() {
 	failed = failed || callGetAccountBalanceHTTP()
 	failed = failed || callGetQuotes()
 
-	// calls below this place an order and immediately cancel it
-	// you must specify:
+	//calls below this place an order and immediately cancel it
+	//you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
@@ -51,7 +52,7 @@ func main() {
 		payerAddr = ownerAddr
 	}
 
-	// Order lifecycle
+	//Order lifecycle
 	clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
 	failed = failed || fail
 	failed = failed || callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
@@ -95,7 +96,7 @@ func callOrderbookHTTP() bool {
 
 	fmt.Println()
 
-	orderbook, err = h.GetOrderbook("SOLUSDT", 2)
+	orderbook, err = h.GetOrderbook("SOLUSDT", 10)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 		return true
@@ -105,12 +106,46 @@ func callOrderbookHTTP() bool {
 
 	fmt.Println()
 
-	orderbook, err = h.GetOrderbook("SOL:USDC", 3)
+	orderbook, err = h.GetOrderbook("SOL:USDC", 10)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
 	} else {
 		log.Info(orderbook)
+	}
+
+	return false
+}
+
+func callOrderbookWithInfoHTTP() bool {
+	h := provider.NewHTTPLocal()
+
+	orderbook, err := h.GetOrderbookWithInfo("ETH-USDT", 0)
+	if err != nil {
+		log.Errorf("error with GetOrderbookWithInfo request for ETH-USDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
+	orderbook, err = h.GetOrderbookWithInfo("SOLUSDT", 2)
+	if err != nil {
+		log.Errorf("error with GetOrderbookWithInfo request for SOLUSDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook.Height)
+	}
+
+	fmt.Println()
+
+	orderbook, err = h.GetOrderbookWithInfo("SOL:USDC", 3)
+	if err != nil {
+		log.Errorf("error with GetOrderbookWithInfo request for SOL:USDC: %v", err)
+		return true
+	} else {
+		log.Info(orderbook.Height)
 	}
 
 	return false

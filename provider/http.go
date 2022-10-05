@@ -73,6 +73,17 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbook
 	return orderbook, nil
 }
 
+// GetOrderbookWithInfo returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (h *HTTPClient) GetOrderbookWithInfo(market string, limit uint32) (*pb.GetOrderbookWithInfoResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/orderbookswithinfo/%s?limit=%v", h.baseURL, market, limit)
+	orderbook := new(pb.GetOrderbookWithInfoResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOrderbookWithInfoResponse](url, h.httpClient, orderbook, h.GetAuthHeader()); err != nil {
+		return nil, err
+	}
+
+	return orderbook, nil
+}
+
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/trades/%s?limit=%v", h.baseURL, market, limit)

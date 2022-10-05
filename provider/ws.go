@@ -81,6 +81,16 @@ func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32
 	return &response, nil
 }
 
+// GetOrderbookWithInfo returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (w *WSClient) GetOrderbookWithInfo(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookWithInfoResponse, error) {
+	var response pb.GetOrderbookWithInfoResponse
+	err := w.conn.Request(ctx, "GetOrderbookWithInfo", &pb.GetOrderbookRequestWithInfo{Market: market, Limit: limit}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (w *WSClient) GetTrades(ctx context.Context, market string, limit uint32) (*pb.GetTradesResponse, error) {
 	var response pb.GetTradesResponse
