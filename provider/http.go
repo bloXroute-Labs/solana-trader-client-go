@@ -219,10 +219,10 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 }
 
 // PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
-func (h *HTTPClient) PostTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/swap", h.baseURL)
+func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/trade-swap", h.baseURL)
 	request := &pb.TradeSwapRequest{
-		OwnerAddress: owner,
+		OwnerAddress: ownerAddress,
 		InToken:      inToken,
 		OutToken:     outToken,
 		InAmount:     inAmount,

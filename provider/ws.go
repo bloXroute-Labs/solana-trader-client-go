@@ -122,9 +122,9 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (w *WSClient) GetUnsettled(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
+func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
 	var response pb.GetUnsettledResponse
-	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, OwnerAddress: owner}, &response)
+	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -175,13 +175,13 @@ func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAm
 }
 
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
+func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)
 	if err != nil {
 		return nil, err
 	}
 	request := &pb.TradeSwapRequest{
-		OwnerAddress: owner,
+		OwnerAddress: ownerAddress,
 		InToken:      inToken,
 		OutToken:     outToken,
 		InAmount:     inAmount,
@@ -191,6 +191,16 @@ func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken s
 
 	var response pb.TradeSwapResponse
 	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRouteTradeSwap returns a partially signed transaction for submitting a swap request
+func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.RouteTradeSwapResponse, error) {
+	var response pb.RouteTradeSwapResponse
+	err := w.conn.Request(ctx, "PostRouteTradeSwap", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +275,27 @@ func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken
 		}
 
 		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
+// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+	resp, err := w.PostRouteTradeSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	var signatures []string
+	for _, swap := range resp.Swaps {
+		for _, tx := range swap.Transactions {
+			signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
+			if err != nil {
+				return nil, err
+			}
+
+			signatures = append(signatures, signature)
+		}
 	}
 
 	return signatures, nil
