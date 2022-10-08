@@ -115,7 +115,7 @@ func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner str
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
-	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, Owner: owner})
+	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: owner})
 }
 
 // GetMarkets returns the list of all available named markets
@@ -159,12 +159,12 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (g *GRPCClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
 	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: owner,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	})
 }
 
@@ -192,12 +192,12 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: owner,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	})
 	if err != nil {
 		return []string{}, err

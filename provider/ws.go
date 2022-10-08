@@ -124,7 +124,7 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (w *WSClient) GetUnsettled(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
 	var response pb.GetUnsettledResponse
-	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, Owner: owner}, &response)
+	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, OwnerAddress: owner}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -181,12 +181,12 @@ func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken s
 		return nil, err
 	}
 	request := &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: owner,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	}
 
 	var response pb.TradeSwapResponse

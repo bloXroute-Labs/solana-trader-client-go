@@ -190,7 +190,7 @@ func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage floa
 		projectString += fmt.Sprintf("&projects=%s", project)
 	}
 
-	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v%s",
+	url := fmt.Sprintf("%s/api/v1/market/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v%s",
 		h.baseURL, inToken, outToken, inAmount, slippage, limit, projectString)
 	result := new(pb.GetQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetQuotesResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
@@ -220,14 +220,14 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 
 // PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
 func (h *HTTPClient) PostTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/amm/trade-swap", h.baseURL)
+	url := fmt.Sprintf("%s/api/v1/trade/swap", h.baseURL)
 	request := &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: owner,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	}
 
 	var response pb.TradeSwapResponse

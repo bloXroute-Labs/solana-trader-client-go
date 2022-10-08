@@ -22,6 +22,8 @@ very useful to most users (unless you want to write a signer in a different lang
 similarly named `Submit*` methods (e.g. `SubmitOrder`). These methods generate, sign, and submit the
 transaction all at once.
 
+AUTH_EHADER STUFF
+
 
 ## Quickstart
 
@@ -33,7 +35,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 )
 
@@ -79,7 +81,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/pkg/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"context"
 )
