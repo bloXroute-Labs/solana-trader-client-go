@@ -22,8 +22,8 @@ very useful to most users (unless you want to write a signer in a different lang
 similarly named `Submit*` methods (e.g. `SubmitOrder`). These methods generate, sign, and submit the
 transaction all at once.
 
-AUTH_EHADER STUFF
-
+You will also need your bloXroute authorization header to use these endpoints. By default, this is loaded from the 
+`AUTH_HEADER` environment variable.
 
 ## Quickstart
 
