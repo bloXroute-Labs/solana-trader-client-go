@@ -197,7 +197,7 @@ func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, out
 	return &response, nil
 }
 
-// PostRouteTradeSwap returns a partially signed transaction for submitting a swap request
+// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
 func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.RouteTradeSwapResponse, error) {
 	var response pb.RouteTradeSwapResponse
 	err := w.conn.Request(ctx, "PostRouteTradeSwap", request, &response)

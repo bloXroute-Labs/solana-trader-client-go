@@ -168,7 +168,7 @@ func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, o
 	})
 }
 
-// PostRouteTradeSwap returns a partially signed transaction for submitting a swap request
+// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
 func (g *GRPCClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.RouteTradeSwapResponse, error) {
 	return g.apiClient.PostRouteTradeSwap(ctx, request)
 }
@@ -212,7 +212,10 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	for _, tx := range resp.Transactions {
 		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
 		if err != nil {
-			return nil, err
+			if signature != "" {
+				signatures = append(signatures, signature)
+			}
+			return signatures, err
 		}
 
 		signatures = append(signatures, signature)
