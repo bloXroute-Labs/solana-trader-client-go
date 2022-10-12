@@ -74,6 +74,7 @@ func main() {
 	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callTradeSwap(w, ownerAddr)
+	failed = failed || callRouteTradeSwap(w, ownerAddr)
 
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -748,5 +749,43 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting route trade swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("route trade swap")
+	sig, err := w.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
+		OwnerAddress: ownerAddr,
+		Project:      pb.Project_P_RAYDIUM,
+		Steps: []*pb.RouteStep{
+			{
+				// FIDA-RAY pool address
+				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
+				InToken:     "FIDA",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				// RAY-USDC pool address
+				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
+				InToken:      "RAY",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
 }

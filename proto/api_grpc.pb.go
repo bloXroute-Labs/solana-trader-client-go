@@ -45,6 +45,7 @@ type ApiClient interface {
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
 	GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, opts ...grpc.CallOption) (*GetOrderByIDResponse, error)
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
+	PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*RouteTradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(ctx context.Context, in *GetOrderbooksRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
@@ -274,6 +275,15 @@ func (c *apiClient) GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, o
 func (c *apiClient) GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error) {
 	out := new(GetUnsettledResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/GetUnsettled", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*RouteTradeSwapResponse, error) {
+	out := new(RouteTradeSwapResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostRouteTradeSwap", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -567,6 +577,7 @@ type ApiServer interface {
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
 	GetOrderByID(context.Context, *GetOrderByIDRequest) (*GetOrderByIDResponse, error)
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
+	PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*RouteTradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
@@ -654,6 +665,9 @@ func (UnimplementedApiServer) GetOrderByID(context.Context, *GetOrderByIDRequest
 }
 func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnsettled not implemented")
+}
+func (UnimplementedApiServer) PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*RouteTradeSwapResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostRouteTradeSwap not implemented")
 }
 func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetOrderbooksStream not implemented")
@@ -1124,6 +1138,24 @@ func _Api_GetUnsettled_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_PostRouteTradeSwap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RouteTradeSwapRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostRouteTradeSwap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostRouteTradeSwap",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostRouteTradeSwap(ctx, req.(*RouteTradeSwapRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Api_GetOrderbooksStream_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetOrderbooksRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -1394,6 +1426,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUnsettled",
 			Handler:    _Api_GetUnsettled_Handler,
+		},
+		{
+			MethodName: "PostRouteTradeSwap",
+			Handler:    _Api_PostRouteTradeSwap_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
