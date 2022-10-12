@@ -233,7 +233,10 @@ func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 		for _, tx := range swap.Transactions {
 			signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
 			if err != nil {
-				return nil, err
+				if signature != "" {
+					signatures = append(signatures, signature)
+				}
+				return signatures, err
 			}
 
 			signatures = append(signatures, signature)

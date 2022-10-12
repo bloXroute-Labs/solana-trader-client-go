@@ -291,7 +291,10 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 		for _, tx := range swap.Transactions {
 			signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
 			if err != nil {
-				return nil, err
+				if signature != "" {
+					signatures = append(signatures, signature)
+				}
+				return signatures, err
 			}
 
 			signatures = append(signatures, signature)
