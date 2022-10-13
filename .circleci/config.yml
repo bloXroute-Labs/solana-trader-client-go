@@ -64,22 +64,22 @@ jobs:
             source $BASH_ENV
       - run:
           name: GRPC Examples (testnet)
-          command: API_ENV=testnet make grpc-examples
+          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
       - run:
           name: HTTP Examples (testnet)
-          command: API_ENV=testnet make http-examples
+          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
       - run:
           name: WS Examples (testnet)
-          command: API_ENV=testnet make ws-examples
+          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
       - run:
           name: GRPC Examples (mainnet)
-          command: API_ENV=mainnet make grpc-examples
+          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
       - run:
           name: HTTP Examples (mainnet)
-          command: API_ENV=mainnet make http-examples
+          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
       - run:
           name: WS Examples (mainnet)
-          command: API_ENV=mainnet make ws-examples
+          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
       - slack/notify:
           custom: |
             {
@@ -123,7 +123,9 @@ workflows:
           requires:
             - init
       - integration:
-          context: slack
+          context:
+            - slack
+            - trader-api-sdk
           requires:
             - init
             - unit
