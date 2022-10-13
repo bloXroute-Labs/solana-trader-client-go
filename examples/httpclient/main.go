@@ -187,7 +187,7 @@ func callUnsettledHTTP() bool {
 
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+		log.Errorf("error with GetUnsettled request for SOLUSDT: %v", err)
 		return true
 	} else {
 		log.Info(response)

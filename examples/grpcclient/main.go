@@ -162,7 +162,7 @@ func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
 func callUnsettledGRPC(g *provider.GRPCClient) bool {
 	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
+		log.Errorf("error with GetUnsettled request for SOLUSDC: %v", err)
 		return true
 	} else {
 		log.Info(response)
