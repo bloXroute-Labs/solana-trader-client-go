@@ -223,7 +223,7 @@ func callUnsettledWS(w *provider.WSClient) bool {
 
 	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
+		log.Errorf("error with GetUnsettled request for SOL-USDT: %v", err)
 		return true
 	} else {
 		log.Info(response)
