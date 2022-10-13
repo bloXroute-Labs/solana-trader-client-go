@@ -53,8 +53,8 @@ func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
 func main() {
 	utils.InitLogger()
 
-	passed := run()
-	if !passed {
+	failed := run()
+	if failed {
 		log.Fatal("one or multiple examples failed")
 	}
 }
