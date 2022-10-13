@@ -262,46 +262,39 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight b
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, skipPreFlight bool) ([]string, error) {
+func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, skipPreFlight bool) (signatures []string, errors []error) {
 	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
-		return []string{}, err
+		errors = append(errors, err)
+		return signatures, errors
 	}
-	var signatures []string
+
 	for _, tx := range resp.Transactions {
 		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
+		errors = append(errors, err)
 		signatures = append(signatures, signature)
 	}
 
-	return signatures, nil
+	return signatures, errors
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) (signatures []string, errors []error) {
 	resp, err := w.PostRouteTradeSwap(ctx, request)
 	if err != nil {
-		return nil, err
+		errors = append(errors, err)
+		return signatures, errors
 	}
-	var signatures []string
+
 	for _, swap := range resp.Swaps {
 		for _, tx := range swap.Transactions {
 			signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
-			if err != nil {
-				if signature != "" {
-					signatures = append(signatures, signature)
-				}
-				return signatures, err
-			}
-
 			signatures = append(signatures, signature)
+			errors = append(errors, err)
 		}
 	}
 
-	return signatures, nil
+	return signatures, errors
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -421,23 +414,20 @@ func (w *WSClient) SubmitCancelAll(
 	owner string,
 	openOrdersAddresses []string,
 	skipPreFlight bool,
-) ([]string, error) {
+) (signatures []string, errors []error) {
 	orders, err := w.PostCancelAll(ctx, market, owner, openOrdersAddresses)
 	if err != nil {
-		return nil, err
+		errors = append(errors, err)
+		return signatures, errors
 	}
 
-	var signatures []string
 	for _, tx := range orders.Transactions {
 		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
+		errors = append(errors, err)
 		signatures = append(signatures, signature)
 	}
 
-	return signatures, nil
+	return signatures, errors
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

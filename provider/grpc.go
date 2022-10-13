@@ -195,7 +195,7 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) (signatures []string, errors []error) {
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
@@ -205,48 +205,36 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 		Project:      project,
 	})
 	if err != nil {
-		return nil, err
+		errors = append(errors, err)
+		return signatures, errors
 	}
 
-	var signatures []string
 	for _, tx := range resp.Transactions {
 		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			if signature != "" {
-				signatures = append(signatures, signature)
-			}
-			return signatures, err
-		}
-
 		signatures = append(signatures, signature)
+		errors = append(errors, err)
 	}
 
-	return signatures, nil
+	return signatures, errors
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) (signatures []string, errors []error) {
 	resp, err := g.apiClient.PostRouteTradeSwap(ctx, request)
 	if err != nil {
-		return nil, err
+		errors = append(errors, err)
+		return signatures, errors
 	}
 
-	var signatures []string
 	for _, swap := range resp.Swaps {
 		for _, tx := range swap.Transactions {
 			signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-			if err != nil {
-				if signature != "" {
-					signatures = append(signatures, signature)
-				}
-				return signatures, err
-			}
-
 			signatures = append(signatures, signature)
+			errors = append(errors, err)
 		}
 	}
 
-	return signatures, nil
+	return signatures, errors
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -336,23 +324,20 @@ func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, op
 	})
 }
 
-func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, skipPreFlight bool) (signatures []string, errors []error) {
 	orders, err := g.PostCancelAll(ctx, market, owner, openOrdersAddresses)
 	if err != nil {
-		return nil, err
+		errors = append(errors, err)
+		return signatures, errors
 	}
 
-	var signatures []string
 	for _, tx := range orders.Transactions {
 		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
 		signatures = append(signatures, signature)
+		errors = append(errors, err)
 	}
 
-	return signatures, nil
+	return signatures, errors
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
