@@ -101,6 +101,7 @@ func main() {
 
 	if failed {
 		log.Fatal("one or multiple examples failed")
+		os.Exit(1)
 	}
 
 }
