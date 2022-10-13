@@ -38,6 +38,7 @@ type PostOrderOpts struct {
 
 type RPCOpts struct {
 	Endpoint       string
+	UseTLS         bool
 	Timeout        time.Duration
 	PrivateKey     *solana.PrivateKey
 	AuthHeader     string

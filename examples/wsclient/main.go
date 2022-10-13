@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
@@ -17,8 +18,20 @@ import (
 
 func main() {
 	utils.InitLogger()
-	w, err := provider.NewWSClientTestnet()
-	var failed bool
+
+	env, err := config.LoadEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var w *provider.WSClient
+
+	switch env {
+	case config.EnvTestnet:
+		w, err = provider.NewWSClientTestnet()
+	case config.EnvMainnet:
+		w, err = provider.NewWSClient()
+	}
 	if err != nil {
 		log.Errorf("error dialing WS client: %v", err)
 		return
@@ -29,6 +42,8 @@ func main() {
 			panic(err)
 		}
 	}(w)
+
+	var failed bool
 
 	// informational requests
 	failed = failed || callMarketsWS(w)

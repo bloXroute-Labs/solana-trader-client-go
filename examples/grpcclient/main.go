@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
@@ -16,12 +17,26 @@ import (
 
 func main() {
 	utils.InitLogger()
-	g, err := provider.NewGRPCTestnet()
-	var failed bool
+
+	env, err := config.LoadEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var g *provider.GRPCClient
+
+	switch env {
+	case config.EnvTestnet:
+		g, err = provider.NewGRPCTestnet()
+	case config.EnvMainnet:
+		g, err = provider.NewGRPCClient()
+	}
 	if err != nil {
 		log.Errorf("error dialing GRPC client: %v", err)
 		return
 	}
+
+	var failed bool
 
 	// informational methods
 	failed = failed || callMarketsGRPC(g)

@@ -2,12 +2,14 @@ package provider
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -23,6 +25,7 @@ type GRPCClient struct {
 // NewGRPCClient connects to Mainnet Trader API
 func NewGRPCClient() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(MainnetGRPC)
+	opts.UseTLS = true
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -61,7 +64,13 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 // NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
-	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), authOption)
+
+	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
+	if opts.UseTLS {
+		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
+	}
+
+	conn, err := grpc.Dial(opts.Endpoint, transportOption, authOption)
 	if err != nil {
 		return nil, err
 	}
