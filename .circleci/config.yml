@@ -9,6 +9,8 @@ executors:
       GOPATH: /home/circleci/go
       WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
       GOTRACEBACK: all
+      RUN_TRADES: false
+      RUN_TRADE_STREAM: false
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
   init:
@@ -60,9 +62,6 @@ jobs:
             echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
             echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
             source $BASH_ENV
-            
-            export RUN_TRADES=false
-            export RUN_TRADE_STREAM=false
       - run:
           name: GRPC Examples (testnet)
           command: API_ENV=testnet make grpc-examples
