@@ -16,14 +16,14 @@ import (
 )
 
 func httpClient() *provider.HTTPClient {
-	env, err := config.LoadEnv()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var h *provider.HTTPClient
 
-	switch env {
+	switch cfg.Env {
 	case config.EnvTestnet:
 		h = provider.NewHTTPTestnet()
 	case config.EnvMainnet:
@@ -33,7 +33,7 @@ func httpClient() *provider.HTTPClient {
 }
 
 func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
-	env, err := config.LoadEnv()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
 	var h *provider.HTTPClient
 	client := &http.Client{Timeout: timeout}
 
-	switch env {
+	switch cfg.Env {
 	case config.EnvTestnet:
 		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.TestnetHTTP))
 	case config.EnvMainnet:
@@ -65,6 +65,15 @@ func main() {
 	failed = failed || callUnsettledHTTP()
 	failed = failed || callGetAccountBalanceHTTP()
 	failed = failed || callGetQuotes()
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !cfg.RunTrades {
+		log.Info("skipping trades due to config")
+		return
+	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:

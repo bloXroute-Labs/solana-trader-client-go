@@ -18,14 +18,14 @@ import (
 func main() {
 	utils.InitLogger()
 
-	env, err := config.LoadEnv()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var g *provider.GRPCClient
 
-	switch env {
+	switch cfg.Env {
 	case config.EnvTestnet:
 		g, err = provider.NewGRPCTestnet()
 	case config.EnvMainnet:
@@ -46,11 +46,21 @@ func main() {
 	failed = failed || callPoolsGRPC(g)
 	failed = failed || callPriceGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
-	failed = failed || callTradesGRPCStream(g)
+
+	// trade stream can be slow
+	if cfg.RunTradeStream {
+		failed = failed || callTradesGRPCStream(g)
+	}
+
 	failed = failed || callUnsettledGRPC(g)
 	failed = failed || callGetAccountBalanceGRPC(g)
 	failed = failed || callGetQuotes(g)
 	failed = failed || callRecentBlockHashGRPCStream(g)
+
+	if !cfg.RunTrades {
+		log.Info("skipping trades due to config")
+		return
+	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:

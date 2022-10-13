@@ -19,14 +19,14 @@ import (
 func main() {
 	utils.InitLogger()
 
-	env, err := config.LoadEnv()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var w *provider.WSClient
 
-	switch env {
+	switch cfg.Env {
 	case config.EnvTestnet:
 		w, err = provider.NewWSClientTestnet()
 	case config.EnvMainnet:
@@ -59,7 +59,15 @@ func main() {
 
 	// streaming methods
 	failed = failed || callOrderbookWSStream(w)
-	failed = failed || callTradesWSStream(w)
+
+	if cfg.RunTradeStream {
+		failed = failed || callTradesWSStream(w)
+	}
+
+	if !cfg.RunTrades {
+		log.Info("skipping trades due to config")
+		return
+	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
