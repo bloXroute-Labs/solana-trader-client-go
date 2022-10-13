@@ -61,14 +61,23 @@ jobs:
             echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
             source $BASH_ENV
       - run:
-          name: GRPC Examples
-          command: make grpc-examples
+          name: GRPC Examples (testnet)
+          command: API_ENV=testnet make grpc-examples
       - run:
-          name: HTTP Examples
-          command: make http-examples
+          name: HTTP Examples (testnet)
+          command: API_ENV=testnet make http-examples
       - run:
-          name: WS Examples
-          command: make ws-examples
+          name: WS Examples (testnet)
+          command: API_ENV=testnet make ws-examples
+      - run:
+          name: GRPC Examples (mainnet)
+          command: API_ENV=mainnet make grpc-examples
+      - run:
+          name: HTTP Examples (mainnet)
+          command: API_ENV=mainnet make http-examples
+      - run:
+          name: WS Examples (mainnet)
+          command: API_ENV=mainnet make ws-examples
       - slack/notify:
           custom: |
             {
@@ -116,7 +125,7 @@ workflows:
           requires:
             - init
             - unit
-          filters:
-            branches:
-              only:
-                - develop
+#          filters:
+#            branches:
+#              only:
+#                - develop
