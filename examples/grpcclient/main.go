@@ -18,6 +18,13 @@ import (
 func main() {
 	utils.InitLogger()
 
+	passed := run()
+	if !passed {
+		log.Fatal("one or multiple examples failed")
+	}
+}
+
+func run() bool {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
@@ -32,8 +39,7 @@ func main() {
 		g, err = provider.NewGRPCClient()
 	}
 	if err != nil {
-		log.Errorf("error dialing GRPC client: %v", err)
-		return
+		log.Fatalf("error dialing GRPC client: %v", err)
 	}
 
 	var failed bool
@@ -59,7 +65,7 @@ func main() {
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
-		return
+		return failed
 	}
 
 	// calls below this place an order and immediately cancel it
@@ -70,7 +76,7 @@ func main() {
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return
+		return failed
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
@@ -91,10 +97,7 @@ func main() {
 	failed = failed || callTradeSwap(g, ownerAddr)
 	failed = failed || callRouteTradeSwap(g, ownerAddr)
 
-	if failed {
-		log.Fatal("one or multiple examples failed")
-		os.Exit(1)
-	}
+	return failed
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) bool {
@@ -198,7 +201,7 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 func callPoolsGRPC(g *provider.GRPCClient) bool {
 	pools, err := g.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
-		log.Errorf("error with GetPools request for Radium: %v", err)
+		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
 		log.Info(pools)
