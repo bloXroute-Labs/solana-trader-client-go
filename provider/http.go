@@ -141,7 +141,7 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?owner=%s", h.baseURL, market, owner)
+	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?ownerAddress=%s", h.baseURL, market, owner)
 	result := new(pb.GetUnsettledResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
 		return nil, err

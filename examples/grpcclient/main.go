@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
@@ -16,12 +17,32 @@ import (
 
 func main() {
 	utils.InitLogger()
-	g, err := provider.NewGRPCTestnet()
-	var failed bool
-	if err != nil {
-		log.Errorf("error dialing GRPC client: %v", err)
-		return
+
+	failed := run()
+	if failed {
+		log.Fatal("one or multiple examples failed")
 	}
+}
+
+func run() bool {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var g *provider.GRPCClient
+
+	switch cfg.Env {
+	case config.EnvTestnet:
+		g, err = provider.NewGRPCTestnet()
+	case config.EnvMainnet:
+		g, err = provider.NewGRPCClient()
+	}
+	if err != nil {
+		log.Fatalf("error dialing GRPC client: %v", err)
+	}
+
+	var failed bool
 
 	// informational methods
 	failed = failed || callMarketsGRPC(g)
@@ -31,11 +52,21 @@ func main() {
 	failed = failed || callPoolsGRPC(g)
 	failed = failed || callPriceGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
-	failed = failed || callTradesGRPCStream(g)
+
+	// trade stream can be slow
+	if cfg.RunTradeStream {
+		failed = failed || callTradesGRPCStream(g)
+	}
+
 	failed = failed || callUnsettledGRPC(g)
 	failed = failed || callGetAccountBalanceGRPC(g)
 	failed = failed || callGetQuotes(g)
 	failed = failed || callRecentBlockHashGRPCStream(g)
+
+	if !cfg.RunTrades {
+		log.Info("skipping trades due to config")
+		return failed
+	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -45,7 +76,7 @@ func main() {
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return
+		return failed
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
@@ -66,9 +97,7 @@ func main() {
 	failed = failed || callTradeSwap(g, ownerAddr)
 	failed = failed || callRouteTradeSwap(g, ownerAddr)
 
-	if failed {
-		log.Fatal("one or multiple examples failed")
-	}
+	return failed
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) bool {
@@ -133,7 +162,7 @@ func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
 func callUnsettledGRPC(g *provider.GRPCClient) bool {
 	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
+		log.Errorf("error with GetUnsettled request for SOLUSDC: %v", err)
 		return true
 	} else {
 		log.Info(response)
@@ -172,7 +201,7 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 func callPoolsGRPC(g *provider.GRPCClient) bool {
 	pools, err := g.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
-		log.Errorf("error with GetPools request for Radium: %v", err)
+		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
 		log.Info(pools)
@@ -246,7 +275,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	_, err = stream()
 	if err != nil {
 		//demonstration purposes only. will swallow
-		log.Errorf("subscription error: %v", err)
+		log.Infof("subscription error: %v", err)
 	} else {
 		log.Error("subscription should have returned an error")
 		return true
