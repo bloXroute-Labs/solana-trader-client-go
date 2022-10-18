@@ -274,6 +274,18 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 	return &response, nil
 }
 
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
+
+	var response pb.PostSubmitBatchResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitBatchResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) ([]string, error) {
 	project, err := ProjectFromString(projectStr)

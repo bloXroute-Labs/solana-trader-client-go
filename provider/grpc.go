@@ -203,6 +203,11 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 		SkipPreFlight: skipPreFlight})
 }
 
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	return g.apiClient.PostSubmitBatch(ctx, request)
+}
+
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{

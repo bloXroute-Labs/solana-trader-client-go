@@ -34,6 +34,7 @@ type ApiClient interface {
 	// trade endpoints
 	PostOrder(ctx context.Context, in *PostOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error)
 	PostSubmit(ctx context.Context, in *PostSubmitRequest, opts ...grpc.CallOption) (*PostSubmitResponse, error)
+	PostSubmitBatch(ctx context.Context, in *PostSubmitBatchRequest, opts ...grpc.CallOption) (*PostSubmitBatchResponse, error)
 	PostCancelOrder(ctx context.Context, in *PostCancelOrderRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelByClientOrderID(ctx context.Context, in *PostCancelByClientOrderIDRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelAll(ctx context.Context, in *PostCancelAllRequest, opts ...grpc.CallOption) (*PostCancelAllResponse, error)
@@ -176,6 +177,15 @@ func (c *apiClient) PostOrder(ctx context.Context, in *PostOrderRequest, opts ..
 func (c *apiClient) PostSubmit(ctx context.Context, in *PostSubmitRequest, opts ...grpc.CallOption) (*PostSubmitResponse, error) {
 	out := new(PostSubmitResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/PostSubmit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) PostSubmitBatch(ctx context.Context, in *PostSubmitBatchRequest, opts ...grpc.CallOption) (*PostSubmitBatchResponse, error) {
+	out := new(PostSubmitBatchResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostSubmitBatch", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -566,6 +576,7 @@ type ApiServer interface {
 	// trade endpoints
 	PostOrder(context.Context, *PostOrderRequest) (*PostOrderResponse, error)
 	PostSubmit(context.Context, *PostSubmitRequest) (*PostSubmitResponse, error)
+	PostSubmitBatch(context.Context, *PostSubmitBatchRequest) (*PostSubmitBatchResponse, error)
 	PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error)
 	PostCancelByClientOrderID(context.Context, *PostCancelByClientOrderIDRequest) (*PostCancelOrderResponse, error)
 	PostCancelAll(context.Context, *PostCancelAllRequest) (*PostCancelAllResponse, error)
@@ -632,6 +643,9 @@ func (UnimplementedApiServer) PostOrder(context.Context, *PostOrderRequest) (*Po
 }
 func (UnimplementedApiServer) PostSubmit(context.Context, *PostSubmitRequest) (*PostSubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostSubmit not implemented")
+}
+func (UnimplementedApiServer) PostSubmitBatch(context.Context, *PostSubmitBatchRequest) (*PostSubmitBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostSubmitBatch not implemented")
 }
 func (UnimplementedApiServer) PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostCancelOrder not implemented")
@@ -936,6 +950,24 @@ func _Api_PostSubmit_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).PostSubmit(ctx, req.(*PostSubmitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_PostSubmitBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSubmitBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostSubmitBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostSubmitBatch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostSubmitBatch(ctx, req.(*PostSubmitBatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1382,6 +1414,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostSubmit",
 			Handler:    _Api_PostSubmit_Handler,
+		},
+		{
+			MethodName: "PostSubmitBatch",
+			Handler:    _Api_PostSubmitBatch_Handler,
 		},
 		{
 			MethodName: "PostCancelOrder",

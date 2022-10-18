@@ -242,6 +242,16 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 	return &response, nil
 }
 
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	var response pb.PostSubmitBatchResponse
+	err := w.conn.Request(ctx, "PostSubmitBatch", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // signAndSubmit signs the given transaction and submits it.
 func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
 	if w.privateKey == nil {
