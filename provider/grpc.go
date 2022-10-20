@@ -178,7 +178,7 @@ func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, o
 }
 
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
-func (g *GRPCClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.RouteTradeSwapResponse, error) {
+func (g *GRPCClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
 	return g.apiClient.PostRouteTradeSwap(ctx, request)
 }
 
@@ -201,6 +201,11 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: txBase64,
 		SkipPreFlight: skipPreFlight})
+}
+
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	return g.apiClient.PostSubmitBatch(ctx, request)
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
@@ -241,18 +246,16 @@ func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	}
 
 	var signatures []string
-	for _, swap := range resp.Swaps {
-		for _, tx := range swap.Transactions {
-			signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-			if err != nil {
-				if signature != "" {
-					signatures = append(signatures, signature)
-				}
-				return signatures, err
+	for _, tx := range resp.Transactions {
+		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			if signature != "" {
+				signatures = append(signatures, signature)
 			}
-
-			signatures = append(signatures, signature)
+			return signatures, err
 		}
+
+		signatures = append(signatures, signature)
 	}
 
 	return signatures, nil

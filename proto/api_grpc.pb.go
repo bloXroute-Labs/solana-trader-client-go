@@ -34,6 +34,7 @@ type ApiClient interface {
 	// trade endpoints
 	PostOrder(ctx context.Context, in *PostOrderRequest, opts ...grpc.CallOption) (*PostOrderResponse, error)
 	PostSubmit(ctx context.Context, in *PostSubmitRequest, opts ...grpc.CallOption) (*PostSubmitResponse, error)
+	PostSubmitBatch(ctx context.Context, in *PostSubmitBatchRequest, opts ...grpc.CallOption) (*PostSubmitBatchResponse, error)
 	PostCancelOrder(ctx context.Context, in *PostCancelOrderRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelByClientOrderID(ctx context.Context, in *PostCancelByClientOrderIDRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error)
 	PostCancelAll(ctx context.Context, in *PostCancelAllRequest, opts ...grpc.CallOption) (*PostCancelAllResponse, error)
@@ -45,7 +46,7 @@ type ApiClient interface {
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
 	GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, opts ...grpc.CallOption) (*GetOrderByIDResponse, error)
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
-	PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*RouteTradeSwapResponse, error)
+	PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(ctx context.Context, in *GetOrderbooksRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
@@ -182,6 +183,15 @@ func (c *apiClient) PostSubmit(ctx context.Context, in *PostSubmitRequest, opts 
 	return out, nil
 }
 
+func (c *apiClient) PostSubmitBatch(ctx context.Context, in *PostSubmitBatchRequest, opts ...grpc.CallOption) (*PostSubmitBatchResponse, error) {
+	out := new(PostSubmitBatchResponse)
+	err := c.cc.Invoke(ctx, "/api.Api/PostSubmitBatch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *apiClient) PostCancelOrder(ctx context.Context, in *PostCancelOrderRequest, opts ...grpc.CallOption) (*PostCancelOrderResponse, error) {
 	out := new(PostCancelOrderResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/PostCancelOrder", in, out, opts...)
@@ -281,8 +291,8 @@ func (c *apiClient) GetUnsettled(ctx context.Context, in *GetUnsettledRequest, o
 	return out, nil
 }
 
-func (c *apiClient) PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*RouteTradeSwapResponse, error) {
-	out := new(RouteTradeSwapResponse)
+func (c *apiClient) PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error) {
+	out := new(TradeSwapResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/PostRouteTradeSwap", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -566,6 +576,7 @@ type ApiServer interface {
 	// trade endpoints
 	PostOrder(context.Context, *PostOrderRequest) (*PostOrderResponse, error)
 	PostSubmit(context.Context, *PostSubmitRequest) (*PostSubmitResponse, error)
+	PostSubmitBatch(context.Context, *PostSubmitBatchRequest) (*PostSubmitBatchResponse, error)
 	PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error)
 	PostCancelByClientOrderID(context.Context, *PostCancelByClientOrderIDRequest) (*PostCancelOrderResponse, error)
 	PostCancelAll(context.Context, *PostCancelAllRequest) (*PostCancelAllResponse, error)
@@ -577,7 +588,7 @@ type ApiServer interface {
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
 	GetOrderByID(context.Context, *GetOrderByIDRequest) (*GetOrderByIDResponse, error)
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
-	PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*RouteTradeSwapResponse, error)
+	PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
@@ -633,6 +644,9 @@ func (UnimplementedApiServer) PostOrder(context.Context, *PostOrderRequest) (*Po
 func (UnimplementedApiServer) PostSubmit(context.Context, *PostSubmitRequest) (*PostSubmitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostSubmit not implemented")
 }
+func (UnimplementedApiServer) PostSubmitBatch(context.Context, *PostSubmitBatchRequest) (*PostSubmitBatchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostSubmitBatch not implemented")
+}
 func (UnimplementedApiServer) PostCancelOrder(context.Context, *PostCancelOrderRequest) (*PostCancelOrderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostCancelOrder not implemented")
 }
@@ -666,7 +680,7 @@ func (UnimplementedApiServer) GetOrderByID(context.Context, *GetOrderByIDRequest
 func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnsettled not implemented")
 }
-func (UnimplementedApiServer) PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*RouteTradeSwapResponse, error) {
+func (UnimplementedApiServer) PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*TradeSwapResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostRouteTradeSwap not implemented")
 }
 func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error {
@@ -936,6 +950,24 @@ func _Api_PostSubmit_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).PostSubmit(ctx, req.(*PostSubmitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_PostSubmitBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostSubmitBatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).PostSubmitBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Api/PostSubmitBatch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).PostSubmitBatch(ctx, req.(*PostSubmitBatchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1382,6 +1414,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostSubmit",
 			Handler:    _Api_PostSubmit_Handler,
+		},
+		{
+			MethodName: "PostSubmitBatch",
+			Handler:    _Api_PostSubmitBatch_Handler,
 		},
 		{
 			MethodName: "PostCancelOrder",
