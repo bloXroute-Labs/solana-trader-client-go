@@ -198,8 +198,8 @@ func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, out
 }
 
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
-func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.RouteTradeSwapResponse, error) {
-	var response pb.RouteTradeSwapResponse
+func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
+	var response pb.TradeSwapResponse
 	err := w.conn.Request(ctx, "PostRouteTradeSwap", request, &response)
 	if err != nil {
 		return nil, err
@@ -297,18 +297,16 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 		return nil, err
 	}
 	var signatures []string
-	for _, swap := range resp.Swaps {
-		for _, tx := range swap.Transactions {
-			signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
-			if err != nil {
-				if signature != "" {
-					signatures = append(signatures, signature)
-				}
-				return signatures, err
+	for _, tx := range resp.Transactions {
+		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			if signature != "" {
+				signatures = append(signatures, signature)
 			}
-
-			signatures = append(signatures, signature)
+			return signatures, err
 		}
+
+		signatures = append(signatures, signature)
 	}
 
 	return signatures, nil

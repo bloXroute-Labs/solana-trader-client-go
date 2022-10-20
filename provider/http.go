@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
@@ -293,6 +294,26 @@ func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, 
 		return []string{}, err
 	}
 	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
+	if err != nil {
+		return []string{}, err
+	}
+
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
+// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+	resp, err := h.PostRouteTradeSwap(ctx, request)
 	if err != nil {
 		return []string{}, err
 	}

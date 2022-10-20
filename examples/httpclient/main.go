@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -114,6 +115,7 @@ func run() bool {
 	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callGetRecentBlockHash()
 	failed = failed || callTradeSwap(ownerAddr)
+	failed = failed || callRouteTradeSwap(ownerAddr)
 
 	return failed
 }
@@ -662,4 +664,45 @@ func callTradeSwap(ownerAddr string) bool {
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
 	return false
+}
+
+func callRouteTradeSwap(ownerAddr string) bool {
+	log.Info("starting route trade swap test")
+
+	h := httpClientWithTimeout(time.Second * 30)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("route trade swap")
+	sig, err := h.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
+		OwnerAddress: ownerAddr,
+		Project:      pb.Project_P_RAYDIUM,
+		Steps: []*pb.RouteStep{
+			{
+				// FIDA-RAY pool address
+				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
+				InToken:     "FIDA",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				// RAY-USDC pool address
+				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
+				InToken:      "RAY",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("route trade swap transaction signature : %s", sig)
+	return false
+
 }

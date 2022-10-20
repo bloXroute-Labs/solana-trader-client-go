@@ -46,7 +46,7 @@ type ApiClient interface {
 	GetOpenOrders(ctx context.Context, in *GetOpenOrdersRequest, opts ...grpc.CallOption) (*GetOpenOrdersResponse, error)
 	GetOrderByID(ctx context.Context, in *GetOrderByIDRequest, opts ...grpc.CallOption) (*GetOrderByIDResponse, error)
 	GetUnsettled(ctx context.Context, in *GetUnsettledRequest, opts ...grpc.CallOption) (*GetUnsettledResponse, error)
-	PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*RouteTradeSwapResponse, error)
+	PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(ctx context.Context, in *GetOrderbooksRequest, opts ...grpc.CallOption) (Api_GetOrderbooksStreamClient, error)
 	GetTickersStream(ctx context.Context, in *GetTickersRequest, opts ...grpc.CallOption) (Api_GetTickersStreamClient, error)
@@ -291,8 +291,8 @@ func (c *apiClient) GetUnsettled(ctx context.Context, in *GetUnsettledRequest, o
 	return out, nil
 }
 
-func (c *apiClient) PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*RouteTradeSwapResponse, error) {
-	out := new(RouteTradeSwapResponse)
+func (c *apiClient) PostRouteTradeSwap(ctx context.Context, in *RouteTradeSwapRequest, opts ...grpc.CallOption) (*TradeSwapResponse, error) {
+	out := new(TradeSwapResponse)
 	err := c.cc.Invoke(ctx, "/api.Api/PostRouteTradeSwap", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -588,7 +588,7 @@ type ApiServer interface {
 	GetOpenOrders(context.Context, *GetOpenOrdersRequest) (*GetOpenOrdersResponse, error)
 	GetOrderByID(context.Context, *GetOrderByIDRequest) (*GetOrderByIDResponse, error)
 	GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error)
-	PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*RouteTradeSwapResponse, error)
+	PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*TradeSwapResponse, error)
 	// streaming endpoints
 	GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error
 	GetTickersStream(*GetTickersRequest, Api_GetTickersStreamServer) error
@@ -680,7 +680,7 @@ func (UnimplementedApiServer) GetOrderByID(context.Context, *GetOrderByIDRequest
 func (UnimplementedApiServer) GetUnsettled(context.Context, *GetUnsettledRequest) (*GetUnsettledResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnsettled not implemented")
 }
-func (UnimplementedApiServer) PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*RouteTradeSwapResponse, error) {
+func (UnimplementedApiServer) PostRouteTradeSwap(context.Context, *RouteTradeSwapRequest) (*TradeSwapResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostRouteTradeSwap not implemented")
 }
 func (UnimplementedApiServer) GetOrderbooksStream(*GetOrderbooksRequest, Api_GetOrderbooksStreamServer) error {
