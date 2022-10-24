@@ -42,6 +42,7 @@ type Env string
 const (
 	EnvMainnet Env = "mainnet"
 	EnvTestnet Env = "testnet"
+	EnvLocal   Env = "local"
 )
 
 func loadEnv() (Env, error) {
@@ -51,6 +52,8 @@ func loadEnv() (Env, error) {
 	}
 
 	switch Env(strings.ToLower(v)) {
+	case EnvLocal:
+		return EnvLocal, nil
 	case EnvTestnet:
 		return EnvTestnet, nil
 	case EnvMainnet:
