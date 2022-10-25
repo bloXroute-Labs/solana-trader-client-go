@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
@@ -17,11 +18,29 @@ import (
 
 func main() {
 	utils.InitLogger()
-	w, err := provider.NewWSClientTestnet()
-	var failed bool
+
+	failed := run()
+	if failed {
+		log.Fatal("one or multiple examples failed")
+	}
+}
+
+func run() bool {
+	cfg, err := config.Load()
 	if err != nil {
-		log.Errorf("error dialing WS client: %v", err)
-		return
+		log.Fatal(err)
+	}
+
+	var w *provider.WSClient
+
+	switch cfg.Env {
+	case config.EnvTestnet:
+		w, err = provider.NewWSClientTestnet()
+	case config.EnvMainnet:
+		w, err = provider.NewWSClient()
+	}
+	if err != nil {
+		log.Fatalf("error dialing WS client: %v", err)
 	}
 	defer func(w *provider.WSClient) {
 		err := w.Close()
@@ -29,6 +48,8 @@ func main() {
 			panic(err)
 		}
 	}(w)
+
+	var failed bool
 
 	// informational requests
 	failed = failed || callMarketsWS(w)
@@ -44,10 +65,18 @@ func main() {
 
 	// streaming methods
 	failed = failed || callOrderbookWSStream(w)
-	failed = failed || callTradesWSStream(w)
 	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
+	
+  if cfg.RunTradeStream {
+		failed = failed || callTradesWSStream(w)
+	}
+
+	if !cfg.RunTrades {
+		log.Info("skipping trades due to config")
+		return failed
+	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -57,7 +86,7 @@ func main() {
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return
+		return failed
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
@@ -76,11 +105,9 @@ func main() {
 	failed = failed || callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callTradeSwap(w, ownerAddr)
+	failed = failed || callRouteTradeSwap(w, ownerAddr)
 
-	if failed {
-		log.Fatal("one or multiple examples failed")
-	}
-
+	return failed
 }
 
 func callMarketsWS(w *provider.WSClient) bool {
@@ -153,7 +180,7 @@ func callPoolsWS(w *provider.WSClient) bool {
 
 	pools, err := w.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
-		log.Errorf("error with GetPools request for Radium: %v", err)
+		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
 		log.Info(pools)
@@ -198,7 +225,7 @@ func callUnsettledWS(w *provider.WSClient) bool {
 
 	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
+		log.Errorf("error with GetUnsettled request for SOL-USDT: %v", err)
 		return true
 	} else {
 		log.Info(response)
@@ -802,5 +829,43 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting route trade swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("route trade swap")
+	sig, err := w.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
+		OwnerAddress: ownerAddr,
+		Project:      pb.Project_P_RAYDIUM,
+		Steps: []*pb.RouteStep{
+			{
+				// FIDA-RAY pool address
+				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
+				InToken:     "FIDA",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				// RAY-USDC pool address
+				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
+				InToken:      "RAY",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
 }

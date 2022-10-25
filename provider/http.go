@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
@@ -141,7 +142,7 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?owner=%s", h.baseURL, market, owner)
+	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?ownerAddress=%s", h.baseURL, market, owner)
 	result := new(pb.GetUnsettledResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
 		return nil, err
@@ -190,7 +191,7 @@ func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage floa
 		projectString += fmt.Sprintf("&projects=%s", project)
 	}
 
-	url := fmt.Sprintf("%s/api/v1/amm/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v%s",
+	url := fmt.Sprintf("%s/api/v1/market/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v%s",
 		h.baseURL, inToken, outToken, inAmount, slippage, limit, projectString)
 	result := new(pb.GetQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetQuotesResponse](url, h.httpClient, result, h.GetAuthHeader()); err != nil {
@@ -219,15 +220,15 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 }
 
 // PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
-func (h *HTTPClient) PostTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/amm/trade-swap", h.baseURL)
+func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/trade-swap", h.baseURL)
 	request := &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: ownerAddress,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	}
 
 	var response pb.TradeSwapResponse
@@ -274,6 +275,18 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 	return &response, nil
 }
 
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
+
+	var response pb.PostSubmitBatchResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitBatchResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) ([]string, error) {
 	project, err := ProjectFromString(projectStr)
@@ -281,6 +294,26 @@ func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, 
 		return []string{}, err
 	}
 	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
+	if err != nil {
+		return []string{}, err
+	}
+
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
+// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+	resp, err := h.PostRouteTradeSwap(ctx, request)
 	if err != nil {
 		return []string{}, err
 	}

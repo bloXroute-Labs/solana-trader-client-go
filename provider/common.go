@@ -16,10 +16,10 @@ const (
 	MainnetHTTP       = "https://virginia.solana.dex.blxrbdn.com"
 	MainnetWS         = "wss://virginia.solana.dex.blxrbdn.com/ws"
 	MainnetGRPC       = "virginia.solana.dex.blxrbdn.com:443"
-	TestnetHTTP       = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/"
+	TestnetHTTP       = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
 	TestnetWS         = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
 	TestnetGRPC       = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
-	DevnetHTTP        = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/"
+	DevnetHTTP        = "http://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com"
 	DevnetWS          = "ws://serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com/ws"
 	DevnetGRPC        = "serum-nlb-53baf45ef9775263.elb.us-east-1.amazonaws.com:80"
 	LocalWS           = "ws://localhost:9000/ws"
@@ -38,6 +38,7 @@ type PostOrderOpts struct {
 
 type RPCOpts struct {
 	Endpoint       string
+	UseTLS         bool
 	Timeout        time.Duration
 	PrivateKey     *solana.PrivateKey
 	AuthHeader     string

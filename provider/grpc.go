@@ -2,12 +2,14 @@ package provider
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -23,6 +25,7 @@ type GRPCClient struct {
 // NewGRPCClient connects to Mainnet Trader API
 func NewGRPCClient() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(MainnetGRPC)
+	opts.UseTLS = true
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -61,7 +64,13 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 // NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
-	conn, err := grpc.Dial(opts.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), authOption)
+
+	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
+	if opts.UseTLS {
+		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
+	}
+
+	conn, err := grpc.Dial(opts.Endpoint, transportOption, authOption)
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +123,8 @@ func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner str
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
-	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, Owner: owner})
+func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
+	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress})
 }
 
 // GetMarkets returns the list of all available named markets
@@ -157,15 +166,20 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight
 }
 
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (g *GRPCClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
+func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
 	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: ownerAddress,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	})
+}
+
+// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
+func (g *GRPCClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
+	return g.apiClient.PostRouteTradeSwap(ctx, request)
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
@@ -189,24 +203,55 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 		SkipPreFlight: skipPreFlight})
 }
 
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	return g.apiClient.PostSubmitBatch(ctx, request)
+}
+
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: ownerAddress,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	})
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
 	var signatures []string
 	for _, tx := range resp.Transactions {
 		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
 		if err != nil {
+			if signature != "" {
+				signatures = append(signatures, signature)
+			}
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
+// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+	resp, err := g.apiClient.PostRouteTradeSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			if signature != "" {
+				signatures = append(signatures, signature)
+			}
 			return signatures, err
 		}
 

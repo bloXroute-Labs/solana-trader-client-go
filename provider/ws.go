@@ -122,9 +122,9 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (w *WSClient) GetUnsettled(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
+func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
 	var response pb.GetUnsettledResponse
-	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, Owner: owner}, &response)
+	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -175,22 +175,32 @@ func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAm
 }
 
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (w *WSClient) PostTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
+func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)
 	if err != nil {
 		return nil, err
 	}
 	request := &pb.TradeSwapRequest{
-		Owner:    owner,
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: inAmount,
-		Slippage: slippage,
-		Project:  project,
+		OwnerAddress: ownerAddress,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
 	}
 
 	var response pb.TradeSwapResponse
 	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
+func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
+	var response pb.TradeSwapResponse
+	err := w.conn.Request(ctx, "PostRouteTradeSwap", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +242,16 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 	return &response, nil
 }
 
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	var response pb.PostSubmitBatchResponse
+	err := w.conn.Request(ctx, "PostSubmitBatch", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // signAndSubmit signs the given transaction and submits it.
 func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
 	if w.privateKey == nil {
@@ -261,6 +281,28 @@ func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken
 	for _, tx := range resp.Transactions {
 		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
 		if err != nil {
+			return signatures, err
+		}
+
+		signatures = append(signatures, signature)
+	}
+
+	return signatures, nil
+}
+
+// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+	resp, err := w.PostRouteTradeSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	var signatures []string
+	for _, tx := range resp.Transactions {
+		signature, err := w.signAndSubmit(ctx, tx, skipPreFlight)
+		if err != nil {
+			if signature != "" {
+				signatures = append(signatures, signature)
+			}
 			return signatures, err
 		}
 

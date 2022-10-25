@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
@@ -14,8 +16,51 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func httpClient() *provider.HTTPClient {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var h *provider.HTTPClient
+
+	switch cfg.Env {
+	case config.EnvTestnet:
+		h = provider.NewHTTPTestnet()
+	case config.EnvMainnet:
+		h = provider.NewHTTPClient()
+	}
+	return h
+}
+
+func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var h *provider.HTTPClient
+	client := &http.Client{Timeout: timeout}
+
+	switch cfg.Env {
+	case config.EnvTestnet:
+		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.TestnetHTTP))
+	case config.EnvMainnet:
+		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.MainnetHTTP))
+	}
+	return h
+}
+
 func main() {
 	utils.InitLogger()
+
+	failed := run()
+	if failed {
+		log.Fatal("one or multiple examples failed")
+	}
+}
+
+func run() bool {
 	var failed bool
 	// informational methods
 	failed = failed || callMarketsHTTP()
@@ -29,6 +74,15 @@ func main() {
 	failed = failed || callGetAccountBalanceHTTP()
 	failed = failed || callGetQuotes()
 
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !cfg.RunTrades {
+		log.Info("skipping trades due to config")
+		return failed
+	}
+
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
@@ -37,7 +91,7 @@ func main() {
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return
+		return failed
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
@@ -61,14 +115,13 @@ func main() {
 	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
 	failed = failed || callGetRecentBlockHash()
 	failed = failed || callTradeSwap(ownerAddr)
+	failed = failed || callRouteTradeSwap(ownerAddr)
 
-	if failed {
-		log.Fatal("one or multiple examples failed")
-	}
+	return failed
 }
 
 func callMarketsHTTP() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	markets, err := h.GetMarkets()
 	if err != nil {
@@ -83,7 +136,7 @@ func callMarketsHTTP() bool {
 }
 
 func callOrderbookHTTP() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	orderbook, err := h.GetOrderbook("ETH-USDT", 0)
 	if err != nil {
@@ -117,9 +170,7 @@ func callOrderbookHTTP() bool {
 }
 
 func callOpenOrdersHTTP() bool {
-	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, opts)
+	h := httpClientWithTimeout(time.Second * 60)
 
 	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "")
 	if err != nil {
@@ -134,13 +185,11 @@ func callOpenOrdersHTTP() bool {
 }
 
 func callUnsettledHTTP() bool {
-	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, opts)
+	h := httpClientWithTimeout(time.Second * 60)
 
 	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+		log.Errorf("error with GetUnsettled request for SOLUSDT: %v", err)
 		return true
 	} else {
 		log.Info(response)
@@ -151,9 +200,7 @@ func callUnsettledHTTP() bool {
 }
 
 func callGetAccountBalanceHTTP() bool {
-	client := &http.Client{Timeout: time.Second * 60}
-	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, opts)
+	h := httpClientWithTimeout(time.Second * 60)
 
 	response, err := h.GetAccountBalance("F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
 	if err != nil {
@@ -168,7 +215,7 @@ func callGetAccountBalanceHTTP() bool {
 }
 
 func callTradesHTTP() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	trades, err := h.GetTrades("SOLUSDT", 5)
 	if err != nil {
@@ -183,11 +230,11 @@ func callTradesHTTP() bool {
 }
 
 func callPoolsHTTP() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	pools, err := h.GetPools([]pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
-		log.Errorf("error with GetPools request for Radium: %v", err)
+		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
 		log.Info(pools)
@@ -198,7 +245,7 @@ func callPoolsHTTP() bool {
 }
 
 func callPriceHTTP() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	prices, err := h.GetPrice([]string{"SOL", "ETH"})
 	if err != nil {
@@ -213,7 +260,7 @@ func callPriceHTTP() bool {
 }
 
 func callTickersHTTP() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	tickers, err := h.GetTickers("SOLUSDT")
 	if err != nil {
@@ -228,9 +275,7 @@ func callTickersHTTP() bool {
 }
 
 func callGetQuotes() bool {
-	client := &http.Client{Timeout: time.Second * 60}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+	h := httpClientWithTimeout(time.Second * 60)
 
 	inToken := "SOL"
 	outToken := "USDC"
@@ -272,9 +317,7 @@ const (
 )
 
 func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
-	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+	h := httpClientWithTimeout(time.Second * 30)
 
 	// generate a random clientOrderId for this order
 	rand.Seed(time.Now().UnixNano())
@@ -309,9 +352,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 
 func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) bool {
 	time.Sleep(60 * time.Second)
-	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, opts)
+	h := httpClientWithTimeout(time.Second * 30)
 
 	_, err := h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
 		marketAddr, ooAddr, true)
@@ -326,9 +367,7 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 
 func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 	time.Sleep(60 * time.Second)
-	client := &http.Client{Timeout: time.Second * 30}
-	opts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, opts)
+	h := httpClientWithTimeout(time.Second * 30)
 
 	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
@@ -344,9 +383,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
-	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+	h := httpClientWithTimeout(time.Second * 30)
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -431,9 +468,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
-	client := &http.Client{Timeout: time.Second * 60}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+	h := httpClientWithTimeout(time.Second * 60)
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -517,9 +552,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
-	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+	h := httpClientWithTimeout(time.Second * 30)
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -603,7 +636,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 }
 
 func callGetRecentBlockHash() bool {
-	h := provider.NewHTTPTestnet()
+	h := httpClient()
 
 	hash, err := h.GetRecentBlockHash()
 	if err != nil {
@@ -620,9 +653,7 @@ func callGetRecentBlockHash() bool {
 func callTradeSwap(ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
-	client := &http.Client{Timeout: time.Second * 30}
-	rpcOpts := provider.DefaultRPCOpts(provider.TestnetHTTP)
-	h := provider.NewHTTPClientWithOpts(client, rpcOpts)
+	h := httpClientWithTimeout(time.Second * 30)
 
 	log.Info("trade swap")
 	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL",
@@ -633,4 +664,45 @@ func callTradeSwap(ownerAddr string) bool {
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
 	return false
+}
+
+func callRouteTradeSwap(ownerAddr string) bool {
+	log.Info("starting route trade swap test")
+
+	h := httpClientWithTimeout(time.Second * 30)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("route trade swap")
+	sig, err := h.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
+		OwnerAddress: ownerAddr,
+		Project:      pb.Project_P_RAYDIUM,
+		Steps: []*pb.RouteStep{
+			{
+				// FIDA-RAY pool address
+				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
+				InToken:     "FIDA",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				// RAY-USDC pool address
+				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
+				InToken:      "RAY",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("route trade swap transaction signature : %s", sig)
+	return false
+
 }
