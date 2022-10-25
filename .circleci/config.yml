@@ -34,7 +34,7 @@ jobs:
           name: Download golint
           command: go get -u golang.org/x/lint/golint
       - save_cache:
-          key: go-mod-{{checksum "go.sum"}}
+          key: v1-go-mod-{{checksum "go.sum"}}
           paths:
             - "/home/circleci/go/pkg/mod"
       - persist_to_workspace:
