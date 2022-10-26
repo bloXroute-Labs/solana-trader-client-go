@@ -576,3 +576,22 @@ func (w *WSClient) GetRecentBlockHashStream(ctx context.Context) (connections.St
 		return &pb.GetRecentBlockHashResponse{}
 	})
 }
+
+// GetQuotesStream subscribes to a stream for getting recent quotes of tokens of interest.
+func (w *WSClient) GetQuotesStream(ctx context.Context, projects []pb.Project, tokenPairs []*pb.TokenPair) (connections.Streamer[*pb.GetQuotesStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetQuotesStream", &pb.GetQuotesStreamRequest{
+		Projects:   projects,
+		TokenPairs: tokenPairs,
+	}, func() *pb.GetQuotesStreamResponse {
+		return &pb.GetQuotesStreamResponse{}
+	})
+}
+
+// GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
+func (w *WSClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetPoolReservesStream", &pb.GetPoolReservesStreamRequest{
+		Projects: projects,
+	}, func() *pb.GetPoolReservesStreamResponse {
+		return &pb.GetPoolReservesStreamResponse{}
+	})
+}

@@ -21,20 +21,20 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-mod-{{checksum "go.sum"}}
+            - v1-go-mod-{{checksum "go.sum"}}
       - run:
           name: Update/install packages
           command: |
             sudo apt update
             sudo apt install awscli
       - run:
-          name: Download dependencies
-          command: go mod tidy
-      - run:
           name: Download golint
           command: go get -u golang.org/x/lint/golint
+      - run:
+          name: Download dependencies
+          command: go mod tidy
       - save_cache:
-          key: go-mod-{{checksum "go.sum"}}
+          key: v1-go-mod-{{checksum "go.sum"}}
           paths:
             - "/home/circleci/go/pkg/mod"
       - persist_to_workspace:
