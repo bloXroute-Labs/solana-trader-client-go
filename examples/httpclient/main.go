@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
@@ -439,12 +438,14 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 
 	time.Sleep(time.Minute)
 
@@ -539,12 +540,14 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 	return false
 }
 
@@ -626,12 +629,14 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 	return false
 }
 
@@ -657,7 +662,7 @@ func callTradeSwap(ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL",
-		0.01, 0.1, "raydium", false)
+		0.01, 0.1, "raydium", pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR, false)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -697,7 +702,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 				OutAmountMin: 0.004000,
 			},
 		},
-	}, false)
+	}, pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR, false)
 	if err != nil {
 		log.Error(err)
 		return true

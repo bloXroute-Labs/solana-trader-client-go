@@ -209,7 +209,11 @@ func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	if g.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
@@ -222,43 +226,46 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 		return nil, err
 	}
 
-	var signatures []string
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range resp.Transactions {
-		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		oneRequest := pb.PostSubmitRequest{}
+		oneRequest.SkipPreFlight = skipPreFlight
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *g.privateKey)
 		if err != nil {
-			if signature != "" {
-				signatures = append(signatures, signature)
-			}
-			return signatures, err
+			return nil, err
 		}
-
-		signatures = append(signatures, signature)
+		oneRequest.Transaction = signedTxBase64
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
-	return signatures, nil
+	return g.PostSubmitBatch(ctx, &batchRequest)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
-	resp, err := g.apiClient.PostRouteTradeSwap(ctx, request)
+func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	if g.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
+	resp, err := g.PostRouteTradeSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-
-	var signatures []string
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range resp.Transactions {
-		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		oneRequest := pb.PostSubmitRequest{}
+		oneRequest.SkipPreFlight = skipPreFlight
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *g.privateKey)
 		if err != nil {
-			if signature != "" {
-				signatures = append(signatures, signature)
-			}
-			return signatures, err
+			return nil, err
 		}
-
-		signatures = append(signatures, signature)
+		oneRequest.Transaction = signedTxBase64
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
-	return signatures, nil
+	return g.PostSubmitBatch(ctx, &batchRequest)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -348,23 +355,30 @@ func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, op
 	})
 }
 
-func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	if g.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
 	orders, err := g.PostCancelAll(ctx, market, owner, openOrdersAddresses)
 	if err != nil {
 		return nil, err
 	}
 
-	var signatures []string
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range orders.Transactions {
-		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
+		oneRequest := pb.PostSubmitRequest{}
+		oneRequest.SkipPreFlight = skipPreFlight
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *g.privateKey)
 		if err != nil {
-			return signatures, err
+			return nil, err
 		}
-
-		signatures = append(signatures, signature)
+		oneRequest.Transaction = signedTxBase64
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
-	return signatures, nil
+	return g.PostSubmitBatch(ctx, &batchRequest)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

@@ -288,47 +288,64 @@ func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.Po
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	if h.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
 	project, err := ProjectFromString(projectStr)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
-	var signatures []string
+	if err != nil {
+		return nil, err
+	}
+
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range resp.Transactions {
-		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		oneRequest := pb.PostSubmitRequest{}
+		oneRequest.SkipPreFlight = skipPreFlight
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
 		if err != nil {
-			return signatures, err
+			return nil, err
 		}
-
-		signatures = append(signatures, signature)
+		oneRequest.Transaction = signedTxBase64
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
-	return signatures, nil
+	return h.PostSubmitBatch(&batchRequest)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	if h.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
 	resp, err := h.PostRouteTradeSwap(ctx, request)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
-
-	var signatures []string
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range resp.Transactions {
-		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		oneRequest := pb.PostSubmitRequest{}
+		oneRequest.SkipPreFlight = skipPreFlight
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
 		if err != nil {
-			return signatures, err
+			return nil, err
 		}
-
-		signatures = append(signatures, signature)
+		oneRequest.Transaction = signedTxBase64
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
-	return signatures, nil
+	return h.PostSubmitBatch(&batchRequest)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -442,23 +459,30 @@ func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []s
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	if h.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
 	orders, err := h.PostCancelAll(market, owner, openOrders)
 	if err != nil {
 		return nil, err
 	}
 
-	var signatures []string
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range orders.Transactions {
-		signature, err := h.signAndSubmit(tx, skipPreFlight)
+		oneRequest := pb.PostSubmitRequest{}
+		oneRequest.SkipPreFlight = skipPreFlight
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
 		if err != nil {
-			return signatures, err
+			return nil, err
 		}
-
-		signatures = append(signatures, signature)
+		oneRequest.Transaction = signedTxBase64
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
-	return signatures, nil
+	return h.PostSubmitBatch(&batchRequest)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
