@@ -28,11 +28,11 @@ jobs:
             sudo apt update
             sudo apt install awscli
       - run:
-          name: Download dependencies
-          command: go mod tidy
-      - run:
           name: Download golint
           command: go get -u golang.org/x/lint/golint
+      - run:
+          name: Download dependencies
+          command: go mod tidy
       - save_cache:
           key: go-mod-{{checksum "go.sum"}}
           paths:
