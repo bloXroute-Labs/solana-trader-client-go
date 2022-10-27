@@ -285,13 +285,16 @@ func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range resp.Transactions {
-		oneRequest := pb.PostSubmitRequest{}
+		oneRequest := pb.PostSubmitRequestEntry{}
 		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.MessageContent, *w.privateKey)
 		if err != nil {
 			return nil, err
 		}
-		oneRequest.Transaction = signedTxBase64
+		oneRequest.Transaction = &pb.Transaction{
+			MessageContent: signedTxBase64,
+			IsCleanup:      tx.IsCleanup,
+		}
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
@@ -311,13 +314,16 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range resp.Transactions {
-		oneRequest := pb.PostSubmitRequest{}
+		oneRequest := pb.PostSubmitRequestEntry{}
 		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.MessageContent, *w.privateKey)
 		if err != nil {
 			return nil, err
 		}
-		oneRequest.Transaction = signedTxBase64
+		oneRequest.Transaction = &pb.Transaction{
+			MessageContent: signedTxBase64,
+			IsCleanup:      tx.IsCleanup,
+		}
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
@@ -448,13 +454,15 @@ func (w *WSClient) SubmitCancelAll(ctx context.Context, market, owner string, op
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = submitStrategy
 	for _, tx := range orders.Transactions {
-		oneRequest := pb.PostSubmitRequest{}
+		oneRequest := pb.PostSubmitRequestEntry{}
 		oneRequest.SkipPreFlight = skipPreFlight
 		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
 		if err != nil {
 			return nil, err
 		}
-		oneRequest.Transaction = signedTxBase64
+		oneRequest.Transaction = &pb.Transaction{
+			MessageContent: signedTxBase64,
+		}
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 

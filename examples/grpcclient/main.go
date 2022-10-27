@@ -831,7 +831,7 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDC",
-		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, pb.SubmitStrategy_P_ALWAYS_EXECUTE_LAST, false)
+		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, pb.SubmitStrategy_P_SUBMIT_ALL, false)
 	if err != nil {
 		log.Error(err)
 		return true
