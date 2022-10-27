@@ -68,8 +68,9 @@ func run() bool {
 	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
-	
-  if cfg.RunTradeStream {
+	failed = failed || callPricesWSStream(w)
+
+	if cfg.RunTradeStream {
 		failed = failed || callTradesWSStream(w)
 	}
 
@@ -104,6 +105,7 @@ func run() bool {
 	failed = failed || cancelAll(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callTradeSwap(w, ownerAddr)
 	failed = failed || callRouteTradeSwap(w, ownerAddr)
 
@@ -867,5 +869,29 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("route trade swap transaction signature : %s", sig)
+	return false
+}
+
+// Quotes response
+func callPricesWSStream(w *provider.WSClient) bool {
+	log.Info("starting prices stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL"})
+	if err != nil {
+		log.Errorf("error with GetPrices stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
 	return false
 }

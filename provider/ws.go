@@ -595,3 +595,13 @@ func (w *WSClient) GetPoolReservesStream(ctx context.Context, projects []pb.Proj
 		return &pb.GetPoolReservesStreamResponse{}
 	})
 }
+
+// GetPricesStream subscribes to a stream for getting recent quotes of tokens of interest.
+func (w *WSClient) GetPricesStream(ctx context.Context, projects []pb.Project, tokens []string) (connections.Streamer[*pb.GetPricesStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetPricesStream", &pb.GetPricesStreamRequest{
+		Projects: projects,
+		Tokens:   tokens,
+	}, func() *pb.GetPricesStreamResponse {
+		return &pb.GetPricesStreamResponse{}
+	})
+}
