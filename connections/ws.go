@@ -328,7 +328,9 @@ func (w *WS) Close(reason error) error {
 
 	// cancel all subscriptions
 	for _, sub := range w.subscriptionMap {
-		sub.close()
+		if sub.active {
+			sub.close()
+		}
 	}
 
 	// close underlying connection
