@@ -276,34 +276,11 @@ func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions interfac
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest := pb.PostSubmitBatchRequest{}
-	batchRequest.SubmitStrategy = opts.SubmitStrategy
-	for _, tx := range transactions.([]interface{}) {
-		oneRequest := pb.PostSubmitRequestEntry{}
-		oneRequest.SkipPreFlight = opts.SkipPreFlight
-		if txStr, ok := tx.(string); ok {
-			signedTxBase64, err := transaction.SignTxWithPrivateKey(txStr, *w.privateKey)
-			if err != nil {
-				return nil, err
-			}
-			oneRequest.Transaction = &pb.TransactionMessage{
-				Content: signedTxBase64,
-			}
-		} else if txMsg, ok := tx.(*pb.TransactionMessage); ok {
-			signedTxBase64, err := transaction.SignTxWithPrivateKey(txMsg.Content, *w.privateKey)
-			if err != nil {
-				return nil, err
-			}
-			oneRequest.Transaction = &pb.TransactionMessage{
-				Content:   signedTxBase64,
-				IsCleanup: txMsg.IsCleanup,
-			}
-		}
-
-		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
+	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, opts)
+	if err != nil {
+		return nil, err
 	}
-
-	return w.PostSubmitBatch(ctx, &batchRequest)
+	return w.PostSubmitBatch(ctx, batchRequest)
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
