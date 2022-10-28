@@ -619,7 +619,10 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -722,7 +725,10 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -812,7 +818,10 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -831,7 +840,10 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDC",
-		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, pb.SubmitStrategy_P_SUBMIT_ALL, false)
+		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+			SkipPreFlight:  false,
+		})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -869,7 +881,10 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 				OutAmountMin: 0.004000,
 			},
 		},
-	}, pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR, false)
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
