@@ -231,13 +231,13 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	for _, tx := range resp.Transactions {
 		oneRequest := pb.PostSubmitRequestEntry{}
 		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.MessageContent, *g.privateKey)
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
 		if err != nil {
 			return nil, err
 		}
-		oneRequest.Transaction = &pb.Transaction{
-			MessageContent: signedTxBase64,
-			IsCleanup:      tx.IsCleanup,
+		oneRequest.Transaction = &pb.TransactionMessage{
+			Content:   signedTxBase64,
+			IsCleanup: tx.IsCleanup,
 		}
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
@@ -260,13 +260,13 @@ func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	for _, tx := range resp.Transactions {
 		oneRequest := pb.PostSubmitRequestEntry{}
 		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.MessageContent, *g.privateKey)
+		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
 		if err != nil {
 			return nil, err
 		}
-		oneRequest.Transaction = &pb.Transaction{
-			MessageContent: signedTxBase64,
-			IsCleanup:      tx.IsCleanup,
+		oneRequest.Transaction = &pb.TransactionMessage{
+			Content:   signedTxBase64,
+			IsCleanup: tx.IsCleanup,
 		}
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
@@ -380,8 +380,8 @@ func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 		if err != nil {
 			return nil, err
 		}
-		oneRequest.Transaction = &pb.Transaction{
-			MessageContent: signedTxBase64,
+		oneRequest.Transaction = &pb.TransactionMessage{
+			Content: signedTxBase64,
 		}
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
