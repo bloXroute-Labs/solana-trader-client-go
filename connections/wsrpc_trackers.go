@@ -4,17 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/sourcegraph/jsonrpc2"
+	"sync"
 )
 
 // entry to track an active subscription on connection: channel to send updates on and reference to cancel the subscription
 type subscriptionEntry struct {
-	active bool
-	ch     chan json.RawMessage
-	cancel context.CancelFunc
+	active    bool
+	ch        chan json.RawMessage
+	onceClose sync.Once
+	cancel    context.CancelFunc
 }
 
-func (s subscriptionEntry) close() {
-	close(s.ch)
+func (s *subscriptionEntry) close() {
+	s.onceClose.Do(func() {
+		close(s.ch)
+	})
+
 	s.cancel()
 }
 
