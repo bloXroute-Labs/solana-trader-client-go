@@ -7,7 +7,6 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
@@ -68,8 +67,8 @@ func run() bool {
 	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
-	
-  if cfg.RunTradeStream {
+
+	if cfg.RunTradeStream {
 		failed = failed || callTradesWSStream(w)
 	}
 
@@ -618,12 +617,17 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 
 	time.Sleep(time.Minute)
 
@@ -720,12 +724,17 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 	return false
 }
 
@@ -806,12 +815,17 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 	return false
 }
 
@@ -823,7 +837,10 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDC",
-		"SOL", 0.01, 0.1, "raydium", false)
+		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+			SkipPreFlight:  false,
+		})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -861,7 +878,10 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 				OutAmountMin: 0.004000,
 			},
 		},
-	}, false)
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
 	if err != nil {
 		log.Error(err)
 		return true

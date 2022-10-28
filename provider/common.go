@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"os"
 	"strings"
@@ -34,6 +35,11 @@ type PostOrderOpts struct {
 	OpenOrdersAddress string
 	ClientOrderID     uint64
 	SkipPreFlight     bool
+}
+
+type SubmitOpts struct {
+	SubmitStrategy pb.SubmitStrategy
+	SkipPreFlight  bool
 }
 
 type RPCOpts struct {
@@ -73,4 +79,37 @@ func ProjectFromString(project string) (api.Project, error) {
 	}
 
 	return api.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
+}
+
+func buildBatchRequest(transactions interface{}, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+	batchRequest := pb.PostSubmitBatchRequest{}
+	batchRequest.SubmitStrategy = opts.SubmitStrategy
+
+	for _, tx := range transactions.([]interface{}) {
+
+		oneRequest := pb.PostSubmitRequestEntry{}
+		oneRequest.SkipPreFlight = opts.SkipPreFlight
+
+		if txStr, ok := tx.(string); ok {
+			signedTxBase64, err := transaction.SignTxWithPrivateKey(txStr, privateKey)
+			if err != nil {
+				return &pb.PostSubmitBatchRequest{}, err
+			}
+			oneRequest.Transaction = &pb.TransactionMessage{
+				Content: signedTxBase64,
+			}
+		} else if txMsg, ok := tx.(*pb.TransactionMessage); ok {
+			signedTxBase64, err := transaction.SignTxWithPrivateKey(txMsg.Content, privateKey)
+			if err != nil {
+				return &pb.PostSubmitBatchRequest{}, err
+			}
+			oneRequest.Transaction = &pb.TransactionMessage{
+				Content:   signedTxBase64,
+				IsCleanup: txMsg.IsCleanup,
+			}
+		}
+
+		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
+	}
+	return &batchRequest, nil
 }

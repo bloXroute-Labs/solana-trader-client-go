@@ -56,6 +56,7 @@ type ApiClient interface {
 	GetRecentBlockHashStream(ctx context.Context, in *GetRecentBlockHashRequest, opts ...grpc.CallOption) (Api_GetRecentBlockHashStreamClient, error)
 	GetQuotesStream(ctx context.Context, in *GetQuotesStreamRequest, opts ...grpc.CallOption) (Api_GetQuotesStreamClient, error)
 	GetPoolReservesStream(ctx context.Context, in *GetPoolReservesStreamRequest, opts ...grpc.CallOption) (Api_GetPoolReservesStreamClient, error)
+	GetPricesStream(ctx context.Context, in *GetPricesStreamRequest, opts ...grpc.CallOption) (Api_GetPricesStreamClient, error)
 }
 
 type apiClient struct {
@@ -556,6 +557,38 @@ func (x *apiGetPoolReservesStreamClient) Recv() (*GetPoolReservesStreamResponse,
 	return m, nil
 }
 
+func (c *apiClient) GetPricesStream(ctx context.Context, in *GetPricesStreamRequest, opts ...grpc.CallOption) (Api_GetPricesStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[8], "/api.Api/GetPricesStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &apiGetPricesStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Api_GetPricesStreamClient interface {
+	Recv() (*GetPricesStreamResponse, error)
+	grpc.ClientStream
+}
+
+type apiGetPricesStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *apiGetPricesStreamClient) Recv() (*GetPricesStreamResponse, error) {
+	m := new(GetPricesStreamResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -598,6 +631,7 @@ type ApiServer interface {
 	GetRecentBlockHashStream(*GetRecentBlockHashRequest, Api_GetRecentBlockHashStreamServer) error
 	GetQuotesStream(*GetQuotesStreamRequest, Api_GetQuotesStreamServer) error
 	GetPoolReservesStream(*GetPoolReservesStreamRequest, Api_GetPoolReservesStreamServer) error
+	GetPricesStream(*GetPricesStreamRequest, Api_GetPricesStreamServer) error
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -706,6 +740,9 @@ func (UnimplementedApiServer) GetQuotesStream(*GetQuotesStreamRequest, Api_GetQu
 }
 func (UnimplementedApiServer) GetPoolReservesStream(*GetPoolReservesStreamRequest, Api_GetPoolReservesStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetPoolReservesStream not implemented")
+}
+func (UnimplementedApiServer) GetPricesStream(*GetPricesStreamRequest, Api_GetPricesStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetPricesStream not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -1356,6 +1393,27 @@ func (x *apiGetPoolReservesStreamServer) Send(m *GetPoolReservesStreamResponse) 
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetPricesStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetPricesStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ApiServer).GetPricesStream(m, &apiGetPricesStreamServer{stream})
+}
+
+type Api_GetPricesStreamServer interface {
+	Send(*GetPricesStreamResponse) error
+	grpc.ServerStream
+}
+
+type apiGetPricesStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *apiGetPricesStreamServer) Send(m *GetPricesStreamResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1507,6 +1565,11 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetPoolReservesStream",
 			Handler:       _Api_GetPoolReservesStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetPricesStream",
+			Handler:       _Api_GetPricesStream_Handler,
 			ServerStreams: true,
 		},
 	},
