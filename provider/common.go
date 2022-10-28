@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"os"
 	"strings"
@@ -34,6 +35,11 @@ type PostOrderOpts struct {
 	OpenOrdersAddress string
 	ClientOrderID     uint64
 	SkipPreFlight     bool
+}
+
+type SubmitOpts struct {
+	SubmitStrategy pb.SubmitStrategy
+	SkipPreFlight  bool
 }
 
 type RPCOpts struct {

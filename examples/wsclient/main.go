@@ -67,8 +67,8 @@ func run() bool {
 	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
-	
-  if cfg.RunTradeStream {
+
+	if cfg.RunTradeStream {
 		failed = failed || callTradesWSStream(w)
 	}
 
@@ -617,7 +617,10 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -721,7 +724,10 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -809,7 +815,10 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -828,7 +837,10 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDC",
-		"SOL", 0.01, 0.1, "raydium", pb.SubmitStrategy_P_SUBMIT_ALL, false)
+		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+			SkipPreFlight:  false,
+		})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -866,7 +878,10 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 				OutAmountMin: 0.004000,
 			},
 		},
-	}, pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR, false)
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
 	if err != nil {
 		log.Error(err)
 		return true

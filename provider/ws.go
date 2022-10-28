@@ -271,63 +271,57 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight b
 	return response.Signature, nil
 }
 
-// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+// signAndSubmitBatch signs the given transactions and submits them.
+func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions interface{}, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-
-	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
-	if err != nil {
-		return nil, err
-	}
-
 	batchRequest := pb.PostSubmitBatchRequest{}
-	batchRequest.SubmitStrategy = submitStrategy
-	for _, tx := range resp.Transactions {
+	batchRequest.SubmitStrategy = opts.SubmitStrategy
+	for _, tx := range transactions.([]interface{}) {
 		oneRequest := pb.PostSubmitRequestEntry{}
-		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *w.privateKey)
-		if err != nil {
-			return nil, err
+		oneRequest.SkipPreFlight = opts.SkipPreFlight
+		if txStr, ok := tx.(string); ok {
+			signedTxBase64, err := transaction.SignTxWithPrivateKey(txStr, *w.privateKey)
+			if err != nil {
+				return nil, err
+			}
+			oneRequest.Transaction = &pb.TransactionMessage{
+				Content: signedTxBase64,
+			}
+		} else if txMsg, ok := tx.(*pb.TransactionMessage); ok {
+			signedTxBase64, err := transaction.SignTxWithPrivateKey(txMsg.Content, *w.privateKey)
+			if err != nil {
+				return nil, err
+			}
+			oneRequest.Transaction = &pb.TransactionMessage{
+				Content:   signedTxBase64,
+				IsCleanup: txMsg.IsCleanup,
+			}
 		}
-		oneRequest.Transaction = &pb.TransactionMessage{
-			Content:   signedTxBase64,
-			IsCleanup: tx.IsCleanup,
-		}
+
 		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
 	}
 
 	return w.PostSubmitBatch(ctx, &batchRequest)
 }
 
-// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
-	if w.privateKey == nil {
-		return nil, ErrPrivateKeyNotFound
+// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
+	if err != nil {
+		return nil, err
 	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
 
+// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostRouteTradeSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-	batchRequest := pb.PostSubmitBatchRequest{}
-	batchRequest.SubmitStrategy = submitStrategy
-	for _, tx := range resp.Transactions {
-		oneRequest := pb.PostSubmitRequestEntry{}
-		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *w.privateKey)
-		if err != nil {
-			return nil, err
-		}
-		oneRequest.Transaction = &pb.TransactionMessage{
-			Content:   signedTxBase64,
-			IsCleanup: tx.IsCleanup,
-		}
-		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
-	}
-
-	return w.PostSubmitBatch(ctx, &batchRequest)
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -441,32 +435,12 @@ func (w *WSClient) PostCancelAll(
 	return &response, nil
 }
 
-func (w *WSClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, submitStrategy pb.SubmitStrategy, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
-	if w.privateKey == nil {
-		return nil, ErrPrivateKeyNotFound
-	}
-
+func (w *WSClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	orders, err := w.PostCancelAll(ctx, market, owner, openOrdersAddresses)
 	if err != nil {
 		return nil, err
 	}
-
-	batchRequest := pb.PostSubmitBatchRequest{}
-	batchRequest.SubmitStrategy = submitStrategy
-	for _, tx := range orders.Transactions {
-		oneRequest := pb.PostSubmitRequestEntry{}
-		oneRequest.SkipPreFlight = skipPreFlight
-		signedTxBase64, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
-		if err != nil {
-			return nil, err
-		}
-		oneRequest.Transaction = &pb.TransactionMessage{
-			Content: signedTxBase64,
-		}
-		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
-	}
-
-	return w.PostSubmitBatch(ctx, &batchRequest)
+	return w.signAndSubmitBatch(ctx, orders.Transactions, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

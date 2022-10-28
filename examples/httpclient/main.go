@@ -438,7 +438,10 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -540,7 +543,10 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -629,7 +635,10 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.SubmitStrategy_P_SUBMIT_ALL, true)
+	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -662,7 +671,10 @@ func callTradeSwap(ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL",
-		0.01, 0.1, "raydium", pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR, false)
+		0.01, 0.1, "raydium", provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+			SkipPreFlight:  false,
+		})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -702,7 +714,10 @@ func callRouteTradeSwap(ownerAddr string) bool {
 				OutAmountMin: 0.004000,
 			},
 		},
-	}, pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR, false)
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
