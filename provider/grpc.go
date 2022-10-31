@@ -165,6 +165,19 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight
 	return response.Signature, nil
 }
 
+// signAndSubmitBatch signs the given transactions and submits them.
+func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions interface{}, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	if g.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return g.PostSubmitBatch(ctx, batchRequest)
+}
+
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
 	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
@@ -209,7 +222,7 @@ func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
@@ -222,43 +235,16 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 		return nil, err
 	}
 
-	var signatures []string
-	for _, tx := range resp.Transactions {
-		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			if signature != "" {
-				signatures = append(signatures, signature)
-			}
-			return signatures, err
-		}
-
-		signatures = append(signatures, signature)
-	}
-
-	return signatures, nil
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
-	resp, err := g.apiClient.PostRouteTradeSwap(ctx, request)
+func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostRouteTradeSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-
-	var signatures []string
-	for _, tx := range resp.Transactions {
-		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			if signature != "" {
-				signatures = append(signatures, signature)
-			}
-			return signatures, err
-		}
-
-		signatures = append(signatures, signature)
-	}
-
-	return signatures, nil
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -348,23 +334,12 @@ func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, op
 	})
 }
 
-func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, skipPreFlight bool) ([]string, error) {
+func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	orders, err := g.PostCancelAll(ctx, market, owner, openOrdersAddresses)
 	if err != nil {
 		return nil, err
 	}
-
-	var signatures []string
-	for _, tx := range orders.Transactions {
-		signature, err := g.signAndSubmit(ctx, tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
-		signatures = append(signatures, signature)
-	}
-
-	return signatures, nil
+	return g.signAndSubmitBatch(ctx, orders.Transactions, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

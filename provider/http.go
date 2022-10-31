@@ -219,6 +219,18 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 	return response.Signature, nil
 }
 
+// signAndSubmitBatch signs the given transactions and submits them.
+func (h *HTTPClient) signAndSubmitBatch(transactions interface{}, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	if h.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, opts)
+	if err != nil {
+		return nil, err
+	}
+	return h.PostSubmitBatch(batchRequest)
+}
+
 // PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
 func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/trade-swap", h.baseURL)
@@ -288,47 +300,25 @@ func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.Po
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	project, err := ProjectFromString(projectStr)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 	resp, err := h.PostTradeSwap(owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
-
-	var signatures []string
-	for _, tx := range resp.Transactions {
-		signature, err := h.signAndSubmit(tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
-		signatures = append(signatures, signature)
-	}
-
-	return signatures, nil
+	return h.signAndSubmitBatch(resp.Transactions, opts)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := h.PostRouteTradeSwap(ctx, request)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
-
-	var signatures []string
-	for _, tx := range resp.Transactions {
-		signature, err := h.signAndSubmit(tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
-		signatures = append(signatures, signature)
-	}
-
-	return signatures, nil
+	return h.signAndSubmitBatch(resp.Transactions, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -442,23 +432,12 @@ func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []s
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, skipPreFlight bool) ([]string, error) {
+func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	orders, err := h.PostCancelAll(market, owner, openOrders)
 	if err != nil {
 		return nil, err
 	}
-
-	var signatures []string
-	for _, tx := range orders.Transactions {
-		signature, err := h.signAndSubmit(tx, skipPreFlight)
-		if err != nil {
-			return signatures, err
-		}
-
-		signatures = append(signatures, signature)
-	}
-
-	return signatures, nil
+	return h.signAndSubmitBatch(orders.Transactions, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

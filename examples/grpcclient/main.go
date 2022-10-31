@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/gagliardetto/solana-go"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
@@ -17,7 +18,6 @@ import (
 
 func main() {
 	utils.InitLogger()
-
 	failed := run()
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -33,6 +33,8 @@ func run() bool {
 	var g *provider.GRPCClient
 
 	switch cfg.Env {
+	case config.EnvLocal:
+		g, err = provider.NewGRPCLocal()
 	case config.EnvTestnet:
 		g, err = provider.NewGRPCTestnet()
 	case config.EnvMainnet:
@@ -99,6 +101,8 @@ func run() bool {
 	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callTradeSwap(g, ownerAddr)
 	failed = failed || callRouteTradeSwap(g, ownerAddr)
+	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
+	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr)
 
 	return failed
 }
@@ -621,12 +625,17 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 
 	time.Sleep(time.Second * 30)
 
@@ -722,12 +731,17 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 	return false
 }
 
@@ -810,12 +824,17 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, true)
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("placing cancel order(s) %s", strings.Join(sigs, ", "))
+	for _, tx := range sigs.Transactions {
+		log.Infof("placing cancel order(s) %s", tx.Signature)
+	}
 	return false
 }
 
@@ -827,7 +846,10 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDC",
-		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, false)
+		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+			SkipPreFlight:  false,
+		})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -865,13 +887,89 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 				OutAmountMin: 0.004000,
 			},
 		},
-	}, false)
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
+}
+
+func callAddMemoWithInstructions(g *provider.GRPCClient, ownerAddr string) bool {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	privateKeys := make(map[solana.PublicKey]solana.PrivateKey)
+	privateKeys[privateKey.PublicKey()] = privateKey
+	blockHashResp, err := g.RecentBlockHash(ctx)
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	encodedTxn, err := transaction.AddMemo(
+		[]solana.Instruction{},
+		"new memo by dev",
+		solana.MustHashFromBase58(blockHashResp.BlockHash),
+		solana.MustPublicKeyFromBase58(ownerAddr),
+		privateKeys,
+	)
+	response, err := g.PostSubmit(ctx, encodedTxn, false)
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	log.Infof("response.signature : %s", response.Signature)
+	return true
+}
+
+func callAddMemoToSerializedTxn(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("add memo to serialized tx")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	privateKeys := make(map[solana.PublicKey]solana.PrivateKey)
+	privateKeys[privateKey.PublicKey()] = privateKey
+	blockHashResp, err := g.RecentBlockHash(ctx)
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	encodedTxn, err := transaction.AddMemo(
+		[]solana.Instruction{},
+		"new memo by dev",
+		solana.MustHashFromBase58(blockHashResp.BlockHash),
+		solana.MustPublicKeyFromBase58(ownerAddr),
+		privateKeys,
+	)
+
+	encodedTxn2, err := transaction.AddMemoToSerializedTxn(encodedTxn, "new memo by dev2", solana.MustPublicKeyFromBase58(ownerAddr), privateKeys)
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	log.Infof("encodedTxn2 : %s", encodedTxn2)
+	response, err := g.PostSubmit(ctx, encodedTxn2, false)
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+	log.Infof("response.signature : %s", response.Signature)
+
+	return true
 }
 
 func callPricesGRPCStream(g *provider.GRPCClient) bool {
