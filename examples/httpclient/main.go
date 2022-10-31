@@ -698,17 +698,16 @@ func callRouteTradeSwap(ownerAddr string) bool {
 		Steps: []*pb.RouteStep{
 			{
 				// FIDA-RAY pool address
-				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
-				InToken:     "FIDA",
-
+				InToken:      "FIDA",
+				OutToken:     "RAY",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
 			},
 			{
 				// RAY-USDC pool address
-				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
 				InToken:      "RAY",
+				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
