@@ -54,6 +54,7 @@ func run() bool {
 	failed = failed || callPoolsGRPC(g)
 	failed = failed || callPriceGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
+	failed = failed || callPricesGRPCStream(g)
 
 	// trade stream can be slow
 	if cfg.RunTradeStream {
@@ -969,4 +970,30 @@ func callAddMemoToSerializedTxn(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Infof("response.signature : %s", response.Signature)
 
 	return true
+}
+
+func callPricesGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get prices stream")
+
+	ch := make(chan *pb.GetPricesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL"})
+
+	if err != nil {
+		log.Errorf("error with GetPrices stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
 }

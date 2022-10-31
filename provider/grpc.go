@@ -474,3 +474,16 @@ func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, projects []pb.Pr
 
 	return connections.GRPCStream[pb.GetPoolReservesStreamResponse](stream, ""), nil
 }
+
+// GetPricesStream subscribes to a stream for getting recent prices of tokens of interest.
+func (g *GRPCClient) GetPricesStream(ctx context.Context, projects []pb.Project, tokens []string) (connections.Streamer[*pb.GetPricesStreamResponse], error) {
+	stream, err := g.apiClient.GetPricesStream(ctx, &pb.GetPricesStreamRequest{
+		Projects: projects,
+		Tokens:   tokens,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPricesStreamResponse](stream, ""), nil
+}
