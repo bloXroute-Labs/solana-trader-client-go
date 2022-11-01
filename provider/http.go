@@ -224,7 +224,7 @@ func (h *HTTPClient) signAndSubmitBatch(transactions interface{}, opts SubmitOpt
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildSignedBatchRequest(transactions, *h.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, opts)
 	if err != nil {
 		return nil, err
 	}

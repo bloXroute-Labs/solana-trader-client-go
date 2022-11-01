@@ -84,7 +84,7 @@ func ProjectFromString(project string) (api.Project, error) {
 	return api.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildSignedBatchRequest(transactions interface{}, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildBatchRequest(transactions interface{}, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = opts.SubmitStrategy
 

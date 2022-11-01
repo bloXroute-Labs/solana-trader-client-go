@@ -171,7 +171,7 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions interf
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildSignedBatchRequest(transactions, *g.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
 	if err != nil {
 		return nil, err
 	}
