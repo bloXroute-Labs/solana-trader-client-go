@@ -17,6 +17,10 @@ import (
 )
 
 func main() {
+	os.Setenv("PUBLIC_KEY", "2JJQHAYdogfB1fE1ftcvFcsQAXSgQQKkafCwZczWdSWd")
+	os.Setenv("PRIVATE_KEY", "3EhZ4Epe6QrcDKQRucdftv6vWXMnpTKDV4mekSPWZEcZnJV4huzesLHwASdVUzoGyQ8evywwomGHQZiYr91fdm6y")
+	os.Setenv("AUTH_HEADER", "ZDIxYzE0NmItZWYxNi00ZmFmLTg5YWUtMzYwMTk4YzUyZmM4OjEwOWE5MzEzZDc2Yjg3MzczYjdjZDdhNmZkZGE3ZDg5")
+	os.Setenv("API_ENV", "local")
 	utils.InitLogger()
 	failed := run()
 	if failed {
@@ -45,7 +49,12 @@ func run() bool {
 	}
 
 	var failed bool
-
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	failed = failed || callTradeSwap(g, ownerAddr)
+	failed = failed || callRouteTradeSwap(g, ownerAddr)
+	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
+	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr)
+	return false
 	// informational methods
 	failed = failed || callMarketsGRPC(g)
 	failed = failed || callOrderbookGRPC(g)
@@ -78,7 +87,7 @@ func run() bool {
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	ownerAddr, ok = os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return failed
@@ -871,8 +880,8 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		Steps: []*pb.RouteStep{
 			{
 				// FIDA-RAY pool address
-				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
-				InToken:     "FIDA",
+				InToken:  "FIDA",
+				OutToken: "RAY",
 
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
@@ -880,8 +889,8 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 			},
 			{
 				// RAY-USDC pool address
-				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
 				InToken:      "RAY",
+				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,

@@ -6,7 +6,10 @@ import (
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	log "github.com/sirupsen/logrus"
+
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -81,35 +84,45 @@ func ProjectFromString(project string) (api.Project, error) {
 	return api.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildBatchRequest(transactions interface{}, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildSignedBatchRequest(transactions interface{}, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
-	for _, tx := range transactions.([]interface{}) {
-
-		oneRequest := pb.PostSubmitRequestEntry{}
-		oneRequest.SkipPreFlight = opts.SkipPreFlight
-
-		if txStr, ok := tx.(string); ok {
-			signedTxBase64, err := transaction.SignTxWithPrivateKey(txStr, privateKey)
+	switch transactions.(type) {
+	case []*api.TransactionMessage:
+		for _, txMsg := range transactions.([]*api.TransactionMessage) {
+			oneRequest, err := createBatchRequestEntry(opts, txMsg.Content, privateKey)
 			if err != nil {
-				return &pb.PostSubmitBatchRequest{}, err
+				return nil, err
 			}
-			oneRequest.Transaction = &pb.TransactionMessage{
-				Content: signedTxBase64,
-			}
-		} else if txMsg, ok := tx.(*pb.TransactionMessage); ok {
-			signedTxBase64, err := transaction.SignTxWithPrivateKey(txMsg.Content, privateKey)
-			if err != nil {
-				return &pb.PostSubmitBatchRequest{}, err
-			}
-			oneRequest.Transaction = &pb.TransactionMessage{
-				Content:   signedTxBase64,
-				IsCleanup: txMsg.IsCleanup,
-			}
+
+			batchRequest.Entries = append(batchRequest.Entries, oneRequest)
 		}
+	case []string:
+		for _, txStr := range transactions.([]string) {
+			oneRequest, err := createBatchRequestEntry(opts, txStr, privateKey)
+			if err != nil {
+				return nil, err
+			}
 
-		batchRequest.Entries = append(batchRequest.Entries, &oneRequest)
+			batchRequest.Entries = append(batchRequest.Entries, oneRequest)
+		}
+	default:
+		log.Fatalf("transactions has unknown type : %v", reflect.TypeOf(transactions))
 	}
+
 	return &batchRequest, nil
+}
+
+func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana.PrivateKey) (*pb.PostSubmitRequestEntry, error) {
+	oneRequest := pb.PostSubmitRequestEntry{}
+	oneRequest.SkipPreFlight = opts.SkipPreFlight
+	signedTxBase64, err := transaction.SignTxWithPrivateKey(txBase64, privateKey)
+	if err != nil {
+		return nil, err
+	}
+	oneRequest.Transaction = &pb.TransactionMessage{
+		Content: signedTxBase64,
+	}
+	return &oneRequest, nil
 }

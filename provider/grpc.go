@@ -8,6 +8,7 @@ import (
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -170,7 +171,7 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions interf
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	batchRequest, err := buildSignedBatchRequest(transactions, *g.privateKey, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +235,7 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	if err != nil {
 		return nil, err
 	}
-
+	log.Info("resp.Transactions %v", resp.Transactions)
 	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 

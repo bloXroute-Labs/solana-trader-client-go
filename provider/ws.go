@@ -276,7 +276,7 @@ func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions interfac
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, opts)
+	batchRequest, err := buildSignedBatchRequest(transactions, *w.privateKey, opts)
 	if err != nil {
 		return nil, err
 	}
