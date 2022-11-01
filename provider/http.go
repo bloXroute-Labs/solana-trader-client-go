@@ -233,7 +233,7 @@ func (h *HTTPClient) signAndSubmitBatch(transactions interface{}, opts SubmitOpt
 
 // PostTradeSwap PostOrder returns a partially signed transaction for submitting a swap request
 func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/trade-swap", h.baseURL)
+	url := fmt.Sprintf("%s/api/v1/trade/swap", h.baseURL)
 	request := &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
@@ -242,6 +242,18 @@ func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmo
 		Slippage:     slippage,
 		Project:      project,
 	}
+
+	var response pb.TradeSwapResponse
+	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
+func (h *HTTPClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/route-swap", h.baseURL)
 
 	var response pb.TradeSwapResponse
 	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.GetAuthHeader())

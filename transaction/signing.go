@@ -34,6 +34,7 @@ func SignTxWithPrivateKey(unsignedTxBase64 string, privateKey solana.PrivateKey)
 	if err != nil {
 		return "", err
 	}
+
 	unsignedTx := solanarpc.TransactionWithMeta{Transaction: unsignedTxBytes}
 	solanaTx, err := unsignedTx.GetTransaction()
 	if err != nil {

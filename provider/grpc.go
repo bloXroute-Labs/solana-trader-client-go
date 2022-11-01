@@ -234,7 +234,6 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	if err != nil {
 		return nil, err
 	}
-
 	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 

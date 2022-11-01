@@ -17,7 +17,6 @@ import (
 
 func main() {
 	utils.InitLogger()
-
 	failed := run()
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -33,6 +32,8 @@ func run() bool {
 	var w *provider.WSClient
 
 	switch cfg.Env {
+	case config.EnvLocal:
+		w, err = provider.NewWSClientLocal()
 	case config.EnvTestnet:
 		w, err = provider.NewWSClientTestnet()
 	case config.EnvMainnet:
@@ -864,8 +865,8 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		Steps: []*pb.RouteStep{
 			{
 				// FIDA-RAY pool address
-				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
-				InToken:     "FIDA",
+				InToken:  "FIDA",
+				OutToken: "RAY",
 
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
@@ -873,8 +874,8 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 			},
 			{
 				// RAY-USDC pool address
-				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
 				InToken:      "RAY",
+				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,

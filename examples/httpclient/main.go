@@ -24,6 +24,8 @@ func httpClient() *provider.HTTPClient {
 	var h *provider.HTTPClient
 
 	switch cfg.Env {
+	case config.EnvLocal:
+		h = provider.NewHTTPLocal()
 	case config.EnvTestnet:
 		h = provider.NewHTTPTestnet()
 	case config.EnvMainnet:
@@ -42,6 +44,8 @@ func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
 	client := &http.Client{Timeout: timeout}
 
 	switch cfg.Env {
+	case config.EnvLocal:
+		h = provider.NewHTTPLocal()
 	case config.EnvTestnet:
 		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.TestnetHTTP))
 	case config.EnvMainnet:
@@ -52,7 +56,6 @@ func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
 
 func main() {
 	utils.InitLogger()
-
 	failed := run()
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -61,6 +64,7 @@ func main() {
 
 func run() bool {
 	var failed bool
+
 	// informational methods
 	failed = failed || callMarketsHTTP()
 	failed = failed || callOrderbookHTTP()
@@ -698,17 +702,17 @@ func callRouteTradeSwap(ownerAddr string) bool {
 		Steps: []*pb.RouteStep{
 			{
 				// FIDA-RAY pool address
-				PoolAddress: "2dRNngAm729NzLbb1pzgHtfHvPqR4XHFmFyYK78EfEeX",
-				InToken:     "FIDA",
 
+				InToken:      "FIDA",
+				OutToken:     "RAY",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
 			},
 			{
 				// RAY-USDC pool address
-				PoolAddress:  "6UmmUiYoBjSrhakAobJw8BvkmJtDVxaeBtbt7rxWo1mg",
 				InToken:      "RAY",
+				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
