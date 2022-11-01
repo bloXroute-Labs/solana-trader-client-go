@@ -8,7 +8,6 @@ import (
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -235,7 +234,6 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	if err != nil {
 		return nil, err
 	}
-	log.Info("resp.Transactions %v", resp.Transactions)
 	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
