@@ -57,6 +57,7 @@ type ApiClient interface {
 	GetQuotesStream(ctx context.Context, in *GetQuotesStreamRequest, opts ...grpc.CallOption) (Api_GetQuotesStreamClient, error)
 	GetPoolReservesStream(ctx context.Context, in *GetPoolReservesStreamRequest, opts ...grpc.CallOption) (Api_GetPoolReservesStreamClient, error)
 	GetPricesStream(ctx context.Context, in *GetPricesStreamRequest, opts ...grpc.CallOption) (Api_GetPricesStreamClient, error)
+	GetSwapsStream(ctx context.Context, in *GetSwapsStreamRequest, opts ...grpc.CallOption) (Api_GetSwapsStreamClient, error)
 }
 
 type apiClient struct {
@@ -589,6 +590,38 @@ func (x *apiGetPricesStreamClient) Recv() (*GetPricesStreamResponse, error) {
 	return m, nil
 }
 
+func (c *apiClient) GetSwapsStream(ctx context.Context, in *GetSwapsStreamRequest, opts ...grpc.CallOption) (Api_GetSwapsStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Api_ServiceDesc.Streams[9], "/api.Api/GetSwapsStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &apiGetSwapsStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Api_GetSwapsStreamClient interface {
+	Recv() (*GetSwapsStreamResponse, error)
+	grpc.ClientStream
+}
+
+type apiGetSwapsStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *apiGetSwapsStreamClient) Recv() (*GetSwapsStreamResponse, error) {
+	m := new(GetSwapsStreamResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility
@@ -632,6 +665,7 @@ type ApiServer interface {
 	GetQuotesStream(*GetQuotesStreamRequest, Api_GetQuotesStreamServer) error
 	GetPoolReservesStream(*GetPoolReservesStreamRequest, Api_GetPoolReservesStreamServer) error
 	GetPricesStream(*GetPricesStreamRequest, Api_GetPricesStreamServer) error
+	GetSwapsStream(*GetSwapsStreamRequest, Api_GetSwapsStreamServer) error
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -743,6 +777,9 @@ func (UnimplementedApiServer) GetPoolReservesStream(*GetPoolReservesStreamReques
 }
 func (UnimplementedApiServer) GetPricesStream(*GetPricesStreamRequest, Api_GetPricesStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetPricesStream not implemented")
+}
+func (UnimplementedApiServer) GetSwapsStream(*GetSwapsStreamRequest, Api_GetSwapsStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetSwapsStream not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 
@@ -1414,6 +1451,27 @@ func (x *apiGetPricesStreamServer) Send(m *GetPricesStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Api_GetSwapsStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetSwapsStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ApiServer).GetSwapsStream(m, &apiGetSwapsStreamServer{stream})
+}
+
+type Api_GetSwapsStreamServer interface {
+	Send(*GetSwapsStreamResponse) error
+	grpc.ServerStream
+}
+
+type apiGetSwapsStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *apiGetSwapsStreamServer) Send(m *GetSwapsStreamResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1570,6 +1628,11 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetPricesStream",
 			Handler:       _Api_GetPricesStream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetSwapsStream",
+			Handler:       _Api_GetSwapsStream_Handler,
 			ServerStreams: true,
 		},
 	},
