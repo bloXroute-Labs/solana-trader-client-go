@@ -486,3 +486,20 @@ func (g *GRPCClient) GetPricesStream(ctx context.Context, projects []pb.Project,
 
 	return connections.GRPCStream[pb.GetPricesStreamResponse](stream, ""), nil
 }
+
+// GetSwapsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
+func (g *GRPCClient) GetSwapsStream(
+	ctx context.Context,
+	projects []pb.Project,
+	markets []string,
+) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
+	stream, err := g.apiClient.GetSwapsStream(ctx, &pb.GetSwapsStreamRequest{
+		Projects: projects,
+		Markets:  markets,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetSwapsStreamResponse](stream, ""), nil
+}
