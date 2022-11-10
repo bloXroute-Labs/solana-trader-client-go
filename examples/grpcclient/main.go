@@ -67,6 +67,7 @@ func run() bool {
 	failed = failed || callRecentBlockHashGRPCStream(g)
 	failed = failed || callQuotesGRPCStream(g)
 	failed = failed || callPoolReservesGRPCStream(g)
+	failed = failed || callSwapsGRPCStream(g)
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -988,6 +989,32 @@ func callPricesGRPCStream(g *provider.GRPCClient) bool {
 	}
 	stream.Into(ch)
 	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callSwapsGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get swaps stream")
+
+	ch := make(chan *pb.GetSwapsStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL/USDC"})
+
+	if err != nil {
+		log.Errorf("error with GetSwaps stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed

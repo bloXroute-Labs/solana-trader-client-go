@@ -69,6 +69,7 @@ func run() bool {
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
 	failed = failed || callPricesWSStream(w)
+	failed = failed || callSwapsWSStream(w)
 
 	if cfg.RunTradeStream {
 		failed = failed || callTradesWSStream(w)
@@ -908,6 +909,30 @@ func callPricesWSStream(w *provider.WSClient) bool {
 
 	ch := stream.Channel(0)
 	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+// Swaps response
+func callSwapsWSStream(w *provider.WSClient) bool {
+	log.Info("starting swaps stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL/USDC"})
+	if err != nil {
+		log.Errorf("error with GetPrices stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			return true
