@@ -63,7 +63,7 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 
 // NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
+	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: "ZDIxYzE0NmItZWYxNi00ZmFmLTg5YWUtMzYwMTk4YzUyZmM4OjEwOWE5MzEzZDc2Yjg3MzczYjdjZDdhNmZkZGE3ZDg5"})
 
 	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if opts.UseTLS {
@@ -169,7 +169,7 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
