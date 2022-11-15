@@ -6,10 +6,7 @@ import (
 	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
-	log "github.com/sirupsen/logrus"
-
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -84,31 +81,17 @@ func ProjectFromString(project string) (api.Project, error) {
 	return api.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildBatchRequest(transactions interface{}, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
-	switch transactions.(type) {
-	case []*api.TransactionMessage:
-		for _, txMsg := range transactions.([]*api.TransactionMessage) {
-			oneRequest, err := createBatchRequestEntry(opts, txMsg.Content, privateKey)
-			if err != nil {
-				return nil, err
-			}
-
-			batchRequest.Entries = append(batchRequest.Entries, oneRequest)
+	for _, tx := range transactions {
+		request, err := createBatchRequestEntry(opts, tx.Content, privateKey)
+		if err != nil {
+			return nil, err
 		}
-	case []string:
-		for _, txStr := range transactions.([]string) {
-			oneRequest, err := createBatchRequestEntry(opts, txStr, privateKey)
-			if err != nil {
-				return nil, err
-			}
 
-			batchRequest.Entries = append(batchRequest.Entries, oneRequest)
-		}
-	default:
-		log.Fatalf("transactions has unknown type : %v", reflect.TypeOf(transactions))
+		batchRequest.Entries = append(batchRequest.Entries, request)
 	}
 
 	return &batchRequest, nil

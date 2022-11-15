@@ -148,16 +148,19 @@ func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 }
 
 // signAndSubmit signs the given transaction and submits it.
-func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
+func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
 	if g.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, *g.privateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	response, err := g.PostSubmit(ctx, txBase64, skipPreFlight)
+	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
+		Content:   txBase64,
+		IsCleanup: tx.IsCleanup,
+	}, skipPreFlight)
 	if err != nil {
 		return "", err
 	}
@@ -166,7 +169,7 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions interface{}, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
@@ -211,8 +214,8 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
-	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: txBase64,
+func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
 		SkipPreFlight: skipPreFlight})
 }
 
