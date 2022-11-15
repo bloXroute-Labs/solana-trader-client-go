@@ -38,6 +38,7 @@ func run() bool {
 	case config.EnvTestnet:
 		g, err = provider.NewGRPCTestnet()
 	case config.EnvMainnet:
+
 		g, err = provider.NewGRPCClient()
 	}
 	if err != nil {
@@ -93,9 +94,19 @@ func run() bool {
 	if !ok {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
+	} //ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
 	failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
+	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
+	failed = failed || callTradeSwap(g, ownerAddr)
+	failed = failed || callRouteTradeSwap(g, ownerAddr)
+	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
+	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr) //failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
 	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
@@ -922,7 +933,7 @@ func callAddMemoWithInstructions(g *provider.GRPCClient, ownerAddr string) bool 
 		solana.MustPublicKeyFromBase58(ownerAddr),
 		privateKeys,
 	)
-	response, err := g.PostSubmit(ctx, encodedTxn, false)
+	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{Content: encodedTxn}, false)
 	if err != nil {
 		log.Error(err)
 		return false
@@ -962,7 +973,7 @@ func callAddMemoToSerializedTxn(g *provider.GRPCClient, ownerAddr string) bool {
 		return false
 	}
 	log.Infof("encodedTxn2 : %s", encodedTxn2)
-	response, err := g.PostSubmit(ctx, encodedTxn2, false)
+	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{Content: encodedTxn2}, false)
 	if err != nil {
 		log.Error(err)
 		return false
