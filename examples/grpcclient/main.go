@@ -94,7 +94,7 @@ func run() bool {
 	if !ok {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
-	} //ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	}
 	if !ok {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
