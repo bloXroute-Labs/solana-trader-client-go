@@ -63,7 +63,7 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 
 // NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: "ZDIxYzE0NmItZWYxNi00ZmFmLTg5YWUtMzYwMTk4YzUyZmM4OjEwOWE5MzEzZDc2Yjg3MzczYjdjZDdhNmZkZGE3ZDg5"})
+	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
 
 	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if opts.UseTLS {
