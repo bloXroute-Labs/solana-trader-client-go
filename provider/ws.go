@@ -588,7 +588,7 @@ func (w *WSClient) GetSwapsStream(
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	return connections.WSStream(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
 		Projects: projects,
-		Markets:  markets,
+		Pools:    markets,
 	}, func() *pb.GetSwapsStreamResponse {
 		return &pb.GetSwapsStreamResponse{}
 	})
