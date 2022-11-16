@@ -114,8 +114,11 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (sol
 	if err != nil {
 		return solana.Signature{}, err
 	}
-
-	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, ts.opts.SkipPreflight, "")
+	opts := solanarpc.TransactionOpts{
+		SkipPreflight:       ts.opts.SkipPreflight,
+		PreflightCommitment: "",
+	}
+	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, opts)
 	if err != nil {
 		return solana.Signature{}, err
 	}
@@ -145,7 +148,7 @@ func SerumBuilder(ctx context.Context, g *provider.GRPCClient, publicKey solana.
 
 		orderID++
 
-		signedTx, err := transaction.SignTxWithPrivateKey(response.Transaction, privateKey)
+		signedTx, err := transaction.SignTxWithPrivateKey(response.Transaction.Content, privateKey)
 		if err != nil {
 			return "", err
 		}

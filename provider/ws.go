@@ -231,7 +231,9 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{
-		Transaction:   txBase64,
+		Transaction: &pb.TransactionMessage{
+			Content: txBase64,
+		},
 		SkipPreFlight: skipPreFlight,
 	}
 	var response pb.PostSubmitResponse
@@ -253,12 +255,12 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 }
 
 // signAndSubmit signs the given transaction and submits it.
-func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight bool) (string, error) {
+func (w *WSClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
 	if w.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
 
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *w.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -272,7 +274,7 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx string, skipPreFlight b
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions interface{}, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
@@ -586,7 +588,7 @@ func (w *WSClient) GetSwapsStream(
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	return connections.WSStream(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
 		Projects: projects,
-		Markets:  markets,
+		Pools:    markets,
 	}, func() *pb.GetSwapsStreamResponse {
 		return &pb.GetSwapsStreamResponse{}
 	})

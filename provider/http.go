@@ -202,11 +202,11 @@ func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage floa
 }
 
 // signAndSubmit signs the given transaction and submits it.
-func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error) {
+func (h *HTTPClient) signAndSubmit(tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
 	if h.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -220,7 +220,7 @@ func (h *HTTPClient) signAndSubmit(tx string, skipPreFlight bool) (string, error
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (h *HTTPClient) signAndSubmitBatch(transactions interface{}, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) signAndSubmitBatch(transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
@@ -289,7 +289,7 @@ func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types 
 // PostSubmit posts the transaction string to the Solana network.
 func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: txBase64, SkipPreFlight: skipPreFlight}
+	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
 
 	var response pb.PostSubmitResponse
 	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response, h.GetAuthHeader())
