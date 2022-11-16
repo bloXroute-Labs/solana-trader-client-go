@@ -1007,19 +1007,19 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL"})
+	stream, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
 	if err != nil {
 		log.Errorf("error with GetSwaps stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
 	for i := 1; i <= 3; i++ {
-		resp, ok := <-ch
+		_, ok := <-ch
 		if !ok {
 			// channel closed
 			return true
 		}
-		fmt.Println(resp)
+
 		log.Infof("response %v received", i)
 	}
 	return false
