@@ -314,7 +314,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	}
 
 	orderbookCh := stream.Channel(0)
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 2; i++ {
 		data, ok := <-orderbookCh
 		if !ok {
 			// channel closed
