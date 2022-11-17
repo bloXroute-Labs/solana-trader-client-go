@@ -69,6 +69,7 @@ func run() bool {
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
 	failed = failed || callPricesWSStream(w)
+	failed = failed || callSwapsWSStream(w)
 
 	if cfg.RunTradeStream {
 		failed = failed || callTradesWSStream(w)
@@ -313,7 +314,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	}
 
 	orderbookCh := stream.Channel(0)
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 2; i++ {
 		_, ok := <-orderbookCh
 		if !ok {
 			return true
@@ -893,7 +894,6 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-// Quotes response
 func callPricesWSStream(w *provider.WSClient) bool {
 	log.Info("starting prices stream")
 
@@ -912,6 +912,32 @@ func callPricesWSStream(w *provider.WSClient) bool {
 		if !ok {
 			return true
 		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callSwapsWSStream(w *provider.WSClient) bool {
+	log.Info("starting get swaps stream")
+
+	ch := make(chan *pb.GetSwapsStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
+	if err != nil {
+		log.Errorf("error with GetSwaps stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
 		log.Infof("response %v received", i)
 	}
 	return false
