@@ -3,9 +3,8 @@ package provider
 import (
 	"errors"
 	"fmt"
-	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
 	"os"
 	"strings"
 	"time"
@@ -66,19 +65,19 @@ func DefaultRPCOpts(endpoint string) RPCOpts {
 	}
 }
 
-var stringToAmm = map[string]api.Project{
-	"unknown": api.Project_P_UNKNOWN,
-	"jupiter": api.Project_P_JUPITER,
-	"raydium": api.Project_P_RAYDIUM,
-	"all":     api.Project_P_ALL,
+var stringToAmm = map[string]pb.Project{
+	"unknown": pb.Project_P_UNKNOWN,
+	"jupiter": pb.Project_P_JUPITER,
+	"raydium": pb.Project_P_RAYDIUM,
+	"all":     pb.Project_P_ALL,
 }
 
-func ProjectFromString(project string) (api.Project, error) {
+func ProjectFromString(project string) (pb.Project, error) {
 	if apiProject, ok := stringToAmm[strings.ToLower(project)]; ok {
 		return apiProject, nil
 	}
 
-	return api.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
+	return pb.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
 func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {

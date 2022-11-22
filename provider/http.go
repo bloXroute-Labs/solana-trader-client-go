@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
 	"github.com/gagliardetto/solana-go"
 	"net/http"
 )

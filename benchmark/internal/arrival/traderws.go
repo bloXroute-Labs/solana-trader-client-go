@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/sourcegraph/jsonrpc2"

@@ -9,8 +9,7 @@ import (
 	"os"
 	"time"
 
-	api "github.com/bloXroute-Labs/solana-trader-client-go/proto"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
@@ -428,8 +427,8 @@ const (
 	// SOL/USDC market
 	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 
-	orderSide   = api.Side_S_ASK
-	orderType   = api.OrderType_OT_LIMIT
+	orderSide   = pb.Side_S_ASK
+	orderType   = pb.OrderType_OT_LIMIT
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
@@ -521,7 +520,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// sign/submit transaction after creation
 	sig, err := w.SubmitOrder(context.Background(), ownerAddr, payerAddr, marketAddr,
-		orderSide, []api.OrderType{orderType}, orderAmount,
+		orderSide, []pb.OrderType{orderType}, orderAmount,
 		orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)

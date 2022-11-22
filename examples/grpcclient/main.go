@@ -12,7 +12,7 @@ import (
 	"os"
 	"time"
 
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
 	log "github.com/sirupsen/logrus"
 )
 

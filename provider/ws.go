@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
 	"github.com/gagliardetto/solana-go"
 )
 
