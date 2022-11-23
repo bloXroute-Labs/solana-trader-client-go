@@ -142,3 +142,19 @@ workflows:
           requires:
             - init
             - unit
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - develop
+    jobs:
+      - integration-mainnet:
+          context:
+            - slack
+            - trader-api-sdk
+          requires:
+            - init
+            - unit
