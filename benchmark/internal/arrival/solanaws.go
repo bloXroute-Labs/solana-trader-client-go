@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"

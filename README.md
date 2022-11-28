@@ -36,7 +36,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 )
 
 func main() {
@@ -82,7 +82,7 @@ package main
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	pb "github.com/bloXroute-Labs/solana-trader-client-go/proto"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"context"
 )
 
@@ -121,12 +121,6 @@ You can use a couple of different formats, with restrictions:
 
 
 ## Development
-
-Regenerate protobuf files (uses a Docker builder for consistency):
-
-```
-$ make proto
-```
 
 Unit tests:
 
