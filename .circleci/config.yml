@@ -151,6 +151,14 @@ workflows:
               only:
                 - develop
     jobs:
+      - init:
+          context:
+            - circleci
+      - unit:
+          context:
+            - slack
+          requires:
+            - init
       - integration-mainnet:
           context:
             - slack
