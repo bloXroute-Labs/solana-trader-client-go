@@ -122,12 +122,6 @@ You can use a couple of different formats, with restrictions:
 
 ## Development
 
-Regenerate protobuf files (uses a Docker builder for consistency):
-
-```
-$ make proto
-```
-
 Unit tests:
 
 ```
