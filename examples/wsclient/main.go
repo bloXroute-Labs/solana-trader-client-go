@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )

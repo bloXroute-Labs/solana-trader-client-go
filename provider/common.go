@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"os"
 	"strings"
 	"time"

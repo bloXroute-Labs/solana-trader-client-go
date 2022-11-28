@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"

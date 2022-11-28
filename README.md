@@ -36,7 +36,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 )
 
 func main() {
@@ -82,7 +82,7 @@ package main
 import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/proto/api"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"context"
 )
 
