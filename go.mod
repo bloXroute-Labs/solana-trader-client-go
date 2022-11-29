@@ -3,7 +3,7 @@ module github.com/bloXroute-Labs/solana-trader-client-go
 go 1.18
 
 require (
-	github.com/bloXroute-Labs/solana-trader-proto v1.2.1
+	github.com/bloXroute-Labs/solana-trader-proto v1.2.2-alpha.0.20221129200556-c4f95f4af8f9
 	github.com/gagliardetto/binary v0.7.2-0.20220918220700-6a22eaf7d87e
 	github.com/gagliardetto/solana-go v1.6.1-0.20221018174950-475b9d64e462
 	github.com/gorilla/websocket v1.4.2
@@ -62,7 +62,7 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
