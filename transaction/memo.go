@@ -57,10 +57,7 @@ func AddMemoToSerializedTxn(txBase64, memoContent string,
 
 	var instructions []solana.Instruction
 	for _, cmpInst := range solanaTx.Message.Instructions {
-		accounts, err := cmpInst.ResolveInstructionAccounts(&solanaTx.Message)
-		if err != nil {
-			return "", err
-		}
+		accounts := cmpInst.ResolveInstructionAccounts(&solanaTx.Message)
 		instProgID, err := solanaTx.Message.ResolveProgramIDIndex(cmpInst.ProgramIDIndex)
 		if err != nil {
 			return "", err
