@@ -18,6 +18,10 @@ import (
 
 func main() {
 	utils.InitLogger()
+	os.Setenv("PUBLIC_KEY", "2JJQHAYdogfB1fE1ftcvFcsQAXSgQQKkafCwZczWdSWd")
+	os.Setenv("PRIVATE_KEY", "3EhZ4Epe6QrcDKQRucdftv6vWXMnpTKDV4mekSPWZEcZnJV4huzesLHwASdVUzoGyQ8evywwomGHQZiYr91fdm6y")
+	os.Setenv("AUTH_HEADER", "ZDIxYzE0NmItZWYxNi00ZmFmLTg5YWUtMzYwMTk4YzUyZmM4OjEwOWE5MzEzZDc2Yjg3MzczYjdjZDdhNmZkZGE3ZDg5")
+	os.Setenv("API_ENV", "local")
 	failed := run()
 	if failed {
 		log.Fatal("one or multiple examples failed")
@@ -48,12 +52,12 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	failed = failed || callMarketsGRPC(g)
-	failed = failed || callOrderbookGRPC(g)
-	failed = failed || callOpenOrdersGRPC(g)
-	failed = failed || callTickersGRPC(g)
-	failed = failed || callPoolsGRPC(g)
-	failed = failed || callPriceGRPC(g)
+	//failed = failed || callMarketsGRPC(g)
+	//failed = failed || callOrderbookGRPC(g)
+	//failed = failed || callOpenOrdersGRPC(g)
+	//failed = failed || callTickersGRPC(g)
+	//failed = failed || callPoolsGRPC(g)
+	//failed = failed || callPriceGRPC(g)
 	failed = failed || callOrderbookGRPCStream(g)
 	failed = failed || callPricesGRPCStream(g)
 
@@ -80,41 +84,41 @@ func run() bool {
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return failed
-	}
+	//ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	//if !ok {
+	//	log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
+	//	return failed
+	//}
+	//
+	//ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	//if !ok {
+	//	log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+	//}
 
-	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
+	//payerAddr, ok := os.LookupEnv("PAYER")
+	//if !ok {
+	//	log.Infof("PAYER environment variable not set: will be set to owner address")
+	//	payerAddr = ownerAddr
+	//}
+	//if !ok {
+	//	log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+	//}
 
-	payerAddr, ok := os.LookupEnv("PAYER")
-	if !ok {
-		log.Infof("PAYER environment variable not set: will be set to owner address")
-		payerAddr = ownerAddr
-	}
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
-	failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callTradeSwap(g, ownerAddr)
-	failed = failed || callRouteTradeSwap(g, ownerAddr)
-	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
-	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr) //failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callTradeSwap(g, ownerAddr)
-	failed = failed || callRouteTradeSwap(g, ownerAddr)
-	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
-	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr)
+	//failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || callTradeSwap(g, ownerAddr)
+	//failed = failed || callRouteTradeSwap(g, ownerAddr)
+	//failed = failed || callAddMemoWithInstructions(g, ownerAddr)
+	//failed = failed || callAddMemoToSerializedTxn(g, ownerAddr) //failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
+	//failed = failed || callTradeSwap(g, ownerAddr)
+	//failed = failed || callRouteTradeSwap(g, ownerAddr)
+	//failed = failed || callAddMemoWithInstructions(g, ownerAddr)
+	//failed = failed || callAddMemoToSerializedTxn(g, ownerAddr)
 
 	return failed
 }
@@ -285,7 +289,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream error response
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 1)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
