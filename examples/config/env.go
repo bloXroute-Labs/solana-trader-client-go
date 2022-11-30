@@ -7,9 +7,9 @@ import (
 )
 
 type Example struct {
-	Env            Env
-	RunTradeStream bool
-	RunTrades      bool
+	Env           Env
+	RunSlowStream bool
+	RunTrades     bool
 }
 
 func Load() (Example, error) {
@@ -18,10 +18,10 @@ func Load() (Example, error) {
 		return Example{}, err
 	}
 
-	runTradesStream := true
-	rtsV := os.Getenv("RUN_TRADE_STREAM")
+	runSlowStream := true
+	rtsV := os.Getenv("RUN_SLOW_STREAM")
 	if rtsV == "false" {
-		runTradesStream = false
+		runSlowStream = false
 	}
 
 	runTrades := true
@@ -31,9 +31,9 @@ func Load() (Example, error) {
 	}
 
 	return Example{
-		Env:            env,
-		RunTrades:      runTrades,
-		RunTradeStream: runTradesStream,
+		Env:           env,
+		RunTrades:     runTrades,
+		RunSlowStream: runSlowStream,
 	}, nil
 }
 

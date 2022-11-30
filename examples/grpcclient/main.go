@@ -54,11 +54,13 @@ func run() bool {
 	failed = failed || callTickersGRPC(g)
 	failed = failed || callPoolsGRPC(g)
 	failed = failed || callPriceGRPC(g)
-	failed = failed || callOrderbookGRPCStream(g)
+	if cfg.RunSlowStream {
+		failed = failed || callOrderbookGRPCStream(g)
+	}
 	failed = failed || callPricesGRPCStream(g)
 
 	// trade stream can be slow
-	if cfg.RunTradeStream {
+	if cfg.RunSlowStream {
 		failed = failed || callTradesGRPCStream(g)
 	}
 
