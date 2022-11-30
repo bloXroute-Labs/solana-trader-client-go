@@ -63,14 +63,16 @@ func run() bool {
 	failed = failed || callGetQuotes(w)
 
 	// streaming methods
-	failed = failed || callOrderbookWSStream(w)
+	if cfg.RunSlowStream {
+		failed = failed || callOrderbookWSStream(w)
+	}
 	failed = failed || callRecentBlockHashWSStream(w)
 	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
 	failed = failed || callPricesWSStream(w)
 	failed = failed || callSwapsWSStream(w)
 
-	if cfg.RunTradeStream {
+	if cfg.RunSlowStream {
 		failed = failed || callTradesWSStream(w)
 	}
 
