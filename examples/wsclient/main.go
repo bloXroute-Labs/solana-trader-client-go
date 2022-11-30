@@ -70,6 +70,7 @@ func run() bool {
 	failed = failed || callPoolReservesWSStream(w)
 	failed = failed || callPricesWSStream(w)
 	failed = failed || callSwapsWSStream(w)
+	failed = failed || callBlockWSStream(w)
 
 	if cfg.RunSlowStream {
 		failed = failed || callTradesWSStream(w)
@@ -899,6 +900,32 @@ func callSwapsWSStream(w *provider.WSClient) bool {
 	stream, err := w.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
 	if err != nil {
 		log.Errorf("error with GetSwaps stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callBlockWSStream(w *provider.WSClient) bool {
+	log.Info("starting get swaps stream")
+
+	ch := make(chan *pb.GetBlockStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetBlockStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetBlock stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)

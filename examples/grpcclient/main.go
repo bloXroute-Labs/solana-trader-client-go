@@ -70,6 +70,7 @@ func run() bool {
 	failed = failed || callRecentBlockHashGRPCStream(g)
 	failed = failed || callPoolReservesGRPCStream(g)
 	failed = failed || callSwapsGRPCStream(g)
+	failed = failed || callBlockGRPCStream(g)
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -992,6 +993,32 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 	stream, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
 	if err != nil {
 		log.Errorf("error with GetSwaps stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callBlockGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get swaps stream")
+
+	ch := make(chan *pb.GetBlockStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetBlockStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetBlock stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
