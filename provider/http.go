@@ -49,11 +49,12 @@ func NewHTTPLocal() *HTTPClient {
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-func NewHTTPCustomClient(host string, apiPort int) *HTTPClient {
+func NewHTTPCustomClient(authHeader, host string, apiPort int) *HTTPClient {
 	opts := RPCOpts{
 		Endpoint:    fmt.Sprintf("%s:%d", host, apiPort),
 		Timeout:     defaultRPCTimeout,
 		DisableAuth: true,
+		AuthHeader:  authHeader,
 	}
 
 	return NewHTTPClientWithOpts(nil, opts)
