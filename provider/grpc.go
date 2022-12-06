@@ -47,9 +47,9 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
-func NewGRPCInsecureLocal() *GRPCClient {
+func NewGRPCInsecureLocal(apiPort int) *GRPCClient {
 	opts := RPCOpts{
-		Endpoint: "127.0.0.1:9000",
+		Endpoint: fmt.Sprintf("127.0.0.1:%d", apiPort),
 		Timeout:  defaultRPCTimeout,
 	}
 
