@@ -43,6 +43,7 @@ type SubmitOpts struct {
 
 type RPCOpts struct {
 	Endpoint       string
+	DisableAuth    bool
 	UseTLS         bool
 	Timeout        time.Duration
 	PrivateKey     *solana.PrivateKey

@@ -49,29 +49,11 @@ func NewGRPCLocal() (*GRPCClient, error) {
 
 func NewGRPCInsecure(host string, apiPort int) (*GRPCClient, error) {
 	opts := RPCOpts{
-		Endpoint: fmt.Sprintf("%s:%d", host, apiPort),
-		Timeout:  defaultRPCTimeout,
+		Endpoint:    fmt.Sprintf("%s:%d", host, apiPort),
+		Timeout:     defaultRPCTimeout,
+		DisableAuth: true,
 	}
-
-	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
-
-	conn, err := grpc.Dial(opts.Endpoint, transportOption)
-	if err != nil {
-		return nil, err
-	}
-	client := &GRPCClient{
-		apiClient:  pb.NewApiClient(conn),
-		privateKey: opts.PrivateKey,
-	}
-	client.recentBlockHashStore = newRecentBlockHashStore(
-		client.GetRecentBlockHash,
-		client.GetRecentBlockHashStream,
-		opts,
-	)
-	if opts.CacheBlockHash {
-		go client.recentBlockHashStore.run(context.Background())
-	}
-	return client, err
+	return NewGRPCClientWithOpts(opts)
 }
 
 type blxrCredentials struct {
@@ -90,17 +72,26 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 
 // NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
-
+	var conn grpc.ClientConnInterface
+	var err error
 	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if opts.UseTLS {
 		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
 	}
 
-	conn, err := grpc.Dial(opts.Endpoint, transportOption, authOption)
-	if err != nil {
-		return nil, err
+	if opts.DisableAuth {
+		conn, err = grpc.Dial(opts.Endpoint, transportOption)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
+		conn, err = grpc.Dial(opts.Endpoint, transportOption, authOption)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	client := &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
