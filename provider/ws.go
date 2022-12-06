@@ -42,6 +42,15 @@ func NewWSClientLocal() (*WSClient, error) {
 	return NewWSClientWithOpts(opts)
 }
 
+// NewWSCustomClient
+func NewWSCustomClient(authHeader, endpoint string) (*WSClient, error) {
+	opts := RPCOpts{
+		Endpoint:   endpoint,
+		AuthHeader: authHeader,
+	}
+	return NewWSClientWithOpts(opts)
+}
+
 // NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
