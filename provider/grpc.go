@@ -49,7 +49,7 @@ func NewGRPCLocal() (*GRPCClient, error) {
 
 func NewGRPCInsecureLocal() *GRPCClient {
 	opts := RPCOpts{
-		Endpoint: LocalGRPC,
+		Endpoint: "127.0.0.1:9000",
 		Timeout:  defaultRPCTimeout,
 	}
 
