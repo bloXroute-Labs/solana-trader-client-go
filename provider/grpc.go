@@ -47,6 +47,7 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+// NewGRPCInsecure connects to any host, port without any auth. it's used by solana-trader-api integration tests
 func NewGRPCInsecure(host string, apiPort int) (*GRPCClient, error) {
 	opts := RPCOpts{
 		Endpoint:    fmt.Sprintf("%s:%d", host, apiPort),
