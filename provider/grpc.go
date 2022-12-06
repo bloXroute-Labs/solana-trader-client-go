@@ -47,6 +47,33 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+func NewGRPCInsecureLocal() (*GRPCClient, error) {
+	opts := RPCOpts{
+		Endpoint: LocalGRPC,
+		Timeout:  defaultRPCTimeout,
+	}
+
+	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
+
+	conn, err := grpc.Dial(opts.Endpoint, transportOption)
+	if err != nil {
+		return nil, err
+	}
+	client := &GRPCClient{
+		ApiClient:  pb.NewApiClient(conn),
+		PrivateKey: opts.PrivateKey,
+	}
+	client.RecentBlockHashStore = newRecentBlockHashStore(
+		client.GetRecentBlockHash,
+		client.GetRecentBlockHashStream,
+		opts,
+	)
+	if opts.CacheBlockHash {
+		go client.RecentBlockHashStore.run(context.Background())
+	}
+	return client, err
+}
+
 type blxrCredentials struct {
 	authorization string
 }
