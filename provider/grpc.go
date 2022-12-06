@@ -47,9 +47,9 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
-func NewGRPCInsecureLocal(apiPort int) *GRPCClient {
+func NewGRPCInsecure(host string, apiPort int) (*GRPCClient, error) {
 	opts := RPCOpts{
-		Endpoint: fmt.Sprintf("127.0.0.1:%d", apiPort),
+		Endpoint: fmt.Sprintf("%s:%d", host, apiPort),
 		Timeout:  defaultRPCTimeout,
 	}
 
@@ -57,7 +57,7 @@ func NewGRPCInsecureLocal(apiPort int) *GRPCClient {
 
 	conn, err := grpc.Dial(opts.Endpoint, transportOption)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	client := &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
@@ -71,7 +71,7 @@ func NewGRPCInsecureLocal(apiPort int) *GRPCClient {
 	if opts.CacheBlockHash {
 		go client.recentBlockHashStore.run(context.Background())
 	}
-	return client
+	return client, err
 }
 
 type blxrCredentials struct {
