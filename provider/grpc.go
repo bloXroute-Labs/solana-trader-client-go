@@ -16,10 +16,10 @@ import (
 type GRPCClient struct {
 	pb.UnimplementedApiServer
 
-	apiClient pb.ApiClient
+	ApiClient pb.ApiClient
 
-	privateKey           *solana.PrivateKey
-	recentBlockHashStore *recentBlockHashStore
+	PrivateKey           *solana.PrivateKey
+	RecentBlockHashStore *recentBlockHashStore
 }
 
 // NewGRPCClient connects to Mainnet Trader API
@@ -75,84 +75,84 @@ func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
 		return nil, err
 	}
 	client := &GRPCClient{
-		apiClient:  pb.NewApiClient(conn),
-		privateKey: opts.PrivateKey,
+		ApiClient:  pb.NewApiClient(conn),
+		PrivateKey: opts.PrivateKey,
 	}
-	client.recentBlockHashStore = newRecentBlockHashStore(
+	client.RecentBlockHashStore = newRecentBlockHashStore(
 		client.GetRecentBlockHash,
 		client.GetRecentBlockHashStream,
 		opts,
 	)
 	if opts.CacheBlockHash {
-		go client.recentBlockHashStore.run(context.Background())
+		go client.RecentBlockHashStore.run(context.Background())
 	}
 	return client, nil
 }
 
 func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
-	return g.recentBlockHashStore.get(ctx)
+	return g.RecentBlockHashStore.get(ctx)
 }
 
 func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
-	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+	return g.ApiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponse, error) {
-	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
+	return g.ApiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit})
 }
 
 // GetPools returns pools for given projects.
 func (g *GRPCClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
-	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{Projects: projects})
+	return g.ApiClient.GetPools(ctx, &pb.GetPoolsRequest{Projects: projects})
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32) (*pb.GetTradesResponse, error) {
-	return g.apiClient.GetTrades(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
+	return g.ApiClient.GetTrades(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (g *GRPCClient) GetTickers(ctx context.Context, market string) (*pb.GetTickersResponse, error) {
-	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
+	return g.ApiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market})
 }
 
 // GetOpenOrders returns all opened orders by owner address and market
 func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string) (*pb.GetOpenOrdersResponse, error) {
-	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress})
+	return g.ApiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress})
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
-	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress})
+	return g.ApiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress})
 }
 
 // GetMarkets returns the list of all available named markets
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
-	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
+	return g.ApiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
-	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
+	return g.ApiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
 // GetPrice returns the USDC price of requested tokens
 func (g *GRPCClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
-	return g.apiClient.GetPrice(ctx, &pb.GetPriceRequest{Tokens: tokens})
+	return g.ApiClient.GetPrice(ctx, &pb.GetPriceRequest{Tokens: tokens})
 }
 
 // GetQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it
 func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
-	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects})
+	return g.ApiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects})
 }
 
 // signAndSubmit signs the given transaction and submits it.
 func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
-	if g.privateKey == nil {
+	if g.PrivateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.PrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -170,10 +170,10 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 
 // signAndSubmitBatch signs the given transactions and submits them.
 func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	if g.privateKey == nil {
+	if g.PrivateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *g.PrivateKey, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.
 
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
+	return g.ApiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
 		OutToken:     outToken,
@@ -195,12 +195,12 @@ func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, o
 
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
 func (g *GRPCClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
-	return g.apiClient.PostRouteTradeSwap(ctx, request)
+	return g.ApiClient.PostRouteTradeSwap(ctx, request)
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	return g.apiClient.PostOrder(ctx, &pb.PostOrderRequest{
+	return g.ApiClient.PostOrder(ctx, &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
@@ -215,18 +215,18 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 
 // PostSubmit posts the transaction string to the Solana network.
 func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
-	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
+	return g.ApiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
 		SkipPreFlight: skipPreFlight})
 }
 
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
-	return g.apiClient.PostSubmitBatch(ctx, request)
+	return g.ApiClient.PostSubmitBatch(ctx, request)
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
+	resp, err := g.ApiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
 		OutToken:     outToken,
@@ -268,7 +268,7 @@ func (g *GRPCClient) PostCancelOrder(
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	return g.apiClient.PostCancelOrder(ctx, &pb.PostCancelOrderRequest{
+	return g.ApiClient.PostCancelOrder(ctx, &pb.PostCancelOrderRequest{
 		OrderID:           orderID,
 		Side:              side,
 		OwnerAddress:      owner,
@@ -303,7 +303,7 @@ func (g *GRPCClient) PostCancelByClientOrderID(
 	market,
 	openOrders string,
 ) (*pb.PostCancelOrderResponse, error) {
-	return g.apiClient.PostCancelByClientOrderID(ctx, &pb.PostCancelByClientOrderIDRequest{
+	return g.ApiClient.PostCancelByClientOrderID(ctx, &pb.PostCancelByClientOrderIDRequest{
 		ClientOrderID:     clientOrderID,
 		OwnerAddress:      owner,
 		MarketAddress:     market,
@@ -329,7 +329,7 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 }
 
 func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, openOrders []string) (*pb.PostCancelAllResponse, error) {
-	return g.apiClient.PostCancelAll(ctx, &pb.PostCancelAllRequest{
+	return g.ApiClient.PostCancelAll(ctx, &pb.PostCancelAllRequest{
 		Market:              market,
 		OwnerAddress:        owner,
 		OpenOrdersAddresses: openOrders,
@@ -346,7 +346,7 @@ func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
 func (g *GRPCClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
-	return g.apiClient.PostSettle(ctx, &pb.PostSettleRequest{
+	return g.ApiClient.PostSettle(ctx, &pb.PostSettleRequest{
 		OwnerAddress:      owner,
 		Market:            market,
 		BaseTokenWallet:   baseTokenWallet,
@@ -366,7 +366,7 @@ func (g *GRPCClient) SubmitSettle(ctx context.Context, owner, market, baseTokenW
 }
 
 func (g *GRPCClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	return g.apiClient.PostReplaceByClientOrderID(ctx, &pb.PostOrderRequest{
+	return g.ApiClient.PostReplaceByClientOrderID(ctx, &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
@@ -389,7 +389,7 @@ func (g *GRPCClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 }
 
 func (g *GRPCClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	return g.apiClient.PostReplaceOrder(ctx, &pb.PostReplaceOrderRequest{
+	return g.ApiClient.PostReplaceOrder(ctx, &pb.PostReplaceOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
@@ -414,7 +414,7 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
+	stream, err := g.ApiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit})
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +424,7 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, l
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit uint32) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
-	stream, err := g.apiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
+	stream, err := g.ApiClient.GetTradesStream(ctx, &pb.GetTradesRequest{Market: market, Limit: limit})
 	if err != nil {
 		return nil, err
 	}
@@ -434,7 +434,7 @@ func (g *GRPCClient) GetTradesStream(ctx context.Context, market string, limit u
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
 func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
-	stream, err := g.apiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
+	stream, err := g.ApiClient.GetOrderStatusStream(ctx, &pb.GetOrderStatusStreamRequest{Market: market, OwnerAddress: ownerAddress})
 	if err != nil {
 		return nil, err
 	}
@@ -444,7 +444,7 @@ func (g *GRPCClient) GetOrderStatusStream(ctx context.Context, market, ownerAddr
 
 // GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
 func (g *GRPCClient) GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*pb.GetRecentBlockHashResponse], error) {
-	stream, err := g.apiClient.GetRecentBlockHashStream(ctx, &pb.GetRecentBlockHashRequest{})
+	stream, err := g.ApiClient.GetRecentBlockHashStream(ctx, &pb.GetRecentBlockHashRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +454,7 @@ func (g *GRPCClient) GetRecentBlockHashStream(ctx context.Context) (connections.
 
 // GetQuotesStream subscribes to a stream for getting recent quotes of tokens of interest.
 func (g *GRPCClient) GetQuotesStream(ctx context.Context, projects []pb.Project, tokenPairs []*pb.TokenPair) (connections.Streamer[*pb.GetQuotesStreamResponse], error) {
-	stream, err := g.apiClient.GetQuotesStream(ctx, &pb.GetQuotesStreamRequest{
+	stream, err := g.ApiClient.GetQuotesStream(ctx, &pb.GetQuotesStreamRequest{
 		Projects:   projects,
 		TokenPairs: tokenPairs,
 	})
@@ -467,7 +467,7 @@ func (g *GRPCClient) GetQuotesStream(ctx context.Context, projects []pb.Project,
 
 // GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
 func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
-	stream, err := g.apiClient.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
+	stream, err := g.ApiClient.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
 		Projects: projects,
 	})
 	if err != nil {
@@ -479,7 +479,7 @@ func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, projects []pb.Pr
 
 // GetPricesStream subscribes to a stream for getting recent prices of tokens of interest.
 func (g *GRPCClient) GetPricesStream(ctx context.Context, projects []pb.Project, tokens []string) (connections.Streamer[*pb.GetPricesStreamResponse], error) {
-	stream, err := g.apiClient.GetPricesStream(ctx, &pb.GetPricesStreamRequest{
+	stream, err := g.ApiClient.GetPricesStream(ctx, &pb.GetPricesStreamRequest{
 		Projects: projects,
 		Tokens:   tokens,
 	})
@@ -496,7 +496,7 @@ func (g *GRPCClient) GetSwapsStream(
 	projects []pb.Project,
 	markets []string,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
-	stream, err := g.apiClient.GetSwapsStream(ctx, &pb.GetSwapsStreamRequest{
+	stream, err := g.ApiClient.GetSwapsStream(ctx, &pb.GetSwapsStreamRequest{
 		Projects: projects,
 		Pools:    markets,
 	})
