@@ -47,6 +47,16 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+// NewGRPCInsecure connects to any host, port without any auth. it's used by solana-trader-api integration tests
+func NewGRPCInsecure(host string, apiPort int) (*GRPCClient, error) {
+	opts := RPCOpts{
+		Endpoint:    fmt.Sprintf("%s:%d", host, apiPort),
+		Timeout:     defaultRPCTimeout,
+		DisableAuth: true,
+	}
+	return NewGRPCClientWithOpts(opts)
+}
+
 type blxrCredentials struct {
 	authorization string
 }
@@ -63,17 +73,26 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 
 // NewGRPCClientWithOpts connects to custom Trader API
 func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
-
+	var conn grpc.ClientConnInterface
+	var err error
 	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if opts.UseTLS {
 		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
 	}
 
-	conn, err := grpc.Dial(opts.Endpoint, transportOption, authOption)
-	if err != nil {
-		return nil, err
+	if opts.DisableAuth {
+		conn, err = grpc.Dial(opts.Endpoint, transportOption)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
+		conn, err = grpc.Dial(opts.Endpoint, transportOption, authOption)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	client := &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
