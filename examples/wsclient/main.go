@@ -67,7 +67,6 @@ func run() bool {
 		failed = failed || callOrderbookWSStream(w)
 	}
 	failed = failed || callRecentBlockHashWSStream(w)
-	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
 	failed = failed || callPricesWSStream(w)
 	failed = failed || callSwapsWSStream(w)
@@ -373,35 +372,6 @@ func callRecentBlockHashWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-// Quotes response
-func callQuotesWSStream(w *provider.WSClient) bool {
-	log.Info("starting quotes stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	stream, err := w.GetQuotesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []*pb.TokenPair{{
-		InToken:  "SOL",
-		OutToken: "USDC",
-		InAmount: 1,
-	}})
-	if err != nil {
-		log.Errorf("error with GetQuotes stream request: %v", err)
-		return true
-	}
-
-	ch := stream.Channel(0)
-	for i := 1; i <= 3; i++ {
-		_, ok := <-ch
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-// Quotes response
 func callPoolReservesWSStream(w *provider.WSClient) bool {
 	log.Info("starting pool reserves stream")
 
