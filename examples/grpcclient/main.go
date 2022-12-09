@@ -121,7 +121,7 @@ func run() bool {
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) bool {
-	markets, err := g.GetMarkets(context.Background(), pb.Project_P_OPENBOOK)
+	markets, err := g.GetMarkets(context.Background())
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
