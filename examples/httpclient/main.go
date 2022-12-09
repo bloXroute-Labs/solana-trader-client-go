@@ -140,9 +140,9 @@ func callMarketsHTTP() bool {
 func callOrderbookHTTP() bool {
 	h := httpClient()
 
-	orderbook, err := h.GetOrderbook("ETH-USDT", 0, pb.Project_P_OPENBOOK)
+	orderbook, err := h.GetOrderbook("SOL-USDT", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
+		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
 	} else {
 		log.Info(orderbook)

@@ -132,9 +132,9 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callOrderbookWS(w *provider.WSClient) bool {
 	log.Info("fetching orderbooks...")
 
-	orderbook, err := w.GetOrderbook(context.Background(), "ETH-USDT", 0, pb.Project_P_OPENBOOK)
+	orderbook, err := w.GetOrderbook(context.Background(), "SOL-USDT", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
+		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
 	} else {
 		log.Info(orderbook)
