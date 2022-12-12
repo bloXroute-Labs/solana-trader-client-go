@@ -67,7 +67,6 @@ func run() bool {
 		failed = failed || callOrderbookWSStream(w)
 	}
 	failed = failed || callRecentBlockHashWSStream(w)
-	failed = failed || callQuotesWSStream(w)
 	failed = failed || callPoolReservesWSStream(w)
 	failed = failed || callPricesWSStream(w)
 	failed = failed || callSwapsWSStream(w)
@@ -132,17 +131,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callOrderbookWS(w *provider.WSClient) bool {
 	log.Info("fetching orderbooks...")
 
-	orderbook, err := w.GetOrderbook(context.Background(), "ETH-USDT", 0)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	fmt.Println()
-
-	orderbook, err = w.GetOrderbook(context.Background(), "SOLUSDT", 2)
+	orderbook, err := w.GetOrderbook(context.Background(), "SOL-USDT", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
@@ -152,7 +141,17 @@ func callOrderbookWS(w *provider.WSClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3)
+	orderbook, err = w.GetOrderbook(context.Background(), "SOLUSDT", 2, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+
+	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -167,7 +166,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 func callTradesWS(w *provider.WSClient) bool {
 	log.Info("fetching trades...")
 
-	trades, err := w.GetTrades(context.Background(), "SOLUSDC", 3)
+	trades, err := w.GetTrades(context.Background(), "SOLUSDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -212,7 +211,7 @@ func callPriceWS(w *provider.WSClient) bool {
 func callOpenOrdersWS(w *provider.WSClient) bool {
 	log.Info("fetching open orders...")
 
-	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "")
+	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 		return true
@@ -227,7 +226,7 @@ func callOpenOrdersWS(w *provider.WSClient) bool {
 func callUnsettledWS(w *provider.WSClient) bool {
 	log.Info("fetching unsettled...")
 
-	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetUnsettled request for SOL-USDT: %v", err)
 		return true
@@ -257,7 +256,7 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 func callTickersWS(w *provider.WSClient) bool {
 	log.Info("fetching tickers...")
 
-	tickers, err := w.GetTickers(context.Background(), "SOLUSDC")
+	tickers, err := w.GetTickers(context.Background(), "SOLUSDC", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOL-USDT: %v", err)
 		return true
@@ -308,7 +307,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 		return true
@@ -332,7 +331,7 @@ func callTradesWSStream(w *provider.WSClient) bool {
 	defer cancel()
 
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
-	stream, err := w.GetTradesStream(ctx, "SOL/USDC", 3)
+	stream, err := w.GetTradesStream(ctx, "SOL/USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
 		return true
@@ -373,35 +372,6 @@ func callRecentBlockHashWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-// Quotes response
-func callQuotesWSStream(w *provider.WSClient) bool {
-	log.Info("starting quotes stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	stream, err := w.GetQuotesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []*pb.TokenPair{{
-		InToken:  "SOL",
-		OutToken: "USDC",
-		InAmount: 1,
-	}})
-	if err != nil {
-		log.Errorf("error with GetQuotes stream request: %v", err)
-		return true
-	}
-
-	ch := stream.Channel(0)
-	for i := 1; i <= 3; i++ {
-		_, ok := <-ch
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-// Quotes response
 func callPoolReservesWSStream(w *provider.WSClient) bool {
 	log.Info("starting pool reserves stream")
 
@@ -444,7 +414,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	errCh := make(chan error)
-	stream, err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
+	stream, err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error getting order status stream %v", err)
 		errCh <- err
@@ -513,7 +483,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	// create order without actually submitting
-	response, err := w.PostOrder(context.Background(), ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	response, err := w.PostOrder(context.Background(), ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -523,7 +493,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	// sign/submit transaction after creation
 	sig, err := w.SubmitOrder(context.Background(), ownerAddr, payerAddr, marketAddr,
 		orderSide, []pb.OrderType{orderType}, orderAmount,
-		orderPrice, opts)
+		orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return 0, true
@@ -538,7 +508,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 	log.Info("trying to cancel order")
 
 	_, err := w.SubmitCancelByClientOrderID(context.Background(), clientOrderID, ownerAddr,
-		marketAddr, ooAddr, true)
+		marketAddr, ooAddr, pb.Project_P_OPENBOOK, true)
 	if err != nil {
 		log.Errorf("failed to cancel order by client ID (%v)", err)
 		return true
@@ -551,7 +521,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	log.Info("starting post settle")
 
-	sig, err := w.SubmitSettle(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
+	sig, err := w.SubmitSettle(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, pb.Project_P_OPENBOOK, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return true
@@ -579,7 +549,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -587,7 +557,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err = w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -597,7 +567,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -622,7 +592,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -636,7 +606,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	time.Sleep(time.Minute)
 
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -669,7 +639,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -678,7 +648,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	}
 	time.Sleep(time.Minute)
 	// Check order is there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -698,7 +668,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -708,7 +678,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -729,7 +699,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -761,7 +731,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -769,7 +739,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	// Check orders are there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -790,7 +760,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	sig, err = w.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -800,7 +770,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 	}
@@ -820,7 +790,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})

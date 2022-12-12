@@ -68,7 +68,6 @@ func run() bool {
 	failed = failed || callGetAccountBalanceGRPC(g)
 	failed = failed || callGetQuotes(g)
 	failed = failed || callRecentBlockHashGRPCStream(g)
-	failed = failed || callQuotesGRPCStream(g)
 	failed = failed || callPoolReservesGRPCStream(g)
 	failed = failed || callSwapsGRPCStream(g)
 
@@ -135,9 +134,9 @@ func callMarketsGRPC(g *provider.GRPCClient) bool {
 }
 
 func callOrderbookGRPC(g *provider.GRPCClient) bool {
-	orderbook, err := g.GetOrderbook(context.Background(), "ETH-USDT", 0)
+	orderbook, err := g.GetOrderbook(context.Background(), "SOL-USDC", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for ETH-USDT: %v", err)
+		log.Errorf("error with GetOrderbook request for SOL-USDC: %v", err)
 		return true
 	} else {
 		log.Info(orderbook)
@@ -145,7 +144,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2)
+	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 		return true
@@ -155,7 +154,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3)
+	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -168,7 +167,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 }
 
 func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
-	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "")
+	orders, err := g.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 		return true
@@ -181,7 +180,7 @@ func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
 }
 
 func callUnsettledGRPC(g *provider.GRPCClient) bool {
-	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	response, err := g.GetUnsettled(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetUnsettled request for SOLUSDC: %v", err)
 		return true
@@ -207,7 +206,7 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 }
 
 func callTickersGRPC(g *provider.GRPCClient) bool {
-	orders, err := g.GetTickers(context.Background(), "SOLUSDC")
+	orders, err := g.GetTickers(context.Background(), "SOLUSDC", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDC: %v", err)
 		return true
@@ -287,7 +286,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream error response
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -303,7 +302,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	}
 
 	// Stream ok response
-	stream, err = g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3)
+	stream, err = g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -337,7 +336,7 @@ func callTradesGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetTradesStream(ctx, "SOL/USDC", 3)
+	stream, err := g.GetTradesStream(ctx, "SOL/USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetTrades stream request for SOL/USDC: %v", err)
 		return true
@@ -365,36 +364,6 @@ func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
 	stream, err := g.GetRecentBlockHashStream(ctx)
 	if err != nil {
 		log.Errorf("error with GetRecentBlockHash stream request: %v", err)
-		return true
-	}
-	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
-		_, ok := <-ch
-		if !ok {
-			// channel closed
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-func callQuotesGRPCStream(g *provider.GRPCClient) bool {
-	log.Info("starting get quotes stream")
-
-	ch := make(chan *pb.GetQuotesStreamResponse)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Stream response
-	stream, err := g.GetQuotesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []*pb.TokenPair{{
-		InToken:  "SOL",
-		OutToken: "USDC",
-		InAmount: 1,
-	}})
-
-	if err != nil {
-		log.Errorf("error with GetQuotes stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
@@ -454,7 +423,7 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	ch := make(chan *pb.GetOrderStatusStreamResponse)
 	errCh := make(chan error)
-	stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr)
+	stream, err := g.GetOrderStatusStream(ctx, marketAddr, ownerAddr, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error getting order status stream %v", err)
 		errCh <- err
@@ -525,7 +494,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	}
 
 	// create order without actually submitting
-	response, err := g.PostOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	response, err := g.PostOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -534,7 +503,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+		orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return 0, true
@@ -552,7 +521,7 @@ func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr str
 	defer cancel()
 
 	sig, err := g.SubmitCancelByClientOrderID(ctx, clientID, ownerAddr,
-		marketAddr, ooAddr, true)
+		marketAddr, ooAddr, pb.Project_P_OPENBOOK, true)
 	if err != nil {
 		log.Errorf("failed to cancel order by client order ID (%v)", err)
 		return true
@@ -568,7 +537,7 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sig, err := g.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
+	sig, err := g.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, pb.Project_P_OPENBOOK, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return true
@@ -596,7 +565,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -604,7 +573,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err = g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -614,7 +583,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -639,7 +608,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -653,7 +622,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	time.Sleep(time.Second * 30)
 
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -685,7 +654,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -694,7 +663,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	time.Sleep(time.Minute * 1)
 
 	// Check order is there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -714,7 +683,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = g.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	sig, err = g.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -724,7 +693,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -745,7 +714,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -777,7 +746,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -785,7 +754,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	log.Infof("submitting place order #1, signature %s", sig)
 	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err := g.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -806,7 +775,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, opts)
+	sig, err = g.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -816,7 +785,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "")
+	orders, err = g.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -838,7 +807,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, provider.SubmitOpts{
+	sigs, err := g.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})

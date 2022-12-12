@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -71,8 +70,8 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbookResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v", h.baseURL, market, limit)
+func (h *HTTPClient) GetOrderbook(market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
 	orderbook := new(pb.GetOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponse](url, h.httpClient, orderbook, h.authHeader); err != nil {
 		return nil, err
@@ -82,8 +81,8 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32) (*pb.GetOrderbook
 }
 
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
-func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/trades/%s?limit=%v", h.baseURL, market, limit)
+func (h *HTTPClient) GetTrades(market string, limit uint32, project pb.Project) (*pb.GetTradesResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/trades/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
 	marketTrades := new(pb.GetTradesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetTradesResponse](url, h.httpClient, marketTrades, h.authHeader); err != nil {
 		return nil, err
@@ -94,17 +93,7 @@ func (h *HTTPClient) GetTrades(market string, limit uint32) (*pb.GetTradesRespon
 
 // GetPools returns pools for given projects.
 func (h *HTTPClient) GetPools(projects []pb.Project) (*pb.GetPoolsResponse, error) {
-	projectsArg := ""
-	if projects != nil && len(projects) > 0 {
-		for i, project := range projects {
-			arg := "projects=" + project.String()
-			if i == 0 {
-				projectsArg = projectsArg + "?" + arg
-			} else {
-				projectsArg = projectsArg + "&" + arg
-			}
-		}
-	}
+	projectsArg := convertSliceArgument("projects", true, projects)
 	url := fmt.Sprintf("%s/api/v1/market/pools%s", h.baseURL, projectsArg)
 	pools := new(pb.GetPoolsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPoolsResponse](url, h.httpClient, pools, h.authHeader); err != nil {
@@ -115,8 +104,8 @@ func (h *HTTPClient) GetPools(projects []pb.Project) (*pb.GetPoolsResponse, erro
 }
 
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
-func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/tickers/%s", h.baseURL, market)
+func (h *HTTPClient) GetTickers(market string, project pb.Project) (*pb.GetTickersResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/tickers/%s?project=%v", h.baseURL, market, project)
 	tickers := new(pb.GetTickersResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetTickersResponse](url, h.httpClient, tickers, h.authHeader); err != nil {
 		return nil, err
@@ -126,8 +115,8 @@ func (h *HTTPClient) GetTickers(market string) (*pb.GetTickersResponse, error) {
 }
 
 // GetOpenOrders returns all opened orders by owner address and market
-func (h *HTTPClient) GetOpenOrders(market string, owner string, openOrdersAddress string) (*pb.GetOpenOrdersResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s&openOrdersAddress=%s", h.baseURL, market, owner, openOrdersAddress)
+func (h *HTTPClient) GetOpenOrders(market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s&openOrdersAddress=%s&project=%s", h.baseURL, market, owner, openOrdersAddress, project)
 	orders := new(pb.GetOpenOrdersResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetOpenOrdersResponse](url, h.httpClient, orders, h.authHeader); err != nil {
 		return nil, err
@@ -148,8 +137,8 @@ func (h *HTTPClient) GetMarkets() (*pb.GetMarketsResponse, error) {
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (h *HTTPClient) GetUnsettled(market string, owner string) (*pb.GetUnsettledResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?ownerAddress=%s", h.baseURL, market, owner)
+func (h *HTTPClient) GetUnsettled(market string, owner string, project pb.Project) (*pb.GetUnsettledResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?ownerAddress=%s&project=%s", h.baseURL, market, owner, project)
 	result := new(pb.GetUnsettledResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](url, h.httpClient, result, h.authHeader); err != nil {
 		return nil, err
@@ -171,17 +160,7 @@ func (h *HTTPClient) GetAccountBalance(owner string) (*pb.GetAccountBalanceRespo
 
 // GetPrice returns the USDC price of requested tokens
 func (h *HTTPClient) GetPrice(tokens []string) (*pb.GetPriceResponse, error) {
-	tokensArg := ""
-	if tokens != nil && len(tokens) > 0 {
-		for i, token := range tokens {
-			arg := "tokens=" + token
-			if i == 0 {
-				tokensArg = tokensArg + "?" + arg
-			} else {
-				tokensArg = tokensArg + "&" + arg
-			}
-		}
-	}
+	tokensArg := convertStrSliceArgument("tokens", true, tokens)
 	url := fmt.Sprintf("%s/api/v1/market/price%s", h.baseURL, tokensArg)
 	pools := new(pb.GetPriceResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPriceResponse](url, h.httpClient, pools, h.authHeader); err != nil {
@@ -193,10 +172,7 @@ func (h *HTTPClient) GetPrice(tokens []string) (*pb.GetPriceResponse, error) {
 
 // GetQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it
 func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
-	projectString := ""
-	for _, project := range projects {
-		projectString += fmt.Sprintf("&projects=%s", project)
-	}
+	projectString := convertSliceArgument("projects", false, projects)
 
 	url := fmt.Sprintf("%s/api/v1/market/quote?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v%s",
 		h.baseURL, inToken, outToken, inAmount, slippage, limit, projectString)
@@ -206,6 +182,31 @@ func (h *HTTPClient) GetQuotes(inToken, outToken string, inAmount, slippage floa
 	}
 
 	return result, nil
+}
+
+// PostSubmit posts the transaction string to the Solana network.
+func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
+	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
+
+	var response pb.PostSubmitResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
+
+	var response pb.PostSubmitBatchResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitBatchResponse](url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // signAndSubmit signs the given transaction and submits it.
@@ -258,66 +259,6 @@ func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmo
 	return &response, nil
 }
 
-// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
-func (h *HTTPClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/route-swap", h.baseURL)
-
-	var response pb.TradeSwapResponse
-	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
-	request := &pb.PostOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-	}
-
-	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostSubmit posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
-
-	var response pb.PostSubmitResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
-func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
-
-	var response pb.PostSubmitBatchResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitBatchResponse](url, h.httpClient, request, &response, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, slippage float64, projectStr string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	project, err := ProjectFromString(projectStr)
@@ -331,18 +272,54 @@ func (h *HTTPClient) SubmitTradeSwap(owner, inToken, outToken string, inAmount, 
 	return h.signAndSubmitBatch(resp.Transactions, opts)
 }
 
+// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
+func (h *HTTPClient) PostRouteTradeSwap(request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/route-swap", h.baseURL)
+
+	var response pb.TradeSwapResponse
+	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := h.PostRouteTradeSwap(ctx, request)
+func (h *HTTPClient) SubmitRouteTradeSwap(request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostRouteTradeSwap(request)
 	if err != nil {
 		return nil, err
 	}
 	return h.signAndSubmitBatch(resp.Transactions, opts)
 }
 
+// PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
+	request := &pb.PostOrderRequest{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              types,
+		Amount:            amount,
+		Price:             price,
+		Project:           project,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := h.PostOrder(owner, payer, market, side, types, amount, price, opts)
+func (h *HTTPClient) SubmitOrder(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+	order, err := h.PostOrder(owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
 	}
@@ -358,6 +335,7 @@ func (h *HTTPClient) PostCancelOrder(
 	owner,
 	market,
 	openOrders string,
+	project pb.Project,
 ) (*pb.PostCancelOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/cancel", h.baseURL)
 	request := &pb.PostCancelOrderRequest{
@@ -365,6 +343,7 @@ func (h *HTTPClient) PostCancelOrder(
 		Side:              side,
 		OwnerAddress:      owner,
 		MarketAddress:     market,
+		Project:           project,
 		OpenOrdersAddress: openOrders,
 	}
 
@@ -384,9 +363,10 @@ func (h *HTTPClient) SubmitCancelOrder(
 	owner,
 	market,
 	openOrders string,
+	project pb.Project,
 	skipPreFlight bool,
 ) (string, error) {
-	order, err := h.PostCancelOrder(orderID, side, owner, market, openOrders)
+	order, err := h.PostCancelOrder(orderID, side, owner, market, openOrders, project)
 	if err != nil {
 		return "", err
 	}
@@ -400,12 +380,14 @@ func (h *HTTPClient) PostCancelByClientOrderID(
 	owner,
 	market,
 	openOrders string,
+	project pb.Project,
 ) (*pb.PostCancelOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/cancelbyid", h.baseURL)
 	request := &pb.PostCancelByClientOrderIDRequest{
 		ClientOrderID:     clientOrderID,
 		OwnerAddress:      owner,
 		MarketAddress:     market,
+		Project:           project,
 		OpenOrdersAddress: openOrders,
 	}
 
@@ -424,9 +406,10 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 	owner,
 	market,
 	openOrders string,
+	project pb.Project,
 	skipPreFlight bool,
 ) (string, error) {
-	order, err := h.PostCancelByClientOrderID(clientOrderID, owner, market, openOrders)
+	order, err := h.PostCancelByClientOrderID(clientOrderID, owner, market, openOrders, project)
 	if err != nil {
 		return "", err
 	}
@@ -434,12 +417,13 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 	return h.signAndSubmit(order.Transaction, skipPreFlight)
 }
 
-func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []string) (*pb.PostCancelAllResponse, error) {
+func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []string, project pb.Project) (*pb.PostCancelAllResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/cancelall", h.baseURL)
 	request := &pb.PostCancelAllRequest{
 		Market:              market,
 		OwnerAddress:        owner,
 		OpenOrdersAddresses: openOrdersAddresses,
+		Project:             project,
 	}
 
 	var response pb.PostCancelAllResponse
@@ -451,8 +435,8 @@ func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []s
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	orders, err := h.PostCancelAll(market, owner, openOrders)
+func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	orders, err := h.PostCancelAll(market, owner, openOrders, project)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +444,7 @@ func (h *HTTPClient) SubmitCancelAll(market, owner string, openOrders []string, 
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
-func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project pb.Project) (*pb.PostSettleResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/settle", h.baseURL)
 	request := &pb.PostSettleRequest{
 		OwnerAddress:      owner,
@@ -468,6 +452,7 @@ func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet
 		BaseTokenWallet:   baseTokenWallet,
 		QuoteTokenWallet:  quoteTokenWallet,
 		OpenOrdersAddress: openOrdersAccount,
+		Project:           project,
 	}
 
 	var response pb.PostSettleResponse
@@ -479,8 +464,8 @@ func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet
 }
 
 // SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
-func (h *HTTPClient) SubmitSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
-	order, err := h.PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+func (h *HTTPClient) SubmitSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project pb.Project, skipPreflight bool) (string, error) {
+	order, err := h.PostSettle(owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount, project)
 	if err != nil {
 		return "", err
 	}
@@ -488,7 +473,7 @@ func (h *HTTPClient) SubmitSettle(owner, market, baseTokenWallet, quoteTokenWall
 	return h.signAndSubmit(order.Transaction, skipPreflight)
 }
 
-func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/replacebyclientid", h.baseURL)
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
@@ -498,6 +483,7 @@ func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, sid
 		Type:              types,
 		Amount:            amount,
 		Price:             price,
+		Project:           project,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ClientOrderID:     opts.ClientOrderID,
 	}
@@ -510,8 +496,8 @@ func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, sid
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitReplaceByClientOrderID(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := h.PostReplaceByClientOrderID(owner, payer, market, side, types, amount, price, opts)
+func (h *HTTPClient) SubmitReplaceByClientOrderID(owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+	order, err := h.PostReplaceByClientOrderID(owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
 	}
@@ -519,7 +505,7 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(owner, payer, market string, s
 	return h.signAndSubmit(order.Transaction, opts.SkipPreFlight)
 }
 
-func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/replace", h.baseURL)
 	request := &pb.PostReplaceOrderRequest{
 		OwnerAddress:      owner,
@@ -529,6 +515,7 @@ func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side
 		Type:              types,
 		Amount:            amount,
 		Price:             price,
+		Project:           project,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ClientOrderID:     opts.ClientOrderID,
 		OrderID:           orderID,
@@ -542,8 +529,8 @@ func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitReplaceOrder(orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := h.PostReplaceOrder(orderID, owner, payer, market, side, types, amount, price, opts)
+func (h *HTTPClient) SubmitReplaceOrder(orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+	order, err := h.PostReplaceOrder(orderID, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
 	}
@@ -560,4 +547,34 @@ func (h *HTTPClient) GetRecentBlockHash() (*pb.GetRecentBlockHashResponse, error
 	}
 
 	return response, nil
+}
+
+type stringable interface {
+	String() string
+}
+
+func convertSliceArgument[T stringable](argName string, isFirst bool, s []T) string {
+	r := ""
+	for i, v := range s {
+		arg := fmt.Sprintf("%v=%v", argName, v.String())
+		if i == 0 && isFirst {
+			r += "?" + arg
+		} else {
+			r += "&" + arg
+		}
+	}
+	return r
+}
+
+func convertStrSliceArgument(argName string, isFirst bool, s []string) string {
+	r := ""
+	for i, v := range s {
+		arg := fmt.Sprintf("%v=%v", argName, v)
+		if i == 0 && isFirst {
+			r += "?" + arg
+		} else {
+			r += "&" + arg
+		}
+	}
+	return r
 }
