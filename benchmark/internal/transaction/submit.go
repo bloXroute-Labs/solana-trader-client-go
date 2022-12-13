@@ -141,7 +141,7 @@ func SerumBuilder(ctx context.Context, g *provider.GRPCClient, publicKey solana.
 		orderIDM.Lock()
 		defer orderIDM.Unlock()
 
-		response, err := g.PostCancelOrder(ctx, strconv.Itoa(orderID), pb.Side_S_ASK, publicKey.String(), market, ooAddress.String())
+		response, err := g.PostCancelOrder(ctx, strconv.Itoa(orderID), pb.Side_S_ASK, publicKey.String(), market, ooAddress.String(), pb.Project_P_SERUM)
 		if err != nil {
 			return "", err
 		}
