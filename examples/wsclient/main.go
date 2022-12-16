@@ -51,28 +51,29 @@ func run() bool {
 	var failed bool
 
 	// informational requests
-	failed = failed || callMarketsWS(w)
-	failed = failed || callOrderbookWS(w)
-	failed = failed || callTradesWS(w)
-	failed = failed || callPoolsWS(w)
-	failed = failed || callPriceWS(w)
-	failed = failed || callOpenOrdersWS(w)
-	failed = failed || callTickersWS(w)
-	failed = failed || callUnsettledWS(w)
-	failed = failed || callAccountBalanceWS(w)
-	failed = failed || callGetQuotes(w)
+	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
+	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
+	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
+	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
+	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
+	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
+	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
+	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
+	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
+	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 
 	// streaming methods
 	if cfg.RunSlowStream {
-		failed = failed || callOrderbookWSStream(w)
+		failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
 	}
-	failed = failed || callRecentBlockHashWSStream(w)
-	failed = failed || callPoolReservesWSStream(w)
-	failed = failed || callPricesWSStream(w)
-	failed = failed || callSwapsWSStream(w)
+	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
+	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
+	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
+	failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
+	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 
 	if cfg.RunSlowStream {
-		failed = failed || callTradesWSStream(w)
+		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 	}
 
 	if !cfg.RunTrades {
@@ -102,15 +103,26 @@ func run() bool {
 		payerAddr = ownerAddr
 	}
 
-	failed = failed || orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr)
-	failed = failed || cancelAll(w, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceOrder(w, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callRecentBlockHashWSStream(w)
-	failed = failed || callTradeSwap(w, ownerAddr)
-	failed = failed || callRouteTradeSwap(w, ownerAddr)
+	failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
+	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 
 	return failed
+}
+
+func logCall(name string, call func() bool) bool {
+	log.Infof("Executing `%s'...", name)
+
+	result := call()
+	if result {
+		log.Errorf("`%s' failed", name)
+	}
+
+	return result
 }
 
 func callMarketsWS(w *provider.WSClient) bool {
@@ -899,6 +911,32 @@ func callSwapsWSStream(w *provider.WSClient) bool {
 	stream, err := w.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
 	if err != nil {
 		log.Errorf("error with GetSwaps stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callBlockWSStream(w *provider.WSClient) bool {
+	log.Info("starting get block stream")
+
+	ch := make(chan *pb.GetBlockStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetBlockStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetBlock stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)

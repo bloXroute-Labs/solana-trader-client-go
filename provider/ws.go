@@ -617,3 +617,11 @@ func (w *WSClient) GetSwapsStream(
 		return &pb.GetSwapsStreamResponse{}
 	})
 }
+
+// GetBlockStream subscribes to a stream for getting recent blocks.
+func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
+	newResponse := func() *pb.GetBlockStreamResponse {
+		return &pb.GetBlockStreamResponse{}
+	}
+	return connections.WSStream(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
+}

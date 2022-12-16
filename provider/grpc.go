@@ -537,3 +537,13 @@ func (g *GRPCClient) GetSwapsStream(
 
 	return connections.GRPCStream[pb.GetSwapsStreamResponse](stream, ""), nil
 }
+
+// GetBlockStream subscribes to a stream for getting recent blocks.
+func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
+	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
+}
