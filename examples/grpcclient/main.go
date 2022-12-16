@@ -1020,7 +1020,7 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 }
 
 func callBlockGRPCStream(g *provider.GRPCClient) bool {
-	log.Info("starting get swaps stream")
+	log.Info("starting get block stream")
 
 	ch := make(chan *pb.GetBlockStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())

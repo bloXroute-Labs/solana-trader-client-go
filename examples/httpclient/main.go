@@ -65,16 +65,16 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	failed = failed || callMarketsHTTP()
-	failed = failed || callOrderbookHTTP()
-	failed = failed || callOpenOrdersHTTP()
-	failed = failed || callTradesHTTP()
-	failed = failed || callPoolsHTTP()
-	failed = failed || callPriceHTTP()
-	failed = failed || callTickersHTTP()
-	failed = failed || callUnsettledHTTP()
-	failed = failed || callGetAccountBalanceHTTP()
-	failed = failed || callGetQuotes()
+	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
+	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -109,17 +109,28 @@ func run() bool {
 
 	// Order lifecycle
 	clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
-	failed = failed || fail
-	failed = failed || callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID)
-	failed = failed || callPostSettleHTTP(ownerAddr, ooAddr)
-	failed = failed || cancelAll(ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceOrder(ownerAddr, payerAddr, ooAddr)
-	failed = failed || callGetRecentBlockHash()
-	failed = failed || callTradeSwap(ownerAddr)
-	failed = failed || callRouteTradeSwap(ownerAddr)
+	failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
+	failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+	failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
+	failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
+	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 
 	return failed
+}
+
+func logCall(name string, call func() bool) bool {
+	log.Infof("Executing `%s'...", name)
+
+	result := call()
+	if result {
+		log.Errorf("`%s' failed", name)
+	}
+
+	return result
 }
 
 func callMarketsHTTP() bool {
