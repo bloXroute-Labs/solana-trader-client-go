@@ -48,29 +48,29 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	failed = failed || callMarketsGRPC(g)
-	failed = failed || callOrderbookGRPC(g)
-	failed = failed || callOpenOrdersGRPC(g)
-	failed = failed || callTickersGRPC(g)
-	failed = failed || callPoolsGRPC(g)
-	failed = failed || callPriceGRPC(g)
+	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
+	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
+	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
+	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
+	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	if cfg.RunSlowStream {
-		failed = failed || callOrderbookGRPCStream(g)
+		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 	}
-	failed = failed || callPricesGRPCStream(g)
+	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
 	// trade stream can be slow
 	if cfg.RunSlowStream {
-		failed = failed || callTradesGRPCStream(g)
+		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 	}
 
-	failed = failed || callUnsettledGRPC(g)
-	failed = failed || callGetAccountBalanceGRPC(g)
-	failed = failed || callGetQuotes(g)
-	failed = failed || callRecentBlockHashGRPCStream(g)
-	failed = failed || callPoolReservesGRPCStream(g)
-	failed = failed || callSwapsGRPCStream(g)
-	failed = failed || callBlockGRPCStream(g)
+	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
+	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
+	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
+	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
+	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
+	failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
+	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -102,23 +102,34 @@ func run() bool {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
-	failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callTradeSwap(g, ownerAddr)
-	failed = failed || callRouteTradeSwap(g, ownerAddr)
-	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
-	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr) //failed = failed || orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || cancelAll(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callReplaceOrder(g, ownerAddr, payerAddr, ooAddr)
-	failed = failed || callTradeSwap(g, ownerAddr)
-	failed = failed || callRouteTradeSwap(g, ownerAddr)
-	failed = failed || callAddMemoWithInstructions(g, ownerAddr)
-	failed = failed || callAddMemoToSerializedTxn(g, ownerAddr)
+	failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
+	failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
+	failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
+	failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
+	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
+	failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
+	failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
 
 	return failed
+}
+
+func logCall(name string, call func() bool) bool {
+	log.Infof("Executing `%s'...", name)
+
+	result := call()
+	if result {
+		log.Errorf("`%s' failed", name)
+	}
+
+	return result
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) bool {
