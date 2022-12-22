@@ -2,7 +2,6 @@ package connections
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -44,8 +43,8 @@ func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Cli
 	return nil
 }
 
-func HTTPPostWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, body interface{}, val T, authHeader string) error {
-	b, err := json.Marshal(body)
+func HTTPPostWithClient[B protoreflect.ProtoMessage, T protoreflect.ProtoMessage](url string, client *http.Client, body B, val T, authHeader string) error {
+	b, err := protojson.Marshal(body)
 	if err != nil {
 		return err
 	}

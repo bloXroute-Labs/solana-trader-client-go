@@ -190,7 +190,7 @@ func (h *HTTPClient) PostSubmit(txBase64 string, skipPreFlight bool) (*pb.PostSu
 	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
 
 	var response pb.PostSubmitResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (h *HTTPClient) PostSubmitBatch(request *pb.PostSubmitBatchRequest) (*pb.Po
 	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
 
 	var response pb.PostSubmitBatchResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitBatchResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +252,7 @@ func (h *HTTPClient) PostTradeSwap(ownerAddress, inToken, outToken string, inAmo
 	}
 
 	var response pb.TradeSwapResponse
-	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (h *HTTPClient) PostRouteTradeSwap(request *pb.RouteTradeSwapRequest) (*pb.
 	url := fmt.Sprintf("%s/api/v1/trade/route-swap", h.baseURL)
 
 	var response pb.TradeSwapResponse
-	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +310,7 @@ func (h *HTTPClient) PostOrder(owner, payer, market string, side pb.Side, types 
 	}
 
 	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +348,7 @@ func (h *HTTPClient) PostCancelOrder(
 	}
 
 	var response pb.PostCancelOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +392,7 @@ func (h *HTTPClient) PostCancelByClientOrderID(
 	}
 
 	var response pb.PostCancelOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -427,7 +427,7 @@ func (h *HTTPClient) PostCancelAll(market, owner string, openOrdersAddresses []s
 	}
 
 	var response pb.PostCancelAllResponse
-	err := connections.HTTPPostWithClient[*pb.PostCancelAllResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -456,7 +456,7 @@ func (h *HTTPClient) PostSettle(owner, market, baseTokenWallet, quoteTokenWallet
 	}
 
 	var response pb.PostSettleResponse
-	err := connections.HTTPPostWithClient[*pb.PostSettleResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +489,7 @@ func (h *HTTPClient) PostReplaceByClientOrderID(owner, payer, market string, sid
 	}
 
 	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +522,7 @@ func (h *HTTPClient) PostReplaceOrder(orderID, owner, payer, market string, side
 	}
 
 	var response pb.PostOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPPostWithClient(url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
