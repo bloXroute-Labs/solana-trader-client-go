@@ -184,7 +184,7 @@ func callOrderbookHTTP() bool {
 }
 
 func callMarketDepthHTTP() bool {
-	h := httpClient()
+	/*h := httpClient()
 
 	orderbook, err := h.GetMarketDepth("SOL-USDC", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
@@ -192,7 +192,7 @@ func callMarketDepthHTTP() bool {
 		return true
 	} else {
 		log.Info(orderbook)
-	}
+	}*/
 
 	return false
 }
