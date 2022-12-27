@@ -80,6 +80,17 @@ func (h *HTTPClient) GetOrderbook(market string, limit uint32, project pb.Projec
 	return orderbook, nil
 }
 
+// GetMarketDepth returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (h *HTTPClient) GetMarketDepth(market string, limit uint32, project pb.Project) (*pb.GetMarketDepthResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/depth/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
+	mktDepth := new(pb.GetMarketDepthResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetMarketDepthResponse](url, h.httpClient, mktDepth, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return mktDepth, nil
+}
+
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (h *HTTPClient) GetTrades(market string, limit uint32, project pb.Project) (*pb.GetTradesResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/trades/%s?limit=%v&project=%v", h.baseURL, market, limit, project)

@@ -67,6 +67,7 @@ func run() bool {
 	// informational methods
 	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
 	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
@@ -174,6 +175,20 @@ func callOrderbookHTTP() bool {
 	orderbook, err = h.GetOrderbook("SOL:USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	return false
+}
+
+func callMarketDepthHTTP() bool {
+	h := httpClient()
+
+	orderbook, err := h.GetMarketDepth("SOL-USDC", 0, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
 	} else {
 		log.Info(orderbook)
