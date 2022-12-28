@@ -121,6 +121,11 @@ func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint
 	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit, Project: project})
 }
 
+// GetMarketDepth returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (g *GRPCClient) GetMarketDepth(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetMarketDepthResponse, error) {
+	return g.apiClient.GetMarketDepth(ctx, &pb.GetMarketDepthRequest{Market: market, Limit: limit, Project: project})
+}
+
 // GetPools returns pools for given projects.
 func (g *GRPCClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
 	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{Projects: projects})
@@ -451,6 +456,16 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, l
 	}
 
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+}
+
+// GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (g *GRPCClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
+	stream, err := g.apiClient.GetMarketDepthsStream(ctx, &pb.GetMarketDepthsRequest{Markets: markets, Limit: limit, Project: project})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetMarketDepthsStreamResponse](stream, fmt.Sprint(markets)), nil
 }
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
