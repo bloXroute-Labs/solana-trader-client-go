@@ -531,10 +531,12 @@ func (g *GRPCClient) GetSwapsStream(
 	ctx context.Context,
 	projects []pb.Project,
 	markets []string,
+	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	stream, err := g.apiClient.GetSwapsStream(ctx, &pb.GetSwapsStreamRequest{
-		Projects: projects,
-		Pools:    markets,
+		Projects:      projects,
+		Pools:         markets,
+		IncludeFailed: includeFailed,
 	})
 	if err != nil {
 		return nil, err

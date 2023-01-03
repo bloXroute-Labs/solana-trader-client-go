@@ -622,10 +622,12 @@ func (w *WSClient) GetSwapsStream(
 	ctx context.Context,
 	projects []pb.Project,
 	markets []string,
+	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	return connections.WSStream(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
-		Projects: projects,
-		Pools:    markets,
+		Projects:      projects,
+		Pools:         markets,
+		IncludeFailed: includeFailed,
 	}, func() *pb.GetSwapsStreamResponse {
 		return &pb.GetSwapsStreamResponse{}
 	})
