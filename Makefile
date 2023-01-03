@@ -4,7 +4,7 @@ test:
 
 .PHONY: unit
 unit:
-	 go test -v ./provider_test/.
+	 go test -v ./...
 
 .PHONY: grpc-examples
 grpc-examples:
