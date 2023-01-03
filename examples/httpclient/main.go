@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -136,8 +137,10 @@ func logCall(name string, call func() bool) bool {
 
 func callMarketsHTTP() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	markets, err := h.GetMarkets()
+	markets, err := h.GetMarkets(ctx)
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
@@ -151,8 +154,10 @@ func callMarketsHTTP() bool {
 
 func callOrderbookHTTP() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	orderbook, err := h.GetOrderbook("SOL-USDT", 0, pb.Project_P_OPENBOOK)
+	orderbook, err := h.GetOrderbook(ctx, "SOL-USDT", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
@@ -162,7 +167,7 @@ func callOrderbookHTTP() bool {
 
 	fmt.Println()
 
-	orderbook, err = h.GetOrderbook("SOLUSDT", 2, pb.Project_P_OPENBOOK)
+	orderbook, err = h.GetOrderbook(ctx, "SOLUSDT", 2, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 		return true
@@ -172,7 +177,7 @@ func callOrderbookHTTP() bool {
 
 	fmt.Println()
 
-	orderbook, err = h.GetOrderbook("SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	orderbook, err = h.GetOrderbook(ctx, "SOL:USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -198,9 +203,11 @@ func callMarketDepthHTTP() bool {
 }
 
 func callOpenOrdersHTTP() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
-	orders, err := h.GetOpenOrders("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", pb.Project_P_OPENBOOK)
+	orders, err := h.GetOpenOrders(ctx, "SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
 		return true
@@ -213,9 +220,11 @@ func callOpenOrdersHTTP() bool {
 }
 
 func callUnsettledHTTP() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
-	response, err := h.GetUnsettled("SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", pb.Project_P_OPENBOOK)
+	response, err := h.GetUnsettled(ctx, "SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetUnsettled request for SOLUSDT: %v", err)
 		return true
@@ -228,9 +237,11 @@ func callUnsettledHTTP() bool {
 }
 
 func callGetAccountBalanceHTTP() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
-	response, err := h.GetAccountBalance("F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
+	response, err := h.GetAccountBalance(ctx, "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
 		return true
@@ -244,8 +255,10 @@ func callGetAccountBalanceHTTP() bool {
 
 func callTradesHTTP() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	trades, err := h.GetTrades("SOLUSDT", 5, pb.Project_P_OPENBOOK)
+	trades, err := h.GetTrades(ctx, "SOLUSDT", 5, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetTrades request for SOLUSDT: %v", err)
 		return true
@@ -259,8 +272,10 @@ func callTradesHTTP() bool {
 
 func callPoolsHTTP() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	pools, err := h.GetPools([]pb.Project{pb.Project_P_RAYDIUM})
+	pools, err := h.GetPools(ctx, []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
@@ -274,8 +289,10 @@ func callPoolsHTTP() bool {
 
 func callPriceHTTP() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	prices, err := h.GetPrice([]string{"SOL", "ETH"})
+	prices, err := h.GetPrice(ctx, []string{"SOL", "ETH"})
 	if err != nil {
 		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
 		return true
@@ -289,8 +306,10 @@ func callPriceHTTP() bool {
 
 func callTickersHTTP() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	tickers, err := h.GetTickers("SOLUSDT", pb.Project_P_OPENBOOK)
+	tickers, err := h.GetTickers(ctx, "SOLUSDT", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDT: %v", err)
 		return true
@@ -304,6 +323,8 @@ func callTickersHTTP() bool {
 
 func callGetQuotes() bool {
 	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	inToken := "SOL"
 	outToken := "USDC"
@@ -311,7 +332,7 @@ func callGetQuotes() bool {
 	slippage := float64(5)
 	limit := 5
 
-	quotes, err := h.GetQuotes(inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
+	quotes, err := h.GetQuotes(ctx, inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
@@ -345,7 +366,9 @@ const (
 )
 
 func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// generate a random clientOrderId for this order
 	rand.Seed(time.Now().UnixNano())
@@ -357,7 +380,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	}
 
 	// create order without actually submitting
-	response, err := h.PostOrder(ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	response, err := h.PostOrder(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -365,7 +388,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	// sign/submit transaction after creation
-	sig, err := h.SubmitOrder(ownerAddr, ownerAddr, marketAddr,
+	sig, err := h.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
 		orderSide, []pb.OrderType{orderType}, orderAmount,
 		orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
@@ -380,9 +403,11 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 
 func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) bool {
 	time.Sleep(60 * time.Second)
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	_, err := h.SubmitCancelByClientOrderID(clientOrderID, ownerAddr,
+	_, err := h.SubmitCancelByClientOrderID(ctx, clientOrderID, ownerAddr,
 		marketAddr, ooAddr, pb.Project_P_OPENBOOK, true)
 	if err != nil {
 		log.Errorf("failed to cancel order by client ID (%v)", err)
@@ -395,9 +420,11 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 
 func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 	time.Sleep(60 * time.Second)
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	sig, err := h.SubmitSettle(ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, pb.Project_P_OPENBOOK, false)
+	sig, err := h.SubmitSettle(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, pb.Project_P_OPENBOOK, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return true
@@ -411,7 +438,9 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -424,7 +453,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -432,7 +461,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err = h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -442,7 +471,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err := h.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -467,7 +496,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
+	sigs, err := h.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -481,7 +510,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	time.Sleep(time.Minute)
 
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err = h.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -501,7 +530,9 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
-	h := httpClientWithTimeout(time.Second * 60)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -513,7 +544,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -522,7 +553,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 	time.Sleep(time.Minute)
 	// Check order is there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err := h.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -542,7 +573,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = h.SubmitReplaceByClientOrderID(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = h.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -552,7 +583,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err = h.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -572,7 +603,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
+	sigs, err := h.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -590,7 +621,9 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	rand.Seed(time.Now().UnixNano())
 	clientOrderID1 := rand.Uint64()
@@ -603,7 +636,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrder(ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -612,7 +645,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := h.GetOpenOrders(marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err := h.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -633,7 +666,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitReplaceOrder(found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = h.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -643,7 +676,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = h.GetOpenOrders(marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err = h.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -664,7 +697,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelAll(marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
+	sigs, err := h.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -680,8 +713,10 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 func callGetRecentBlockHash() bool {
 	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	hash, err := h.GetRecentBlockHash()
+	hash, err := h.GetRecentBlockHash(ctx)
 	if err != nil {
 		log.Errorf("error with GetRecentBlockHash request: %v", err)
 		return true
@@ -696,10 +731,12 @@ func callGetRecentBlockHash() bool {
 func callTradeSwap(ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ownerAddr, "USDC", "SOL",
+	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL",
 		0.01, 0.1, "raydium", provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  false,
@@ -715,10 +752,12 @@ func callTradeSwap(ownerAddr string) bool {
 func callRouteTradeSwap(ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
-	h := httpClientWithTimeout(time.Second * 30)
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	log.Info("route trade swap")
-	sig, err := h.SubmitRouteTradeSwap(&pb.RouteTradeSwapRequest{
+	sig, err := h.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
 		OwnerAddress: ownerAddr,
 		Project:      pb.Project_P_RAYDIUM,
 		Steps: []*pb.RouteStep{

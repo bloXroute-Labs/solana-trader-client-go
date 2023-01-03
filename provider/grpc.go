@@ -47,16 +47,6 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCInsecure connects to any host, port without any auth. it's used by solana-trader-api integration tests
-func NewGRPCInsecure(host string, apiPort int) (*GRPCClient, error) {
-	opts := RPCOpts{
-		Endpoint:    fmt.Sprintf("%s:%d", host, apiPort),
-		Timeout:     defaultRPCTimeout,
-		DisableAuth: true,
-	}
-	return NewGRPCClientWithOpts(opts)
-}
-
 type blxrCredentials struct {
 	authorization string
 }
@@ -541,10 +531,12 @@ func (g *GRPCClient) GetSwapsStream(
 	ctx context.Context,
 	projects []pb.Project,
 	markets []string,
+	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	stream, err := g.apiClient.GetSwapsStream(ctx, &pb.GetSwapsStreamRequest{
-		Projects: projects,
-		Pools:    markets,
+		Projects:      projects,
+		Pools:         markets,
+		IncludeFailed: includeFailed,
 	})
 	if err != nil {
 		return nil, err

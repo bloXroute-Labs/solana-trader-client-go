@@ -42,15 +42,6 @@ func NewWSClientLocal() (*WSClient, error) {
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSCustomClient
-func NewWSCustomClient(authHeader, endpoint string) (*WSClient, error) {
-	opts := RPCOpts{
-		Endpoint:   endpoint,
-		AuthHeader: authHeader,
-	}
-	return NewWSClientWithOpts(opts)
-}
-
 // NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
@@ -631,10 +622,12 @@ func (w *WSClient) GetSwapsStream(
 	ctx context.Context,
 	projects []pb.Project,
 	markets []string,
+	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	return connections.WSStream(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
-		Projects: projects,
-		Pools:    markets,
+		Projects:      projects,
+		Pools:         markets,
+		IncludeFailed: includeFailed,
 	}, func() *pb.GetSwapsStreamResponse {
 		return &pb.GetSwapsStreamResponse{}
 	})
