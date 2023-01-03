@@ -13,19 +13,18 @@ import (
 )
 
 const (
-	MainnetHTTP       = "https://virginia.solana.dex.blxrbdn.com"
-	MainnetWS         = "wss://virginia.solana.dex.blxrbdn.com/ws"
-	MainnetGRPC       = "virginia.solana.dex.blxrbdn.com:443"
-	TestnetHTTP       = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
-	TestnetWS         = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
-	TestnetGRPC       = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
-	DevnetHTTP        = "http://solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
-	DevnetWS          = "ws://solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com/ws"
-	DevnetGRPC        = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com:80"
-	LocalWS           = "ws://localhost:9000/ws"
-	LocalGRPC         = "localhost:9000"
-	LocalHTTP         = "http://127.0.0.1:9000"
-	defaultRPCTimeout = 7 * time.Second
+	MainnetHTTP = "https://virginia.solana.dex.blxrbdn.com"
+	MainnetWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
+	MainnetGRPC = "virginia.solana.dex.blxrbdn.com:443"
+	TestnetHTTP = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
+	TestnetWS   = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
+	TestnetGRPC = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
+	DevnetHTTP  = "http://solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
+	DevnetWS    = "ws://solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com/ws"
+	DevnetGRPC  = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com:80"
+	LocalWS     = "ws://localhost:9000/ws"
+	LocalGRPC   = "localhost:9000"
+	LocalHTTP   = "http://127.0.0.1:9000"
 )
 
 var ErrPrivateKeyNotFound = errors.New("private key not provided for signing transaction")
@@ -45,7 +44,6 @@ type RPCOpts struct {
 	Endpoint       string
 	DisableAuth    bool
 	UseTLS         bool
-	Timeout        time.Duration
 	PrivateKey     *solana.PrivateKey
 	AuthHeader     string
 	CacheBlockHash bool
@@ -60,7 +58,6 @@ func DefaultRPCOpts(endpoint string) RPCOpts {
 	}
 	return RPCOpts{
 		Endpoint:   endpoint,
-		Timeout:    defaultRPCTimeout,
 		PrivateKey: spk,
 		AuthHeader: os.Getenv("AUTH_HEADER"),
 	}

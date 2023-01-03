@@ -2,6 +2,7 @@ package connections
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,8 +26,8 @@ func (h HTTPError) Error() string {
 	return h.Message
 }
 
-func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, val T, authHeader string) error {
-	req, err := http.NewRequest("GET", url, nil)
+func HTTPGetWithClient[T protoreflect.ProtoMessage](ctx context.Context, url string, client *http.Client, val T, authHeader string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	req.Header.Set("Authorization", authHeader)
 	httpResp, err := client.Do(req)
 	if err != nil {
@@ -44,13 +45,13 @@ func HTTPGetWithClient[T protoreflect.ProtoMessage](url string, client *http.Cli
 	return nil
 }
 
-func HTTPPostWithClient[T protoreflect.ProtoMessage](url string, client *http.Client, body interface{}, val T, authHeader string) error {
+func HTTPPostWithClient[T protoreflect.ProtoMessage](ctx context.Context, url string, client *http.Client, body interface{}, val T, authHeader string) error {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(b))
 	req.Header.Set("Authorization", authHeader)
 	req.Header.Set("Content-Type", contentType)
 	httpResp, err := client.Do(req)
