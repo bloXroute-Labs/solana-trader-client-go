@@ -42,15 +42,6 @@ func NewWSClientLocal() (*WSClient, error) {
 	return NewWSClientWithOpts(opts)
 }
 
-// NewWSCustomClient
-func NewWSCustomClient(authHeader, endpoint string) (*WSClient, error) {
-	opts := RPCOpts{
-		Endpoint:   endpoint,
-		AuthHeader: authHeader,
-	}
-	return NewWSClientWithOpts(opts)
-}
-
 // NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
@@ -84,6 +75,16 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
 	var response pb.GetOrderbookResponse
 	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderbookRequest{Market: market, Limit: limit, Project: project}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetMarketDepth returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (w *WSClient) GetMarketDepth(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetMarketDepthResponse, error) {
+	var response pb.GetMarketDepthResponse
+	err := w.conn.Request(ctx, "GetMarketDepth", &pb.GetMarketDepthRequest{Market: market, Limit: limit, Project: project}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -544,6 +545,18 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 	})
 }
 
+// GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
+	return connections.WSStream(w.conn, ctx, "GetMarketDepthsStream", &pb.GetMarketDepthsRequest{
+		Markets: markets,
+		Limit:   limit,
+		Project: project,
+	}, func() *pb.GetMarketDepthsStreamResponse {
+		var v pb.GetMarketDepthsStreamResponse
+		return &v
+	})
+}
+
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
 	return connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
@@ -609,10 +622,12 @@ func (w *WSClient) GetSwapsStream(
 	ctx context.Context,
 	projects []pb.Project,
 	markets []string,
+	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	return connections.WSStream(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
-		Projects: projects,
-		Pools:    markets,
+		Projects:      projects,
+		Pools:         markets,
+		IncludeFailed: includeFailed,
 	}, func() *pb.GetSwapsStreamResponse {
 		return &pb.GetSwapsStreamResponse{}
 	})

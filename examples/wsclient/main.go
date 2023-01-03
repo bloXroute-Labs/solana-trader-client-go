@@ -53,6 +53,7 @@ func run() bool {
 	// informational requests
 	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
+	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
 	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
@@ -65,6 +66,7 @@ func run() bool {
 	// streaming methods
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
+		failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
 	}
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
@@ -169,6 +171,21 @@ func callOrderbookWS(w *provider.WSClient) bool {
 		return true
 	} else {
 		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callMarketDepthWS(w *provider.WSClient) bool {
+	log.Info("fetching market depth data...")
+
+	mktDepth, err := w.GetMarketDepth(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("error with GetMarketDepth request for SOL:USDC: %v", err)
+		return true
+	} else {
+		log.Info(mktDepth)
 	}
 
 	fmt.Println()
@@ -328,6 +345,30 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	orderbookCh := stream.Channel(0)
 	for i := 1; i <= 2; i++ {
 		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+// Stream response
+func callMarketDepthWSStream(w *provider.WSClient) bool {
+	log.Info("starting market depth stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetMarketDepthsStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("error with GetMarketDepthsStream request for SOL/USDC: %v", err)
+		return true
+	}
+
+	mktDepthDataCh := stream.Channel(0)
+	for i := 1; i <= 2; i++ {
+		_, ok := <-mktDepthDataCh
 		if !ok {
 			return true
 		}
@@ -908,7 +949,7 @@ func callSwapsWSStream(w *provider.WSClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := w.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
+	stream, err := w.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}, true) // SOL-USDC Raydium pool
 	if err != nil {
 		log.Errorf("error with GetSwaps stream request: %v", err)
 		return true

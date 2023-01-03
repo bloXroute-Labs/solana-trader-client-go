@@ -50,12 +50,14 @@ func run() bool {
 	// informational methods
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
+	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
 	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	}
 	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
@@ -172,6 +174,19 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callMarketDepthGRPC(g *provider.GRPCClient) bool {
+	mktDepth, err := g.GetMarketDepth(context.Background(), "SOL-USDC", 0, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("error with GetMarketDepth request for SOL-USDC: %v", err)
+		return true
+	} else {
+		log.Info(mktDepth)
 	}
 
 	fmt.Println()
@@ -329,6 +344,55 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	orderbookCh := stream.Channel(0)
 	for i := 1; i <= 2; i++ {
 		data, ok := <-orderbookCh
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received, data %v ", i, data)
+	}
+
+	return false
+}
+
+func callMarketDepthGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting market depth stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream error response
+	stream, err := g.GetMarketDepthsStream(ctx, []string{"SOL/USDC", "xxx"}, 3, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("connection could not be established. error: %v", err)
+		return true
+	}
+
+	_, err = stream()
+	if err != nil {
+		//demonstration purposes only. will swallow
+		log.Infof("subscription error: %v", err)
+	} else {
+		log.Error("subscription should have returned an error")
+		return true
+	}
+
+	// Stream ok response
+	stream, err = g.GetMarketDepthsStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, pb.Project_P_OPENBOOK)
+	if err != nil {
+		log.Errorf("connection could not be established. error: %v", err)
+		return true
+	}
+
+	_, err = stream()
+	if err != nil {
+		log.Errorf("subscription error: %v", err)
+		return true
+	}
+
+	ordermktDepthUpdateCh := stream.Channel(0)
+	for i := 1; i <= 2; i++ {
+		data, ok := <-ordermktDepthUpdateCh
 		if !ok {
 			// channel closed
 			return true
@@ -1001,7 +1065,7 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}) // SOL-USDC Raydium pool
+	stream, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2"}, true) // SOL-USDC Raydium pool
 	if err != nil {
 		log.Errorf("error with GetSwaps stream request: %v", err)
 		return true

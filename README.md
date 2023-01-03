@@ -46,7 +46,7 @@ func main() {
 		panic(err)
 	}
 
-	orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT", 5) // in this case limit to 5 bids and asks. 0 for no limit
+	orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT", 5, pb.Project_P_OPENBOOK) // in this case limit to 5 bids and asks. 0 for no limit
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +54,7 @@ func main() {
 
 	// HTTP
 	h := provider.NewHTTPClient()
-	tickers, err := h.GetTickers("ETHUSDT")
+	tickers, err := h.GetTickers(context.Background(), "ETHUSDT", pb.Project_P_OPENBOOK)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +66,7 @@ func main() {
 		panic(err)
 	}
 	// note that open orders is a slow function call
-	openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", "")
+	openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", "", pb.Project_P_OPENBOOK)
 	if err != nil {
 		panic(err)
 	}
@@ -95,7 +95,7 @@ func main() {
 		panic(err)
 	}
 
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDT"}, 5)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDT"}, 5, pb.Project_P_OPENBOOK)
 	if err != nil {
 		panic(err)
 	}
