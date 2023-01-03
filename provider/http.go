@@ -44,17 +44,6 @@ func NewHTTPLocal() *HTTPClient {
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPCustomClient
-func NewHTTPCustomClient(authHeader, endpoint string) *HTTPClient {
-	opts := RPCOpts{
-		Endpoint:   endpoint,
-		Timeout:    defaultRPCTimeout,
-		AuthHeader: authHeader,
-	}
-
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
 // NewHTTPClientWithOpts connects to custom Trader API (set client to nil to use default client)
 func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	if client == nil {
