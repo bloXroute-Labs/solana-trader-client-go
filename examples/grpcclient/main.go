@@ -38,7 +38,6 @@ func run() bool {
 	case config.EnvTestnet:
 		g, err = provider.NewGRPCTestnet()
 	case config.EnvMainnet:
-
 		g, err = provider.NewGRPCClient()
 	}
 	if err != nil {

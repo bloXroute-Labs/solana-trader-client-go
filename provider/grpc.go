@@ -62,25 +62,27 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 }
 
 // NewGRPCClientWithOpts connects to custom Trader API
-func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	var conn grpc.ClientConnInterface
-	var err error
+func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClient, error) {
+	var (
+		conn     grpc.ClientConnInterface
+		err      error
+		grpcOpts = make([]grpc.DialOption, 0)
+	)
+
 	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if opts.UseTLS {
 		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
 	}
+	grpcOpts = append(grpcOpts, transportOption)
 
-	if opts.DisableAuth {
-		conn, err = grpc.Dial(opts.Endpoint, transportOption)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
-		conn, err = grpc.Dial(opts.Endpoint, transportOption, authOption)
-		if err != nil {
-			return nil, err
-		}
+	if !opts.DisableAuth {
+		grpcOpts = append(grpcOpts, grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader}))
+	}
+
+	grpcOpts = append(grpcOpts, dialOpts...)
+	conn, err = grpc.Dial(opts.Endpoint, grpcOpts...)
+	if err != nil {
+		return nil, err
 	}
 
 	client := &GRPCClient{
