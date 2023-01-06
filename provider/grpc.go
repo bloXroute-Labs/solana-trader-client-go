@@ -47,16 +47,6 @@ func NewGRPCLocal() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
-// NewGRPCInsecure connects to any host, port without any auth. it's used by solana-trader-api integration tests
-func NewGRPCInsecure(host string, apiPort int) (*GRPCClient, error) {
-	opts := RPCOpts{
-		Endpoint:    fmt.Sprintf("%s:%d", host, apiPort),
-		Timeout:     defaultRPCTimeout,
-		DisableAuth: true,
-	}
-	return NewGRPCClientWithOpts(opts)
-}
-
 type blxrCredentials struct {
 	authorization string
 }
@@ -72,25 +62,27 @@ func (bc blxrCredentials) RequireTransportSecurity() bool {
 }
 
 // NewGRPCClientWithOpts connects to custom Trader API
-func NewGRPCClientWithOpts(opts RPCOpts) (*GRPCClient, error) {
-	var conn grpc.ClientConnInterface
-	var err error
+func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClient, error) {
+	var (
+		conn     grpc.ClientConnInterface
+		err      error
+		grpcOpts = make([]grpc.DialOption, 0)
+	)
+
 	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if opts.UseTLS {
 		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
 	}
+	grpcOpts = append(grpcOpts, transportOption)
 
-	if opts.DisableAuth {
-		conn, err = grpc.Dial(opts.Endpoint, transportOption)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		authOption := grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader})
-		conn, err = grpc.Dial(opts.Endpoint, transportOption, authOption)
-		if err != nil {
-			return nil, err
-		}
+	if !opts.DisableAuth {
+		grpcOpts = append(grpcOpts, grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader}))
+	}
+
+	grpcOpts = append(grpcOpts, dialOpts...)
+	conn, err = grpc.Dial(opts.Endpoint, grpcOpts...)
+	if err != nil {
+		return nil, err
 	}
 
 	client := &GRPCClient{
@@ -541,10 +533,12 @@ func (g *GRPCClient) GetSwapsStream(
 	ctx context.Context,
 	projects []pb.Project,
 	markets []string,
+	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
 	stream, err := g.apiClient.GetSwapsStream(ctx, &pb.GetSwapsStreamRequest{
-		Projects: projects,
-		Pools:    markets,
+		Projects:      projects,
+		Pools:         markets,
+		IncludeFailed: includeFailed,
 	})
 	if err != nil {
 		return nil, err
