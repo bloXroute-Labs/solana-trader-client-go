@@ -196,7 +196,7 @@ func callMarketDepthHTTP() bool {
 
 	mdData, err := h.GetMarketDepth(ctx, "SOL-USDC", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
-		log.Errorf("error with GetMarketDepth request for SOL-USDT: %v", err)
+		log.Errorf("error with GetMarketDepth request for SOL-USDC: %v", err)
 		return true
 	} else {
 		log.Info(mdData)
