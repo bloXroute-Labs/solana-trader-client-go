@@ -544,7 +544,7 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.
-func (h *HTTPClient) GetRecentBlockHash(ctx context.Context, ) (*pb.GetRecentBlockHashResponse, error) {
+func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/system/blockhash", h.baseURL)
 	response := new(pb.GetRecentBlockHashResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {

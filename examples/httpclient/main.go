@@ -189,15 +189,18 @@ func callOrderbookHTTP() bool {
 }
 
 func callMarketDepthHTTP() bool {
-	/*h := httpClient()
+	h := httpClient()
 
-	orderbook, err := h.GetMarketDepth("SOL-USDC", 0, pb.Project_P_OPENBOOK)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	mdData, err := h.GetMarketDepth(ctx, "SOL-USDC", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
+		log.Errorf("error with GetMarketDepth request for SOL-USDC: %v", err)
 		return true
 	} else {
-		log.Info(orderbook)
-	}*/
+		log.Info(mdData)
+	}
 
 	return false
 }
