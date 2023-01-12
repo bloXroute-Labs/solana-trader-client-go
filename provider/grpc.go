@@ -243,7 +243,7 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
 func (g *GRPCClient) PostPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostPerpOrderResponse, error) {
+	contract common.PerpContract, amount, price float64, project pb.Project, clientOrderID uint64) (*pb.PostPerpOrderResponse, error) {
 	return g.apiClient.PostPerpOrder(ctx, &pb.PostPerpOrderRequest{
 		Project:        project,
 		OwnerAddress:   owner,
@@ -255,7 +255,7 @@ func (g *GRPCClient) PostPerpOrder(ctx context.Context, owner, payer, accountAdd
 		Type:           typee,
 		Amount:         amount,
 		Price:          price,
-		ClientOrderID:  opts.ClientOrderID,
+		ClientOrderID:  clientOrderID,
 	})
 }
 
@@ -306,13 +306,16 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 }
 
 // SubmitOrder builds a perp order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
+func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
+	contract common.PerpContract, amount, price float64, project pb.Project, clientOrderID uint64, skipPreFlight bool) (string, error) {
+	order, err := g.PostPerpOrder(ctx, owner, payer, accountAddress, slippage, positionSide, typee, contract, amount, price, project, clientOrderID)
 	if err != nil {
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: order.Transaction,
+	}, skipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
