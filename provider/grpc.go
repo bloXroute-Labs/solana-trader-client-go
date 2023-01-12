@@ -7,6 +7,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -138,6 +139,16 @@ func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner str
 	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project})
 }
 
+// GetPerpPositions returns all perp positions by owner address and market
+func (g *GRPCClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+	return g.apiClient.GetPerpPositions(ctx, &pb.GetPerpPositionsRequest{
+		Project:        project,
+		OwnerAddress:   ownerAddress,
+		AccountAddress: accountAddress,
+		Contracts:      contracts,
+	})
+}
+
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddress string, project pb.Project) (*pb.GetUnsettledResponse, error) {
 	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress, Project: project})
@@ -230,6 +241,24 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 	})
 }
 
+// PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
+func (g *GRPCClient) PostPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
+	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostPerpOrderResponse, error) {
+	return g.apiClient.PostPerpOrder(ctx, &pb.PostPerpOrderRequest{
+		Project:        project,
+		OwnerAddress:   owner,
+		PayerAddress:   payer,
+		Contract:       contract,
+		AccountAddress: accountAddress,
+		PositionSide:   positionSide,
+		Slippage:       slippage,
+		Type:           typee,
+		Amount:         amount,
+		Price:          price,
+		ClientOrderID:  opts.ClientOrderID,
+	})
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
@@ -276,6 +305,16 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
+// SubmitOrder builds a perp order, signs it, and submits to the network.
+func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
 // PostCancelOrder builds a Serum cancel order.
 func (g *GRPCClient) PostCancelOrder(
 	ctx context.Context,
@@ -313,6 +352,30 @@ func (g *GRPCClient) SubmitCancelOrder(
 	}
 
 	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// PostClosePerpPositions builds cancel perp positions txn.
+func (g *GRPCClient) PostClosePerpPositions(ctx context.Context, ownerAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PostClosePerpPositionsResponse, error) {
+	request := &pb.PostClosePerpPositionsRequest{
+		Project:      project,
+		OwnerAddress: ownerAddress,
+		Contracts:    contracts,
+	}
+	return g.apiClient.PostClosePerpPositions(ctx, request)
+}
+
+// SubmitClosePerpPositions builds a close perp positions txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitClosePerpPositions(ctx context.Context, ownerAddress string, contracts []common.PerpContract, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	order, err := g.PostClosePerpPositions(ctx, ownerAddress, contracts, project)
+	if err != nil {
+		return nil, err
+	}
+	var msgs []*pb.TransactionMessage
+	for _, txn := range order.Transactions {
+		msgs = append(msgs, &pb.TransactionMessage{Content: txn})
+	}
+
+	return g.signAndSubmitBatch(ctx, msgs, opts)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.

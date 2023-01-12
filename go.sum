@@ -59,6 +59,16 @@ github.com/blendle/zapdriver v1.3.1 h1:C3dydBOWYRiOk+B8X9IVZ5IOe+7cl+tGOexN4QqHf
 github.com/blendle/zapdriver v1.3.1/go.mod h1:mdXfREi6u5MArG4j9fewC+FGnXaBR+T4Ox4J2u4eHCc=
 github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20221222193401-b7cd63dea44c h1:AZ3FSFKMaR73XW3yVbzfWJv/0/eOQ0+kT+MDMyEM4zM=
 github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20221222193401-b7cd63dea44c/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111042642-806977143327 h1:Vflri5nanO/4MJwR9zSayDYerzNKZ5pdJSDJCmiN9Nw=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111042642-806977143327/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111163950-f6f9b9458abd h1:GGlqrUi5B9XAIR13Csu4fbzOGBEenHwjetXPm8UlIII=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111163950-f6f9b9458abd/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111165742-ea7ee0d4be2e h1:+FZOhHqlk64Es4ZtebZ6DhpNIS2yh5jIenkPenQQ16Q=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111165742-ea7ee0d4be2e/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111170856-d6b124abc3f1 h1:HUbyfDxEHoGilbkyWXWBgXvGHD9375/AsFEPxnyvu7s=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230111170856-d6b124abc3f1/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230112153903-70d83ca4ddd8 h1:Pd2So+fy+BJh81M+gjJMyvWqsSY/1/kJleJImOd1bJg=
+github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230112153903-70d83ca4ddd8/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

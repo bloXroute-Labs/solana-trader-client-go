@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -131,6 +132,21 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 	return &response, nil
 }
 
+// GetPerpPositions returns all perp positions by owner address and market
+func (w *WSClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+	var response pb.GetPerpPositionsResponse
+	err := w.conn.Request(ctx, "GetPerpPositions", &pb.GetPerpPositionsRequest{
+		Project:        project,
+		OwnerAddress:   ownerAddress,
+		AccountAddress: accountAddress,
+		Contracts:      contracts,
+	}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress string, project pb.Project) (*pb.GetUnsettledResponse, error) {
 	var response pb.GetUnsettledResponse
@@ -239,6 +255,30 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 	return &response, nil
 }
 
+// PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
+func (w *WSClient) PostPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
+	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostPerpOrderResponse, error) {
+	request := &pb.PostPerpOrderRequest{
+		Project:        project,
+		OwnerAddress:   owner,
+		PayerAddress:   payer,
+		Contract:       contract,
+		AccountAddress: accountAddress,
+		PositionSide:   positionSide,
+		Slippage:       slippage,
+		Type:           typee,
+		Amount:         amount,
+		Price:          price,
+		ClientOrderID:  opts.ClientOrderID,
+	}
+	var response pb.PostPerpOrderResponse
+	err := w.conn.Request(ctx, "PostPerpOrderRequest", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{
@@ -314,6 +354,21 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
+// SubmitPerpOrder builds a perp order, signs it, and submits to the network.
+func (w *WSClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
+	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+
+	order, err := w.PostPerpOrder(ctx, owner, payer, accountAddress, slippage, positionSide,
+		typee, contract, amount, price, project, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: order.Transaction,
+	}, opts.SkipPreFlight)
+}
+
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
 func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := w.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
@@ -353,6 +408,52 @@ func (w *WSClient) PostCancelOrder(
 
 // SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
 func (w *WSClient) SubmitCancelOrder(
+	ctx context.Context,
+	orderID string,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+	project pb.Project,
+	skipPreFlight bool,
+) (string, error) {
+	order, err := w.PostCancelOrder(ctx, orderID, side, owner, market, openOrders, project)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// PostClosePerpPositions builds cancel perp positions txn.
+func (w *WSClient) PostClosePerpPositions(
+	ctx context.Context,
+	orderID string,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+	project pb.Project,
+) (*pb.PostCancelOrderResponse, error) {
+	request := &pb.PostCancelOrderRequest{
+		OrderID:           orderID,
+		Side:              side,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
+		Project:           project,
+	}
+
+	var response pb.PostCancelOrderResponse
+	err := w.conn.Request(ctx, "PostCancelOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitClosePerpPositions builds a close perp positions txn, signs and submits it to the network.
+func (w *WSClient) SubmitClosePerpPositions(
 	ctx context.Context,
 	orderID string,
 	side pb.Side,
