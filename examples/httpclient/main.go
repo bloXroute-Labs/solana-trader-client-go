@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"math/rand"
 	"net/http"
 	"os"
@@ -363,7 +364,7 @@ const (
 	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 
 	orderSide   = pb.Side_S_ASK
-	orderType   = pb.OrderType_OT_LIMIT
+	orderType   = common.OrderType_OT_LIMIT
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
@@ -383,7 +384,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	}
 
 	// create order without actually submitting
-	response, err := h.PostOrder(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	response, err := h.PostOrder(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -392,7 +393,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 
 	// sign/submit transaction after creation
 	sig, err := h.SubmitOrder(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, []pb.OrderType{orderType}, orderAmount,
+		orderSide, []common.OrderType{orderType}, orderAmount,
 		orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
@@ -456,7 +457,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -464,7 +465,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err = h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -547,7 +548,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -576,7 +577,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = h.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = h.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -639,7 +640,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := h.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -669,7 +670,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = h.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
