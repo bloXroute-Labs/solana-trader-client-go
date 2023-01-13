@@ -128,7 +128,7 @@ func (h *HTTPClient) GetOpenOrders(ctx context.Context, market string, owner str
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
-func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PerpPositionsResponse, error) {
 	var strs []string
 	for _, c := range contracts {
 		strs = append(strs, fmt.Sprint(c))
@@ -136,8 +136,8 @@ func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, 
 
 	contractsArg := convertStrSliceArgument("contracts", true, strs)
 	url := fmt.Sprintf("%s/api/v1/trade/perp-positions/?ownerAddress=%s&accountAddress=%s&project=%s%s", h.baseURL, ownerAddress, accountAddress, project, contractsArg)
-	positions := new(pb.GetPerpPositionsResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetPerpPositionsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+	positions := new(pb.PerpPositionsResponse)
+	if err := connections.HTTPGetWithClient[*pb.PerpPositionsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -313,7 +313,7 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (h *HTTPClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
@@ -377,7 +377,7 @@ func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountA
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
@@ -568,7 +568,7 @@ func (h *HTTPClient) SubmitSettle(ctx context.Context, owner, market, baseTokenW
 	return h.signAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
-func (h *HTTPClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/replacebyclientid", h.baseURL)
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
@@ -591,7 +591,7 @@ func (h *HTTPClient) PostReplaceByClientOrderID(ctx context.Context, owner, paye
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := h.PostReplaceByClientOrderID(ctx, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
@@ -600,7 +600,7 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	return h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/replace", h.baseURL)
 	request := &pb.PostReplaceOrderRequest{
 		OwnerAddress:      owner,
@@ -624,7 +624,7 @@ func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := h.PostReplaceOrder(ctx, orderID, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
