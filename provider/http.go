@@ -134,7 +134,7 @@ func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, 
 		strs = append(strs, fmt.Sprint(c))
 	}
 
-	contractsArg := convertStrSliceArgument("contracs", true, strs)
+	contractsArg := convertStrSliceArgument("contracts", true, strs)
 	url := fmt.Sprintf("%s/api/v1/trade/perp-positions/?ownerAddress=%s&accountAddress=%s&project=%s%s", h.baseURL, ownerAddress, accountAddress, project, contractsArg)
 	positions := new(pb.GetPerpPositionsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpPositionsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
