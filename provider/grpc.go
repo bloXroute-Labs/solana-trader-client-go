@@ -140,8 +140,8 @@ func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner str
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
-func (g *GRPCClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PerpPositionsResponse, error) {
-	return g.apiClient.GetPerpPositions(ctx, &pb.PerpPositionsRequest{
+func (g *GRPCClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+	return g.apiClient.GetPerpPositions(ctx, &pb.GetPerpPositionsRequest{
 		Project:        project,
 		OwnerAddress:   ownerAddress,
 		AccountAddress: accountAddress,

@@ -128,7 +128,7 @@ func (h *HTTPClient) GetOpenOrders(ctx context.Context, market string, owner str
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
-func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PerpPositionsResponse, error) {
+func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
 	var strs []string
 	for _, c := range contracts {
 		strs = append(strs, fmt.Sprint(c))
@@ -136,8 +136,8 @@ func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, 
 
 	contractsArg := convertStrSliceArgument("contracts", true, strs)
 	url := fmt.Sprintf("%s/api/v1/trade/perp-positions/?ownerAddress=%s&accountAddress=%s&project=%s%s", h.baseURL, ownerAddress, accountAddress, project, contractsArg)
-	positions := new(pb.PerpPositionsResponse)
-	if err := connections.HTTPGetWithClient[*pb.PerpPositionsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+	positions := new(pb.GetPerpPositionsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPerpPositionsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
 		return nil, err
 	}
 

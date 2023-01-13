@@ -133,9 +133,9 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
-func (w *WSClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PerpPositionsResponse, error) {
-	var response pb.PerpPositionsResponse
-	err := w.conn.Request(ctx, "GetPerpPositions", &pb.PerpPositionsRequest{
+func (w *WSClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+	var response pb.GetPerpPositionsResponse
+	err := w.conn.Request(ctx, "GetPerpPositions", &pb.GetPerpPositionsRequest{
 		Project:        project,
 		OwnerAddress:   ownerAddress,
 		AccountAddress: accountAddress,
