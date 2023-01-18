@@ -58,13 +58,19 @@ jobs:
           at: /home/circleci/go
       - run:
           name: GRPC Examples (testnet)
-          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
       - run:
           name: HTTP Examples (testnet)
-          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
       - run:
           name: WS Examples (testnet)
-          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
   integration-mainnet:
     executor: bxgo
     steps:
@@ -78,13 +84,19 @@ jobs:
             source $BASH_ENV
       - run:
           name: GRPC Examples (mainnet)
-          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
       - run:
           name: HTTP Examples (mainnet)
-          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
       - run:
           name: WS Examples (mainnet)
-          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
           # enabled on all builds now
 #      - slack/notify:
 #          custom: |
