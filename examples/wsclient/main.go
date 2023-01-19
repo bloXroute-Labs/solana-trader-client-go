@@ -5,6 +5,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"math/rand"
 	"os"
 	"time"
@@ -62,6 +63,7 @@ func run() bool {
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
+	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
 
 	// streaming methods
 	if cfg.RunSlowStream {
@@ -73,6 +75,7 @@ func run() bool {
 	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 	failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
+	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
@@ -453,7 +456,7 @@ const (
 	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
 
 	orderSide   = pb.Side_S_ASK
-	orderType   = pb.OrderType_OT_LIMIT
+	orderType   = common.OrderType_OT_LIMIT
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
@@ -536,7 +539,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	// create order without actually submitting
-	response, err := w.PostOrder(context.Background(), ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	response, err := w.PostOrder(context.Background(), ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -545,7 +548,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// sign/submit transaction after creation
 	sig, err := w.SubmitOrder(context.Background(), ownerAddr, payerAddr, marketAddr,
-		orderSide, []pb.OrderType{orderType}, orderAmount,
+		orderSide, []common.OrderType{orderType}, orderAmount,
 		orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
@@ -602,7 +605,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -610,7 +613,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err = w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -692,7 +695,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -721,7 +724,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -784,7 +787,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -813,7 +816,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []pb.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = w.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -988,6 +991,44 @@ func callBlockWSStream(w *provider.WSClient) bool {
 			return true
 		}
 
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift orderbooks...")
+
+	orderbook, err := w.GetPerpOrderbook(context.Background(), "SOL-PERP", 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftOrderbookWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift orderbook stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetPerpOrderbooksStream(ctx, []string{"SOL-PERP"}, 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbooksStream request for SOL-PERP: %v", err)
+		return true
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 2; i++ {
+		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
 		log.Infof("response %v received", i)
 	}
 	return false

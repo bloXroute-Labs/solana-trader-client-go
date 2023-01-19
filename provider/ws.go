@@ -6,6 +6,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -218,7 +219,7 @@ func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTrad
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -315,7 +316,7 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := w.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
@@ -468,7 +469,7 @@ func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWal
 	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
-func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request := &pb.PostOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -489,7 +490,7 @@ func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer,
 	return &response, nil
 }
 
-func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := w.PostReplaceByClientOrderID(ctx, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
@@ -498,7 +499,7 @@ func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, paye
 	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request := &pb.PostReplaceOrderRequest{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -520,7 +521,7 @@ func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, 
 	return &response, nil
 }
 
-func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []pb.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := w.PostReplaceOrder(ctx, orderID, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
@@ -639,4 +640,26 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 		return &pb.GetBlockStreamResponse{}
 	}
 	return connections.WSStream(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
+}
+
+// GetPerpOrderbook returns the current state of perpetual contract orderbook.
+func (w *WSClient) GetPerpOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetPerpOrderbookResponse, error) {
+	var response pb.GetPerpOrderbookResponse
+	err := w.conn.Request(ctx, "GetPerpOrderbook", &pb.GetPerpOrderbookRequest{Market: market, Limit: limit, Project: project}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
+func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
+	newResponse := func() *pb.GetPerpOrderbooksStreamResponse {
+		return &pb.GetPerpOrderbooksStreamResponse{}
+	}
+	return connections.WSStream(w.conn, ctx, "GetPerpOrderbooksStream", &pb.GetPerpOrderbooksRequest{
+		Markets: markets,
+		Limit:   limit,
+		Project: project,
+	}, newResponse)
 }
