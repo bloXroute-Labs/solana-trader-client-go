@@ -55,15 +55,13 @@ func run() bool {
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-	}
+	failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+	failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
-	// trade stream can be slow
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
@@ -71,7 +69,6 @@ func run() bool {
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
-	failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 
 	if !cfg.RunTrades {
