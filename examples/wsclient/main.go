@@ -888,7 +888,10 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		Project:      pb.Project_P_RAYDIUM,
 		Steps: []*pb.RouteStep{
 			{
-				// FIDA-RAY pool address
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
 				InToken:  "FIDA",
 				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 
@@ -897,7 +900,10 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 				OutAmount:    0.0074,
 			},
 			{
-				// RAY-USDC pool address
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				OutToken:     "USDC",
 				InAmount:     0.007505,
