@@ -99,6 +99,7 @@ jobs:
             API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
           # enabled on all builds now
       - slack/notify:
+          branch_pattern: develop
           custom: |
             {
               "text": "solana-trader-client-go Build failed [develop]",
