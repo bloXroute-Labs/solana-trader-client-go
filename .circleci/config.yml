@@ -97,7 +97,6 @@ jobs:
           command: |
             unset PRIVATE_KEY
             API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
-          # enabled on all builds now
       - slack/notify:
           branch_pattern: develop
           custom: |
@@ -134,6 +133,9 @@ jobs:
 workflows:
   version: 2
   test-branch:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - init:
           context: circleci
@@ -143,7 +145,6 @@ workflows:
             - init
       - integration-testnet:
           context:
-            - slack
             - trader-api-sdk
           requires:
             - init
@@ -156,13 +157,8 @@ workflows:
             - init
             - unit
   nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 12 * *"
-          filters:
-            branches:
-              only:
-                - develop
+    when:
+      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - init:
           context:
@@ -170,6 +166,12 @@ workflows:
       - unit:
           requires:
             - init
+      - integration-testnet:
+          context:
+            - trader-api-sdk
+          requires:
+            - init
+            - unit
       - integration-mainnet:
           context:
             - slack
