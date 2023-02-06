@@ -78,6 +78,7 @@ func run() bool {
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes() })
+	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -799,4 +800,21 @@ func callRouteTradeSwap(ownerAddr string) bool {
 	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
 
+}
+
+func callDriftOrderbookHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	orderbook, err := h.GetPerpOrderbook(ctx, "SOL-PERP", 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
 }

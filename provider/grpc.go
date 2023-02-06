@@ -622,3 +622,24 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 
 	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
 }
+
+//------- Drift ----
+
+// GetPerpOrderbook returns the current state of perpetual contract orderbook.
+func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetPerpOrderbookResponse, error) {
+	return g.apiClient.GetPerpOrderbook(ctx, &pb.GetPerpOrderbookRequest{Market: market, Limit: limit, Project: project})
+}
+
+// GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
+func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
+	stream, err := g.apiClient.GetPerpOrderbooksStream(ctx, &pb.GetPerpOrderbooksRequest{
+		Markets: markets,
+		Limit:   limit,
+		Project: project,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPerpOrderbooksStreamResponse](stream, ""), nil
+}

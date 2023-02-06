@@ -63,6 +63,7 @@ func run() bool {
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
+	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -71,6 +72,7 @@ func run() bool {
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
+	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
@@ -993,6 +995,44 @@ func callBlockWSStream(w *provider.WSClient) bool {
 			return true
 		}
 
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift orderbooks...")
+
+	orderbook, err := w.GetPerpOrderbook(context.Background(), "SOL-PERP", 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftOrderbookWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift orderbook stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetPerpOrderbooksStream(ctx, []string{"SOL-PERP"}, 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbooksStream request for SOL-PERP: %v", err)
+		return true
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 2; i++ {
+		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
 		log.Infof("response %v received", i)
 	}
 	return false

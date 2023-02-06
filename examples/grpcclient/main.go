@@ -48,6 +48,7 @@ func run() bool {
 	var failed bool
 
 	// informational methods
+
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
@@ -55,8 +56,12 @@ func run() bool {
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
-	failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-	failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+	failed = failed || logCall("callDriftOrderbookGRPC", func() bool { return callDriftOrderbookGRPC(g) })
+
+	if cfg.RunSlowStream {
+		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+	}
 	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
 	if cfg.RunSlowStream {
@@ -70,6 +75,7 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
+	failed = failed || logCall("callDriftOrderbookGRPCStream", func() bool { return callDriftOrderbookGRPCStream(g) })
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -1109,5 +1115,44 @@ func callBlockGRPCStream(g *provider.GRPCClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get Drift orderbook stream")
+
+	ch := make(chan *pb.GetPerpOrderbooksStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPerpOrderbooksStream(ctx, []string{"SOL-PERP"}, 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbooksStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftOrderbookGRPC(g *provider.GRPCClient) bool {
+	orderbook, err := g.GetPerpOrderbook(context.Background(), "SOL-PERP", 0, pb.Project_P_DRIFT)
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
 	return false
 }

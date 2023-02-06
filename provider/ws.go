@@ -741,3 +741,25 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 	}
 	return connections.WSStream(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
 }
+
+// GetPerpOrderbook returns the current state of perpetual contract orderbook.
+func (w *WSClient) GetPerpOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetPerpOrderbookResponse, error) {
+	var response pb.GetPerpOrderbookResponse
+	err := w.conn.Request(ctx, "GetPerpOrderbook", &pb.GetPerpOrderbookRequest{Market: market, Limit: limit, Project: project}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
+func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
+	newResponse := func() *pb.GetPerpOrderbooksStreamResponse {
+		return &pb.GetPerpOrderbooksStreamResponse{}
+	}
+	return connections.WSStream(w.conn, ctx, "GetPerpOrderbooksStream", &pb.GetPerpOrderbooksRequest{
+		Markets: markets,
+		Limit:   limit,
+		Project: project,
+	}, newResponse)
+}
