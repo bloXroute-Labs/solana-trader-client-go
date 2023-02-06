@@ -115,14 +115,18 @@ func run() bool {
 	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
 	failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
 	failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
-	failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-	failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
-	failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
 
+	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
+	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(g, ownerAddr) })
+	failed = failed || logCall("callGetUser", func() bool { return callGetUser(g, ownerAddr) })
+	if cfg.RunPerpTrades {
+		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(g, ownerAddr) })
+		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(g, ownerAddr) })
+		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
+		failed = failed || logCall("callDepositCollateral", func() bool { return callDepositCollateral(g, ownerAddr) })
+		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
+		failed = failed || logCall("callWithdrawCollateral", func() bool { return callWithdrawCollateral(g, ownerAddr) })
+	}
 	return failed
 }
 
@@ -1126,7 +1130,11 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetPerpOrderbooksStream(ctx, []string{"SOL-PERP"}, 0, pb.Project_P_DRIFT)
+	stream, err := g.GetPerpOrderbooksStream(ctx, &pb.GetPerpOrderbooksRequest{
+		Markets: []string{"SOL-PERP"},
+		Limit:   0,
+		Project: pb.Project_P_DRIFT,
+	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream stream request: %v", err)
 		return true
@@ -1145,7 +1153,11 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 }
 
 func callDriftOrderbookGRPC(g *provider.GRPCClient) bool {
-	orderbook, err := g.GetPerpOrderbook(context.Background(), "SOL-PERP", 0, pb.Project_P_DRIFT)
+	orderbook, err := g.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
+		Market:  "SOL-PERP",
+		Limit:   0,
+		Project: pb.Project_P_DRIFT,
+	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
 		return true
@@ -1154,5 +1166,190 @@ func callDriftOrderbookGRPC(g *provider.GRPCClient) bool {
 	}
 
 	fmt.Println()
+	return false
+}
+
+func callGetOpenPerpOrders(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetOpenPerpOrders test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetOpenPerpOrders(ctx, &pb.GetOpenPerpOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contracts:      []common.PerpContract{common.PerpContract_SOL_PERP},
+		Project:        pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetOpenPerpOrders resp : %s", user)
+	return false
+}
+
+func callGetPerpPositions(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetPerpPositions test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetPerpPositions(ctx, &pb.GetPerpPositionsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contracts:      []common.PerpContract{common.PerpContract_SOL_PERP},
+		Project:        pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetPerpPositions resp : %s", user)
+	return false
+}
+
+func callGetUser(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetUser test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetUser(ctx, &pb.GetUserRequest{
+		OwnerAddress: ownerAddr,
+		Project:      pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetUser resp : %s", user)
+	return false
+}
+
+func callCancelPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callCancelPerpOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
+		Project:       pb.Project_P_DRIFT,
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+		Contract:      common.PerpContract_SOL_PERP,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callCancelPerpOrder signature : %s", sig)
+	return false
+}
+
+func callClosePerpPositions(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callClosePerpPositions test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	sig, err := g.SubmitClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
+		Project:      pb.Project_P_DRIFT,
+		OwnerAddress: ownerAddr,
+		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callClosePerpPositions signature : %s", sig)
+	return false
+}
+
+func callCreateUser(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callCreateUser test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitCreateUser(ctx, &pb.PostCreateUserRequest{
+		Project:      pb.Project_P_DRIFT,
+		OwnerAddress: ownerAddr,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callCreateUser signature : %s", sig)
+	return false
+}
+
+func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callPostPerpOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostPerpOrderRequest{
+		Project:        pb.Project_P_DRIFT,
+		OwnerAddress:   ownerAddr,
+		PayerAddress:   ownerAddr,
+		Contract:       common.PerpContract_SOL_PERP,
+		AccountAddress: "",
+		PositionSide:   common.PerpPositionSide_PS_SHORT,
+		Slippage:       10,
+		Type:           common.PerpOrderType_POT_LIMIT,
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := g.SubmitPostPerpOrder(ctx, request, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostPerpOrder signature : %s", sig)
+	return false
+}
+
+func callWithdrawCollateral(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callWithdrawCollateral test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitWithdrawCollateral(ctx, &pb.PostWithdrawCollateralRequest{
+		Project:      pb.Project_P_DRIFT,
+		OwnerAddress: ownerAddr,
+		Amount:       1,
+		Contract:     common.PerpContract_SOL_PERP,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callWithdrawCollateral signature : %s", sig)
+	return false
+}
+
+func callDepositCollateral(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callDepositCollateral test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitDepositCollateral(ctx, &pb.PostDepositCollateralRequest{
+		Project:      pb.Project_P_DRIFT,
+		OwnerAddress: ownerAddr,
+		Amount:       1,
+		Contract:     common.PerpContract_SOL_PERP,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDepositCollateral signature : %s", sig)
 	return false
 }

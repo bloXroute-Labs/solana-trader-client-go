@@ -139,14 +139,44 @@ func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner str
 	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project})
 }
 
+// GetOpenPerpOrders returns all opened perp orders
+func (g *GRPCClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
+	return g.apiClient.GetOpenPerpOrders(ctx, request)
+}
+
+// PostCancelPerpOrder returns a partially signed transaction for canceling perp order
+func (g *GRPCClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
+	return g.apiClient.PostCancelPerpOrder(ctx, request)
+}
+
+// PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
+func (g *GRPCClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrdersResponse, error) {
+	return g.apiClient.PostCancelPerpOrders(ctx, request)
+}
+
+// PostCreateUser returns a partially signed transaction for creating a user
+func (g *GRPCClient) PostCreateUser(ctx context.Context, request *pb.PostCreateUserRequest) (*pb.PostCreateUserResponse, error) {
+	return g.apiClient.PostCreateUser(ctx, request)
+}
+
+// GetUser returns a user's info
+func (g *GRPCClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	return g.apiClient.GetUser(ctx, request)
+}
+
+// PostDepositCollateral returns a partially signed transaction for posting collateral
+func (g *GRPCClient) PostDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
+	return g.apiClient.PostDepositCollateral(ctx, request)
+}
+
+// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
+func (g *GRPCClient) PostWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
+	return g.apiClient.PostWithdrawCollateral(ctx, request)
+}
+
 // GetPerpPositions returns all perp positions by owner address and market
-func (g *GRPCClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
-	return g.apiClient.GetPerpPositions(ctx, &pb.GetPerpPositionsRequest{
-		Project:        project,
-		OwnerAddress:   ownerAddress,
-		AccountAddress: accountAddress,
-		Contracts:      contracts,
-	})
+func (g *GRPCClient) GetPerpPositions(ctx context.Context, request *pb.GetPerpPositionsRequest) (*pb.GetPerpPositionsResponse, error) {
+	return g.apiClient.GetPerpPositions(ctx, request)
 }
 
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
@@ -242,21 +272,8 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
-func (g *GRPCClient) PostPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, clientOrderID uint64) (*pb.PostPerpOrderResponse, error) {
-	return g.apiClient.PostPerpOrder(ctx, &pb.PostPerpOrderRequest{
-		Project:        project,
-		OwnerAddress:   owner,
-		PayerAddress:   payer,
-		Contract:       contract,
-		AccountAddress: accountAddress,
-		PositionSide:   positionSide,
-		Slippage:       slippage,
-		Type:           typee,
-		Amount:         amount,
-		Price:          price,
-		ClientOrderID:  clientOrderID,
-	})
+func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
+	return g.apiClient.PostPerpOrder(ctx, request)
 }
 
 // PostSubmit posts the transaction string to the Solana network.
@@ -306,9 +323,8 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 }
 
 // SubmitOrder builds a perp order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, clientOrderID uint64, skipPreFlight bool) (string, error) {
-	order, err := g.PostPerpOrder(ctx, owner, payer, accountAddress, slippage, positionSide, typee, contract, amount, price, project, clientOrderID)
+func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := g.PostPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -316,6 +332,17 @@ func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountA
 	return g.signAndSubmit(ctx, &pb.TransactionMessage{
 		Content: order.Transaction,
 	}, skipPreFlight)
+}
+
+// SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool,
+) (string, error) {
+	resp, err := g.PostCancelPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -358,18 +385,13 @@ func (g *GRPCClient) SubmitCancelOrder(
 }
 
 // PostClosePerpPositions builds cancel perp positions txn.
-func (g *GRPCClient) PostClosePerpPositions(ctx context.Context, ownerAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PostClosePerpPositionsResponse, error) {
-	request := &pb.PostClosePerpPositionsRequest{
-		Project:      project,
-		OwnerAddress: ownerAddress,
-		Contracts:    contracts,
-	}
+func (g *GRPCClient) PostClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest) (*pb.PostClosePerpPositionsResponse, error) {
 	return g.apiClient.PostClosePerpPositions(ctx, request)
 }
 
 // SubmitClosePerpPositions builds a close perp positions txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitClosePerpPositions(ctx context.Context, ownerAddress string, contracts []common.PerpContract, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	order, err := g.PostClosePerpPositions(ctx, ownerAddress, contracts, project)
+func (g *GRPCClient) SubmitClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	order, err := g.PostClosePerpPositions(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -379,6 +401,50 @@ func (g *GRPCClient) SubmitClosePerpPositions(ctx context.Context, ownerAddress 
 	}
 
 	return g.signAndSubmitBatch(ctx, msgs, opts)
+}
+
+// SubmitCreateUser builds a create-user txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreateUserRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostCreateUser(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostWithdrawCollateral(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitDepositCollateral builds a deposit collateral transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostDepositCollateral(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -626,17 +692,13 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 //------- Drift ----
 
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
-func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetPerpOrderbookResponse, error) {
-	return g.apiClient.GetPerpOrderbook(ctx, &pb.GetPerpOrderbookRequest{Market: market, Limit: limit, Project: project})
+func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
+	return g.apiClient.GetPerpOrderbook(ctx, request)
 }
 
 // GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
-func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetPerpOrderbooksStream(ctx, &pb.GetPerpOrderbooksRequest{
-		Markets: markets,
-		Limit:   limit,
-		Project: project,
-	})
+func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetPerpOrderbooksRequest) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
+	stream, err := g.apiClient.GetPerpOrderbooksStream(ctx, request)
 	if err != nil {
 		return nil, err
 	}

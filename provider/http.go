@@ -127,15 +127,93 @@ func (h *HTTPClient) GetOpenOrders(ctx context.Context, market string, owner str
 	return orders, nil
 }
 
+// GetOpenPerpOrders returns all opened perp orders
+func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
+	contractsString := convertSliceArgument("contracts", false, request.Contracts)
+	url := fmt.Sprintf("%s/api/v1/trade/perp/open-orders?ownerAddress=%s&accountAddress=%s&project=%s%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, request.Project, contractsString)
+	orders := new(pb.GetOpenPerpOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOpenPerpOrdersResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+// PostCancelPerpOrder returns a partially signed transaction for canceling perp order
+func (h *HTTPClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/cancelbyid", h.baseURL)
+	response := new(pb.PostCancelPerpOrderResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
+func (h *HTTPClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrdersResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/cancel", h.baseURL)
+	response := new(pb.PostCancelPerpOrdersResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrdersResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// PostCreateUser returns a partially signed transaction for creating a user
+func (h *HTTPClient) PostCreateUser(ctx context.Context, request *pb.PostCreateUserRequest) (*pb.PostCreateUserResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/user", h.baseURL)
+	response := new(pb.PostCreateUserResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCreateUserResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// GetUser returns a user's info
+func (h *HTTPClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/user?ownerAddress=%s&project=%s", h.baseURL, request.OwnerAddress, request.Project)
+	resp := new(pb.GetUserResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetUserResponse](ctx, url, h.httpClient, resp, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// PostDepositCollateral returns a partially signed transaction for posting collateral
+func (h *HTTPClient) PostDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/collateral/deposit", h.baseURL)
+	response := new(pb.PostDepositCollateralResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDepositCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
+func (h *HTTPClient) PostWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/collateral/withdraw", h.baseURL)
+	response := new(pb.PostWithdrawCollateralResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostWithdrawCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+
+}
+
 // GetPerpPositions returns all perp positions by owner address and market
-func (h *HTTPClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+func (h *HTTPClient) GetPerpPositions(ctx context.Context, request *pb.GetPerpPositionsRequest) (*pb.GetPerpPositionsResponse, error) {
 	var strs []string
-	for _, c := range contracts {
+	for _, c := range request.Contracts {
 		strs = append(strs, fmt.Sprint(c))
 	}
 
-	contractsArg := convertStrSliceArgument("contracts", true, strs)
-	url := fmt.Sprintf("%s/api/v1/trade/perp-positions/?ownerAddress=%s&accountAddress=%s&project=%s%s", h.baseURL, ownerAddress, accountAddress, project, contractsArg)
+	contractsArg := convertStrSliceArgument("contracts", false, strs)
+	url := fmt.Sprintf("%s/api/v1/trade/perp/positions?ownerAddress=%s&accountAddress=%s&project=%s%s", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.Project, contractsArg)
 	positions := new(pb.GetPerpPositionsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpPositionsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
 		return nil, err
@@ -312,6 +390,28 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
+// SubmitDepositCollateral builds a deposit collateral transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := h.PostDepositCollateral(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := h.PostWithdrawCollateral(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
+}
+
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (h *HTTPClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/place", h.baseURL)
@@ -337,22 +437,8 @@ func (h *HTTPClient) PostOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
-func (h *HTTPClient) PostPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostPerpOrderResponse, error) {
+func (h *HTTPClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/order", h.baseURL)
-	request := &pb.PostPerpOrderRequest{
-		Project:        project,
-		OwnerAddress:   owner,
-		PayerAddress:   payer,
-		Contract:       contract,
-		AccountAddress: accountAddress,
-		PositionSide:   positionSide,
-		Slippage:       slippage,
-		Type:           typee,
-		Amount:         amount,
-		Price:          price,
-		ClientOrderID:  opts.ClientOrderID,
-	}
 
 	var response pb.PostPerpOrderResponse
 	err := connections.HTTPPostWithClient[*pb.PostPerpOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -363,9 +449,8 @@ func (h *HTTPClient) PostPerpOrder(ctx context.Context, owner, payer, accountAdd
 }
 
 // SubmitPerpOrder builds a perp order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := h.PostPerpOrder(ctx, owner, payer, accountAddress, slippage, positionSide, typee, contract, amount, price, project, opts)
+func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, opts PostOrderOpts) (string, error) {
+	order, err := h.PostPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -436,13 +521,8 @@ func (h *HTTPClient) SubmitCancelOrder(
 }
 
 // PostClosePerpPositions builds cancel perp positions txn.
-func (h *HTTPClient) PostClosePerpPositions(ctx context.Context, ownerAddress string, contracts []common.PerpContract, project pb.Project) (*pb.PostClosePerpPositionsResponse, error) {
-	request := &pb.PostClosePerpPositionsRequest{
-		Project:      project,
-		OwnerAddress: ownerAddress,
-		Contracts:    contracts,
-	}
-	url := fmt.Sprintf("%s/api/v1/trade/close-perp-positions", h.baseURL)
+func (h *HTTPClient) PostClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest) (*pb.PostClosePerpPositionsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/close", h.baseURL)
 	var response pb.PostClosePerpPositionsResponse
 	err := connections.HTTPPostWithClient[*pb.PostClosePerpPositionsResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
@@ -453,8 +533,8 @@ func (h *HTTPClient) PostClosePerpPositions(ctx context.Context, ownerAddress st
 }
 
 // SubmitClosePerpPositions builds a close perp positions txn, signs and submits it to the network.
-func (h *HTTPClient) SubmitClosePerpPositions(ctx context.Context, ownerAddress string, contracts []common.PerpContract, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	order, err := h.PostClosePerpPositions(ctx, ownerAddress, contracts, project)
+func (h *HTTPClient) SubmitClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	order, err := h.PostClosePerpPositions(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -465,6 +545,42 @@ func (h *HTTPClient) SubmitClosePerpPositions(ctx context.Context, ownerAddress 
 	}
 
 	return h.signAndSubmitBatch(ctx, msgs, opts)
+}
+
+// SubmitCancelPerpOrder builds a cancels perp orders txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostCancelPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: order.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitCreateUser builds a create-user txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreateUserRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostCreateUser(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: order.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: order.Transaction,
+	}, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -645,8 +761,8 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 }
 
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
-func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetPerpOrderbookResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
+func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/%s?limit=%v&project=%v", request.Market, request.Limit, request.Project)
 	orderbook := new(pb.GetPerpOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
 		return nil, err
