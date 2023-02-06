@@ -66,18 +66,16 @@ func run() bool {
 	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
 
 	// streaming methods
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
-		failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
-	}
+	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
+	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
-	failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
 
 	if cfg.RunSlowStream {
+		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 	}
 
@@ -892,17 +890,23 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		Project:      pb.Project_P_RAYDIUM,
 		Steps: []*pb.RouteStep{
 			{
-				// FIDA-RAY pool address
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
 				InToken:  "FIDA",
-				OutToken: "RAY",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
 			},
 			{
-				// RAY-USDC pool address
-				InToken:      "RAY",
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,

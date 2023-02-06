@@ -58,13 +58,19 @@ jobs:
           at: /home/circleci/go
       - run:
           name: GRPC Examples (testnet)
-          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
       - run:
           name: HTTP Examples (testnet)
-          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
       - run:
           name: WS Examples (testnet)
-          command: API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
   integration-mainnet:
     executor: bxgo
     steps:
@@ -78,49 +84,58 @@ jobs:
             source $BASH_ENV
       - run:
           name: GRPC Examples (mainnet)
-          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
       - run:
           name: HTTP Examples (mainnet)
-          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
       - run:
           name: WS Examples (mainnet)
-          command: API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
-          # enabled on all builds now
-#      - slack/notify:
-#          custom: |
-#            {
-#              "text": "solana-trader-client-go Build failed [develop]",
-#              "blocks": [
-#                {
-#                  "type": "header",
-#                  "text": {
-#                    "type": "plain_text",
-#                    "text": "solana-trader-client-go Build failed",
-#                    "emoji": true
-#                  }
-#                },
-#                {
-#                  "type": "section",
-#                  "text": {
-#                    "type": "mrkdwn",
-#                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/solana-trader-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
-#                  },
-#                  "accessory": {
-#                    "type": "button",
-#                    "text": {
-#                      "type": "plain_text",
-#                      "text": "CircleCI",
-#                      "emoji": true
-#                    },
-#                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/solana-trader-client-go?branch=develop"
-#                  }
-#                }
-#              ]
-#            }
-#          event: fail
+          command: |
+            unset PRIVATE_KEY
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
+      - slack/notify:
+          branch_pattern: develop
+          custom: |
+            {
+              "text": "solana-trader-client-go Build failed [develop]",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "solana-trader-client-go Build failed",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/solana-trader-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "CircleCI",
+                      "emoji": true
+                    },
+                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/solana-trader-client-go?branch=develop"
+                  }
+                }
+              ]
+            }
+          event: fail
 workflows:
   version: 2
   test-branch:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - init:
           context: circleci
@@ -130,7 +145,6 @@ workflows:
             - init
       - integration-testnet:
           context:
-            - slack
             - trader-api-sdk
           requires:
             - init
@@ -143,22 +157,21 @@ workflows:
             - init
             - unit
   nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 12 * *"
-          filters:
-            branches:
-              only:
-                - develop
+    when:
+      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - init:
           context:
             - circleci
       - unit:
-          context:
-            - slack
           requires:
             - init
+      - integration-testnet:
+          context:
+            - trader-api-sdk
+          requires:
+            - init
+            - unit
       - integration-mainnet:
           context:
             - slack
