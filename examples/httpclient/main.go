@@ -9,7 +9,6 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -67,7 +66,7 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	/*failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
 	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
 	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
@@ -75,12 +74,12 @@ func run() bool {
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })*/
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes() })
+	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
 
-	cfg, err := config.Load()
+	/*cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -121,7 +120,7 @@ func run() bool {
 	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr) })
 	failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
 	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })*/
 
 	return failed
 }
@@ -326,7 +325,7 @@ func callTickersHTTP() bool {
 	return false
 }
 
-func callGetQuotes() bool {
+func callGetQuotesHTTP() bool {
 	h := httpClientWithTimeout(time.Second * 60)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
