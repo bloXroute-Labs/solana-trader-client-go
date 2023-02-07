@@ -9,6 +9,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -66,7 +67,7 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	/*failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
 	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
 	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
@@ -74,12 +75,12 @@ func run() bool {
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })*/
+	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
 
-	/*cfg, err := config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,7 +121,7 @@ func run() bool {
 	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr) })
 	failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
 	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })*/
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 
 	return failed
 }
@@ -766,17 +767,22 @@ func callRouteTradeSwap(ownerAddr string) bool {
 		Project:      pb.Project_P_RAYDIUM,
 		Steps: []*pb.RouteStep{
 			{
-				// FIDA-RAY pool address
-
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
 				InToken:      "FIDA",
-				OutToken:     "RAY",
+				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
 			},
 			{
-				// RAY-USDC pool address
-				InToken:      "RAY",
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,

@@ -64,9 +64,9 @@ func run() bool {
 	}
 	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
-	// trade stream can be slow
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
@@ -74,7 +74,6 @@ func run() bool {
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
-	failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 	failed = failed || logCall("callDriftOrderbookGRPCStream", func() bool { return callDriftOrderbookGRPCStream(g) })
 
@@ -933,17 +932,23 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		Project:      pb.Project_P_RAYDIUM,
 		Steps: []*pb.RouteStep{
 			{
-				// FIDA-RAY pool address
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
 				InToken:  "FIDA",
-				OutToken: "RAY",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
 			},
 			{
-				// RAY-USDC pool address
-				InToken:      "RAY",
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "",
+				},
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				OutToken:     "USDC",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
