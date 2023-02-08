@@ -695,7 +695,7 @@ func (w *WSClient) Close() error {
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
 		Markets: markets,
 		Limit:   limit,
 		Project: project,
@@ -707,7 +707,7 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetMarketDepthsStream", &pb.GetMarketDepthsRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetMarketDepthsStream", &pb.GetMarketDepthsRequest{
 		Markets: markets,
 		Limit:   limit,
 		Project: project,
@@ -719,7 +719,7 @@ func (w *WSClient) GetMarketDepthsStream(ctx context.Context, markets []string, 
 
 // GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
 func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
 		Market:  market,
 		Limit:   limit,
 		Project: project,
@@ -731,7 +731,7 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
 func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, project pb.Project) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
 		Market:       market,
 		OwnerAddress: ownerAddress,
 		Project:      project,
@@ -743,14 +743,14 @@ func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddres
 
 // GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
 func (w *WSClient) GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*pb.GetRecentBlockHashResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetRecentBlockHashStream", &pb.GetRecentBlockHashRequest{}, func() *pb.GetRecentBlockHashResponse {
+	return connections.WSStreamProto(w.conn, ctx, "GetRecentBlockHashStream", &pb.GetRecentBlockHashRequest{}, func() *pb.GetRecentBlockHashResponse {
 		return &pb.GetRecentBlockHashResponse{}
 	})
 }
 
 // GetQuotesStream subscribes to a stream for getting recent quotes of tokens of interest.
 func (w *WSClient) GetQuotesStream(ctx context.Context, projects []pb.Project, tokenPairs []*pb.TokenPair) (connections.Streamer[*pb.GetQuotesStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetQuotesStream", &pb.GetQuotesStreamRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetQuotesStream", &pb.GetQuotesStreamRequest{
 		Projects:   projects,
 		TokenPairs: tokenPairs,
 	}, func() *pb.GetQuotesStreamResponse {
@@ -760,7 +760,7 @@ func (w *WSClient) GetQuotesStream(ctx context.Context, projects []pb.Project, t
 
 // GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
 func (w *WSClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetPoolReservesStream", &pb.GetPoolReservesStreamRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetPoolReservesStream", &pb.GetPoolReservesStreamRequest{
 		Projects: projects,
 	}, func() *pb.GetPoolReservesStreamResponse {
 		return &pb.GetPoolReservesStreamResponse{}
@@ -769,7 +769,7 @@ func (w *WSClient) GetPoolReservesStream(ctx context.Context, projects []pb.Proj
 
 // GetPricesStream subscribes to a stream for getting recent quotes of tokens of interest.
 func (w *WSClient) GetPricesStream(ctx context.Context, projects []pb.Project, tokens []string) (connections.Streamer[*pb.GetPricesStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetPricesStream", &pb.GetPricesStreamRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetPricesStream", &pb.GetPricesStreamRequest{
 		Projects: projects,
 		Tokens:   tokens,
 	}, func() *pb.GetPricesStreamResponse {
@@ -784,7 +784,7 @@ func (w *WSClient) GetSwapsStream(
 	markets []string,
 	includeFailed bool,
 ) (connections.Streamer[*pb.GetSwapsStreamResponse], error) {
-	return connections.WSStream(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
+	return connections.WSStreamProto(w.conn, ctx, "GetSwapsStream", &pb.GetSwapsStreamRequest{
 		Projects:      projects,
 		Pools:         markets,
 		IncludeFailed: includeFailed,
@@ -798,7 +798,7 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 	newResponse := func() *pb.GetBlockStreamResponse {
 		return &pb.GetBlockStreamResponse{}
 	}
-	return connections.WSStream(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
+	return connections.WSStreamProto(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
 }
 
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
@@ -816,5 +816,5 @@ func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetP
 	newResponse := func() *pb.GetPerpOrderbooksStreamResponse {
 		return &pb.GetPerpOrderbooksStreamResponse{}
 	}
-	return connections.WSStream(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
+	return connections.WSStreamProto(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
 }

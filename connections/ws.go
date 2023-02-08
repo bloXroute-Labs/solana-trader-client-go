@@ -218,14 +218,34 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 	}
 }
 
-func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, streamParams proto.Message, resultInitFn func() T) (Streamer[T], error) {
+func WSStreamAny[T any](w *WS, ctx context.Context, streamName string, streamParams interface{}) (Streamer[T], error) {
+	streamParamsB, err := json.Marshal(streamParams)
+	if err != nil {
+		return nil, err
+	}
+	return wsStream(w, ctx, streamName, streamParamsB, func(b []byte) (T, error) {
+		var v T
+		err := json.Unmarshal(b, &v)
+		return v, err
+	})
+}
+
+func WSStreamProto[T proto.Message](w *WS, ctx context.Context, streamName string, streamParams proto.Message, resultInitFn func() T) (Streamer[T], error) {
 	streamParamsB, err := protojson.Marshal(streamParams)
 	if err != nil {
 		return nil, err
 	}
+	return wsStream(w, ctx, streamName, streamParamsB, func(b []byte) (T, error) {
+		v := resultInitFn()
+		err := protojson.Unmarshal(b, v)
+		return v, err
+	})
+}
+
+func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams json.RawMessage, unmarshal func(b []byte) (T, error)) (Streamer[T], error) {
 	params := SubscribeParams{
 		StreamName: streamName,
-		StreamOpts: streamParamsB,
+		StreamOpts: streamParams,
 	}
 	paramsB, err := json.Marshal(params)
 	if err != nil {
@@ -297,8 +317,7 @@ func WSStream[T proto.Message](w *WS, ctx context.Context, streamName string, st
 		var zero T
 		select {
 		case b := <-ch:
-			v := resultInitFn()
-			err := protojson.Unmarshal(b, v)
+			v, err := unmarshal(b)
 			if err != nil {
 				return zero, err
 			}
