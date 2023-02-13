@@ -77,7 +77,7 @@ func run() bool {
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes() })
+	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
 
 	cfg, err := config.Load()
@@ -326,7 +326,7 @@ func callTickersHTTP() bool {
 	return false
 }
 
-func callGetQuotes() bool {
+func callGetQuotesHTTP() bool {
 	h := httpClientWithTimeout(time.Second * 60)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
