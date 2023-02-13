@@ -483,6 +483,16 @@ func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCa
 	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
 }
 
+// SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
+func (w *WSClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostCancelPerpOrders(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+}
+
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
 func (w *WSClient) PostCancelByClientOrderID(
 	ctx context.Context,
