@@ -132,15 +132,80 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 	return &response, nil
 }
 
+// GetOpenPerpOrders returns all opened perp orders
+func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
+	var response pb.GetOpenPerpOrdersResponse
+	err := w.conn.Request(ctx, "GetOpenPerpOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCancelPerpOrder returns a partially signed transaction for canceling perp order
+func (w *WSClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
+	var response pb.PostCancelPerpOrderResponse
+	err := w.conn.Request(ctx, "PostCancelPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
+func (w *WSClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrdersResponse, error) {
+	var response pb.PostCancelPerpOrdersResponse
+	err := w.conn.Request(ctx, "PostCancelPerpOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCreateUser returns a partially signed transaction for creating a user
+func (w *WSClient) PostCreateUser(ctx context.Context, request *pb.PostCreateUserRequest) (*pb.PostCreateUserResponse, error) {
+	var response pb.PostCreateUserResponse
+	err := w.conn.Request(ctx, "PostCreateUser", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetUser returns a user's info
+func (w *WSClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	var response pb.GetUserResponse
+	err := w.conn.Request(ctx, "GetUser", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDepositCollateral returns a partially signed transaction for posting collateral
+func (w *WSClient) PostDepositCollateral(ctx context.Context, req *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
+	var response pb.PostDepositCollateralResponse
+	err := w.conn.Request(ctx, "PostDepositCollateral", req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
+func (w *WSClient) PostWithdrawCollateral(ctx context.Context, req *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
+	var response pb.PostWithdrawCollateralResponse
+	err := w.conn.Request(ctx, "PostWithdrawCollateral", req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetPerpPositions returns all perp positions by owner address and market
-func (w *WSClient) GetPerpPositions(ctx context.Context, ownerAddress string, accountAddress string, contracts []common.PerpContract, project pb.Project) (*pb.GetPerpPositionsResponse, error) {
+func (w *WSClient) GetPerpPositions(ctx context.Context, request *pb.GetPerpPositionsRequest) (*pb.GetPerpPositionsResponse, error) {
 	var response pb.GetPerpPositionsResponse
-	err := w.conn.Request(ctx, "GetPerpPositions", &pb.GetPerpPositionsRequest{
-		Project:        project,
-		OwnerAddress:   ownerAddress,
-		AccountAddress: accountAddress,
-		Contracts:      contracts,
-	}, &response)
+	err := w.conn.Request(ctx, "GetPerpPositions", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -256,23 +321,9 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 }
 
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
-func (w *WSClient) PostPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostPerpOrderResponse, error) {
-	request := &pb.PostPerpOrderRequest{
-		Project:        project,
-		OwnerAddress:   owner,
-		PayerAddress:   payer,
-		Contract:       contract,
-		AccountAddress: accountAddress,
-		PositionSide:   positionSide,
-		Slippage:       slippage,
-		Type:           typee,
-		Amount:         amount,
-		Price:          price,
-		ClientOrderID:  opts.ClientOrderID,
-	}
+func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
 	var response pb.PostPerpOrderResponse
-	err := w.conn.Request(ctx, "PostPerpOrderRequest", request, &response)
+	err := w.conn.Request(ctx, "PostPerpOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -355,11 +406,9 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 }
 
 // SubmitPerpOrder builds a perp order, signs it, and submits to the network.
-func (w *WSClient) SubmitPerpOrder(ctx context.Context, owner, payer, accountAddress, slippage string, positionSide common.PerpPositionSide, typee common.PerpOrderType,
-	contract common.PerpContract, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, opts PostOrderOpts) (string, error) {
 
-	order, err := w.PostPerpOrder(ctx, owner, payer, accountAddress, slippage, positionSide,
-		typee, contract, amount, price, project, opts)
+	order, err := w.PostPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -380,24 +429,7 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostCancelOrder builds a Serum cancel order.
-func (w *WSClient) PostCancelOrder(
-	ctx context.Context,
-	orderID string,
-	side pb.Side,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-) (*pb.PostCancelOrderResponse, error) {
-	request := &pb.PostCancelOrderRequest{
-		OrderID:           orderID,
-		Side:              side,
-		OwnerAddress:      owner,
-		MarketAddress:     market,
-		OpenOrdersAddress: openOrders,
-		Project:           project,
-	}
-
+func (w *WSClient) PostCancelOrder(ctx context.Context, request *pb.PostCancelOrderRequest) (*pb.PostCancelOrderResponse, error) {
 	var response pb.PostCancelOrderResponse
 	err := w.conn.Request(ctx, "PostCancelOrder", request, &response)
 	if err != nil {
@@ -407,17 +439,8 @@ func (w *WSClient) PostCancelOrder(
 }
 
 // SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
-func (w *WSClient) SubmitCancelOrder(
-	ctx context.Context,
-	orderID string,
-	side pb.Side,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-	skipPreFlight bool,
-) (string, error) {
-	order, err := w.PostCancelOrder(ctx, orderID, side, owner, market, openOrders, project)
+func (w *WSClient) SubmitCancelOrder(ctx context.Context, request *pb.PostCancelOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := w.PostCancelOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -426,26 +449,9 @@ func (w *WSClient) SubmitCancelOrder(
 }
 
 // PostClosePerpPositions builds cancel perp positions txn.
-func (w *WSClient) PostClosePerpPositions(
-	ctx context.Context,
-	orderID string,
-	side pb.Side,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-) (*pb.PostCancelOrderResponse, error) {
-	request := &pb.PostCancelOrderRequest{
-		OrderID:           orderID,
-		Side:              side,
-		OwnerAddress:      owner,
-		MarketAddress:     market,
-		OpenOrdersAddress: openOrders,
-		Project:           project,
-	}
-
-	var response pb.PostCancelOrderResponse
-	err := w.conn.Request(ctx, "PostCancelOrder", request, &response)
+func (w *WSClient) PostClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest) (*pb.PostClosePerpPositionsResponse, error) {
+	var response pb.PostClosePerpPositionsResponse
+	err := w.conn.Request(ctx, "PostClosePerpPositions", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -453,22 +459,28 @@ func (w *WSClient) PostClosePerpPositions(
 }
 
 // SubmitClosePerpPositions builds a close perp positions txn, signs and submits it to the network.
-func (w *WSClient) SubmitClosePerpPositions(
-	ctx context.Context,
-	orderID string,
-	side pb.Side,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-	skipPreFlight bool,
+func (w *WSClient) SubmitClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostClosePerpPositions(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	var msgs []*pb.TransactionMessage
+	for _, txn := range resp.Transactions {
+		msgs = append(msgs, &pb.TransactionMessage{Content: txn})
+	}
+
+	return w.signAndSubmitBatch(ctx, msgs, opts)
+}
+
+// SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
+func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool,
 ) (string, error) {
-	order, err := w.PostCancelOrder(ctx, orderID, side, owner, market, openOrders, project)
+	resp, err := w.PostCancelPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -630,6 +642,43 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
+func (w *WSClient) SubmitDepositCollateral(ctx context.Context, req *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostDepositCollateral(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+}
+
+func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserRequest, skipPreFlight bool) (interface{}, interface{}) {
+	resp, err := w.PostCreateUser(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+}
+
+func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrderRequest, skipPreFlight bool) (interface{}, interface{}) {
+	resp, err := w.PostPerpOrder(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+}
+
+// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitWithdrawCollateral(ctx context.Context, req *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (interface{}, interface{}) {
+	resp, err := w.PostWithdrawCollateral(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+}
+
 func (w *WSClient) Close() error {
 	return w.conn.Close(errors.New("shutdown requested"))
 }
@@ -743,9 +792,9 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 }
 
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
-func (w *WSClient) GetPerpOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetPerpOrderbookResponse, error) {
+func (w *WSClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
 	var response pb.GetPerpOrderbookResponse
-	err := w.conn.Request(ctx, "GetPerpOrderbook", &pb.GetPerpOrderbookRequest{Market: market, Limit: limit, Project: project}, &response)
+	err := w.conn.Request(ctx, "GetPerpOrderbook", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -753,13 +802,9 @@ func (w *WSClient) GetPerpOrderbook(ctx context.Context, market string, limit ui
 }
 
 // GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
-func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
+func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetPerpOrderbooksRequest) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
 	newResponse := func() *pb.GetPerpOrderbooksStreamResponse {
 		return &pb.GetPerpOrderbooksStreamResponse{}
 	}
-	return connections.WSStream(w.conn, ctx, "GetPerpOrderbooksStream", &pb.GetPerpOrderbooksRequest{
-		Markets: markets,
-		Limit:   limit,
-		Project: project,
-	}, newResponse)
+	return connections.WSStream(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
 }

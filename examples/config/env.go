@@ -10,6 +10,7 @@ type Example struct {
 	Env           Env
 	RunSlowStream bool
 	RunTrades     bool
+	RunPerpTrades bool
 }
 
 func Load() (Example, error) {
