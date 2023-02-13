@@ -335,9 +335,18 @@ func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 }
 
 // SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool,
-) (string, error) {
+func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool) (string, error) {
 	resp, err := g.PostCancelPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+}
+
+// SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostCancelPerpOrders(ctx, request)
 	if err != nil {
 		return "", err
 	}

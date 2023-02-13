@@ -152,10 +152,10 @@ func (h *HTTPClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCa
 }
 
 // PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
-func (h *HTTPClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrdersResponse, error) {
+func (h *HTTPClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/cancel", h.baseURL)
-	response := new(pb.PostCancelPerpOrdersResponse)
-	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrdersResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+	response := new(pb.PostCancelPerpOrderResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -547,9 +547,21 @@ func (h *HTTPClient) SubmitClosePerpPositions(ctx context.Context, request *pb.P
 	return h.signAndSubmitBatch(ctx, msgs, opts)
 }
 
-// SubmitCancelPerpOrder builds a cancels perp orders txn, signs and submits it to the network.
+// SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
 func (h *HTTPClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := h.PostCancelPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: order.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostCancelPerpOrders(ctx, request)
 	if err != nil {
 		return "", err
 	}
