@@ -130,6 +130,21 @@ jobs:
               ]
             }
           event: fail
+  latest-tag:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
+      - run:
+          name: checkout latest tag
+          command: |
+            git checkout $(git describe --tags --abbrev=0)
+      - persist_to_workspace:
+          root: /home/circleci/go/
+          paths:
+            - src
+            - pkg
+            - bin
 workflows:
   version: 2
   test-branch:
@@ -157,25 +172,26 @@ workflows:
             - init
             - unit
   nightly:
-    when:
-      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+#    when:
+#      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - init:
           context:
             - circleci
-      - unit:
+      - latest-tag:
           requires:
             - init
+      - unit:
+          requires:
+            - latest-tag
       - integration-testnet:
           context:
             - trader-api-sdk
           requires:
-            - init
-            - unit
+            - latest-tag
       - integration-mainnet:
           context:
             - slack
             - trader-api-sdk
           requires:
-            - init
-            - unit
+            - latest-tag
