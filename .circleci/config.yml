@@ -13,12 +13,23 @@ executors:
       RUN_SLOW_STREAM: false
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
-  init:
+  checkout:
     executor: bxgo
     steps:
       - attach_workspace:
           at: /home/circleci/go
       - checkout
+      - persist_to_workspace:
+          root: /home/circleci/go/
+          paths:
+            - src
+            - pkg
+            - bin
+  init:
+    executor: bxgo
+    steps:
+      - attach_workspace:
+          at: /home/circleci/go
       - restore_cache:
           keys:
             - v1-go-mod-{{checksum "go.sum"}}
@@ -131,11 +142,12 @@ jobs:
               ]
             }
           event: fail
-  latest-tag:
+  checkout-tag:
     executor: bxgo
     steps:
       - attach_workspace:
           at: /home/circleci/go
+      - checkout
       - run:
           name: checkout latest tag
           command: |
@@ -153,8 +165,11 @@ workflows:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
+      - checkout
       - init:
           context: circleci
+          requires:
+            - checkout
       - unit:
           context: slack
           requires:
@@ -176,23 +191,24 @@ workflows:
 #    when:
 #      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
+      - checkout-tag
       - init:
-          context:
-            - circleci
-      - latest-tag:
+          context: circleci
           requires:
-            - init
+            - checkout-tag
       - unit:
           requires:
-            - latest-tag
+            - init
       - integration-testnet:
           context:
             - trader-api-sdk
           requires:
-            - latest-tag
+            - init
+            - unit
       - integration-mainnet:
           context:
             - slack
             - trader-api-sdk
           requires:
-            - latest-tag
+            - init
+            - unit
