@@ -22,9 +22,9 @@ jobs:
       - run:
           name: Export build details
           command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
-            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> $BASH_ENV
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> src/.git-env
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> src/.git-env
+            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> src/.git-env
       - persist_to_workspace:
           root: /home/circleci/go/
           paths:
@@ -96,7 +96,7 @@ jobs:
       - run:
           name: Export build details
           command: |
-            source $BASH_ENV
+            source src/.git-env
             echo $BRANCH
       - run:
           name: GRPC Examples (mainnet)
@@ -159,9 +159,9 @@ jobs:
       - run:
           name: Export build details
           command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
-            echo 'export BRANCH="$(git describe --tags --abbrev=0)"' >> $BASH_ENV
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> src/.git-env
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> src/.git-env
+            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> src/.git-env
       - persist_to_workspace:
           root: /home/circleci/go/
           paths:
