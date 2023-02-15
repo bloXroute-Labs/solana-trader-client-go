@@ -11,7 +11,7 @@ executors:
       GOTRACEBACK: all
       RUN_TRADES: false
       RUN_SLOW_STREAM: false
-      BUILD_ENV: src/.build-env
+      BUILD_ENV: /home/circleci/go/src/.build-env
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
   checkout:
@@ -23,8 +23,6 @@ jobs:
       - run:
           name: Export build details
           command: |
-            echo $(pwd)
-            ls
             touch $BUILD_ENV
             echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BUILD_ENV
             echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BUILD_ENV
