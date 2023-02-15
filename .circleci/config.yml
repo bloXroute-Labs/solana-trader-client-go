@@ -19,6 +19,12 @@ jobs:
       - attach_workspace:
           at: /home/circleci/go
       - checkout
+      - run:
+          name: Export build details
+          command: |
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
+            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> $BASH_ENV
       - persist_to_workspace:
           root: /home/circleci/go/
           paths:
@@ -90,9 +96,8 @@ jobs:
       - run:
           name: Export build details
           command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
             source $BASH_ENV
+            echo $BRANCH
       - run:
           name: GRPC Examples (mainnet)
           command: |
@@ -112,7 +117,7 @@ jobs:
           branch_pattern: develop
           custom: |
             {
-              "text": "solana-trader-client-go Build failed [develop]",
+              "text": "solana-trader-client-go Build failed [$BRANCH]",
               "blocks": [
                 {
                   "type": "header",
@@ -148,9 +153,15 @@ jobs:
           at: /home/circleci/go
       - checkout
       - run:
-          name: checkout latest tag
+          name: Checkout latest tag
           command: |
             git checkout $(git describe --tags --abbrev=0)
+      - run:
+          name: Export build details
+          command: |
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
+            echo 'export BRANCH="$(git describe --tags --abbrev=0)"' >> $BASH_ENV
       - persist_to_workspace:
           root: /home/circleci/go/
           paths:
