@@ -59,6 +59,7 @@ jobs:
       - run:
           name: GRPC Examples (testnet)
           command: |
+            echo $(git rev-parse HEAD)
             unset PRIVATE_KEY
             API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
       - run:
