@@ -23,6 +23,8 @@ jobs:
       - run:
           name: Export build details
           command: |
+            echo $(pwd)
+            ls
             touch $BUILD_ENV
             echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BUILD_ENV
             echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BUILD_ENV
