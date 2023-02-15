@@ -11,6 +11,7 @@ executors:
       GOTRACEBACK: all
       RUN_TRADES: false
       RUN_SLOW_STREAM: false
+      BUILD_ENV: src/.build-env
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
   checkout:
@@ -22,9 +23,10 @@ jobs:
       - run:
           name: Export build details
           command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> src/.git-env
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> src/.git-env
-            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> src/.git-env
+            touch $BUILD_ENV
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BUILD_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BUILD_ENV
+            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> $BUILD_ENV
       - persist_to_workspace:
           root: /home/circleci/go/
           paths:
@@ -96,7 +98,7 @@ jobs:
       - run:
           name: Export build details
           command: |
-            source src/.git-env
+            source $BUILD_ENV
             echo $BRANCH
       - run:
           name: GRPC Examples (mainnet)
@@ -159,9 +161,10 @@ jobs:
       - run:
           name: Export build details
           command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> src/.git-env
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> src/.git-env
-            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> src/.git-env
+            touch $BUILD_ENV
+            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BUILD_ENV
+            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BUILD_ENV
+            echo 'export BRANCH="$(git rev-parse --abbrev-ref HEAD)"' >> $BUILD_ENV
       - persist_to_workspace:
           root: /home/circleci/go/
           paths:
