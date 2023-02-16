@@ -322,7 +322,7 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-// SubmitOrder builds a perp order, signs it, and submits to the network.
+// SubmitPerpOrder builds a perp order, signs it, and submits to the network.
 func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := g.PostPerpOrder(ctx, request)
 	if err != nil {
