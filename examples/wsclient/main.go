@@ -62,6 +62,7 @@ func run() bool {
 	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
+	failed = failed || logCall("callTokenAccountsWS", func() bool { return callTokenAccountsWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
 
@@ -291,6 +292,22 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 	}
 
 	fmt.Println()
+	return false
+}
+
+func callTokenAccountsWS(w *provider.WSClient) bool {
+	log.Info("getting token accounts")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	response, err := w.GetTokenAccounts(ctx, "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
+		return true
+	}
+
+	log.Info(response)
 	return false
 }
 

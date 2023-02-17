@@ -244,11 +244,22 @@ func (h *HTTPClient) GetUnsettled(ctx context.Context, market string, owner stri
 	return result, nil
 }
 
-// GetAccountBalance returns all OpenOrders accounts for a given market with the amountsctx context.Context,  of unsettled funds
+// GetAccountBalance returns all token amounts (settled, unsettled, locked) for a given wallet
 func (h *HTTPClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/account/balance?ownerAddress=%s", h.baseURL, owner)
 	result := new(pb.GetAccountBalanceResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetTokenAccounts returns all the token accounts and their balances for a given wallet
+func (h *HTTPClient) GetTokenAccounts(ctx context.Context, owner string) (*pb.GetTokenAccountsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/account/token-accounts?ownerAddress=%s", h.baseURL, owner)
+	result := new(pb.GetTokenAccountsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetTokenAccountsResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
 		return nil, err
 	}
 
