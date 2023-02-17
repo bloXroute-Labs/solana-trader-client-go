@@ -189,9 +189,14 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
-// GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
+// GetAccountBalance returns all token amounts (settled, unsettled, locked) for a given wallet
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
+}
+
+// GetTokenAccounts returns all the token accounts and their balances for a given wallet
+func (g *GRPCClient) GetTokenAccounts(ctx context.Context, owner string) (*pb.GetTokenAccountsResponse, error) {
+	return g.apiClient.GetTokenAccounts(ctx, &pb.GetTokenAccountsRequest{OwnerAddress: owner})
 }
 
 // GetPrice returns the USDC price of requested tokens

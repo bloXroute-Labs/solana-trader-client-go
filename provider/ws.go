@@ -222,10 +222,20 @@ func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress
 	return &response, nil
 }
 
-// GetAccountBalance returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+// GetAccountBalance returns all token amounts (settled, unsettled, locked) for a given wallet
 func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	var response pb.GetAccountBalanceResponse
 	err := w.conn.Request(ctx, "GetAccountBalance", &pb.GetAccountBalanceRequest{OwnerAddress: owner}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetTokenAccounts returns all the token accounts and their balances for a given wallet
+func (w *WSClient) GetTokenAccounts(ctx context.Context, owner string) (*pb.GetTokenAccountsResponse, error) {
+	var response pb.GetTokenAccountsResponse
+	err := w.conn.Request(ctx, "GetTokenAccounts", &pb.GetTokenAccountsRequest{OwnerAddress: owner}, &response)
 	if err != nil {
 		return nil, err
 	}
