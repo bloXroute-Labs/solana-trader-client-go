@@ -71,6 +71,7 @@ func run() bool {
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
 	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
+	failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
@@ -236,6 +237,22 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 	}
 
 	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsGRPC(g *provider.GRPCClient) bool {
+	log.Info("getting token accounts")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	response, err := g.GetTokenAccounts(ctx, "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request: %v", err)
+		return true
+	}
+
+	log.Info(response)
 	return false
 }
 
@@ -1053,11 +1070,11 @@ func callPricesGRPCStream(g *provider.GRPCClient) bool {
 
 	// Stream response
 	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL"})
-
 	if err != nil {
 		log.Errorf("error with GetPrices stream request: %v", err)
 		return true
 	}
+
 	stream.Into(ch)
 	for i := 1; i <= 3; i++ {
 		_, ok := <-ch

@@ -77,6 +77,7 @@ func run() bool {
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
 
@@ -266,6 +267,21 @@ func callGetAccountBalanceHTTP() bool {
 	}
 
 	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	response, err := h.GetTokenAccounts(ctx, "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request: %v", err)
+		return true
+	}
+
+	log.Info(response)
 	return false
 }
 
