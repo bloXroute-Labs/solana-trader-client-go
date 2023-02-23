@@ -182,20 +182,10 @@ func (w *WSClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb
 	return &response, nil
 }
 
-// PostDepositCollateral returns a partially signed transaction for posting collateral
-func (w *WSClient) PostDepositCollateral(ctx context.Context, req *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
-	var response pb.PostDepositCollateralResponse
-	err := w.conn.Request(ctx, "PostDepositCollateral", req, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
-func (w *WSClient) PostWithdrawCollateral(ctx context.Context, req *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
-	var response pb.PostWithdrawCollateralResponse
-	err := w.conn.Request(ctx, "PostWithdrawCollateral", req, &response)
+// PostManageCollateral returns a partially signed transaction for managing collateral
+func (w *WSClient) PostManageCollateral(ctx context.Context, req *pb.PostManageCollateralRequest) (*pb.PostManageCollateralResponse, error) {
+	var response pb.PostManageCollateralResponse
+	err := w.conn.Request(ctx, "PostManageCollateral", req, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -652,8 +642,8 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-func (w *WSClient) SubmitDepositCollateral(ctx context.Context, req *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
-	resp, err := w.PostDepositCollateral(ctx, req)
+func (w *WSClient) SubmitManageCollateral(ctx context.Context, req *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostManageCollateral(ctx, req)
 	if err != nil {
 		return "", err
 	}
@@ -672,16 +662,6 @@ func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserR
 
 func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrderRequest, skipPreFlight bool) (interface{}, interface{}) {
 	resp, err := w.PostPerpOrder(ctx, req)
-	if err != nil {
-		return "", err
-	}
-
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
-}
-
-// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitWithdrawCollateral(ctx context.Context, req *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (interface{}, interface{}) {
-	resp, err := w.PostWithdrawCollateral(ctx, req)
 	if err != nil {
 		return "", err
 	}

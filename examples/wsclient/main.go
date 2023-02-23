@@ -121,9 +121,9 @@ func run() bool {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
-		failed = failed || logCall("callDepositCollateral", func() bool { return callDepositCollateral(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateral", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
-		failed = failed || logCall("callWithdrawCollateral", func() bool { return callWithdrawCollateral(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateral", func() bool { return callManageCollateralWithdraw(w, ownerAddr) })
 	}
 	return failed
 }
@@ -1202,42 +1202,48 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callWithdrawCollateral(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting callWithdrawCollateral test")
+func callManageCollateralWithdraw(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callManageCollateral withdraw test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitWithdrawCollateral(ctx, &pb.PostWithdrawCollateralRequest{
-		Project:      pb.Project_P_DRIFT,
-		OwnerAddress: ownerAddr,
-		Amount:       1,
-		Contract:     common.PerpContract_SOL_PERP,
+	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+		Project:        pb.Project_P_DRIFT,
+		OwnerAddress:   ownerAddr,
+		Amount:         1,
+		Contract:       common.PerpContract_SOL_PERP,
+		AccountAddress: "",
+		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
+		Token:          common.PerpCollateralToken_PCTK_SOL,
 	}, false)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callWithdrawCollateral signature : %s", sig)
+	log.Infof("callManageCollateral signature : %s", sig)
 	return false
 }
 
-func callDepositCollateral(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting callDepositCollateral test")
+func callManageCollateralDeposit(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callManageCollateral deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitDepositCollateral(ctx, &pb.PostDepositCollateralRequest{
-		Project:      pb.Project_P_DRIFT,
-		OwnerAddress: ownerAddr,
-		Amount:       1,
-		Contract:     common.PerpContract_SOL_PERP,
+	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+		Project:        pb.Project_P_DRIFT,
+		OwnerAddress:   ownerAddr,
+		Amount:         1,
+		Contract:       common.PerpContract_SOL_PERP,
+		AccountAddress: "",
+		Type:           common.PerpCollateralType_PCT_DEPOSIT,
+		Token:          common.PerpCollateralToken_PCTK_SOL,
 	}, false)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callDepositCollateral signature : %s", sig)
+	log.Infof("callManageCollateral signature : %s", sig)
 	return false
 }
