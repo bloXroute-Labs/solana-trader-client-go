@@ -117,6 +117,11 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(w, ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(w, ownerAddr) })
+
+	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(w, ownerAddr) })
+	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(w, ownerAddr) })
+	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts(w) })
+
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
@@ -124,6 +129,10 @@ func run() bool {
 		failed = failed || logCall("callManageCollateral", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateral", func() bool { return callManageCollateralWithdraw(w, ownerAddr) })
+
+		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(w, ownerAddr) })
+		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(w, ownerAddr) })
+		failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(w, ownerAddr) })
 	}
 	return failed
 }
@@ -1243,5 +1252,128 @@ func callManageCollateralDeposit(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callGetOpenPerpOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetOpenPerpOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetOpenPerpOrder(ctx, &pb.GetOpenPerpOrderRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contract:       common.PerpContract_SOL_PERP,
+		Project:        pb.Project_P_DRIFT,
+		OrderID:        1,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetOpenPerpOrder resp : %s", user)
+	return false
+}
+
+func callPostSettlePNL(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting SubmitPostSettlePNL deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitPostSettlePNL(ctx, &pb.PostSettlePNLRequest{
+		Project:               pb.Project_P_DRIFT,
+		OwnerAddress:          ownerAddr,
+		SettleeAccountAddress: ownerAddr,
+		Contract:              common.PerpContract_SOL_PERP,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("SubmitPostSettlePNL signature : %s", sig)
+	return false
+}
+
+func callPostSettlePNLs(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostSettlePNLs deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
+		Project:                pb.Project_P_DRIFT,
+		OwnerAddress:           ownerAddr,
+		SettleAccountAddresses: []string{ownerAddr},
+		Contract:               common.PerpContract_SOL_PERP,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostSettlePNLs signature : %s", sig)
+	return false
+}
+
+func callGetAssets(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetAssets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetAssets(ctx, &pb.GetAssetsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contract:       common.PerpContract_SOL_PERP,
+		Project:        pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetAssets resp : %s", user)
+	return false
+}
+
+func callGetContracts(w *provider.WSClient) bool {
+	log.Info("starting callGetContracts test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetPerpContracts(ctx, &pb.GetContractsRequest{
+		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
+		Project:   pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetAssets resp : %s", user)
+	return false
+}
+
+func callPostLiquidatePerp(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostLiquidatePerp deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitPostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
+		Project:               pb.Project_P_DRIFT,
+		OwnerAddress:          ownerAddr,
+		Amount:                1,
+		Contract:              common.PerpContract_SOL_PERP,
+		SettleeAccountAddress: ownerAddr,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostLiquidatePerp signature : %s", sig)
 	return false
 }

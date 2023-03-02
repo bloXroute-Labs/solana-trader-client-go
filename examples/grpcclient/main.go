@@ -119,6 +119,11 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(g, ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(g, ownerAddr) })
+
+	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(g, ownerAddr) })
+	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(g, ownerAddr) })
+	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts(g) })
+
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(g, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(g, ownerAddr) })
@@ -126,6 +131,10 @@ func run() bool {
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g, ownerAddr) })
+
+		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(g, ownerAddr) })
+		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(g, ownerAddr) })
+		failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(g, ownerAddr) })
 	}
 	return failed
 }
@@ -1355,5 +1364,128 @@ func callManageCollateralDeposit(g *provider.GRPCClient, ownerAddr string) bool 
 		return true
 	}
 	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callGetOpenPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetOpenPerpOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetOpenPerpOrder(ctx, &pb.GetOpenPerpOrderRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contract:       common.PerpContract_SOL_PERP,
+		Project:        pb.Project_P_DRIFT,
+		OrderID:        1,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetOpenPerpOrder resp : %s", user)
+	return false
+}
+
+func callPostSettlePNL(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callManageCollateral deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitPostSettlePNL(ctx, &pb.PostSettlePNLRequest{
+		Project:               pb.Project_P_DRIFT,
+		OwnerAddress:          ownerAddr,
+		SettleeAccountAddress: ownerAddr,
+		Contract:              common.PerpContract_SOL_PERP,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callPostSettlePNLs(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callManageCollateral deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
+		Project:                pb.Project_P_DRIFT,
+		OwnerAddress:           ownerAddr,
+		SettleAccountAddresses: []string{ownerAddr},
+		Contract:               common.PerpContract_SOL_PERP,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostSettlePNLs signature : %s", sig)
+	return false
+}
+
+func callGetAssets(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetAssets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetAssets(ctx, &pb.GetAssetsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contract:       common.PerpContract_SOL_PERP,
+		Project:        pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetAssets resp : %s", user)
+	return false
+}
+
+func callGetContracts(g *provider.GRPCClient) bool {
+	log.Info("starting callGetContracts test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetPerpContracts(ctx, &pb.GetContractsRequest{
+		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
+		Project:   pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetAssets resp : %s", user)
+	return false
+}
+
+func callPostLiquidatePerp(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callPostLiquidatePerp deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitPostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
+		Project:               pb.Project_P_DRIFT,
+		OwnerAddress:          ownerAddr,
+		Amount:                1,
+		Contract:              common.PerpContract_SOL_PERP,
+		SettleeAccountAddress: ownerAddr,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostLiquidatePerp signature : %s", sig)
 	return false
 }

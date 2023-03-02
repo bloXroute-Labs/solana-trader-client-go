@@ -169,6 +169,41 @@ func (g *GRPCClient) PostManageCollateral(ctx context.Context, request *pb.PostM
 	return g.apiClient.PostManageCollateral(ctx, request)
 }
 
+// PostSettlePNL returns a partially signed transaction for settling PNL
+func (g *GRPCClient) PostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest) (*pb.PostSettlePNLResponse, error) {
+	return g.apiClient.PostSettlePNL(ctx, request)
+}
+
+// PostSettlePNLs returns partially signed transactions for settling PNLs
+func (g *GRPCClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest) (*pb.PostSettlePNLsResponse, error) {
+	return g.apiClient.PostSettlePNLs(ctx, request)
+}
+
+// GetAssets returns list of assets for user
+func (g *GRPCClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
+	return g.apiClient.GetAssets(ctx, request)
+}
+
+// GetPerpContracts returns list of available perp contracts
+func (g *GRPCClient) GetPerpContracts(ctx context.Context, request *pb.GetContractsRequest) (*pb.GetContractsResponse, error) {
+	return g.apiClient.GetPerpContracts(ctx, request)
+}
+
+// PostLiquidatePerp returns a partially signed transaction for liquidating perp position
+func (g *GRPCClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
+	return g.apiClient.PostLiquidatePerp(ctx, request)
+}
+
+// GetPerpPosition returns a perp position
+func (g *GRPCClient) GetPerpPosition(ctx context.Context, request *pb.GetPerpPositionRequest) (*pb.GetPerpPositionResponse, error) {
+	return g.apiClient.GetPerpPosition(ctx, request)
+}
+
+// GetOpenPerpOrder returns an open perp order
+func (g *GRPCClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
+	return g.apiClient.GetOpenPerpOrder(ctx, request)
+}
+
 // GetPerpPositions returns all perp positions by owner address and market
 func (g *GRPCClient) GetPerpPositions(ctx context.Context, request *pb.GetPerpPositionsRequest) (*pb.GetPerpPositionsResponse, error) {
 	return g.apiClient.GetPerpPositions(ctx, request)
@@ -324,9 +359,7 @@ func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, skipPreFlight)
+	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
@@ -336,7 +369,7 @@ func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
@@ -346,7 +379,7 @@ func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.Pos
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -401,7 +434,7 @@ func (g *GRPCClient) SubmitClosePerpPositions(ctx context.Context, request *pb.P
 	}
 	var msgs []*pb.TransactionMessage
 	for _, txn := range order.Transactions {
-		msgs = append(msgs, &pb.TransactionMessage{Content: txn})
+		msgs = append(msgs, txn)
 	}
 
 	return g.signAndSubmitBatch(ctx, msgs, opts)
@@ -413,9 +446,7 @@ func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 	if err != nil {
 		return "", err
 	}
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: resp.Transaction,
-	}, skipPreFlight)
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
@@ -424,9 +455,34 @@ func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPe
 	if err != nil {
 		return "", err
 	}
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: resp.Transaction,
-	}, skipPreFlight)
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostSettlePNL builds a settle-pnl txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostSettlePNL(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostSettlePNLs builds one or many settle-pnl txn, signs and submits them to the network.
+func (g *GRPCClient) SubmitPostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostSettlePNLs(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitPostLiquidatePerp builds a liquidate-perp txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostLiquidatePerp(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitManageCollateral builds a deposit collateral transaction then signs it, and submits to the network.
@@ -435,9 +491,7 @@ func (g *GRPCClient) SubmitManageCollateral(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return "", err
 	}
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: resp.Transaction,
-	}, skipPreFlight)
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
