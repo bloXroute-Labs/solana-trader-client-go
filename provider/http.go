@@ -226,7 +226,7 @@ func (h *HTTPClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest
 }
 
 // GetPerpContracts returns list of available perp contracts
-func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetContractsRequest) (*pb.GetContractsResponse, error) {
+func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
 	var strs []string
 	for _, c := range request.Contracts {
 		strs = append(strs, fmt.Sprint(c))
@@ -234,8 +234,8 @@ func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetContra
 
 	contractsArg := convertStrSliceArgument("contracts", false, strs)
 	url := fmt.Sprintf("%s/api/v1/trade/perp/contracts?project=%s%s", h.baseURL, request.Project, contractsArg)
-	positions := new(pb.GetContractsResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+	positions := new(pb.GetPerpContractsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPerpContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -250,19 +250,6 @@ func (h *HTTPClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiqu
 		return nil, err
 	}
 	return response, nil
-}
-
-// GetPerpPosition returns a perp position
-func (h *HTTPClient) GetPerpPosition(ctx context.Context, request *pb.GetPerpPositionRequest) (*pb.GetPerpPositionResponse, error) {
-
-	url := fmt.Sprintf("%s/api/v1/trade/perp/position?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s&clientOrderid=%d&orderid=%d", h.baseURL,
-		request.OwnerAddress, request.AccountAddress, request.Project, request.Contract, request.ClientOrderID, request.OrderID)
-	position := new(pb.GetPerpPositionResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetPerpPositionResponse](ctx, url, h.httpClient, position, h.authHeader); err != nil {
-		return nil, err
-	}
-
-	return position, nil
 }
 
 // GetOpenPerpOrder returns an open perp order

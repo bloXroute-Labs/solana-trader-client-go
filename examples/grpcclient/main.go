@@ -1457,7 +1457,7 @@ func callGetContracts(g *provider.GRPCClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := g.GetPerpContracts(ctx, &pb.GetContractsRequest{
+	user, err := g.GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
 		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
 		Project:   pb.Project_P_DRIFT,
 	})

@@ -223,8 +223,8 @@ func (w *WSClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) 
 }
 
 // GetPerpContracts returns list of available perp contracts
-func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetContractsRequest) (*pb.GetContractsResponse, error) {
-	var response pb.GetContractsResponse
+func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
+	var response pb.GetPerpContractsResponse
 	err := w.conn.Request(ctx, "GetPerpContracts", request, &response)
 	if err != nil {
 		return nil, err
@@ -236,16 +236,6 @@ func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetContract
 func (w *WSClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	var response pb.PostLiquidatePerpResponse
 	err := w.conn.Request(ctx, "PostLiquidatePerp", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetPerpPosition returns a perp position
-func (w *WSClient) GetPerpPosition(ctx context.Context, request *pb.GetPerpPositionRequest) (*pb.GetPerpPositionResponse, error) {
-	var response pb.GetPerpPositionResponse
-	err := w.conn.Request(ctx, "GetPerpPosition", request, &response)
 	if err != nil {
 		return nil, err
 	}

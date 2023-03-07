@@ -185,18 +185,13 @@ func (g *GRPCClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest
 }
 
 // GetPerpContracts returns list of available perp contracts
-func (g *GRPCClient) GetPerpContracts(ctx context.Context, request *pb.GetContractsRequest) (*pb.GetContractsResponse, error) {
+func (g *GRPCClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
 	return g.apiClient.GetPerpContracts(ctx, request)
 }
 
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (g *GRPCClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	return g.apiClient.PostLiquidatePerp(ctx, request)
-}
-
-// GetPerpPosition returns a perp position
-func (g *GRPCClient) GetPerpPosition(ctx context.Context, request *pb.GetPerpPositionRequest) (*pb.GetPerpPositionResponse, error) {
-	return g.apiClient.GetPerpPosition(ctx, request)
 }
 
 // GetOpenPerpOrder returns an open perp order
