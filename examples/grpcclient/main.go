@@ -1415,10 +1415,10 @@ func callPostSettlePNLs(g *provider.GRPCClient, ownerAddr string) bool {
 	defer cancel()
 
 	sig, err := g.SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
-		Project:                pb.Project_P_DRIFT,
-		OwnerAddress:           ownerAddr,
-		SettleAccountAddresses: []string{ownerAddr},
-		Contract:               common.PerpContract_SOL_PERP,
+		Project:                 pb.Project_P_DRIFT,
+		OwnerAddress:            ownerAddr,
+		SettleeAccountAddresses: []string{ownerAddr},
+		Contract:                common.PerpContract_SOL_PERP,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
