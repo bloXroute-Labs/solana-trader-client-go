@@ -254,7 +254,7 @@ func (h *HTTPClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiqu
 
 // GetOpenPerpOrder returns an open perp order
 func (h *HTTPClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/positions?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s&clientOrderid=%d&orderid=%d", h.baseURL,
+	url := fmt.Sprintf("%s/api/v1/trade/perp/open-order?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s&clientOrderid=%d&orderid=%d", h.baseURL,
 		request.OwnerAddress, request.AccountAddress, request.Project, request.Contract, request.ClientOrderID, request.OrderID)
 	positions := new(pb.GetOpenPerpOrderResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetOpenPerpOrderResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
