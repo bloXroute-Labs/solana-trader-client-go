@@ -1090,10 +1090,10 @@ func callPostSettlePNLs(ownerAddr string) bool {
 	defer cancel()
 
 	sig, err := httpClient().SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
-		Project:                pb.Project_P_DRIFT,
-		OwnerAddress:           ownerAddr,
-		SettleAccountAddresses: []string{ownerAddr},
-		Contract:               common.PerpContract_SOL_PERP,
+		Project:                 pb.Project_P_DRIFT,
+		OwnerAddress:            ownerAddr,
+		SettleeAccountAddresses: []string{ownerAddr},
+		Contract:                common.PerpContract_SOL_PERP,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
@@ -1132,7 +1132,7 @@ func callGetContracts() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := httpClient().GetPerpContracts(ctx, &pb.GetContractsRequest{
+	user, err := httpClient().GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
 		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
 		Project:   pb.Project_P_DRIFT,
 	})
