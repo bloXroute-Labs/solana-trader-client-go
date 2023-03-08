@@ -183,14 +183,25 @@ func (h *HTTPClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*
 	return resp, nil
 }
 
-// PostManageCollateral returns a partially signed transaction for managing collateral
-func (h *HTTPClient) PostManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest) (*pb.PostManageCollateralResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/managecollateral", h.baseURL)
-	response := new(pb.PostManageCollateralResponse)
-	if err := connections.HTTPPostWithClient[*pb.PostManageCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+// PostDepositCollateral returns a partially signed transaction for posting collateral
+func (h *HTTPClient) PostDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/collateral/deposit", h.baseURL)
+	response := new(pb.PostDepositCollateralResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDepositCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
 	}
 	return response, nil
+}
+
+// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
+func (h *HTTPClient) PostWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/collateral/withdraw", h.baseURL)
+	response := new(pb.PostWithdrawCollateralResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostWithdrawCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
@@ -379,9 +390,20 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
-// SubmitManageCollateral builds a deposit collateral transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
-	resp, err := h.PostManageCollateral(ctx, request)
+// SubmitDepositCollateral builds a deposit collateral transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := h.PostDepositCollateral(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return h.signAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction,
+	}, skipPreFlight)
+}
+
+// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := h.PostWithdrawCollateral(ctx, request)
 	if err != nil {
 		return "", err
 	}
