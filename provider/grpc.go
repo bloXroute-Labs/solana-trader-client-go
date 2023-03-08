@@ -164,14 +164,9 @@ func (g *GRPCClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*
 	return g.apiClient.GetUser(ctx, request)
 }
 
-// PostDepositCollateral returns a partially signed transaction for posting collateral
-func (g *GRPCClient) PostDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
-	return g.apiClient.PostDepositCollateral(ctx, request)
-}
-
-// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
-func (g *GRPCClient) PostWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
-	return g.apiClient.PostWithdrawCollateral(ctx, request)
+// PostManageCollateral returns a partially signed transaction for managing collateral
+func (g *GRPCClient) PostManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest) (*pb.PostManageCollateralResponse, error) {
+	return g.apiClient.PostManageCollateral(ctx, request)
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
@@ -434,20 +429,9 @@ func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPe
 	}, skipPreFlight)
 }
 
-// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitWithdrawCollateral(ctx context.Context, request *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostWithdrawCollateral(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: resp.Transaction,
-	}, skipPreFlight)
-}
-
-// SubmitDepositCollateral builds a deposit collateral transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitDepositCollateral(ctx context.Context, request *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostDepositCollateral(ctx, request)
+// SubmitManageCollateral builds a deposit collateral transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostManageCollateral(ctx, request)
 	if err != nil {
 		return "", err
 	}
