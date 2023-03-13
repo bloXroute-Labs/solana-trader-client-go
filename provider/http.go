@@ -60,7 +60,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	}
 }
 
-// GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+// GetOrderbook returns the requested market's orderbook (e.h. asks and bids). Set limit to 0 for all bids / asks.
 func (h *HTTPClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
 	orderbook := new(pb.GetOrderbookResponse)
@@ -71,7 +71,7 @@ func (h *HTTPClient) GetOrderbook(ctx context.Context, market string, limit uint
 	return orderbook, nil
 }
 
-// GetMarketDepth returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+// GetMarketDepth returns the requested market's coalesced price data (e.h. asks and bids). Set limit to 0 for all bids / asks.
 func (h *HTTPClient) GetMarketDepth(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetMarketDepthResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/depth/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
 	mktDepth := new(pb.GetMarketDepthResponse)
@@ -191,6 +191,77 @@ func (h *HTTPClient) PostManageCollateral(ctx context.Context, request *pb.PostM
 		return nil, err
 	}
 	return response, nil
+}
+
+// PostSettlePNL returns a partially signed transaction for settling PNL
+func (h *HTTPClient) PostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest) (*pb.PostSettlePNLResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/settle-pnl", h.baseURL)
+	response := new(pb.PostSettlePNLResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostSettlePNLResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// PostSettlePNLs returns partially signed transactions for settling PNLs
+func (h *HTTPClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest) (*pb.PostSettlePNLsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/settle-pnls", h.baseURL)
+	response := new(pb.PostSettlePNLsResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostSettlePNLsResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// GetAssets returns list of assets for user
+func (h *HTTPClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/assets?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.Project, request.Contract)
+	positions := new(pb.GetAssetsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetAssetsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return positions, nil
+}
+
+// GetPerpContracts returns list of available perp contracts
+func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
+	var strs []string
+	for _, c := range request.Contracts {
+		strs = append(strs, fmt.Sprint(c))
+	}
+
+	contractsArg := convertStrSliceArgument("contracts", false, strs)
+	url := fmt.Sprintf("%s/api/v1/trade/perp/contracts?project=%s%s", h.baseURL, request.Project, contractsArg)
+	positions := new(pb.GetPerpContractsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPerpContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return positions, nil
+}
+
+// PostLiquidatePerp returns a partially signed transaction for liquidating perp position
+func (h *HTTPClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/liquidate", h.baseURL)
+	response := new(pb.PostLiquidatePerpResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostLiquidatePerpResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// GetOpenPerpOrder returns an open perp order
+func (h *HTTPClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/perp/open-order-by-id?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s&clientOrderID=%d&orderID=%d", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.Project, request.Contract, request.ClientOrderID, request.OrderID)
+	order := new(pb.GetOpenPerpOrderResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOpenPerpOrderResponse](ctx, url, h.httpClient, order, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 // GetPerpPositions returns all perp positions by owner address and market
@@ -379,15 +450,40 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
+// SubmitPostSettlePNL builds a settle-pnl txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest, skipPreFlight bool) (string, error) {
+	resp, err := h.PostSettlePNL(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return h.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostSettlePNLs builds one or many settle-pnl txn, signs and submits them to the network.
+func (h *HTTPClient) SubmitPostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostSettlePNLs(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitPostLiquidatePerp builds a liquidate-perp txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest, skipPreFlight bool) (string, error) {
+	resp, err := h.PostLiquidatePerp(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return h.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
 // SubmitManageCollateral builds a deposit collateral transaction then signs it, and submits to the network.
 func (h *HTTPClient) SubmitManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
 	resp, err := h.PostManageCollateral(ctx, request)
 	if err != nil {
 		return "", err
 	}
-	return h.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: resp.Transaction,
-	}, skipPreFlight)
+	return h.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
@@ -433,9 +529,7 @@ func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 		return "", err
 	}
 
-	sig, err := h.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, opts.SkipPreFlight)
+	sig, err := h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 	return sig, err
 }
 
@@ -519,7 +613,7 @@ func (h *HTTPClient) SubmitClosePerpPositions(ctx context.Context, request *pb.P
 
 	var msgs []*pb.TransactionMessage
 	for _, txn := range order.Transactions {
-		msgs = append(msgs, &pb.TransactionMessage{Content: txn})
+		msgs = append(msgs, txn)
 	}
 
 	return h.signAndSubmitBatch(ctx, msgs, opts)
@@ -532,9 +626,7 @@ func (h *HTTPClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, skipPreFlight)
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
@@ -544,9 +636,7 @@ func (h *HTTPClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.Pos
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, skipPreFlight)
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitCreateUser builds a create-user txn, signs and submits it to the network.
@@ -556,9 +646,7 @@ func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, skipPreFlight)
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
@@ -568,9 +656,7 @@ func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPe
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, skipPreFlight)
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.

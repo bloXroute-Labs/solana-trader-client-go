@@ -192,6 +192,66 @@ func (w *WSClient) PostManageCollateral(ctx context.Context, req *pb.PostManageC
 	return &response, nil
 }
 
+// PostSettlePNL returns a partially signed transaction for settling PNL
+func (w *WSClient) PostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest) (*pb.PostSettlePNLResponse, error) {
+	var response pb.PostSettlePNLResponse
+	err := w.conn.Request(ctx, "PostSettlePNL", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostSettlePNLs returns partially signed transactions for settling PNLs
+func (w *WSClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest) (*pb.PostSettlePNLsResponse, error) {
+	var response pb.PostSettlePNLsResponse
+	err := w.conn.Request(ctx, "PostSettlePNLs", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetAssets returns list of assets for user
+func (w *WSClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
+	var response pb.GetAssetsResponse
+	err := w.conn.Request(ctx, "GetAssets", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetPerpContracts returns list of available perp contracts
+func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
+	var response pb.GetPerpContractsResponse
+	err := w.conn.Request(ctx, "GetPerpContracts", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostLiquidatePerp returns a partially signed transaction for liquidating perp position
+func (w *WSClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
+	var response pb.PostLiquidatePerpResponse
+	err := w.conn.Request(ctx, "PostLiquidatePerp", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOpenPerpOrder returns an open perp order
+func (w *WSClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
+	var response pb.GetOpenPerpOrderResponse
+	err := w.conn.Request(ctx, "GetOpenPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetPerpPositions returns all perp positions by owner address and market
 func (w *WSClient) GetPerpPositions(ctx context.Context, request *pb.GetPerpPositionsRequest) (*pb.GetPerpPositionsResponse, error) {
 	var response pb.GetPerpPositionsResponse
@@ -403,9 +463,7 @@ func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrde
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, opts.SkipPreFlight)
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -456,7 +514,7 @@ func (w *WSClient) SubmitClosePerpPositions(ctx context.Context, request *pb.Pos
 	}
 	var msgs []*pb.TransactionMessage
 	for _, txn := range resp.Transactions {
-		msgs = append(msgs, &pb.TransactionMessage{Content: txn})
+		msgs = append(msgs, txn)
 	}
 
 	return w.signAndSubmitBatch(ctx, msgs, opts)
@@ -470,7 +528,7 @@ func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCa
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
@@ -480,7 +538,7 @@ func (w *WSClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostC
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -642,13 +700,40 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
+// SubmitPostSettlePNL builds a settle-pnl txn, signs and submits it to the network.
+func (w *WSClient) SubmitPostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostSettlePNL(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostSettlePNLs builds one or many settle-pnl txn, signs and submits them to the network.
+func (w *WSClient) SubmitPostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostSettlePNLs(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitPostLiquidatePerp builds a liquidate-perp txn, signs and submits it to the network.
+func (w *WSClient) SubmitPostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostLiquidatePerp(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
 func (w *WSClient) SubmitManageCollateral(ctx context.Context, req *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
 	resp, err := w.PostManageCollateral(ctx, req)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserRequest, skipPreFlight bool) (interface{}, interface{}) {
@@ -657,7 +742,7 @@ func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserR
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrderRequest, skipPreFlight bool) (interface{}, interface{}) {
@@ -666,7 +751,7 @@ func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrde
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) Close() error {
