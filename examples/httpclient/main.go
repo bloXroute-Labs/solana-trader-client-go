@@ -84,10 +84,6 @@ func run() bool {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !cfg.RunTrades {
-		log.Info("skipping trades due to config")
-		return failed
-	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -112,17 +108,19 @@ func run() bool {
 	}
 
 	// Order lifecycle
-	clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
-	failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-	failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-	failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
-	failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
-	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
+	if cfg.RunTrades {
+		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
+		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
+		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
+		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
+		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
+	}
 
+	failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
