@@ -337,7 +337,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 
 	_, err = stream()
 	if err != nil {
-		//demonstration purposes only. will swallow
+		// demonstration purposes only. will swallow
 		log.Infof("subscription error: %v", err)
 	} else {
 		log.Error("subscription should have returned an error")
@@ -386,7 +386,7 @@ func callMarketDepthGRPCStream(g *provider.GRPCClient) bool {
 
 	_, err = stream()
 	if err != nil {
-		//demonstration purposes only. will swallow
+		// demonstration purposes only. will swallow
 		log.Infof("subscription error: %v", err)
 	} else {
 		log.Error("subscription should have returned an error")
