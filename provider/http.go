@@ -127,6 +127,17 @@ func (h *HTTPClient) GetOpenOrders(ctx context.Context, market string, owner str
 	return orders, nil
 }
 
+// GetOrderByID returns an order by id
+func (h *HTTPClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDRequest) (*pb.GetOrderByIDResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/orderbyid/%s?market=%s&project=%s", h.baseURL, in.OrderID, in.Market, in.Project)
+	orders := new(pb.GetOrderByIDResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOrderByIDResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 // GetOpenPerpOrders returns all opened perp orders
 func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	contractsString := convertSliceArgument("contracts", false, request.Contracts)
@@ -152,10 +163,10 @@ func (h *HTTPClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCa
 }
 
 // PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
-func (h *HTTPClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrderResponse, error) {
+func (h *HTTPClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrdersResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/cancel", h.baseURL)
-	response := new(pb.PostCancelPerpOrderResponse)
-	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+	response := new(pb.PostCancelPerpOrdersResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrdersResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -630,13 +641,14 @@ func (h *HTTPClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
-func (h *HTTPClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
-	order, err := h.PostCancelPerpOrders(ctx, request)
+func (h *HTTPClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostCancelPerpOrders(ctx, request)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // SubmitCreateUser builds a create-user txn, signs and submits it to the network.

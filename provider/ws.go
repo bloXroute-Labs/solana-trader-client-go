@@ -132,6 +132,16 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 	return &response, nil
 }
 
+// GetOrderByID returns an order by id
+func (w *WSClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDRequest) (*pb.GetOrderByIDResponse, error) {
+	var response pb.GetOrderByIDResponse
+	err := w.conn.Request(ctx, "GetOrderByID", &pb.GetOrderByIDRequest{OrderID: in.OrderID, Market: in.Market, Project: in.Project}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetOpenPerpOrders returns all opened perp orders
 func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	var response pb.GetOpenPerpOrdersResponse
@@ -532,13 +542,14 @@ func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCa
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
-func (w *WSClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
+func (w *WSClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostCancelPerpOrders(ctx, request)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+	return w.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
