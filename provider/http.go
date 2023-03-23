@@ -838,7 +838,7 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
 func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/orderbook/%s?limit=%d&project=%v", h.baseURL, request.Contract, request.Limit, request.Project)
+	url := fmt.Sprintf("%s/api/v1/market/perp/orderbook/%s?limit=%d&project=%v", h.baseURL, request.Contract, request.Limit, request.Project)
 	orderbook := new(pb.GetPerpOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
 		return nil, err
