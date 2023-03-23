@@ -828,9 +828,9 @@ func callDriftOrderbookHTTP() bool {
 	defer cancel()
 
 	orderbook, err := h.GetPerpOrderbook(ctx, &pb.GetPerpOrderbookRequest{
-		Market:  "SOL-PERP",
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
+		Contract: common.PerpContract_SOL_PERP,
+		Limit:    0,
+		Project:  pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
