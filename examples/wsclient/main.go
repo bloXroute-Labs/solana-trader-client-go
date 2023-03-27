@@ -1024,9 +1024,9 @@ func callDriftOrderbookWS(w *provider.WSClient) bool {
 	log.Info("fetching drift orderbooks...")
 
 	orderbook, err := w.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
-		Market:  "SOL-PERP",
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
+		Contract: common.PerpContract_SOL_PERP,
+		Limit:    0,
+		Project:  pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
@@ -1046,9 +1046,9 @@ func callDriftOrderbookWSStream(w *provider.WSClient) bool {
 	defer cancel()
 
 	stream, err := w.GetPerpOrderbooksStream(ctx, &pb.GetPerpOrderbooksRequest{
-		Markets: []string{"SOL-PERP"},
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
+		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
+		Limit:     0,
+		Project:   pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream request for SOL-PERP: %v", err)

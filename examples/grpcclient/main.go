@@ -1140,9 +1140,9 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 
 	// Stream response
 	stream, err := g.GetPerpOrderbooksStream(ctx, &pb.GetPerpOrderbooksRequest{
-		Markets: []string{"SOL-PERP"},
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
+		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
+		Limit:     0,
+		Project:   pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream stream request: %v", err)
@@ -1163,9 +1163,9 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 
 func callDriftOrderbookGRPC(g *provider.GRPCClient) bool {
 	orderbook, err := g.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
-		Market:  "SOL-PERP",
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
+		Contract: common.PerpContract_SOL_PERP,
+		Limit:    0,
+		Project:  pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
