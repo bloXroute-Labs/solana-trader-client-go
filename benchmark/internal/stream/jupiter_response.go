@@ -1,6 +1,6 @@
 package stream
 
-type jupiterResponse struct {
+type JupiterResponse struct {
 	Routes      []jupiterRoute `json:"data"`
 	TimeTaken   float64        `json:"timeTaken"`
 	ContextSlot uint64         `json:"contextSlot"`

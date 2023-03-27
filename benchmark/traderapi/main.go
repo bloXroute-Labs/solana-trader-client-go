@@ -24,7 +24,7 @@ func main() {
 		Flags: []cli.Flag{
 			utils.SolanaHTTPRPCEndpointFlag,
 			utils.SolanaWSRPCEndpointFlag,
-			APIWSEndpoint,
+			utils.APIWSEndpoint,
 			MarketAddrFlag,
 			DurationFlag,
 			utils.OutputFileFlag,
@@ -51,7 +51,7 @@ func run(c *cli.Context) error {
 	defer cancel()
 
 	marketAddr := c.String(MarketAddrFlag.Name)
-	traderAPIEndpoint := c.String(APIWSEndpoint.Name)
+	traderAPIEndpoint := c.String(utils.APIWSEndpoint.Name)
 	solanaRPCEndpoint := c.String(utils.SolanaHTTPRPCEndpointFlag.Name)
 	solanaWSEndpoint := c.String(utils.SolanaWSRPCEndpointFlag.Name)
 
@@ -171,11 +171,6 @@ func run(c *cli.Context) error {
 }
 
 var (
-	APIWSEndpoint = &cli.StringFlag{
-		Name:  "solana-trader-ws-endpoint",
-		Usage: "Solana Trader API API websocket connection endpoint",
-		Value: "wss://virginia.solana.dex.blxrbdn.com/ws",
-	}
 	MarketAddrFlag = &cli.StringFlag{
 		Name:  "market",
 		Usage: "market to run analysis for",
