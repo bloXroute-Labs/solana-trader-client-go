@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/arrival"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/output"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -24,7 +25,7 @@ func main() {
 		Flags: []cli.Flag{
 			utils.SolanaHTTPRPCEndpointFlag,
 			utils.SolanaWSRPCEndpointFlag,
-			APIWSEndpoint,
+			utils.APIWSEndpoint,
 			MarketAddrFlag,
 			DurationFlag,
 			utils.OutputFileFlag,
@@ -51,7 +52,7 @@ func run(c *cli.Context) error {
 	defer cancel()
 
 	marketAddr := c.String(MarketAddrFlag.Name)
-	traderAPIEndpoint := c.String(APIWSEndpoint.Name)
+	traderAPIEndpoint := c.String(utils.APIWSEndpoint.Name)
 	solanaRPCEndpoint := c.String(utils.SolanaHTTPRPCEndpointFlag.Name)
 	solanaWSEndpoint := c.String(utils.SolanaWSRPCEndpointFlag.Name)
 
@@ -60,11 +61,15 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 
-	traderOS, err := arrival.NewAPIOrderbookStream(traderAPIEndpoint, marketAddr, authHeader)
+	connectCtx, connectCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer connectCancel()
+
+	traderOS, err := stream.NewAPIOrderbookStream(traderAPIEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
-	solanaOS, err := arrival.NewSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
+
+	solanaOS, err := stream.NewSolanaOrderbookStream(connectCtx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
 	if err != nil {
 		return err
 	}
@@ -75,8 +80,8 @@ func run(c *cli.Context) error {
 	defer runCancel()
 
 	var (
-		tradeUpdates  []arrival.StreamUpdate[[]byte]
-		solanaUpdates []arrival.StreamUpdate[arrival.SolanaRawUpdate]
+		tradeUpdates  []stream.RawUpdate[[]byte]
+		solanaUpdates []stream.RawUpdate[stream.SolanaRawUpdate]
 	)
 	errCh := make(chan error, 2)
 
@@ -129,14 +134,14 @@ func run(c *cli.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "could not process trader API updates")
 	}
-	logger.Log().Debugw("processed trader API results", "range", FormatSortRange(traderResults), "count", len(traderResults), "duplicaterange", FormatSortRange(traderDuplicates), "duplicatecount", len(traderDuplicates))
+	logger.Log().Debugw("processed trader API results", "range", output.FormatSortRange(traderResults), "count", len(traderResults), "duplicaterange", output.FormatSortRange(traderDuplicates), "duplicatecount", len(traderDuplicates))
 
 	solanaResults, solanaDuplicates, err := solanaOS.Process(solanaUpdates, removeDuplicates)
 	if err != nil {
 		return errors.Wrap(err, "could not process solana results")
 	}
 
-	logger.Log().Debugw("processed solana results", "range", FormatSortRange(solanaResults), "count", len(solanaResults), "duplicaterange", FormatSortRange(solanaDuplicates), "duplicatecount", len(solanaDuplicates))
+	logger.Log().Debugw("processed solana results", "range", output.FormatSortRange(solanaResults), "count", len(solanaResults), "duplicaterange", output.FormatSortRange(solanaDuplicates), "duplicatecount", len(solanaDuplicates))
 
 	slots := SlotRange(traderResults, solanaResults)
 	logger.Log().Debugw("finished processing data points", "startSlot", slots[0], "endSlot", slots[len(slots)-1], "count", len(slots))
@@ -171,11 +176,6 @@ func run(c *cli.Context) error {
 }
 
 var (
-	APIWSEndpoint = &cli.StringFlag{
-		Name:  "solana-trader-ws-endpoint",
-		Usage: "Solana Trader API API websocket connection endpoint",
-		Value: "wss://virginia.solana.dex.blxrbdn.com/ws",
-	}
 	MarketAddrFlag = &cli.StringFlag{
 		Name:  "market",
 		Usage: "market to run analysis for",

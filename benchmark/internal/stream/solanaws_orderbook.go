@@ -1,4 +1,4 @@
-package arrival
+package stream
 
 import (
 	"context"
@@ -93,7 +93,7 @@ func (s solanaOrderbookStream) Name() string {
 }
 
 // Run stops when parent ctx is canceled
-func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[SolanaRawUpdate], error) {
+func (s solanaOrderbookStream) Run(parent context.Context) ([]RawUpdate[SolanaRawUpdate], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -109,7 +109,7 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[Solan
 
 	s.log().Debug("subscription created")
 
-	messageCh := make(chan StreamUpdate[SolanaRawUpdate], 200)
+	messageCh := make(chan RawUpdate[SolanaRawUpdate], 200)
 
 	// dispatch ask/bid subs
 	go func() {
@@ -125,7 +125,7 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[Solan
 				return
 			}
 
-			messageCh <- NewStreamUpdate(SolanaRawUpdate{
+			messageCh <- NewRawUpdate(SolanaRawUpdate{
 				Data: ar,
 				Side: gserum.SideAsk,
 			})
@@ -144,14 +144,14 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[Solan
 				return
 			}
 
-			messageCh <- NewStreamUpdate(SolanaRawUpdate{
+			messageCh <- NewRawUpdate(SolanaRawUpdate{
 				Data: ar,
 				Side: gserum.SideBid,
 			})
 		}
 	}()
 
-	messages := make([]StreamUpdate[SolanaRawUpdate], 0)
+	messages := make([]RawUpdate[SolanaRawUpdate], 0)
 	for {
 		select {
 		case msg := <-messageCh:
@@ -163,7 +163,7 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]StreamUpdate[Solan
 	}
 }
 
-func (s solanaOrderbookStream) Process(updates []StreamUpdate[SolanaRawUpdate], removeDuplicates bool) (map[int][]ProcessedUpdate[SolanaUpdate], map[int][]ProcessedUpdate[SolanaUpdate], error) {
+func (s solanaOrderbookStream) Process(updates []RawUpdate[SolanaRawUpdate], removeDuplicates bool) (map[int][]ProcessedUpdate[SolanaUpdate], map[int][]ProcessedUpdate[SolanaUpdate], error) {
 	results := make(map[int][]ProcessedUpdate[SolanaUpdate])
 	duplicates := make(map[int][]ProcessedUpdate[SolanaUpdate])
 
