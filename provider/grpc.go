@@ -139,6 +139,11 @@ func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner str
 	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project})
 }
 
+// GetOrderByID returns an order by id
+func (g *GRPCClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDRequest) (*pb.GetOrderByIDResponse, error) {
+	return g.apiClient.GetOrderByID(ctx, in)
+}
+
 // GetOpenPerpOrders returns all opened perp orders
 func (g *GRPCClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	return g.apiClient.GetOpenPerpOrders(ctx, request)
@@ -368,13 +373,14 @@ func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
+func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := g.PostCancelPerpOrders(ctx, request)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // PostCancelOrder builds a Serum cancel order.
