@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/arrival"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -60,11 +60,11 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 
-	traderOS, err := arrival.NewAPIOrderbookStream(traderAPIEndpoint, marketAddr, authHeader)
+	traderOS, err := stream.NewAPIOrderbookStream(traderAPIEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
-	solanaOS, err := arrival.NewSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
+	solanaOS, err := stream.NewSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
 	if err != nil {
 		return err
 	}
@@ -75,8 +75,8 @@ func run(c *cli.Context) error {
 	defer runCancel()
 
 	var (
-		tradeUpdates  []arrival.StreamUpdate[[]byte]
-		solanaUpdates []arrival.StreamUpdate[arrival.SolanaRawUpdate]
+		tradeUpdates  []stream.RawUpdate[[]byte]
+		solanaUpdates []stream.RawUpdate[stream.SolanaRawUpdate]
 	)
 	errCh := make(chan error, 2)
 
