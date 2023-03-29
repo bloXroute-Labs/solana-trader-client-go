@@ -31,8 +31,8 @@ func (br benchmarkResult) PrintSummary() {
 	if len(br.jupiterUpdates) > 0 {
 		startTime := br.firstJupiter().Start
 		endTime := br.lastJupiter().Start
-		fmt.Printf("Start time: %v\n", startTime)
-		fmt.Printf("End time: %v\n", endTime)
+		fmt.Printf("Start time: %v\n", startTime.Format(time.StampMilli))
+		fmt.Printf("End time: %v\n", endTime.Format(time.StampMilli))
 		fmt.Printf("Expected slots: %v\n", expectedSlots(startTime, endTime))
 		fmt.Printf("Slot range: %v => %v\n", br.firstJupiter().Data.ContextSlot, br.lastJupiter().Data.ContextSlot)
 		fmt.Printf("Initial price: %v\n", br.firstJupiter().Data.Price(br.mint))
@@ -43,6 +43,11 @@ func (br benchmarkResult) PrintSummary() {
 
 	fmt.Println("Trader WS: ", len(br.tradeWSUpdates), " samples")
 	if len(br.tradeWSUpdates) > 0 {
+		startTime := br.firstWS().Timestamp
+		endTime := br.lastWS().Timestamp
+		fmt.Printf("Start time: %v\n", startTime.Format(time.StampMilli))
+		fmt.Printf("End time: %v\n", endTime.Format(time.StampMilli))
+		fmt.Printf("Expected slots: %v\n", expectedSlots(startTime, endTime))
 		fmt.Printf("Slot range: %v => %v\n", br.firstWS().Data.Slot, br.lastWS().Data.Slot)
 		fmt.Printf("Initial buy price: %v\n", br.firstWS().Data.Price.Buy)
 		fmt.Printf("Initial sell price: %v\n", br.firstWS().Data.Price.Sell)
@@ -53,8 +58,13 @@ func (br benchmarkResult) PrintSummary() {
 	}
 	fmt.Println()
 
-	fmt.Println("Trader HTTP: ", len(br.tradeWSUpdates), " samples")
+	fmt.Println("Trader HTTP: ", len(br.tradeHTTPUpdates), " samples")
 	if len(br.tradeHTTPUpdates) > 0 {
+		startTime := br.firstHTTP().Start
+		endTime := br.lastHTTP().Start
+		fmt.Printf("Start time: %v\n", startTime.Format(time.StampMilli))
+		fmt.Printf("End time: %v\n", endTime.Format(time.StampMilli))
+		fmt.Printf("Expected slots: %v\n", expectedSlots(startTime, endTime))
 		fmt.Printf("Initial buy price: %v\n", br.firstHTTP().Data.TokenPrices[0].Buy)
 		fmt.Printf("Initial sell price: %v\n", br.firstHTTP().Data.TokenPrices[0].Sell)
 		fmt.Printf("Final buy price: %v\n", br.lastHTTP().Data.TokenPrices[0].Buy)
@@ -65,7 +75,7 @@ func (br benchmarkResult) PrintSummary() {
 	fmt.Println()
 }
 
-func (br benchmarkResult) PrintSimple() {
+func (br benchmarkResult) PrintRaw() {
 	fmt.Println("jupiter API")
 	for _, update := range br.jupiterUpdates {
 		fmt.Printf("[%v] %v => %v: %v\n", update.Data.Data.ContextSlot, update.Data.Start, update.Timestamp, update.Data.Data.PriceInfo[br.mint].Price)

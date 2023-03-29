@@ -170,6 +170,6 @@ func run(c *cli.Context) error {
 	}
 
 	result.PrintSummary()
-	result.PrintSimple()
+	result.PrintRaw()
 	return nil
 }
