@@ -26,7 +26,7 @@ type jupiterAPIStream struct {
 	interval    time.Duration
 }
 
-func NewJupiterAPI(opts ...JupiterOpt) (Source[JupiterPriceResponse, JupiterPriceResponse], error) {
+func NewJupiterAPI(opts ...JupiterOpt) (Source[DurationUpdate[*JupiterPriceResponse], *JupiterPriceResponse], error) {
 	j := &jupiterAPIStream{
 		client:      &http.Client{},
 		amount:      defaultAmount,
@@ -49,16 +49,32 @@ func (j *jupiterAPIStream) Name() string {
 	return "jupiter"
 }
 
-func (j *jupiterAPIStream) Run(ctx context.Context) ([]RawUpdate[JupiterPriceResponse], error) {
-	res, err := j.fetchPrice(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (j *jupiterAPIStream) Run(parent context.Context) ([]RawUpdate[DurationUpdate[*JupiterPriceResponse]], error) {
 
-	return []RawUpdate[JupiterPriceResponse]{NewRawUpdate(*res)}, nil
+	ctx, cancel := context.WithCancel(parent)
+	defer cancel()
+
+	ticker := time.NewTicker(j.interval)
+	messages := make([]RawUpdate[DurationUpdate[*JupiterPriceResponse]], 0)
+	for {
+		select {
+		case <-ticker.C:
+			go func() {
+				start := time.Now()
+				res, err := j.fetchPrice(ctx)
+				if err != nil {
+					return
+				}
+
+				messages = append(messages, NewDurationUpdate(start, res))
+			}()
+		case <-ctx.Done():
+			return messages, nil
+		}
+	}
 }
 
-func (j *jupiterAPIStream) Process(updates []RawUpdate[JupiterPriceResponse], removeDuplicates bool) (map[int][]ProcessedUpdate[JupiterPriceResponse], map[int][]ProcessedUpdate[JupiterPriceResponse], error) {
+func (j *jupiterAPIStream) Process(updates []RawUpdate[DurationUpdate[*JupiterPriceResponse]], removeDuplicates bool) (map[int][]ProcessedUpdate[*JupiterPriceResponse], map[int][]ProcessedUpdate[*JupiterPriceResponse], error) {
 	// TODO implement me
 	panic("implement me")
 }
