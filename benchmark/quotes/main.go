@@ -7,6 +7,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -17,11 +18,14 @@ import (
 // requires AUTH_HEADER and PRIVATE_KEY to work.
 
 const (
-	maxRuntime      = 10 * time.Second
+	maxRuntime = 30 * time.Second
+
+	swapAmount      = 5
 	swapMint        = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	swapInitialWait = 2 * time.Second
 	swapInterval    = time.Second
-	queryInterval   = time.Second
+
+	queryInterval = time.Second
 )
 
 func main() {
@@ -78,7 +82,8 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterInterval(swapInterval))
+	client := provider.NewHTTPLocal() // TODO: remove me
+	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount), actor.WithJupiterClient(client))
 	if err != nil {
 		return err
 	}
@@ -148,9 +153,20 @@ func run(c *cli.Context) error {
 		}
 	}
 
-	fmt.Println(jupiterUpdates)
-	fmt.Println(tradeWSUpdates)
-	fmt.Println(tradeHTTPUpdates)
+	fmt.Println("jupiter API")
+	for _, update := range jupiterUpdates {
+		fmt.Printf("[%v] %v => %v: %v\n", update.Data.Data.ContextSlot, update.Data.Start, update.Timestamp, update.Data.Data.PriceInfo)
+	}
+
+	fmt.Println("traderWS")
+	for _, update := range tradeWSUpdates {
+		fmt.Printf("[%v] %v: B %v | S %v\n", update.Data.Slot, update.Timestamp, update.Data.Price.Buy, update.Data.Price.Sell)
+	}
+
+	fmt.Println("traderHTTP")
+	for _, update := range tradeHTTPUpdates {
+		fmt.Printf("%v => %v: B %v | S %v\n", update.Data.Start, update.Timestamp, update.Data.Data.TokenPrices[0].Buy, update.Data.Data.TokenPrices[0].Sell)
+	}
 
 	return nil
 }
@@ -159,7 +175,7 @@ var (
 	MintFlag = &cli.StringFlag{
 		Name:  "mint",
 		Usage: "mint to fetch price for (inactive token is best)",
-		Value: "zebeczgi5fSEtbpfQKVZKCJ3WgYXxjkMUkNNx7fLKAF", // zbc
+		Value: "6D7nXHAhsRbwj8KFZR2agB6GEjMLg4BM7MAqZzRT8F1j", // gosu
 	}
 
 	TriggerActivityFlag = &cli.BoolFlag{

@@ -3,6 +3,7 @@ package actor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -64,15 +65,34 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) error {
 		SkipPreFlight:  true,
 	}
 
+	time.Sleep(j.initialTimeout)
+
+	ticker := time.NewTicker(j.interval)
+	defer ticker.Stop()
+
+	errCh := make(chan error, 1)
+
 	for i := 0; i < iterations; i++ {
-		res, err := j.client.SubmitTradeSwap(ctx, j.publicKey, j.inputMint, j.outputMint, j.amount, j.slippage, pb.Project_P_JUPITER, submitOpts)
-		if err != nil {
+		select {
+		case <-ticker.C:
+			go func(i int) {
+				j.log().Infow("submitting swap", "count", i)
+
+				res, err := j.client.SubmitTradeSwap(context.Background(), j.publicKey, j.inputMint, j.outputMint, j.amount, j.slippage, pb.Project_P_JUPITER, submitOpts)
+				if err != nil {
+					errCh <- fmt.Errorf("error submitting swap %v: %w", i, err)
+					return
+				}
+
+				j.log().Infow("completed swap", "transactions", res.Transactions)
+
+				time.Sleep(j.interval)
+			}(i)
+		case err := <-errCh:
 			return err
+		case <-ctx.Done():
+			return ctx.Err()
 		}
-
-		j.log().Infow("submitted transactions", "results", res.Transactions)
-
-		time.Sleep(j.interval)
 	}
 
 	return nil
