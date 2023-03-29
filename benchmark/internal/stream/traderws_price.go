@@ -10,13 +10,13 @@ import (
 	"go.uber.org/zap"
 )
 
-type traderPriceStream struct {
+type tradeWSPrice struct {
 	w    *provider.WSClient
 	mint string
 }
 
-func NewTraderPriceStream(opts ...TraderWSPriceOpt) (Source[*pb.GetPricesStreamResponse, TraderAPIUpdate], error) {
-	s := &traderPriceStream{}
+func NewTraderWSPrice(opts ...TraderWSPriceOpt) (Source[*pb.GetPricesStreamResponse, TraderAPIUpdate], error) {
+	s := &tradeWSPrice{}
 
 	for _, o := range opts {
 		o(s)
@@ -26,19 +26,27 @@ func NewTraderPriceStream(opts ...TraderWSPriceOpt) (Source[*pb.GetPricesStreamR
 		return nil, errors.New("mint is mandatory")
 	}
 
+	if s.w == nil {
+		w, err := provider.NewWSClient()
+		if err != nil {
+			return nil, err
+		}
+		s.w = w
+	}
+
 	return s, nil
 }
 
-func (s traderPriceStream) log() *zap.SugaredLogger {
+func (s tradeWSPrice) log() *zap.SugaredLogger {
 	return logger.Log().With("source", "traderapi")
 }
 
-func (s traderPriceStream) Name() string {
+func (s tradeWSPrice) Name() string {
 	return fmt.Sprintf("traderapi")
 }
 
 // Run stops when parent ctx is canceled
-func (s traderPriceStream) Run(parent context.Context) ([]RawUpdate[*pb.GetPricesStreamResponse], error) {
+func (s tradeWSPrice) Run(parent context.Context) ([]RawUpdate[*pb.GetPricesStreamResponse], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -64,6 +72,6 @@ func (s traderPriceStream) Run(parent context.Context) ([]RawUpdate[*pb.GetPrice
 	}
 }
 
-func (s traderPriceStream) Process(updates []RawUpdate[*pb.GetPricesStreamResponse], removeDuplicates bool) (map[int][]ProcessedUpdate[TraderAPIUpdate], map[int][]ProcessedUpdate[TraderAPIUpdate], error) {
+func (s tradeWSPrice) Process(updates []RawUpdate[*pb.GetPricesStreamResponse], removeDuplicates bool) (map[int][]ProcessedUpdate[TraderAPIUpdate], map[int][]ProcessedUpdate[TraderAPIUpdate], error) {
 	return nil, nil, nil
 }

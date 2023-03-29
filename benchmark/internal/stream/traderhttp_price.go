@@ -14,6 +14,7 @@ import (
 type traderHTTPPriceStream struct {
 	h        *provider.HTTPClient
 	mint     string
+	ticker   *time.Ticker
 	interval time.Duration
 }
 
@@ -47,7 +48,10 @@ func (s traderHTTPPriceStream) Run(parent context.Context) ([]RawUpdate[Duration
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
-	ticker := time.NewTicker(s.interval)
+	ticker := s.ticker
+	if ticker == nil {
+		ticker = time.NewTicker(s.interval)
+	}
 	messages := make([]RawUpdate[DurationUpdate[*pb.GetPriceResponse]], 0)
 	for {
 		select {

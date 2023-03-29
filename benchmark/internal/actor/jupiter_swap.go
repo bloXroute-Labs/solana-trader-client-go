@@ -2,7 +2,6 @@ package actor
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -39,14 +38,15 @@ func NewJupiterSwap(opts ...JupiterOpt) (Liquidity, error) {
 		o(j)
 	}
 
-	if j.inputMint == "" || j.outputMint == "" {
-		return nil, errors.New("input and output mints are mandatory")
-	}
+	// if j.inputMint == "" || j.outputMint == "" {
+	// 	return nil, errors.New("input and output mints are mandatory")
+	// }
 
 	return j, nil
 }
 
 func (j *jupiterSwap) Swap(ctx context.Context, iterations int) error {
+	return nil
 	submitOpts := provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  false,

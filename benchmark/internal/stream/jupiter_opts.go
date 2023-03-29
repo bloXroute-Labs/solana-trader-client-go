@@ -10,6 +10,12 @@ func WithJupiterToken(mint string) JupiterOpt {
 	}
 }
 
+func WithJupiterTicker(t *time.Ticker) JupiterOpt {
+	return func(s *jupiterAPIStream) {
+		s.ticker = t
+	}
+}
+
 func WithJupiterAmount(amount float64) JupiterOpt {
 	return func(s *jupiterAPIStream) {
 		s.amount = amount
