@@ -428,11 +428,7 @@ func (h *HTTPClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, o
 }
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, projectStr string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	project, err := ProjectFromString(projectStr)
-	if err != nil {
-		return nil, err
-	}
+func (h *HTTPClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := h.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
 	if err != nil {
 		return nil, err

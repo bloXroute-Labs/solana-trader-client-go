@@ -20,20 +20,26 @@ func WithJupiterAmount(amount float64) JupiterOpt {
 	}
 }
 
+func WithJupiterInitialTimeout(initialTimeout time.Duration) JupiterOpt {
+	return func(s *jupiterSwap) {
+		s.initialTimeout = initialTimeout
+	}
+}
+
 func WithJupiterInterval(interval time.Duration) JupiterOpt {
 	return func(s *jupiterSwap) {
 		s.interval = interval
 	}
 }
 
-func WithJupiterIterations(iterations int) JupiterOpt {
-	return func(s *jupiterSwap) {
-		s.iterations = iterations
-	}
-}
-
 func WithJupiterClient(client *provider.HTTPClient) JupiterOpt {
 	return func(s *jupiterSwap) {
 		s.client = client
+	}
+}
+
+func WithJupiterPublicKey(pk string) JupiterOpt {
+	return func(s *jupiterSwap) {
+		s.publicKey = pk
 	}
 }

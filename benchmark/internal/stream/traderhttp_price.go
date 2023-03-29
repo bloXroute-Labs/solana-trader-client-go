@@ -36,7 +36,7 @@ func NewTraderHTTPPriceStream(opts ...TraderHTTPPriceOpt) (Source[DurationUpdate
 }
 
 func (s traderHTTPPriceStream) log() *zap.SugaredLogger {
-	return logger.Log().With("source", "traderapi")
+	return logger.Log().With("source", "traderapi/http")
 }
 
 func (s traderHTTPPriceStream) Name() string {

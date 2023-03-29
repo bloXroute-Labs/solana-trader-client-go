@@ -19,7 +19,9 @@ import (
 const (
 	maxRuntime      = 10 * time.Second
 	swapMint        = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-	pollingInterval = time.Second
+	swapInitialWait = 2 * time.Second
+	swapInterval    = time.Second
+	queryInterval   = time.Second
 )
 
 func main() {
@@ -32,6 +34,7 @@ func main() {
 			MintFlag,
 			TriggerActivityFlag,
 			IterationsFlag,
+			PublicKeyFlag,
 		},
 		Action: run,
 	}
@@ -55,8 +58,9 @@ func run(c *cli.Context) error {
 	mint := c.String(MintFlag.Name)
 	iterations := c.Int(IterationsFlag.Name)
 	triggerActivity := c.Bool(TriggerActivityFlag.Name)
+	publicKey := c.String(PublicKeyFlag.Name)
 
-	syncedTicker := time.NewTicker(pollingInterval)
+	syncedTicker := time.NewTicker(queryInterval)
 	defer syncedTicker.Stop()
 
 	jupiterAPI, err := stream.NewJupiterAPI(stream.WithJupiterToken(mint), stream.WithJupiterTicker(syncedTicker))
@@ -74,7 +78,7 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint))
+	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterInterval(swapInterval))
 	if err != nil {
 		return err
 	}
@@ -129,8 +133,6 @@ func run(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-
-		runCancel()
 	}
 
 	// wait for routines to exit
@@ -163,12 +165,18 @@ var (
 	TriggerActivityFlag = &cli.BoolFlag{
 		Name:  "trigger-activity",
 		Usage: "if true, send trigger transactions to force quote updates (requires PRIVATE_KEY environment variable_",
-		// Value: true,
+		Value: true,
 	}
 
 	IterationsFlag = &cli.IntFlag{
 		Name:  "iterations",
 		Usage: "number of quotes to compare",
-		Value: 10,
+		Value: 1,
+	}
+
+	PublicKeyFlag = &cli.StringFlag{
+		Name:  "public-key",
+		Usage: "public key to place swaps over (requires PRIVATE_KEY environment variable)",
+		Value: "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
 	}
 )

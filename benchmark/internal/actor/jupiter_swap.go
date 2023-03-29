@@ -2,63 +2,77 @@ package actor
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"go.uber.org/zap"
 	"time"
 )
 
 const (
-	defaultIterations = 1
-	defaultInterval   = 5 * time.Second
-	defaultAmount     = 0.1
+	defaultInterval       = time.Second
+	defaultInitialTimeout = 2 * time.Second
+	defaultSlippage       = 1
+	defaultAmount         = 0.1
 )
 
 // places orders to affect liquidity and trigger price changes
 type jupiterSwap struct {
-	iterations int
-	interval   time.Duration
-	inputMint  string
-	outputMint string
-	amount     float64
-	owner      string
+	interval       time.Duration
+	initialTimeout time.Duration
+	inputMint      string
+	outputMint     string
+	amount         float64
+	slippage       float64
+	publicKey      string
 
 	client *provider.HTTPClient
 }
 
 func NewJupiterSwap(opts ...JupiterOpt) (Liquidity, error) {
 	j := &jupiterSwap{
-		amount:     defaultAmount,
-		iterations: defaultIterations,
-		interval:   defaultInterval,
-		client:     provider.NewHTTPClient(),
+		amount:         defaultAmount,
+		interval:       defaultInterval,
+		initialTimeout: defaultInitialTimeout,
+		slippage:       defaultSlippage,
+		client:         provider.NewHTTPClient(),
 	}
 
 	for _, o := range opts {
 		o(j)
 	}
 
-	// if j.inputMint == "" || j.outputMint == "" {
-	// 	return nil, errors.New("input and output mints are mandatory")
-	// }
+	if j.inputMint == "" || j.outputMint == "" {
+		return nil, errors.New("input and output mints are mandatory")
+	}
+
+	if j.publicKey == "" {
+		return nil, errors.New("public key is mandatory")
+	}
 
 	return j, nil
 }
 
+func (j *jupiterSwap) log() *zap.SugaredLogger {
+	return logger.Log().With("source", "jupiterActor")
+}
+
 func (j *jupiterSwap) Swap(ctx context.Context, iterations int) error {
-	return nil
 	submitOpts := provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  true,
 	}
 
 	for i := 0; i < iterations; i++ {
-		res, err := j.client.SubmitTradeSwap(ctx, j.owner, j.inputMint, j.outputMint, j.amount, 0, "jupiter", submitOpts)
+		res, err := j.client.SubmitTradeSwap(ctx, j.publicKey, j.inputMint, j.outputMint, j.amount, j.slippage, pb.Project_P_JUPITER, submitOpts)
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(res)
+		j.log().Infow("submitted transactions", "results", res.Transactions)
+
+		time.Sleep(j.interval)
 	}
 
 	return nil
