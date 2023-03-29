@@ -26,6 +26,12 @@ func WithJupiterInitialTimeout(initialTimeout time.Duration) JupiterOpt {
 	}
 }
 
+func WithJupiterAfterTimeout(timeout time.Duration) JupiterOpt {
+	return func(s *jupiterSwap) {
+		s.afterTimeout = timeout
+	}
+}
+
 func WithJupiterInterval(interval time.Duration) JupiterOpt {
 	return func(s *jupiterSwap) {
 		s.interval = interval

@@ -8,12 +8,14 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
 const (
 	defaultInterval       = time.Second
 	defaultInitialTimeout = 2 * time.Second
+	defaultAfterTimeout   = 2 * time.Second
 	defaultSlippage       = 1
 	defaultAmount         = 0.1
 )
@@ -22,6 +24,7 @@ const (
 type jupiterSwap struct {
 	interval       time.Duration
 	initialTimeout time.Duration
+	afterTimeout   time.Duration
 	inputMint      string
 	outputMint     string
 	amount         float64
@@ -36,6 +39,7 @@ func NewJupiterSwap(opts ...JupiterOpt) (Liquidity, error) {
 		amount:         defaultAmount,
 		interval:       defaultInterval,
 		initialTimeout: defaultInitialTimeout,
+		afterTimeout:   defaultAfterTimeout,
 		slippage:       defaultSlippage,
 		client:         provider.NewHTTPClient(),
 	}
@@ -59,7 +63,7 @@ func (j *jupiterSwap) log() *zap.SugaredLogger {
 	return logger.Log().With("source", "jupiterActor")
 }
 
-func (j *jupiterSwap) Swap(ctx context.Context, iterations int) error {
+func (j *jupiterSwap) Swap(ctx context.Context, iterations int) ([]SwapEvent, error) {
 	submitOpts := provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
@@ -71,6 +75,9 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) error {
 	defer ticker.Stop()
 
 	errCh := make(chan error, 1)
+	resultCh := make(chan error, iterations)
+	signatures := make([]SwapEvent, 0, iterations)
+	signatureLock := &sync.Mutex{}
 
 	for i := 0; i < iterations; i++ {
 		select {
@@ -78,22 +85,44 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) error {
 			go func(i int) {
 				j.log().Infow("submitting swap", "count", i)
 
-				res, err := j.client.SubmitTradeSwap(context.Background(), j.publicKey, j.inputMint, j.outputMint, j.amount, j.slippage, pb.Project_P_JUPITER, submitOpts)
+				res, err := j.client.SubmitTradeSwap(ctx, j.publicKey, j.inputMint, j.outputMint, j.amount, j.slippage, pb.Project_P_JUPITER, submitOpts)
 				if err != nil {
 					errCh <- fmt.Errorf("error submitting swap %v: %w", i, err)
+					resultCh <- err
 					return
 				}
 
 				j.log().Infow("completed swap", "transactions", res.Transactions)
+				signatureLock.Lock()
+				for _, transaction := range res.Transactions {
+					signatures = append(signatures, SwapEvent{
+						Timestamp: time.Now(),
+						Signature: transaction.Signature,
+					})
+				}
+				signatureLock.Unlock()
+				resultCh <- nil
 
 				time.Sleep(j.interval)
 			}(i)
 		case err := <-errCh:
-			return err
+			return signatures, err
 		case <-ctx.Done():
-			return ctx.Err()
+			return signatures, errors.New("did not complete swaps before timeout")
 		}
 	}
 
-	return nil
+	for i := 0; i < iterations; i++ {
+		select {
+		case err := <-resultCh:
+			if err != nil {
+				return signatures, err
+			}
+		case <-ctx.Done():
+			return signatures, errors.New("did not complete swaps before timeout")
+		}
+	}
+
+	time.Sleep(j.afterTimeout)
+	return signatures, nil
 }

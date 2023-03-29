@@ -6,6 +6,10 @@ type JupiterPriceResponse struct {
 	ContextSlot int                         `json:"contextSlot"`
 }
 
+func (jr JupiterPriceResponse) Price(mint string) float64 {
+	return jr.PriceInfo[mint].Price
+}
+
 type JupiterPriceInfo struct {
 	ID            string  `json:"id"`
 	MintSymbol    string  `json:"mintSymbol"`

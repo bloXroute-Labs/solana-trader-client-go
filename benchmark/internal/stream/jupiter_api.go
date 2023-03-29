@@ -78,8 +78,7 @@ func (j *jupiterAPIStream) Run(parent context.Context) ([]RawUpdate[DurationUpda
 }
 
 func (j *jupiterAPIStream) Process(updates []RawUpdate[DurationUpdate[JupiterPriceResponse]], removeDuplicates bool) (map[int][]ProcessedUpdate[JupiterPriceResponse], map[int][]ProcessedUpdate[JupiterPriceResponse], error) {
-	// TODO implement me
-	panic("implement me")
+	return nil, nil, nil
 }
 
 // func (j *jupiterAPIStream) fetchQuote(ctx context.Context) (*JupiterQuoteResponse, error) {
@@ -103,7 +102,6 @@ func (j *jupiterAPIStream) Process(updates []RawUpdate[DurationUpdate[JupiterPri
 // 		return nil, err
 // 	}
 //
-// 	// TODO: move this to processing
 // 	var jr JupiterQuoteResponse
 // 	err = json.Unmarshal(b, &jr)
 // 	if err != nil {
