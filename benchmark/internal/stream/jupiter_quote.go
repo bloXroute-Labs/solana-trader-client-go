@@ -1,23 +1,23 @@
 package stream
 
-type JupiterResponse struct {
-	Routes      []jupiterRoute `json:"data"`
+type JupiterQuoteResponse struct {
+	Routes      []JupiterRoute `json:"data"`
 	TimeTaken   float64        `json:"timeTaken"`
 	ContextSlot uint64         `json:"contextSlot"`
 }
 
-type jupiterRoute struct {
+type JupiterRoute struct {
 	InAmount             string              `json:"inAmount"`
 	OutAmount            string              `json:"outAmount"`
 	PriceImpactPct       float64             `json:"priceImpactPct"`
-	MarketInfos          []jupiterMarketInfo `json:"marketInfos"`
+	MarketInfos          []JupiterMarketInfo `json:"marketInfos"`
 	Amount               string              `json:"amount"`
 	SlippageBps          int                 `json:"slippageBps"`
 	OtherAmountThreshold string              `json:"otherAmountThreshold"`
 	SwapMode             string              `json:"swapMode"`
 }
 
-type jupiterMarketInfo struct {
+type JupiterMarketInfo struct {
 	ID                 string     `json:"id"`
 	Label              string     `json:"label"`
 	InputMint          string     `json:"inputMint"`
@@ -26,12 +26,12 @@ type jupiterMarketInfo struct {
 	InAmount           string     `json:"inAmount"`
 	OutAmount          string     `json:"outAmount"`
 	PriceImpactPct     float64    `json:"priceImpactPct"`
-	LpFee              jupiterFee `json:"lpFee"`
-	PlatformFee        jupiterFee `json:"platformFee"`
+	LpFee              JupiterFee `json:"lpFee"`
+	PlatformFee        JupiterFee `json:"platformFee"`
 }
 
-type jupiterFee struct {
-	Amount string `json:"amount"`
-	Mint   string `json:"mint"`
-	Pct    int    `json:"pct"`
+type JupiterFee struct {
+	Amount string  `json:"amount"`
+	Mint   string  `json:"mint"`
+	Pct    float64 `json:"pct"`
 }

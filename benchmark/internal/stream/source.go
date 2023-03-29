@@ -29,6 +29,18 @@ func NewRawUpdate[T any](data T) RawUpdate[T] {
 	}
 }
 
+type DurationUpdate[T any] struct {
+	Start time.Time
+	Data  T
+}
+
+func NewDurationUpdate[T any](start time.Time, data T) RawUpdate[DurationUpdate[T]] {
+	return NewRawUpdate(DurationUpdate[T]{
+		Start: start,
+		Data:  data,
+	})
+}
+
 type ProcessedUpdate[T any] struct {
 	Timestamp time.Time
 	Slot      int

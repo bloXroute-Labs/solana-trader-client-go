@@ -7,99 +7,96 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
-	defaultAPIEndpoint = "https://quote-api.jup.ag/v4/quote"
-	defaultAmount      = 100
-	defaultSlippage    = 5
+	quoteAPIEndpoint = "https://quote-api.jup.ag/v4/quote"
+	priceAPIEndpoint = "https://price.jup.ag/v4/price"
+	defaultAmount    = 100
+	defaultSlippage  = 5
+	defaultInterval  = time.Second
 )
 
 type jupiterAPIStream struct {
-	ctx         context.Context
 	client      *http.Client
-	endpoint    string
-	inputMint   string
-	outputMint  string
+	mint        string
 	amount      float64
 	slippageBps int64
+	interval    time.Duration
 }
 
-type JupiterOpt func(s *jupiterAPIStream)
-
-func NewJupiterAPI(ctx context.Context, opts ...JupiterOpt) (Source[JupiterResponse, JupiterResponse], error) {
+func NewJupiterAPI(opts ...JupiterOpt) (Source[JupiterPriceResponse, JupiterPriceResponse], error) {
 	j := &jupiterAPIStream{
-		ctx:         ctx,
 		client:      &http.Client{},
-		endpoint:    defaultAPIEndpoint,
 		amount:      defaultAmount,
 		slippageBps: defaultSlippage,
+		interval:    defaultInterval,
 	}
 
 	for _, o := range opts {
 		o(j)
 	}
 
-	if j.inputMint == "" || j.outputMint == "" {
-		return nil, errors.New("base and quote token are mandatory")
+	if j.mint == "" {
+		return nil, errors.New("mint token is mandatory")
 	}
 
 	return j, nil
-}
-
-func WithJupiterEndpoint(endpoint string) JupiterOpt {
-	return func(s *jupiterAPIStream) {
-		s.endpoint = endpoint
-	}
-}
-
-func WithJupiterTokenPair(inputMint, outputToken string) JupiterOpt {
-	return func(s *jupiterAPIStream) {
-		s.inputMint = inputMint
-		s.outputMint = outputToken
-	}
-}
-
-func WithJupiterAmount(amount float64) JupiterOpt {
-	return func(s *jupiterAPIStream) {
-		s.amount = amount
-	}
-}
-
-func WithJupiterSlippage(slippage int64) JupiterOpt {
-	return func(s *jupiterAPIStream) {
-		s.slippageBps = slippage
-	}
 }
 
 func (j *jupiterAPIStream) Name() string {
 	return "jupiter"
 }
 
-func (j *jupiterAPIStream) Run(ctx context.Context) ([]RawUpdate[JupiterResponse], error) {
-	// TODO: improve
-	j.ctx = ctx
-
-	res, err := j.fetch()
+func (j *jupiterAPIStream) Run(ctx context.Context) ([]RawUpdate[JupiterPriceResponse], error) {
+	res, err := j.fetchPrice(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return []RawUpdate[JupiterResponse]{NewRawUpdate(*res)}, nil
+	return []RawUpdate[JupiterPriceResponse]{NewRawUpdate(*res)}, nil
 }
 
-func (j *jupiterAPIStream) Process(updates []RawUpdate[JupiterResponse], removeDuplicates bool) (map[int][]ProcessedUpdate[JupiterResponse], map[int][]ProcessedUpdate[JupiterResponse], error) {
+func (j *jupiterAPIStream) Process(updates []RawUpdate[JupiterPriceResponse], removeDuplicates bool) (map[int][]ProcessedUpdate[JupiterPriceResponse], map[int][]ProcessedUpdate[JupiterPriceResponse], error) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (j *jupiterAPIStream) collectOne() {
+// func (j *jupiterAPIStream) fetchQuote(ctx context.Context) (*JupiterQuoteResponse, error) {
+// 	url := fmt.Sprintf("%v?inputMint=%v&outputMint=%v&amount=%v&slippageBps=%v", quoteAPIEndpoint, j.inputMint, j.outputMint, j.amount, j.slippageBps)
+// 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	res, err := j.client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	defer func(Body io.ReadCloser) {
+// 		_ = Body.Close()
+// 	}(res.Body)
+//
+// 	b, err := io.ReadAll(res.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// TODO: move this to processing
+// 	var jr JupiterQuoteResponse
+// 	err = json.Unmarshal(b, &jr)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	return &jr, nil
+// }
 
-}
-
-func (j *jupiterAPIStream) fetch() (*JupiterResponse, error) {
-	url := fmt.Sprintf("%v?inputMint=%v&outputMint=%v&amount=%v&slippageBps=%v", j.endpoint, j.inputMint, j.outputMint, j.amount, j.slippageBps)
-	req, err := http.NewRequestWithContext(j.ctx, http.MethodGet, url, nil)
+func (j *jupiterAPIStream) fetchPrice(ctx context.Context) (*JupiterPriceResponse, error) {
+	url := fmt.Sprintf("%v?ids=%v", priceAPIEndpoint, j.mint)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +115,8 @@ func (j *jupiterAPIStream) fetch() (*JupiterResponse, error) {
 		return nil, err
 	}
 
-	var jr JupiterResponse
+	// TODO: move this to processing
+	var jr JupiterPriceResponse
 	err = json.Unmarshal(b, &jr)
 	if err != nil {
 		return nil, err
