@@ -60,11 +60,15 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 
+	connectCtx, connectCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer connectCancel()
+
 	traderOS, err := stream.NewAPIOrderbookStream(traderAPIEndpoint, marketAddr, authHeader)
 	if err != nil {
 		return err
 	}
-	solanaOS, err := stream.NewSolanaOrderbookStream(ctx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
+
+	solanaOS, err := stream.NewSolanaOrderbookStream(connectCtx, solanaRPCEndpoint, solanaWSEndpoint, marketAddr)
 	if err != nil {
 		return err
 	}
@@ -174,7 +178,7 @@ var (
 	MarketAddrFlag = &cli.StringFlag{
 		Name:  "market",
 		Usage: "market to run analysis for",
-		Value: "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT", // SOL/USDC market
+		Value: "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6", // SOL/USDC market
 	}
 	DurationFlag = &cli.DurationFlag{
 		Name:     "run-time",

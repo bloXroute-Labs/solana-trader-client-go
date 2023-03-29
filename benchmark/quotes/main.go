@@ -54,6 +54,11 @@ func run(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	_, ok := os.LookupEnv("AUTH_HEADER")
+	if !ok {
+		return errors.New("AUTH_HEADER not set in environment")
+	}
+
 	var (
 		mint            = c.String(MintFlag.Name)
 		iterations      = c.Int(IterationsFlag.Name)
@@ -68,6 +73,13 @@ func run(c *cli.Context) error {
 		swapAfterWait   = c.Duration(SwapAfterWaitFlag.Name)
 		queryInterval   = c.Duration(QueryIntervalFlag.Name)
 	)
+
+	if triggerActivity {
+		_, ok := os.LookupEnv("PRIVATE_KEY")
+		if !ok {
+			return errors.New("PRIVATE_KEY not set in environment when --trigger-activity set")
+		}
+	}
 
 	syncedTicker := time.NewTicker(queryInterval)
 	defer syncedTicker.Stop()
