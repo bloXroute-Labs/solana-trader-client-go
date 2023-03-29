@@ -185,7 +185,8 @@ func (h *HTTPClient) PostCreateUser(ctx context.Context, request *pb.PostCreateU
 
 // GetUser returns a user's info
 func (h *HTTPClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/user?ownerAddress=%s&project=%s", h.baseURL, request.OwnerAddress, request.Project)
+	url := fmt.Sprintf("%s/api/v1/trade/user?ownerAddress=%s&accountAddress=%s&project=%s", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.Project)
 	resp := new(pb.GetUserResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetUserResponse](ctx, url, h.httpClient, resp, h.authHeader); err != nil {
 		return nil, err
