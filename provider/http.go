@@ -227,8 +227,8 @@ func (h *HTTPClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettleP
 
 // GetAssets returns list of assets for user
 func (h *HTTPClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/assets?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s", h.baseURL,
-		request.OwnerAddress, request.AccountAddress, request.Project, request.Contract)
+	url := fmt.Sprintf("%s/api/v1/trade/perp/assets?ownerAddress=%s&accountAddress=%s&project=%s", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.Project)
 	positions := new(pb.GetAssetsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetAssetsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
 		return nil, err
