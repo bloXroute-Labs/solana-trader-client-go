@@ -1003,9 +1003,8 @@ func callManageCollateralWithdraw(ownerAddr string) bool {
 
 	sig, err := h.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
-		OwnerAddress:   ownerAddr,
 		Amount:         1,
-		AccountAddress: "",
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	}, false)
@@ -1026,9 +1025,8 @@ func callManageCollateralDeposit(ownerAddr string) bool {
 
 	sig, err := h.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
-		OwnerAddress:   ownerAddr,
 		Amount:         1,
-		AccountAddress: "",
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	}, false)
@@ -1115,7 +1113,6 @@ func callGetAssets(ownerAddr string) bool {
 	user, err := httpClient().GetAssets(ctx, &pb.GetAssetsRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
-		Contract:       common.PerpContract_SOL_PERP,
 		Project:        pb.Project_P_DRIFT,
 	})
 	if err != nil {
