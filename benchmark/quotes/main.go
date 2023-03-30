@@ -7,6 +7,8 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -99,7 +101,17 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterAfterTimeout(swapAfterWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount))
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	if err != nil {
+		return err
+	}
+	rpcOpts := provider.RPCOpts{
+		Endpoint:   "http://18.208.115.90:1809",
+		PrivateKey: &privateKey,
+		AuthHeader: "ZDJhYjkzYmEtMWE4Yi00MTg3LTk5NGUtYzYzODk2YzkzNmUzOmE2MTY4MWE5NDU2Y2EzMTlhOTAwMzZlODM2MWRiYzcz",
+	}
+	client := provider.NewHTTPClientWithOpts(nil, rpcOpts)
+	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterAfterTimeout(swapAfterWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount), actor.WithJupiterClient(client))
 	if err != nil {
 		return err
 	}
