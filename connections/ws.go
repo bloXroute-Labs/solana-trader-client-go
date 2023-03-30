@@ -33,6 +33,10 @@ type WS struct {
 
 	requestMap      map[uint64]requestTracker
 	subscriptionMap map[string]subscriptionEntry
+
+	// public to allow overriding of (un)subscribe method name
+	SubscribeMethodName   string
+	UnsubscribeMethodName string
 }
 
 func NewWS(endpoint string, authHeader string) (*WS, error) {
@@ -46,13 +50,15 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	ws := &WS{
-		requestID:       utils.NewRequestID(),
-		conn:            conn,
-		ctx:             ctx,
-		cancel:          cancel,
-		writeCh:         make(chan []byte, 100),
-		requestMap:      make(map[uint64]requestTracker),
-		subscriptionMap: make(map[string]subscriptionEntry),
+		requestID:             utils.NewRequestID(),
+		conn:                  conn,
+		ctx:                   ctx,
+		cancel:                cancel,
+		writeCh:               make(chan []byte, 100),
+		requestMap:            make(map[uint64]requestTracker),
+		subscriptionMap:       make(map[string]subscriptionEntry),
+		SubscribeMethodName:   subscribeMethod,
+		UnsubscribeMethodName: unsubscribeMethod,
 	}
 	go ws.readLoop()
 	go ws.writeLoop()
@@ -253,7 +259,7 @@ func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams
 	}
 	rawParams := json.RawMessage(paramsB)
 	rpcRequest := jsonrpc2.Request{
-		Method: subscribeMethod,
+		Method: w.SubscribeMethodName,
 		ID:     jsonrpc2.ID{Num: w.requestID.Next()},
 		Params: &rawParams,
 	}
@@ -297,7 +303,7 @@ func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams
 
 		unsubscribeMessage := jsonrpc2.Request{
 			ID:     jsonrpc2.ID{Num: w.requestID.Next()},
-			Method: unsubscribeMethod,
+			Method: w.UnsubscribeMethodName,
 			Params: &rm,
 		}
 
