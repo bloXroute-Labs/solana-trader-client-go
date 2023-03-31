@@ -1331,9 +1331,8 @@ func callManageCollateralWithdraw(g *provider.GRPCClient, ownerAddr string) bool
 
 	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
-		OwnerAddress:   ownerAddr,
 		Amount:         1,
-		AccountAddress: "",
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	}, false)
@@ -1353,9 +1352,8 @@ func callManageCollateralDeposit(g *provider.GRPCClient, ownerAddr string) bool 
 
 	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
-		OwnerAddress:   ownerAddr,
 		Amount:         1,
-		AccountAddress: "",
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	}, false)
@@ -1440,7 +1438,6 @@ func callGetAssets(g *provider.GRPCClient, ownerAddr string) bool {
 	user, err := g.GetAssets(ctx, &pb.GetAssetsRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
-		Contract:       common.PerpContract_SOL_PERP,
 		Project:        pb.Project_P_DRIFT,
 	})
 	if err != nil {
