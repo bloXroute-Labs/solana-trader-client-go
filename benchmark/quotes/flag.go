@@ -70,4 +70,10 @@ var (
 		Usage: "public key to place swaps over (requires PRIVATE_KEY environment variable)",
 		Value: "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
 	}
+
+	EnvFlag = &cli.StringFlag{
+		Name:  "env",
+		Usage: "trader API environment (options: mainnet, testnet, devnet)",
+		Value: "mainnet",
+	}
 )

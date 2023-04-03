@@ -8,7 +8,6 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
@@ -36,6 +35,7 @@ func main() {
 			SwapInitialWaitFlag,
 			SwapAfterWaitFlag,
 			QueryIntervalFlag,
+			EnvFlag,
 		},
 		Action: run,
 	}
@@ -62,6 +62,7 @@ func run(c *cli.Context) error {
 	}
 
 	var (
+		env             = c.String(EnvFlag.Name)
 		mint            = c.String(MintFlag.Name)
 		iterations      = c.Int(IterationsFlag.Name)
 		triggerActivity = c.Bool(TriggerActivityFlag.Name)
@@ -83,6 +84,34 @@ func run(c *cli.Context) error {
 		}
 	}
 
+	var (
+		httpClient *provider.HTTPClient
+		wsClient   *provider.WSClient
+		err        error
+	)
+	switch env {
+	case "testnet":
+		httpClient = provider.NewHTTPTestnet()
+		wsClient, err = provider.NewWSClientTestnet()
+		if err != nil {
+			return err
+		}
+	case "devnet":
+		httpClient = provider.NewHTTPDevnet()
+		wsClient, err = provider.NewWSClientDevnet()
+		if err != nil {
+			return err
+		}
+	case "mainnet":
+		httpClient = provider.NewHTTPClient()
+		wsClient, err = provider.NewWSClient()
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown environment: %v", env)
+	}
+
 	syncedTicker := time.NewTicker(queryInterval)
 	defer syncedTicker.Stop()
 
@@ -91,27 +120,17 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	traderAPIWS, err := stream.NewTraderWSPrice(stream.WithTraderWSMint(mint))
+	traderAPIWS, err := stream.NewTraderWSPrice(stream.WithTraderWSMint(mint), stream.WithTraderWSClient(wsClient))
 	if err != nil {
 		return err
 	}
 
-	traderAPIHTTP, err := stream.NewTraderHTTPPriceStream(stream.WithTraderHTTPMint(mint), stream.WithTraderHTTPTicker(syncedTicker))
+	traderAPIHTTP, err := stream.NewTraderHTTPPriceStream(stream.WithTraderHTTPMint(mint), stream.WithTraderHTTPTicker(syncedTicker), stream.WithTraderHTTPClient(httpClient))
 	if err != nil {
 		return err
 	}
 
-	privateKey, err := transaction.LoadPrivateKeyFromEnv()
-	if err != nil {
-		return err
-	}
-	rpcOpts := provider.RPCOpts{
-		Endpoint:   "http://18.208.115.90:1809",
-		PrivateKey: &privateKey,
-		AuthHeader: "ZDJhYjkzYmEtMWE4Yi00MTg3LTk5NGUtYzYzODk2YzkzNmUzOmE2MTY4MWE5NDU2Y2EzMTlhOTAwMzZlODM2MWRiYzcz",
-	}
-	client := provider.NewHTTPClientWithOpts(nil, rpcOpts)
-	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterAfterTimeout(swapAfterWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount), actor.WithJupiterClient(client))
+	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterAfterTimeout(swapAfterWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount), actor.WithJupiterClient(httpClient))
 	if err != nil {
 		return err
 	}
