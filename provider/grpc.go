@@ -753,3 +753,13 @@ func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.Ge
 
 	return connections.GRPCStream[pb.GetPerpOrderbooksStreamResponse](stream, ""), nil
 }
+
+// GetPerpTradesStream subscribes to a stream for trades to the requested contracts
+func (g *GRPCClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpTradesStreamRequest) (connections.Streamer[*pb.GetPerpTradesStreamResponse], error) {
+	stream, err := g.apiClient.GetPerpTradesStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPerpTradesStreamResponse](stream, ""), nil
+}

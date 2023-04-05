@@ -894,3 +894,11 @@ func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetP
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
 }
+
+// GetPerpTradesStream subscribes to a stream for trades to the requested contracts
+func (w *WSClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpTradesStreamRequest) (connections.Streamer[*pb.GetPerpTradesStreamResponse], error) {
+	newResponse := func() *pb.GetPerpTradesStreamResponse {
+		return &pb.GetPerpTradesStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetPerpTradesStream", request, newResponse)
+}

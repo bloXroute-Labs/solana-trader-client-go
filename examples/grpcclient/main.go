@@ -76,6 +76,7 @@ func run() bool {
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 	failed = failed || logCall("callDriftOrderbookGRPCStream", func() bool { return callDriftOrderbookGRPCStream(g) })
+	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -1146,6 +1147,39 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
+	log.Info("starting get Drift PerpTrades stream")
+
+	ch := make(chan *pb.GetPerpTradesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
+		Contracts: []common.PerpContract{
+			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
+			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+		},
+		Limit:   2,
+		Project: pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with GetPerpTradesStream stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)

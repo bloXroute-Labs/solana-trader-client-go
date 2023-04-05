@@ -3,7 +3,7 @@ module github.com/bloXroute-Labs/solana-trader-client-go
 go 1.18
 
 require (
-	github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230330134923-649974c44837
+	github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230405180751-fbd9cfb05e75
 	github.com/gagliardetto/binary v0.7.7
 	github.com/gagliardetto/solana-go v1.8.2
 	github.com/gorilla/websocket v1.4.2

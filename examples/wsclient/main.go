@@ -73,6 +73,7 @@ func run() bool {
 	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
@@ -1061,6 +1062,39 @@ func callDriftOrderbookWSStream(w *provider.WSClient) bool {
 		if !ok {
 			return true
 		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
+	log.Info("starting get Drift PerpTrades stream")
+
+	ch := make(chan *pb.GetPerpTradesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
+		Contracts: []common.PerpContract{
+			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
+			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+		},
+		Limit:   2,
+		Project: pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with GetPerpTradesStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
 		log.Infof("response %v received", i)
 	}
 	return false
