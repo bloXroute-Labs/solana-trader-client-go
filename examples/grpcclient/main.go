@@ -1175,7 +1175,6 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
 			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
 		},
-		Limit:   2,
 		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
