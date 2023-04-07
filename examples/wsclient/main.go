@@ -1399,8 +1399,7 @@ func callGetContracts(w *provider.WSClient) bool {
 	defer cancel()
 
 	user, err := w.GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
-		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
-		Project:   pb.Project_P_DRIFT,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)

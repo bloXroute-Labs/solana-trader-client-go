@@ -1511,8 +1511,7 @@ func callGetContracts(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	user, err := g.GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
-		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
-		Project:   pb.Project_P_DRIFT,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)
