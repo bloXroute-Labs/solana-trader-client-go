@@ -131,7 +131,8 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
-		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g, ownerAddr) })
+		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
+		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(g) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(g, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(g, ownerAddr) })
@@ -1356,7 +1357,7 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callManageCollateralWithdraw(g *provider.GRPCClient, ownerAddr string) bool {
+func callManageCollateralWithdraw(g *provider.GRPCClient) bool {
 	log.Info("starting callManageCollateral withdraw test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1368,6 +1369,28 @@ func callManageCollateralWithdraw(g *provider.GRPCClient, ownerAddr string) bool
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callManageCollateralTransfer(g *provider.GRPCClient) bool {
+	log.Info("starting callManageCollateral transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+		Project:          pb.Project_P_DRIFT,
+		Amount:           1,
+		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:             common.PerpCollateralType_PCT_TRANSFER,
+		Token:            common.PerpCollateralToken_PCTK_SOL,
+		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
 	}, false)
 	if err != nil {
 		log.Error(err)
