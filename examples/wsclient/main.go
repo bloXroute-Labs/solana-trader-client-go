@@ -70,12 +70,12 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
-	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
 
 	if cfg.RunSlowStream {
+		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 	}

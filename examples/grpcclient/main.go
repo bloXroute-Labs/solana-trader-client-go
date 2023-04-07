@@ -62,9 +62,9 @@ func run() bool {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	}
-	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
 	if cfg.RunSlowStream {
+		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 	}
