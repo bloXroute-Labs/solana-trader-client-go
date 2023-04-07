@@ -239,13 +239,7 @@ func (h *HTTPClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest
 
 // GetPerpContracts returns list of available perp contracts
 func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
-	var strs []string
-	for _, c := range request.Contracts {
-		strs = append(strs, fmt.Sprint(c))
-	}
-
-	contractsArg := convertStrSliceArgument("contracts", false, strs)
-	url := fmt.Sprintf("%s/api/v1/trade/perp/contracts?project=%s%s", h.baseURL, request.Project, contractsArg)
+	url := fmt.Sprintf("%s/api/v1/market/perp/contracts?project=%s", h.baseURL, request.Project)
 	positions := new(pb.GetPerpContractsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
 		return nil, err
