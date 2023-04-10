@@ -135,9 +135,10 @@ func run() bool {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
-		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(ownerAddr) })
+		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
-		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(ownerAddr) })
+		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
+		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(ownerAddr) })
@@ -994,7 +995,7 @@ func callPostPerpOrder(ownerAddr string) bool {
 	return false
 }
 
-func callManageCollateralWithdraw(ownerAddr string) bool {
+func callManageCollateralWithdraw() bool {
 	log.Info("starting callManageCollateralWithdraw test")
 
 	h := httpClient()
@@ -1016,7 +1017,30 @@ func callManageCollateralWithdraw(ownerAddr string) bool {
 	return false
 }
 
-func callManageCollateralDeposit(ownerAddr string) bool {
+func callManageCollateralTransfer() bool {
+	log.Info("starting callManageCollateralTransfer test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+		Project:          pb.Project_P_DRIFT,
+		Amount:           1,
+		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:             common.PerpCollateralType_PCT_WITHDRAWAL,
+		Token:            common.PerpCollateralToken_PCTK_SOL,
+		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callManageCollateralTransfer signature : %s", sig)
+	return false
+}
+
+func callManageCollateralDeposit() bool {
 	log.Info("starting callManageCollateral Deposit test")
 
 	h := httpClient()
@@ -1130,8 +1154,7 @@ func callGetContracts() bool {
 	defer cancel()
 
 	user, err := httpClient().GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
-		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
-		Project:   pb.Project_P_DRIFT,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1142,7 +1165,7 @@ func callGetContracts() bool {
 }
 
 func callPostLiquidatePerp(ownerAddr string) bool {
-	log.Info("starting callPostLiquidatePerp deposit test")
+	log.Info("starting callPostLiquidatePerp test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

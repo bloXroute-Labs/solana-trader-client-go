@@ -62,9 +62,9 @@ func run() bool {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	}
-	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 
 	if cfg.RunSlowStream {
+		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 	}
@@ -76,6 +76,7 @@ func run() bool {
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 	failed = failed || logCall("callDriftOrderbookGRPCStream", func() bool { return callDriftOrderbookGRPCStream(g) })
+	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -130,7 +131,8 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
-		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g, ownerAddr) })
+		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
+		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(g) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(g, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(g, ownerAddr) })
@@ -1161,6 +1163,38 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
+	log.Info("starting get Drift PerpTrades stream")
+
+	ch := make(chan *pb.GetPerpTradesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
+		Contracts: []common.PerpContract{
+			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
+			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+		},
+		Project: pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with GetPerpTradesStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
 func callDriftOrderbookGRPC(g *provider.GRPCClient) bool {
 	orderbook, err := g.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
 		Contract: common.PerpContract_SOL_PERP,
@@ -1323,7 +1357,7 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callManageCollateralWithdraw(g *provider.GRPCClient, ownerAddr string) bool {
+func callManageCollateralWithdraw(g *provider.GRPCClient) bool {
 	log.Info("starting callManageCollateral withdraw test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1335,6 +1369,28 @@ func callManageCollateralWithdraw(g *provider.GRPCClient, ownerAddr string) bool
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callManageCollateralTransfer(g *provider.GRPCClient) bool {
+	log.Info("starting callManageCollateral transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+		Project:          pb.Project_P_DRIFT,
+		Amount:           1,
+		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:             common.PerpCollateralType_PCT_TRANSFER,
+		Token:            common.PerpCollateralToken_PCTK_SOL,
+		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
 	}, false)
 	if err != nil {
 		log.Error(err)
@@ -1455,8 +1511,7 @@ func callGetContracts(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	user, err := g.GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
-		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
-		Project:   pb.Project_P_DRIFT,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)

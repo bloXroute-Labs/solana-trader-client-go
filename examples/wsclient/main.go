@@ -70,11 +70,12 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
-	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
 
 	if cfg.RunSlowStream {
+		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 	}
@@ -126,9 +127,10 @@ func run() bool {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
-		failed = failed || logCall("callManageCollateral", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
-		failed = failed || logCall("callManageCollateral", func() bool { return callManageCollateralWithdraw(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(w) })
+		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(w) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(w, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(w, ownerAddr) })
@@ -1066,6 +1068,38 @@ func callDriftOrderbookWSStream(w *provider.WSClient) bool {
 	return false
 }
 
+func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
+	log.Info("starting get Drift PerpTrades stream")
+
+	ch := make(chan *pb.GetPerpTradesStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
+		Contracts: []common.PerpContract{
+			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
+			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+		},
+		Project: pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with GetPerpTradesStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
 func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callGetOpenPerpOrders test")
 
@@ -1211,8 +1245,8 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callManageCollateralWithdraw(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting callManageCollateral withdraw test")
+func callManageCollateralWithdraw(w *provider.WSClient) bool {
+	log.Info("starting callManageCollateralWithdraw withdraw test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1232,8 +1266,30 @@ func callManageCollateralWithdraw(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callManageCollateralTransfer(w *provider.WSClient) bool {
+	log.Info("starting callManageCollateralTransfer withdraw test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+		Project:          pb.Project_P_DRIFT,
+		Amount:           1,
+		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:             common.PerpCollateralType_PCT_TRANSFER,
+		Token:            common.PerpCollateralToken_PCTK_SOL,
+		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
 func callManageCollateralDeposit(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting callManageCollateral deposit test")
+	log.Info("starting callManageCollateralDeposit deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1343,8 +1399,7 @@ func callGetContracts(w *provider.WSClient) bool {
 	defer cancel()
 
 	user, err := w.GetPerpContracts(ctx, &pb.GetPerpContractsRequest{
-		Contracts: []common.PerpContract{common.PerpContract_SOL_PERP},
-		Project:   pb.Project_P_DRIFT,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)
