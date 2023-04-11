@@ -83,6 +83,8 @@ github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230407171315-bba709baac
 github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230407171315-bba709baac80/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230407182826-f00f09c264a1 h1:cvYDn5RGocNcHTW3CmQ+HONz6H+pn8BrbnQ3cAznT00=
 github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230407182826-f00f09c264a1/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230411132529-642b8438bb7c h1:VeamNfiRo71QAtdL7mdTQ2ZCN7YeKSI4NAC7FaK6upo=
+github.com/bloXroute-Labs/solana-trader-proto v1.5.1-0.20230411132529-642b8438bb7c/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
