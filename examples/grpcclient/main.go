@@ -1183,7 +1183,7 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed

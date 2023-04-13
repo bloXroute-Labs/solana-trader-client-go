@@ -1058,7 +1058,7 @@ func callDriftOrderbookWSStream(w *provider.WSClient) bool {
 	}
 
 	orderbookCh := stream.Channel(0)
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-orderbookCh
 		if !ok {
 			return true
