@@ -366,7 +366,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	}
 
 	orderbookCh := stream.Channel(0)
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-orderbookCh
 		if !ok {
 			return true
@@ -390,7 +390,7 @@ func callMarketDepthWSStream(w *provider.WSClient) bool {
 	}
 
 	mktDepthDataCh := stream.Channel(0)
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-mktDepthDataCh
 		if !ok {
 			return true
@@ -414,7 +414,7 @@ func callTradesWSStream(w *provider.WSClient) bool {
 	}
 
 	stream.Into(tradesChan)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-tradesChan
 		if !ok {
 			return true
@@ -438,7 +438,7 @@ func callRecentBlockHashWSStream(w *provider.WSClient) bool {
 	}
 
 	ch := stream.Channel(0)
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			return true
@@ -461,7 +461,7 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 	}
 
 	ch := stream.Channel(0)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			return true
@@ -960,7 +960,7 @@ func callPricesWSStream(w *provider.WSClient) bool {
 	}
 
 	ch := stream.Channel(0)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			return true
@@ -984,7 +984,7 @@ func callSwapsWSStream(w *provider.WSClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1010,7 +1010,7 @@ func callBlockWSStream(w *provider.WSClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1088,7 +1088,7 @@ func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
