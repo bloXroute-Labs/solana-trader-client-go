@@ -360,7 +360,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	}
 
 	orderbookCh := stream.Channel(0)
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= 1; i++ {
 		data, ok := <-orderbookCh
 		if !ok {
 			// channel closed
@@ -409,7 +409,7 @@ func callMarketDepthGRPCStream(g *provider.GRPCClient) bool {
 	}
 
 	ordermktDepthUpdateCh := stream.Channel(0)
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= 1; i++ {
 		data, ok := <-ordermktDepthUpdateCh
 		if !ok {
 			// channel closed
@@ -436,7 +436,7 @@ func callTradesGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(tradesChan)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-tradesChan
 		if !ok {
 			// channel closed
@@ -461,7 +461,7 @@ func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -487,7 +487,7 @@ func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1070,7 +1070,7 @@ func callPricesGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1095,7 +1095,7 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1121,7 +1121,7 @@ func callBlockGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1151,7 +1151,7 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
@@ -1183,7 +1183,7 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ {
 		_, ok := <-ch
 		if !ok {
 			// channel closed
