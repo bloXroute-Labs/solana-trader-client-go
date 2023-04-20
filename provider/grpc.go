@@ -373,14 +373,12 @@ func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := g.PostCancelPerpOrders(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
-		SkipPreFlight: skipPreFlight,
-	})
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -737,7 +735,7 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
 }
 
-//------- Drift ----
+// ------- Drift ----
 
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
 func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
