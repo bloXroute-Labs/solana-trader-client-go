@@ -194,6 +194,11 @@ func (g *GRPCClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpCo
 	return g.apiClient.GetPerpContracts(ctx, request)
 }
 
+// GetMarginContracts returns list of available margin contracts
+func (g *GRPCClient) GetMarginContracts(ctx context.Context, request *pb.GetMarginContractsRequest) (*pb.GetMarginContractsResponse, error) {
+	return g.apiClient.GetMarginContracts(ctx, request)
+}
+
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (g *GRPCClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	return g.apiClient.PostLiquidatePerp(ctx, request)
@@ -304,6 +309,11 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
 func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
 	return g.apiClient.PostPerpOrder(ctx, request)
+}
+
+// PostMarginOrder returns a partially signed transaction for placing a Margin order. Typically, you want to use SubmitMarginOrder instead of this.
+func (g *GRPCClient) PostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest) (*pb.PostMarginOrderResponse, error) {
+	return g.apiClient.PostMarginOrder(ctx, request)
 }
 
 // PostSubmit posts the transaction string to the Solana network.
@@ -451,6 +461,15 @@ func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 // SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
 func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	resp, err := g.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostMarginOrder builds a create-user txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -750,6 +769,21 @@ func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.Ge
 	}
 
 	return connections.GRPCStream[pb.GetPerpOrderbooksStreamResponse](stream, ""), nil
+}
+
+// GetMarginOrderbook returns the current state of Marginetual contract orderbook.
+func (g *GRPCClient) GetMarginOrderbook(ctx context.Context, request *pb.GetMarginOrderbookRequest) (*pb.GetMarginOrderbookResponse, error) {
+	return g.apiClient.GetMarginOrderbook(ctx, request)
+}
+
+// GetMarginOrderbooksStream subscribes to a stream for Marginetual orderbook updates.
+func (g *GRPCClient) GetMarginOrderbooksStream(ctx context.Context, request *pb.GetMarginOrderbooksRequest) (connections.Streamer[*pb.GetMarginOrderbooksStreamResponse], error) {
+	stream, err := g.apiClient.GetMarginOrderbooksStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetMarginOrderbooksStreamResponse](stream, ""), nil
 }
 
 // GetPerpTradesStream subscribes to a stream for trades to the requested contracts

@@ -57,6 +57,7 @@ func run() bool {
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callDriftOrderbookGRPC", func() bool { return callDriftOrderbookGRPC(g) })
+	failed = failed || logCall("callDriftMarginOrderbookGRPC", func() bool { return callDriftOrderbookGRPC(g) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
@@ -75,7 +76,8 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
-	failed = failed || logCall("callDriftOrderbookGRPCStream", func() bool { return callDriftOrderbookGRPCStream(g) })
+	failed = failed || logCall("callDriftPerpOrderbookGRPCStream", func() bool { return callDriftPerpOrderbookGRPCStream(g) })
+	failed = failed || logCall("callDriftMarginOrderbookGRPCStream", func() bool { return callDriftMarginOrderbookGRPCStream(g) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
 
 	if !cfg.RunTrades {
@@ -123,7 +125,8 @@ func run() bool {
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(g, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(g, ownerAddr) })
-	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts(g) })
+	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(g) })
+	failed = failed || logCall("callGetMarginContracts", func() bool { return callGetMarginContracts(g) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(g, ownerAddr) })
@@ -131,6 +134,7 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
+		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(g) })
 
@@ -1133,8 +1137,8 @@ func callBlockGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
-	log.Info("starting get Drift orderbook stream")
+func callDriftPerpOrderbookGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get Drift perp orderbook stream")
 
 	ch := make(chan *pb.GetPerpOrderbooksStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1148,6 +1152,36 @@ func callDriftOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftMarginOrderbookGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get Drift orderbook stream")
+
+	ch := make(chan *pb.GetMarginOrderbooksStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetMarginOrderbooksStream(ctx, &pb.GetMarginOrderbooksRequest{
+		Contracts: []common.MarginContract{common.MarginContract_SOL_SPOT},
+		Limit:     0,
+		Project:   pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with GetMarginOrderbooksStream stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
@@ -1203,6 +1237,23 @@ func callDriftOrderbookGRPC(g *provider.GRPCClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftMarginOrderbookGRPC(g *provider.GRPCClient) bool {
+	orderbook, err := g.GetMarginOrderbook(context.Background(), &pb.GetMarginOrderbookRequest{
+		Contract: common.MarginContract_SOL_SPOT,
+		Limit:    0,
+		Project:  pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with callDriftMarginOrderbookGRPC request for SOL-MARGIN: %v", err)
 		return true
 	} else {
 		log.Info(orderbook)
@@ -1357,6 +1408,33 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
+func callPostMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callPostMarginOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostMarginOrderRequest{
+		Project:        pb.Project_P_DRIFT,
+		OwnerAddress:   ownerAddr,
+		PayerAddress:   ownerAddr,
+		Contract:       common.MarginContract_SOL_SPOT,
+		AccountAddress: "",
+		PositionSide:   common.PositionSide_PS_SHORT,
+		Slippage:       10,
+		Type:           common.DriftOrderType_POT_LIMIT,
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := g.SubmitPostMarginOrder(ctx, request, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostMarginOrder signature : %s", sig)
+	return false
+}
+
 func callManageCollateralWithdraw(g *provider.GRPCClient) bool {
 	log.Info("starting callManageCollateral withdraw test")
 
@@ -1504,8 +1582,8 @@ func callGetAssets(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callGetContracts(g *provider.GRPCClient) bool {
-	log.Info("starting callGetContracts test")
+func callGetPerpContracts(g *provider.GRPCClient) bool {
+	log.Info("starting callGetPerpContracts test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1517,7 +1595,24 @@ func callGetContracts(g *provider.GRPCClient) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetAssets resp : %s", user)
+	log.Infof("callGetPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetMarginContracts(g *provider.GRPCClient) bool {
+	log.Info("starting callGetMarginContracts test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetMarginContracts(ctx, &pb.GetMarginContractsRequest{
+		Project: pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetMarginContracts resp : %s", user)
 	return false
 }
 

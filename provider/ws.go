@@ -242,6 +242,16 @@ func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpCont
 	return &response, nil
 }
 
+// GetMarginContracts returns list of available margin contracts
+func (w *WSClient) GetMarginContracts(ctx context.Context, request *pb.GetMarginContractsRequest) (*pb.GetMarginContractsResponse, error) {
+	var response pb.GetMarginContractsResponse
+	err := w.conn.Request(ctx, "GetMarginContracts", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (w *WSClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	var response pb.PostLiquidatePerpResponse
@@ -390,6 +400,16 @@ func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderR
 	return &response, nil
 }
 
+// PostMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitPostMarginOrder instead of this.
+func (w *WSClient) PostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest) (*pb.PostMarginOrderResponse, error) {
+	var response pb.PostMarginOrderResponse
+	err := w.conn.Request(ctx, "PostMarginOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{
@@ -469,6 +489,17 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, opts PostOrderOpts) (string, error) {
 
 	order, err := w.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// SubmitPostMarginOrder builds a margin order, signs it, and submits to the network.
+func (w *WSClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, opts PostOrderOpts) (string, error) {
+
+	order, err := w.PostMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -893,6 +924,24 @@ func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetP
 		return &pb.GetPerpOrderbooksStreamResponse{}
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
+}
+
+// GetMarginOrderbook returns the current state of marginetual contract orderbook.
+func (w *WSClient) GetMarginOrderbook(ctx context.Context, request *pb.GetMarginOrderbookRequest) (*pb.GetMarginOrderbookResponse, error) {
+	var response pb.GetMarginOrderbookResponse
+	err := w.conn.Request(ctx, "GetMarginOrderbook", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetMarginOrderbooksStream subscribes to a stream for marginetual orderbook updates.
+func (w *WSClient) GetMarginOrderbooksStream(ctx context.Context, request *pb.GetMarginOrderbooksRequest) (connections.Streamer[*pb.GetMarginOrderbooksStreamResponse], error) {
+	newResponse := func() *pb.GetMarginOrderbooksStreamResponse {
+		return &pb.GetMarginOrderbooksStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetMarginOrderbooksStream", request, newResponse)
 }
 
 // GetPerpTradesStream subscribes to a stream for trades to the requested contracts

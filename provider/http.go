@@ -248,6 +248,17 @@ func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpCo
 	return positions, nil
 }
 
+// GetMarginContracts returns list of available Margin contracts
+func (h *HTTPClient) GetMarginContracts(ctx context.Context, request *pb.GetMarginContractsRequest) (*pb.GetMarginContractsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/margin/contracts?project=%s", h.baseURL, request.Project)
+	positions := new(pb.GetMarginContractsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetMarginContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return positions, nil
+}
+
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (h *HTTPClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/liquidate", h.baseURL)
@@ -539,6 +550,29 @@ func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 	return sig, err
 }
 
+// SubmitMarginOrder builds a margin order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, opts PostOrderOpts) (string, error) {
+	order, err := h.PostMarginOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return sig, err
+}
+
+// PostMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitMarginOrder instead of this.
+func (h *HTTPClient) PostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest) (*pb.PostMarginOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/trade/margin/order", h.baseURL)
+
+	var response pb.PostMarginOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostMarginOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
 func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
@@ -656,9 +690,19 @@ func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
-// SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
+// SubmitPostPerpOrder builds a post order txn, signs and submits it to the network.
 func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := h.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// SubmitPostMarginOrder builds a margin order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -848,6 +892,17 @@ func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOr
 	url := fmt.Sprintf("%s/api/v1/market/perp/orderbook/%s?limit=%d&project=%v", h.baseURL, request.Contract, request.Limit, request.Project)
 	orderbook := new(pb.GetPerpOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orderbook, nil
+}
+
+// GetMarginOrderbook returns the current state of Marginetual contract orderbook.
+func (h *HTTPClient) GetMarginOrderbook(ctx context.Context, request *pb.GetMarginOrderbookRequest) (*pb.GetMarginOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/market/Margin/orderbook/%s?limit=%d&project=%v", h.baseURL, request.Contract, request.Limit, request.Project)
+	orderbook := new(pb.GetMarginOrderbookResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetMarginOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
 		return nil, err
 	}
 

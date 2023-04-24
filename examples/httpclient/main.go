@@ -129,7 +129,8 @@ func run() bool {
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
-	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts() })
+	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
+	failed = failed || logCall("callGetMarginContracts", func() bool { return callGetMarginContracts() })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
@@ -137,6 +138,7 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
+		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
 
@@ -995,6 +997,34 @@ func callPostPerpOrder(ownerAddr string) bool {
 	return false
 }
 
+func callPostMarginOrder(ownerAddr string) bool {
+	log.Info("starting callPostMarginOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostMarginOrderRequest{
+		Project:        pb.Project_P_DRIFT,
+		OwnerAddress:   ownerAddr,
+		PayerAddress:   ownerAddr,
+		Contract:       common.MarginContract_SOL_SPOT,
+		AccountAddress: "",
+		PositionSide:   common.PositionSide_PS_SHORT,
+		Slippage:       10,
+		Type:           common.DriftOrderType_POT_LIMIT,
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := h.SubmitPostMarginOrder(ctx, request, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostMarginOrder signature : %s", sig)
+	return false
+}
+
 func callManageCollateralWithdraw() bool {
 	log.Info("starting callManageCollateralWithdraw test")
 
@@ -1147,8 +1177,8 @@ func callGetAssets(ownerAddr string) bool {
 	return false
 }
 
-func callGetContracts() bool {
-	log.Info("starting callGetContracts test")
+func callGetPerpContracts() bool {
+	log.Info("starting callGetPerpContracts test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1160,7 +1190,24 @@ func callGetContracts() bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetAssets resp : %s", user)
+	log.Infof("callGetPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetMarginContracts() bool {
+	log.Info("starting callGetMarginContracts test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := httpClient().GetMarginContracts(ctx, &pb.GetMarginContractsRequest{
+		Project: pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetMarginContracts resp : %s", user)
 	return false
 }
 
