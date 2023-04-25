@@ -264,7 +264,7 @@ func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams
 		StreamOpts: streamParams,
 	}
 
-	paramsB, err := json.Marshal(params)
+	paramsB, err := params.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
