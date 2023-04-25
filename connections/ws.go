@@ -225,10 +225,20 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 }
 
 func WSStreamAny[T any](w *WS, ctx context.Context, streamName string, streamParams interface{}) (Streamer[T], error) {
-	streamParamsB, err := json.Marshal(streamParams)
-	if err != nil {
-		return nil, err
+	var (
+		err           error
+		streamParamsB []byte
+	)
+
+	if streamParams == nil {
+		streamParamsB = nil
+	} else {
+		streamParamsB, err = json.Marshal(streamParams)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return wsStream(w, ctx, streamName, streamParamsB, func(b []byte) (T, error) {
 		var v T
 		err := json.Unmarshal(b, &v)
@@ -249,14 +259,26 @@ func WSStreamProto[T proto.Message](w *WS, ctx context.Context, streamName strin
 }
 
 func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams json.RawMessage, unmarshal func(b []byte) (T, error)) (Streamer[T], error) {
-	params := SubscribeParams{
-		StreamName: streamName,
-		StreamOpts: streamParams,
+	var (
+		err     error
+		paramsB []byte
+	)
+	if streamParams == nil {
+		paramsB, err = json.Marshal([]string{streamName})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		params := SubscribeParams{
+			StreamName: streamName,
+			StreamOpts: streamParams,
+		}
+		paramsB, err = json.Marshal(params)
+		if err != nil {
+			return nil, err
+		}
 	}
-	paramsB, err := json.Marshal(params)
-	if err != nil {
-		return nil, err
-	}
+
 	rawParams := json.RawMessage(paramsB)
 	rpcRequest := jsonrpc2.Request{
 		Method: w.SubscribeMethodName,
