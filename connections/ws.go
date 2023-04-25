@@ -259,24 +259,14 @@ func WSStreamProto[T proto.Message](w *WS, ctx context.Context, streamName strin
 }
 
 func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams json.RawMessage, unmarshal func(b []byte) (T, error)) (Streamer[T], error) {
-	var (
-		err     error
-		paramsB []byte
-	)
-	if streamParams == nil {
-		paramsB, err = json.Marshal([]string{streamName})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		params := SubscribeParams{
-			StreamName: streamName,
-			StreamOpts: streamParams,
-		}
-		paramsB, err = json.Marshal(params)
-		if err != nil {
-			return nil, err
-		}
+	params := SubscribeParams{
+		StreamName: streamName,
+		StreamOpts: streamParams,
+	}
+
+	paramsB, err := json.Marshal(params)
+	if err != nil {
+		return nil, err
 	}
 
 	rawParams := json.RawMessage(paramsB)
