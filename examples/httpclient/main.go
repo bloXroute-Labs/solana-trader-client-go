@@ -1007,7 +1007,7 @@ func callPostMarginOrder(ownerAddr string) bool {
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
 		PayerAddress:   ownerAddr,
-		Contract:       common.MarginContract_SOL_SPOT,
+		Market:         "SOL",
 		AccountAddress: "",
 		PositionSide:   common.PositionSide_PS_SHORT,
 		Slippage:       10,

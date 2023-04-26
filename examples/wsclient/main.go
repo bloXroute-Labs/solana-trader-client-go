@@ -1077,9 +1077,9 @@ func callDriftMarginOrderbookWS(w *provider.WSClient) bool {
 	log.Info("fetching drift margin orderbooks...")
 
 	orderbook, err := w.GetMarginOrderbook(context.Background(), &pb.GetMarginOrderbookRequest{
-		Contract: common.MarginContract_SOL_SPOT,
-		Limit:    0,
-		Project:  pb.Project_P_DRIFT,
+		Market:  "SOL",
+		Limit:   0,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetMarginOrderbook request for SOL-MARGIN: %v", err)
@@ -1099,9 +1099,9 @@ func callDriftMarginOrderbookWSStream(w *provider.WSClient) bool {
 	defer cancel()
 
 	stream, err := w.GetMarginOrderbooksStream(ctx, &pb.GetMarginOrderbooksRequest{
-		Contracts: []common.MarginContract{common.MarginContract_SOL_SPOT},
-		Limit:     0,
-		Project:   pb.Project_P_DRIFT,
+		Markets: []string{"SOL"},
+		Limit:   0,
+		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Errorf("error with GetMarginOrderbooksStream request for SOL-MARGIN: %v", err)
@@ -1305,7 +1305,7 @@ func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
 		PayerAddress:   ownerAddr,
-		Contract:       common.MarginContract_SOL_SPOT,
+		Market:         "SOL",
 		AccountAddress: "",
 		PositionSide:   common.PositionSide_PS_SHORT,
 		Slippage:       10,
