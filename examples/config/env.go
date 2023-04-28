@@ -31,9 +31,16 @@ func Load() (Example, error) {
 		runTrades = false
 	}
 
+	runPerpTrades := true
+	rtP := os.Getenv("RUN_PERP_TRADES")
+	if rtP == "false" {
+		runPerpTrades = false
+	}
+
 	return Example{
 		Env:           env,
 		RunTrades:     runTrades,
+		RunPerpTrades: runPerpTrades,
 		RunSlowStream: runSlowStream,
 	}, nil
 }
