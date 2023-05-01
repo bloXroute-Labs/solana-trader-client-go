@@ -170,7 +170,7 @@ func callMarketsGRPC(g *provider.GRPCClient) bool {
 }
 
 func callOrderbookGRPC(g *provider.GRPCClient) bool {
-	orderbook, err := g.GetOrderbook(context.Background(), "SOL-USDC", 0, pb.Project_P_OPENBOOK)
+	orderbook, err := g.GetOrderbook(context.Background(), "SOL-USDC", 0, false, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDC: %v", err)
 		return true
@@ -180,7 +180,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2, pb.Project_P_OPENBOOK)
+	orderbook, err = g.GetOrderbook(context.Background(), "SOLUSDT", 2, false, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
 		return true
@@ -190,7 +190,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	orderbook, err = g.GetOrderbook(context.Background(), "SOL:USDC", 3, false, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -1242,7 +1242,7 @@ func callDriftPerpOrderbookGRPC(g *provider.GRPCClient) bool {
 }
 
 func callDriftGetOrderbookRGRPC(g *provider.GRPCClient) bool {
-	orderbook, err := g.GetOrderbook(context.Background(), "SOL", 0, pb.Project_P_DRIFT)
+	orderbook, err := g.GetOrderbook(context.Background(), "SOL", 0, true, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with callDriftMarginOrderbookGRPC request for SOL-MARGIN: %v", err)
 		return true
