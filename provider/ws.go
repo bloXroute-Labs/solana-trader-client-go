@@ -926,24 +926,6 @@ func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetP
 	return connections.WSStreamProto(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
 }
 
-// GetMarginOrderbook returns the current state of marginetual contract orderbook.
-func (w *WSClient) GetMarginOrderbook(ctx context.Context, request *pb.GetMarginOrderbookRequest) (*pb.GetMarginOrderbookResponse, error) {
-	var response pb.GetMarginOrderbookResponse
-	err := w.conn.Request(ctx, "GetMarginOrderbook", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetMarginOrderbooksStream subscribes to a stream for marginetual orderbook updates.
-func (w *WSClient) GetMarginOrderbooksStream(ctx context.Context, request *pb.GetMarginOrderbooksRequest) (connections.Streamer[*pb.GetMarginOrderbooksStreamResponse], error) {
-	newResponse := func() *pb.GetMarginOrderbooksStreamResponse {
-		return &pb.GetMarginOrderbooksStreamResponse{}
-	}
-	return connections.WSStreamProto(w.conn, ctx, "GetMarginOrderbooksStream", request, newResponse)
-}
-
 // GetPerpTradesStream subscribes to a stream for trades to the requested contracts
 func (w *WSClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpTradesStreamRequest) (connections.Streamer[*pb.GetPerpTradesStreamResponse], error) {
 	newResponse := func() *pb.GetPerpTradesStreamResponse {

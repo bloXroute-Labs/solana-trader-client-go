@@ -64,7 +64,7 @@ func run() bool {
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callDriftPerpOrderbookWS", func() bool { return callDriftPerpOrderbookWS(w) })
-	failed = failed || logCall("callDriftMarginOrderbookWS", func() bool { return callDriftMarginOrderbookWS(w) })
+	failed = failed || logCall("callDriftGetOrderbookWS", func() bool { return callDriftGetOrderbookWS(w) })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -73,7 +73,7 @@ func run() bool {
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callDriftPerpOrderbookWSStream", func() bool { return callDriftPerpOrderbookWSStream(w) })
-	failed = failed || logCall("callDriftMarginOrderbookWSStream", func() bool { return callDriftMarginOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftOrderbooksWSStream", func() bool { return callDriftOrderbooksWSStream(w) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
 
 	if cfg.RunSlowStream {
@@ -1073,14 +1073,10 @@ func callDriftPerpOrderbookWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callDriftMarginOrderbookWS(w *provider.WSClient) bool {
-	log.Info("fetching drift margin orderbooks...")
+func callDriftGetOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift spot orderbooks...")
 
-	orderbook, err := w.GetMarginOrderbook(context.Background(), &pb.GetMarginOrderbookRequest{
-		Market:  "SOL",
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
-	})
+	orderbook, err := w.GetOrderbook(context.Background(), "SOL", 0, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with GetMarginOrderbook request for SOL-MARGIN: %v", err)
 		return true
@@ -1092,17 +1088,13 @@ func callDriftMarginOrderbookWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callDriftMarginOrderbookWSStream(w *provider.WSClient) bool {
-	log.Info("starting drift margin orderbook stream")
+func callDriftOrderbooksWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift spot orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetMarginOrderbooksStream(ctx, &pb.GetMarginOrderbooksRequest{
-		Markets: []string{"SOL"},
-		Limit:   0,
-		Project: pb.Project_P_DRIFT,
-	})
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL"}, 0, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with GetMarginOrderbooksStream request for SOL-MARGIN: %v", err)
 		return true

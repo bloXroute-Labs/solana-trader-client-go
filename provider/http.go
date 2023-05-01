@@ -301,7 +301,7 @@ func (h *HTTPClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 
 // GetMarketsV2 returns the list of all available named markets
 func (h *HTTPClient) GetMarketsV2(ctx context.Context, request *pb.GetMarketsRequestV2) (*pb.GetMarketsResponseV2, error) {
-	url := fmt.Sprintf("%s/api/v2/market/markets?metadata=%v&project=%s", h.baseURL, request.Metadata, request.Project)
+	url := fmt.Sprintf("%s/api/v2/spot/markets?metadata=%v&project=%s", h.baseURL, request.Metadata, request.Project)
 	markets := new(pb.GetMarketsResponseV2)
 	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponseV2](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
 		return nil, err
@@ -892,17 +892,6 @@ func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOr
 	url := fmt.Sprintf("%s/api/v1/market/perp/orderbook/%s?limit=%d&project=%v", h.baseURL, request.Contract, request.Limit, request.Project)
 	orderbook := new(pb.GetPerpOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPerpOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
-		return nil, err
-	}
-
-	return orderbook, nil
-}
-
-// GetMarginOrderbook returns the current state of Marginetual contract orderbook.
-func (h *HTTPClient) GetMarginOrderbook(ctx context.Context, request *pb.GetMarginOrderbookRequest) (*pb.GetMarginOrderbookResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/Margin/orderbook/%s?limit=%d&project=%v", h.baseURL, request.Market, request.Limit, request.Project)
-	orderbook := new(pb.GetMarginOrderbookResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetMarginOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
 		return nil, err
 	}
 

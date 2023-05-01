@@ -771,21 +771,6 @@ func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.Ge
 	return connections.GRPCStream[pb.GetPerpOrderbooksStreamResponse](stream, ""), nil
 }
 
-// GetMarginOrderbook returns the current state of Marginetual contract orderbook.
-func (g *GRPCClient) GetMarginOrderbook(ctx context.Context, request *pb.GetMarginOrderbookRequest) (*pb.GetMarginOrderbookResponse, error) {
-	return g.apiClient.GetMarginOrderbook(ctx, request)
-}
-
-// GetMarginOrderbooksStream subscribes to a stream for Marginetual orderbook updates.
-func (g *GRPCClient) GetMarginOrderbooksStream(ctx context.Context, request *pb.GetMarginOrderbooksRequest) (connections.Streamer[*pb.GetMarginOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetMarginOrderbooksStream(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.GRPCStream[pb.GetMarginOrderbooksStreamResponse](stream, ""), nil
-}
-
 // GetPerpTradesStream subscribes to a stream for trades to the requested contracts
 func (g *GRPCClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpTradesStreamRequest) (connections.Streamer[*pb.GetPerpTradesStreamResponse], error) {
 	stream, err := g.apiClient.GetPerpTradesStream(ctx, request)
