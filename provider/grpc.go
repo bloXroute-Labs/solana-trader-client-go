@@ -638,8 +638,11 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit, Project: project})
+func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32, metadata bool, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{
+		Markets: markets, Limit: limit,
+		Metadata: metadata,
+		Project:  project})
 	if err != nil {
 		return nil, err
 	}

@@ -335,7 +335,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream error response
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, pb.Project_P_OPENBOOK)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, true, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -351,7 +351,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	}
 
 	// Stream ok response
-	stream, err = g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, pb.Project_P_OPENBOOK)
+	stream, err = g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, false, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -1174,7 +1174,7 @@ func callDriftOrderbooksGRPCStream(g *provider.GRPCClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL"}, 0, pb.Project_P_DRIFT)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL"}, 0, true, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream stream request: %v", err)
 		return true
