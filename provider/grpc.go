@@ -194,11 +194,6 @@ func (g *GRPCClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpCo
 	return g.apiClient.GetPerpContracts(ctx, request)
 }
 
-// GetMarginContracts returns list of available margin contracts
-func (g *GRPCClient) GetMarginContracts(ctx context.Context, request *pb.GetMarginContractsRequest) (*pb.GetMarginContractsResponse, error) {
-	return g.apiClient.GetMarginContracts(ctx, request)
-}
-
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (g *GRPCClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	return g.apiClient.PostLiquidatePerp(ctx, request)
@@ -222,6 +217,11 @@ func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddre
 // GetMarkets returns the list of all available named markets
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
+}
+
+// GetMarketsV2 returns the list of all available named markets
+func (g *GRPCClient) GetMarketsV2(ctx context.Context, request *pb.GetMarketsRequestV2) (*pb.GetMarketsResponseV2, error) {
+	return g.apiClient.GetMarketsV2(ctx, request)
 }
 
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts

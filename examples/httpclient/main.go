@@ -130,7 +130,7 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
-	failed = failed || logCall("callGetMarginContracts", func() bool { return callGetMarginContracts() })
+	failed = failed || logCall("callMarketsV2", func() bool { return callMarketsV2() })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
@@ -981,9 +981,9 @@ func callPostPerpOrder(ownerAddr string) bool {
 		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
-		PositionSide:   common.PositionSide_PS_SHORT,
+		PositionSide:   common.PerpPositionSide_PS_SHORT,
 		Slippage:       10,
-		Type:           common.DriftOrderType_POT_LIMIT,
+		Type:           common.PerpOrderType_POT_LIMIT,
 		Amount:         1,
 		Price:          1000,
 		ClientOrderID:  2,
@@ -1009,9 +1009,9 @@ func callPostMarginOrder(ownerAddr string) bool {
 		PayerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
-		PositionSide:   common.PositionSide_PS_SHORT,
+		PositionSide:   "short",
 		Slippage:       10,
-		Type:           common.DriftOrderType_POT_LIMIT,
+		Type:           "limit",
 		Amount:         1,
 		Price:          1000,
 		ClientOrderID:  2,
@@ -1194,20 +1194,20 @@ func callGetPerpContracts() bool {
 	return false
 }
 
-func callGetMarginContracts() bool {
-	log.Info("starting callGetMarginContracts test")
+func callMarketsV2() bool {
+	log.Info("starting callMarketsV2 test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := httpClient().GetMarginContracts(ctx, &pb.GetMarginContractsRequest{
+	user, err := httpClient().GetMarketsV2(ctx, &pb.GetMarketsRequestV2{
 		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetMarginContracts resp : %s", user)
+	log.Infof("callMarketsV2 resp : %s", user)
 	return false
 }
 

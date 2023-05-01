@@ -248,17 +248,6 @@ func (h *HTTPClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpCo
 	return positions, nil
 }
 
-// GetMarginContracts returns list of available Margin contracts
-func (h *HTTPClient) GetMarginContracts(ctx context.Context, request *pb.GetMarginContractsRequest) (*pb.GetMarginContractsResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/margin/contracts?project=%s", h.baseURL, request.Project)
-	positions := new(pb.GetMarginContractsResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetMarginContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
-		return nil, err
-	}
-
-	return positions, nil
-}
-
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (h *HTTPClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/liquidate", h.baseURL)
@@ -304,6 +293,17 @@ func (h *HTTPClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	url := fmt.Sprintf("%s/api/v1/market/markets", h.baseURL)
 	markets := new(pb.GetMarketsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponse](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return markets, nil
+}
+
+// GetMarketsV2 returns the list of all available named markets
+func (h *HTTPClient) GetMarketsV2(ctx context.Context, request *pb.GetMarketsRequestV2) (*pb.GetMarketsResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/market/markets?metadata=%v&project=%s", h.baseURL, request.Metadata, request.Project)
+	markets := new(pb.GetMarketsResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponseV2](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
 		return nil, err
 	}
 

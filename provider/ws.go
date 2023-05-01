@@ -242,16 +242,6 @@ func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpCont
 	return &response, nil
 }
 
-// GetMarginContracts returns list of available margin contracts
-func (w *WSClient) GetMarginContracts(ctx context.Context, request *pb.GetMarginContractsRequest) (*pb.GetMarginContractsResponse, error) {
-	var response pb.GetMarginContractsResponse
-	err := w.conn.Request(ctx, "GetMarginContracts", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
 // PostLiquidatePerp returns a partially signed transaction for liquidating perp position
 func (w *WSClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
 	var response pb.PostLiquidatePerpResponse
@@ -306,6 +296,16 @@ func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.Get
 func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	var response pb.GetMarketsResponse
 	err := w.conn.Request(ctx, "GetMarkets", &pb.GetMarketsRequest{}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetMarketsV2 returns the list of all available named markets
+func (w *WSClient) GetMarketsV2(ctx context.Context, request *pb.GetMarketsRequestV2) (*pb.GetMarketsResponseV2, error) {
+	var response pb.GetMarketsResponseV2
+	err := w.conn.Request(ctx, "GetMarketsV2", request, &response)
 	if err != nil {
 		return nil, err
 	}

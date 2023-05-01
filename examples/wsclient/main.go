@@ -124,7 +124,7 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(w, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(w) })
-	failed = failed || logCall("callGetMarginContracts", func() bool { return callGetMarginContracts(w) })
+	failed = failed || logCall("callMarketsV2", func() bool { return callMarketsV2(w) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
@@ -1280,9 +1280,9 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
-		PositionSide:   common.PositionSide_PS_SHORT,
+		PositionSide:   common.PerpPositionSide_PS_SHORT,
 		Slippage:       10,
-		Type:           common.DriftOrderType_POT_LIMIT,
+		Type:           common.PerpOrderType_POT_LIMIT,
 		Amount:         1,
 		Price:          1000,
 		ClientOrderID:  2,
@@ -1307,9 +1307,9 @@ func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 		PayerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
-		PositionSide:   common.PositionSide_PS_SHORT,
+		PositionSide:   "short",
 		Slippage:       10,
-		Type:           common.DriftOrderType_POT_LIMIT,
+		Type:           "limit",
 		Amount:         1,
 		Price:          1000,
 		ClientOrderID:  2,
@@ -1489,20 +1489,20 @@ func callGetPerpContracts(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetMarginContracts(w *provider.WSClient) bool {
-	log.Info("starting callGetMarginContracts test")
+func callMarketsV2(w *provider.WSClient) bool {
+	log.Info("starting callMarketsV2 test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := w.GetMarginContracts(ctx, &pb.GetMarginContractsRequest{
+	user, err := w.GetMarketsV2(ctx, &pb.GetMarketsRequestV2{
 		Project: pb.Project_P_DRIFT,
 	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetMarginContracts resp : %s", user)
+	log.Infof("callMarketsV2 resp : %s", user)
 	return false
 }
 
