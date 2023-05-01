@@ -804,11 +804,12 @@ func (w *WSClient) Close() error {
 }
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, metadata bool, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
-		Markets: markets,
-		Limit:   limit,
-		Project: project,
+		Markets:  markets,
+		Limit:    limit,
+		Metadata: metadata,
+		Project:  project,
 	}, func() *pb.GetOrderbooksStreamResponse {
 		var v pb.GetOrderbooksStreamResponse
 		return &v

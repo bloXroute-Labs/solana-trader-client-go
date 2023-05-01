@@ -130,7 +130,7 @@ func run() bool {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
-		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
@@ -364,7 +364,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, false, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 		return true
@@ -1094,7 +1094,7 @@ func callDriftOrderbooksWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL"}, 0, pb.Project_P_DRIFT)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL"}, 0, true, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with GetMarginOrderbooksStream request for SOL-MARGIN: %v", err)
 		return true
@@ -1360,7 +1360,7 @@ func callManageCollateralTransfer(w *provider.WSClient) bool {
 	return false
 }
 
-func callManageCollateralDeposit(w *provider.WSClient, ownerAddr string) bool {
+func callManageCollateralDeposit(w *provider.WSClient) bool {
 	log.Info("starting callManageCollateralDeposit deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
