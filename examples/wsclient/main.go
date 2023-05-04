@@ -124,7 +124,7 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(w, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(w) })
-	failed = failed || logCall("callMarketsV2", func() bool { return callMarketsV2(w) })
+	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets(w) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
@@ -364,7 +364,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, false, pb.Project_P_OPENBOOK)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 		return true
@@ -1094,7 +1094,7 @@ func callDriftOrderbooksWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL"}, 0, true, pb.Project_P_DRIFT)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL"}, 0, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with GetMarginOrderbooksStream request for SOL-MARGIN: %v", err)
 		return true
@@ -1293,8 +1293,7 @@ func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	request := &pb.PostMarginOrderRequest{
-		Project:        pb.Project_P_DRIFT,
+	request := &pb.PostDriftMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
 		PayerAddress:   ownerAddr,
 		Market:         "SOL",
@@ -1306,7 +1305,7 @@ func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := w.SubmitPostMarginOrder(ctx, request, provider.PostOrderOpts{
+	sig, err := w.SubmitPostDriftMarginOrder(ctx, request, provider.PostOrderOpts{
 		SkipPreFlight: false,
 	})
 	if err != nil {
@@ -1481,20 +1480,18 @@ func callGetPerpContracts(w *provider.WSClient) bool {
 	return false
 }
 
-func callMarketsV2(w *provider.WSClient) bool {
-	log.Info("starting callMarketsV2 test")
+func callGetDriftMarkets(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftMarkets test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := w.GetMarketsV2(ctx, &pb.GetMarketsRequestV2{
-		Project: pb.Project_P_DRIFT,
-	})
+	user, err := w.GetDriftMarkets(ctx, &pb.GetDriftMarketsRequest{})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callMarketsV2 resp : %s", user)
+	log.Infof("GetDriftMarkets resp : %s", user)
 	return false
 }
 

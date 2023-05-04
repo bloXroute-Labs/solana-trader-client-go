@@ -126,7 +126,7 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(g, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(g, ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(g) })
-	failed = failed || logCall("callMarketsV2", func() bool { return callMarketsV2(g) })
+	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets(g) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(g, ownerAddr) })
@@ -335,7 +335,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream error response
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, true, pb.Project_P_OPENBOOK)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -351,7 +351,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	}
 
 	// Stream ok response
-	stream, err = g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, false, pb.Project_P_OPENBOOK)
+	stream, err = g.GetOrderbookStream(ctx, []string{"SOL/USDC", "SOL-USDT"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -1174,7 +1174,7 @@ func callDriftOrderbooksGRPCStream(g *provider.GRPCClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL"}, 0, true, pb.Project_P_DRIFT)
+	stream, err := g.GetOrderbookStream(ctx, []string{"SOL"}, 0, pb.Project_P_DRIFT)
 	if err != nil {
 		log.Errorf("error with GetOrderbookStream stream request: %v", err)
 		return true
@@ -1404,8 +1404,7 @@ func callPostMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	request := &pb.PostMarginOrderRequest{
-		Project:        pb.Project_P_DRIFT,
+	request := &pb.PostDriftMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
 		PayerAddress:   ownerAddr,
 		Market:         "SOL",
@@ -1590,20 +1589,18 @@ func callGetPerpContracts(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callMarketsV2(g *provider.GRPCClient) bool {
-	log.Info("starting callMarketsV2 test")
+func callGetDriftMarkets(g *provider.GRPCClient) bool {
+	log.Info("starting callGetDriftMarkets test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := g.GetMarketsV2(ctx, &pb.GetMarketsRequestV2{
-		Project: pb.Project_P_DRIFT,
-	})
+	user, err := g.GetDriftMarkets(ctx, &pb.GetDriftMarketsRequest{})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callMarketsV2 resp : %s", user)
+	log.Infof("callGetDriftMarkets resp : %s", user)
 	return false
 }
 

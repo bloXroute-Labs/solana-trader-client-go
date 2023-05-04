@@ -130,7 +130,7 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
-	failed = failed || logCall("callMarketsV2", func() bool { return callMarketsV2() })
+	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
@@ -1003,8 +1003,7 @@ func callPostMarginOrder(ownerAddr string) bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	request := &pb.PostMarginOrderRequest{
-		Project:        pb.Project_P_DRIFT,
+	request := &pb.PostDriftMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
 		PayerAddress:   ownerAddr,
 		Market:         "SOL",
@@ -1194,20 +1193,18 @@ func callGetPerpContracts() bool {
 	return false
 }
 
-func callMarketsV2() bool {
-	log.Info("starting callMarketsV2 test")
+func callGetDriftMarkets() bool {
+	log.Info("starting callGetDriftMarkets test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := httpClient().GetMarketsV2(ctx, &pb.GetMarketsRequestV2{
-		Project: pb.Project_P_DRIFT,
-	})
+	user, err := httpClient().GetMarketsV2(ctx, &pb.GetDriftMarketsRequest{})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callMarketsV2 resp : %s", user)
+	log.Infof("GetDriftMarkets resp : %s", user)
 	return false
 }
 

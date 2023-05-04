@@ -305,10 +305,10 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 	return &response, nil
 }
 
-// GetMarketsV2 returns the list of all available named markets
-func (w *WSClient) GetMarketsV2(ctx context.Context, request *pb.GetMarketsRequestV2) (*pb.GetMarketsResponseV2, error) {
-	var response pb.GetMarketsResponseV2
-	err := w.conn.Request(ctx, "GetMarketsV2", request, &response)
+// GetDriftMarkets returns the list of all available named markets
+func (w *WSClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+	var response pb.GetDriftMarketsResponse
+	err := w.conn.Request(ctx, "GetDriftMarkets", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -403,10 +403,10 @@ func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderR
 	return &response, nil
 }
 
-// PostMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitPostMarginOrder instead of this.
-func (w *WSClient) PostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest) (*pb.PostMarginOrderResponse, error) {
-	var response pb.PostMarginOrderResponse
-	err := w.conn.Request(ctx, "PostMarginOrder", request, &response)
+// PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitPostMarginOrder instead of this.
+func (w *WSClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
+	var response pb.PostDriftMarginOrderResponse
+	err := w.conn.Request(ctx, "PostDriftMarginOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -499,10 +499,10 @@ func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrde
 	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-// SubmitPostMarginOrder builds a margin order, signs it, and submits to the network.
-func (w *WSClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, opts PostOrderOpts) (string, error) {
+// SubmitPostDriftMarginOrder builds a margin order, signs it, and submits to the network.
+func (w *WSClient) SubmitPostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, opts PostOrderOpts) (string, error) {
 
-	order, err := w.PostMarginOrder(ctx, request)
+	order, err := w.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -804,12 +804,11 @@ func (w *WSClient) Close() error {
 }
 
 // GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, metadata bool, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
+func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
-		Markets:  markets,
-		Limit:    limit,
-		Metadata: metadata,
-		Project:  project,
+		Markets: markets,
+		Limit:   limit,
+		Project: project,
 	}, func() *pb.GetOrderbooksStreamResponse {
 		var v pb.GetOrderbooksStreamResponse
 		return &v

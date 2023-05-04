@@ -299,11 +299,11 @@ func (h *HTTPClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return markets, nil
 }
 
-// GetMarketsV2 returns the list of all available named markets
-func (h *HTTPClient) GetMarketsV2(ctx context.Context, request *pb.GetMarketsRequestV2) (*pb.GetMarketsResponseV2, error) {
-	url := fmt.Sprintf("%s/api/v2/spot/markets?metadata=%v&project=%s", h.baseURL, request.Metadata, request.Project)
-	markets := new(pb.GetMarketsResponseV2)
-	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponseV2](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
+// GetDriftMarketsRequest returns the list of all available named markets
+func (h *HTTPClient) GetDriftMarketsRequest(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/markets?metadata=%v", h.baseURL, request.Metadata)
+	markets := new(pb.GetDriftMarketsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftMarketsResponse](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -550,9 +550,9 @@ func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 	return sig, err
 }
 
-// SubmitMarginOrder builds a margin order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, opts PostOrderOpts) (string, error) {
-	order, err := h.PostMarginOrder(ctx, request)
+// SubmitDriftMarginOrder builds a margin order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, opts PostOrderOpts) (string, error) {
+	order, err := h.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -561,12 +561,12 @@ func (h *HTTPClient) SubmitMarginOrder(ctx context.Context, request *pb.PostMarg
 	return sig, err
 }
 
-// PostMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitMarginOrder instead of this.
-func (h *HTTPClient) PostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest) (*pb.PostMarginOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/margin/order", h.baseURL)
+// PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitDriftMarginOrder instead of this.
+func (h *HTTPClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/margin-place", h.baseURL)
 
-	var response pb.PostMarginOrderResponse
-	err := connections.HTTPPostWithClient[*pb.PostMarginOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	var response pb.PostDriftMarginOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostDriftMarginOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -700,9 +700,9 @@ func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPe
 	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
-// SubmitPostMarginOrder builds a margin order txn, signs and submits it to the network.
-func (h *HTTPClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostMarginOrderRequest, skipPreFlight bool) (string, error) {
-	order, err := h.PostMarginOrder(ctx, request)
+// SubmitDriftPostMarginOrder builds a margin order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitDriftPostMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
