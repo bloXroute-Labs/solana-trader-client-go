@@ -1015,7 +1015,7 @@ func callPostMarginOrder(ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := h.SubmitPostMarginOrder(ctx, request, false)
+	sig, err := h.SubmitDriftPostMarginOrder(ctx, request, false)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1199,7 +1199,7 @@ func callGetDriftMarkets() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := httpClient().GetMarketsV2(ctx, &pb.GetDriftMarketsRequest{})
+	user, err := httpClient().GetDriftMarkets(ctx, &pb.GetDriftMarketsRequest{})
 	if err != nil {
 		log.Error(err)
 		return true
