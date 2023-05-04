@@ -815,6 +815,14 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 	})
 }
 
+// GetDriftMarginOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetDriftMarginOrderbooksStream(ctx context.Context, request *pb.GetDriftMarginOrderbooksRequest) (connections.Streamer[*pb.GetDriftMarginOrderbooksStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarginOrderbooksStream", request, func() *pb.GetDriftMarginOrderbooksStreamResponse {
+		var v pb.GetDriftMarginOrderbooksStreamResponse
+		return &v
+	})
+}
+
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetMarketDepthsStream", &pb.GetMarketDepthsRequest{

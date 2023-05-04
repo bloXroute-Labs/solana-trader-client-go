@@ -77,7 +77,7 @@ func run() bool {
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 	failed = failed || logCall("callDriftPerpOrderbookGRPCStream", func() bool { return callDriftPerpOrderbookGRPCStream(g) })
-	failed = failed || logCall("callDriftOrderbooksGRPCStream", func() bool { return callDriftOrderbooksGRPCStream(g) })
+	failed = failed || logCall("callDriftMarginOrderbooksGRPCStream", func() bool { return callDriftMarginOrderbooksGRPCStream(g) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
 
 	if !cfg.RunTrades {
@@ -1167,16 +1167,19 @@ func callDriftPerpOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callDriftOrderbooksGRPCStream(g *provider.GRPCClient) bool {
+func callDriftMarginOrderbooksGRPCStream(g *provider.GRPCClient) bool {
 	log.Info("starting get Drift spot orderbook stream")
 
-	ch := make(chan *pb.GetOrderbooksStreamResponse)
+	ch := make(chan *pb.GetDriftMarginOrderbooksStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL"}, 0, pb.Project_P_DRIFT)
+	stream, err := g.GetDriftMarginOrderbooksStream(ctx, &pb.GetDriftMarginOrderbooksRequest{
+		Markets: []string{"SOL"},
+		Limit:   0,
+	})
 	if err != nil {
-		log.Errorf("error with GetOrderbookStream stream request: %v", err)
+		log.Errorf("error with GetDriftMarginOrderbooksStream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
