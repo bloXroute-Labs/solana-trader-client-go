@@ -773,6 +773,11 @@ func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOr
 	return g.apiClient.GetPerpOrderbook(ctx, request)
 }
 
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (g *GRPCClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	return g.apiClient.GetDriftMarginOrderbook(ctx, request)
+}
+
 // GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
 func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetPerpOrderbooksRequest) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
 	stream, err := g.apiClient.GetPerpOrderbooksStream(ctx, request)

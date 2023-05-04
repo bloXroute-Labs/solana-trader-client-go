@@ -57,7 +57,7 @@ func run() bool {
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callDriftPerpOrderbookGRPC", func() bool { return callDriftPerpOrderbookGRPC(g) })
-	failed = failed || logCall("callDriftGetOrderbookRGRPC", func() bool { return callDriftGetOrderbookRGRPC(g) })
+	failed = failed || logCall("callDriftGetMarginOrderbookGRPC", func() bool { return callDriftGetMarginOrderbookGRPC(g) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
@@ -1244,8 +1244,12 @@ func callDriftPerpOrderbookGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callDriftGetOrderbookRGRPC(g *provider.GRPCClient) bool {
-	orderbook, err := g.GetOrderbook(context.Background(), "SOL", 0, true, pb.Project_P_DRIFT)
+func callDriftGetMarginOrderbookGRPC(g *provider.GRPCClient) bool {
+	orderbook, err := g.GetDriftMarginOrderbook(context.Background(), &pb.GetDriftMarginOrderbookRequest{
+		Market:   "SOL",
+		Limit:    0,
+		Metadata: true,
+	})
 	if err != nil {
 		log.Errorf("error with callDriftMarginOrderbookGRPC request for SOL-MARGIN: %v", err)
 		return true

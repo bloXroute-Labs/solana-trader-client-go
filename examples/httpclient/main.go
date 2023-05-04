@@ -78,7 +78,8 @@ func run() bool {
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
+	failed = failed || logCall("callDriftPerpOrderbookHTTP", func() bool { return callDriftPerpOrderbookHTTP() })
+	failed = failed || logCall("callDriftGetMarginOrderbookHTTP", func() bool { return callDriftGetMarginOrderbookHTTP() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -825,7 +826,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 
 }
 
-func callDriftOrderbookHTTP() bool {
+func callDriftPerpOrderbookHTTP() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -834,6 +835,27 @@ func callDriftOrderbookHTTP() bool {
 		Contract: common.PerpContract_SOL_PERP,
 		Limit:    0,
 		Project:  pb.Project_P_DRIFT,
+	})
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftGetMarginOrderbookHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	orderbook, err := h.GetDriftMarginOrderbook(ctx, &pb.GetDriftMarginOrderbookRequest{
+		Market:   "SOL",
+		Limit:    0,
+		Metadata: true,
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)

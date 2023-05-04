@@ -898,6 +898,16 @@ func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOr
 	return orderbook, nil
 }
 
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (h *HTTPClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/margin-orderbooks/%s?limit=%d", h.baseURL, request.Market, request.Limit)
+	orderbook := new(pb.GetDriftMarginOrderbookResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftMarginOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
+		return nil, err
+	}
+	return orderbook, nil
+}
+
 type stringable interface {
 	String() string
 }

@@ -929,6 +929,16 @@ func (w *WSClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrde
 	return &response, nil
 }
 
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (w *WSClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	var response pb.GetDriftMarginOrderbookResponse
+	err := w.conn.Request(ctx, "GetDriftMarginOrderbook", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
 func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetPerpOrderbooksRequest) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
 	newResponse := func() *pb.GetPerpOrderbooksStreamResponse {
