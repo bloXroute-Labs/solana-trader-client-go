@@ -299,8 +299,8 @@ func (h *HTTPClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return markets, nil
 }
 
-// GetDriftMarketsRequest returns the list of all available named markets
-func (h *HTTPClient) GetDriftMarketsRequest(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+// GetDriftMarkets returns the list of all available named markets
+func (h *HTTPClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/drift/markets?metadata=%v", h.baseURL, request.Metadata)
 	markets := new(pb.GetDriftMarketsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftMarketsResponse](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
