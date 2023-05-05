@@ -63,7 +63,8 @@ func run() bool {
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
+	failed = failed || logCall("callDriftPerpOrderbookWS", func() bool { return callDriftPerpOrderbookWS(w) })
+	failed = failed || logCall("callDriftGetMarginOrderbookWS", func() bool { return callDriftGetMarginOrderbookWS(w) })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -71,7 +72,8 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
-	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftPerpOrderbookWSStream", func() bool { return callDriftPerpOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftMarginOrderbooksWSStream", func() bool { return callDriftMarginOrderbooksWSStream(w) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
 
 	if cfg.RunSlowStream {
@@ -121,14 +123,17 @@ func run() bool {
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(w, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(w, ownerAddr) })
-	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts(w) })
+	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(w) })
+	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets(w) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
-		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
+		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(w) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(w) })
 
@@ -1022,8 +1027,8 @@ func callBlockWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callDriftOrderbookWS(w *provider.WSClient) bool {
-	log.Info("fetching drift orderbooks...")
+func callDriftPerpOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift perp orderbooks...")
 
 	orderbook, err := w.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
 		Contract: common.PerpContract_SOL_PERP,
@@ -1041,8 +1046,8 @@ func callDriftOrderbookWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callDriftOrderbookWSStream(w *provider.WSClient) bool {
-	log.Info("starting drift orderbook stream")
+func callDriftPerpOrderbookWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift perp orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -1054,6 +1059,51 @@ func callDriftOrderbookWSStream(w *provider.WSClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream request for SOL-PERP: %v", err)
+		return true
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftGetMarginOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift spot orderbooks...")
+
+	orderbook, err := w.GetDriftMarginOrderbook(context.Background(), &pb.GetDriftMarginOrderbookRequest{
+		Market:   "SOL",
+		Limit:    0,
+		Metadata: true,
+	})
+	if err != nil {
+		log.Errorf("error with GetMarginOrderbook request for SOL-MARGIN: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftMarginOrderbooksWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift spot orderbook stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetDriftMarginOrderbooksStream(ctx, &pb.GetDriftMarginOrderbooksRequest{
+		Markets: []string{"SOL"},
+		Limit:   0,
+	})
+	if err != nil {
+		log.Errorf("error with GetMarginOrderbooksStream request for SOL-MARGIN: %v", err)
 		return true
 	}
 
@@ -1245,6 +1295,34 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostMarginOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostDriftMarginOrderRequest{
+		OwnerAddress:   ownerAddr,
+		PayerAddress:   ownerAddr,
+		Market:         "SOL",
+		AccountAddress: "",
+		PositionSide:   "short",
+		Slippage:       10,
+		Type:           "limit",
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := w.SubmitPostDriftMarginOrder(ctx, request, provider.PostOrderOpts{
+		SkipPreFlight: false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostMarginOrder signature : %s", sig)
+	return false
+}
+
 func callManageCollateralWithdraw(w *provider.WSClient) bool {
 	log.Info("starting callManageCollateralWithdraw withdraw test")
 
@@ -1288,7 +1366,7 @@ func callManageCollateralTransfer(w *provider.WSClient) bool {
 	return false
 }
 
-func callManageCollateralDeposit(w *provider.WSClient, ownerAddr string) bool {
+func callManageCollateralDeposit(w *provider.WSClient) bool {
 	log.Info("starting callManageCollateralDeposit deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1392,8 +1470,8 @@ func callGetAssets(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callGetContracts(w *provider.WSClient) bool {
-	log.Info("starting callGetContracts test")
+func callGetPerpContracts(w *provider.WSClient) bool {
+	log.Info("starting callGetPerpContracts test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1405,7 +1483,22 @@ func callGetContracts(w *provider.WSClient) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetAssets resp : %s", user)
+	log.Infof("callGetPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetDriftMarkets(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftMarkets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftMarkets(ctx, &pb.GetDriftMarketsRequest{})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftMarkets resp : %s", user)
 	return false
 }
 
