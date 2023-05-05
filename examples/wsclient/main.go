@@ -173,7 +173,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callOrderbookWS(w *provider.WSClient) bool {
 	log.Info("fetching orderbooks...")
 
-	orderbook, err := w.GetOrderbook(context.Background(), "SOL-USDT", 0, false, pb.Project_P_OPENBOOK)
+	orderbook, err := w.GetOrderbook(context.Background(), "SOL-USDT", 0, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
@@ -183,7 +183,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook(context.Background(), "SOLUSDT", 2, false, pb.Project_P_OPENBOOK)
+	orderbook, err = w.GetOrderbook(context.Background(), "SOLUSDT", 2, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
@@ -193,7 +193,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3, false, pb.Project_P_OPENBOOK)
+	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true

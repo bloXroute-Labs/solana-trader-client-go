@@ -73,12 +73,12 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32, metadata bool, project pb.Project) (*pb.GetOrderbookResponse, error) {
+func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
 	var response pb.GetOrderbookResponse
 	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderbookRequest{
-		Market: market, Limit: limit,
-		Metadata: metadata,
-		Project:  project}, &response)
+		Market:  market,
+		Limit:   limit,
+		Project: project}, &response)
 	if err != nil {
 		return nil, err
 	}
