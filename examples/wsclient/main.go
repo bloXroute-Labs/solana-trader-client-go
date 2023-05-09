@@ -136,6 +136,7 @@ func run() bool {
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(w) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(w) })
+		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(w, ownerAddr) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(w, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(w, ownerAddr) })
@@ -1363,6 +1364,24 @@ func callManageCollateralTransfer(w *provider.WSClient) bool {
 		return true
 	}
 	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callDriftEnableMarginTrading(w *provider.WSClient, ownerAddress string) bool {
+	log.Info("starting callDriftEnableMarginTrading transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+		OwnerAddress: ownerAddress,
+		EnableMargin: true,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftEnableMarginTrading signature : %s", sig)
 	return false
 }
 

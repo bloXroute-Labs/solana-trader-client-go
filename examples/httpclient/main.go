@@ -142,6 +142,7 @@ func run() bool {
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
+		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(ownerAddr) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(ownerAddr) })
@@ -1088,6 +1089,24 @@ func callManageCollateralTransfer() bool {
 		return true
 	}
 	log.Infof("callManageCollateralTransfer signature : %s", sig)
+	return false
+}
+
+func callDriftEnableMarginTrading(ownerAddress string) bool {
+	log.Info("starting callDriftEnableMarginTrading transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := httpClient().SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+		OwnerAddress: ownerAddress,
+		EnableMargin: true,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftEnableMarginTrading signature : %s", sig)
 	return false
 }
 

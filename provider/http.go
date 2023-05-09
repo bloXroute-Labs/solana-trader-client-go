@@ -573,6 +573,28 @@ func (h *HTTPClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostD
 	return &response, nil
 }
 
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (h *HTTPClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/enable-margin", h.baseURL)
+
+	var response pb.PostDriftEnableMarginTradingResponse
+	err := connections.HTTPPostWithClient[*pb.PostDriftEnableMarginTradingResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := h.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+}
+
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
 func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)

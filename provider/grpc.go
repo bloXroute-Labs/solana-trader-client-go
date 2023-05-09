@@ -316,6 +316,21 @@ func (g *GRPCClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostD
 	return g.apiClient.PostDriftMarginOrder(ctx, request)
 }
 
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (g *GRPCClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	return g.apiClient.PostDriftEnableMarginTrading(ctx, request)
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (g *GRPCClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := g.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,

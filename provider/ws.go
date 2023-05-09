@@ -413,6 +413,26 @@ func (w *WSClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDri
 	return &response, nil
 }
 
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (w *WSClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	var response pb.PostDriftEnableMarginTradingResponse
+	err := w.conn.Request(ctx, "PostDriftEnableMarginTrading", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (w *WSClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := w.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{
