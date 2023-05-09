@@ -79,6 +79,7 @@ func run() bool {
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
+	failed = failed || logCall("callDriftMarketDepthHTTP", func() bool { return callDriftMarketDepthHTTP() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -838,6 +839,26 @@ func callDriftOrderbookHTTP() bool {
 		return true
 	} else {
 		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftMarketDepthHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	marketDepth, err := h.GetDriftMarketDepth(ctx, &pb.GetDriftMarketDepthRequest{
+		Contract: "SOL_PERP",
+		Limit:    0,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepth request for SOL_PERP: %v", err)
+		return true
+	} else {
+		log.Info(marketDepth)
 	}
 
 	fmt.Println()

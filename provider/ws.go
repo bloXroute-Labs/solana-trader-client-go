@@ -902,3 +902,21 @@ func (w *WSClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpT
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetPerpTradesStream", request, newResponse)
 }
+
+// GetDriftMarketDepth returns market depth data.
+func (w *WSClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
+	var response pb.GetDriftMarketDepthResponse
+	err := w.conn.Request(ctx, "GetDriftMarketDepth", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftMarketDepthsStream subscribes to a stream for drift market depth data updates.
+func (w *WSClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb.GetDriftMarketDepthsStreamRequest) (connections.Streamer[*pb.GetDriftMarketDepthStreamResponse], error) {
+	newResponse := func() *pb.GetDriftMarketDepthStreamResponse {
+		return &pb.GetDriftMarketDepthStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarketDepthsStream", request, newResponse)
+}

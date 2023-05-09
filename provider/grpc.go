@@ -761,3 +761,18 @@ func (g *GRPCClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPer
 
 	return connections.GRPCStream[pb.GetPerpTradesStreamResponse](stream, ""), nil
 }
+
+// GetDriftMarketDepth returns Drift market depth data.
+func (g *GRPCClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
+	return g.apiClient.GetDriftMarketDepth(ctx, request)
+}
+
+// GetDriftMarketDepthsStream subscribes to a stream for drift market depth data updates.
+func (g *GRPCClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb.GetDriftMarketDepthsStreamRequest) (connections.Streamer[*pb.GetDriftMarketDepthStreamResponse], error) {
+	stream, err := g.apiClient.GetDriftMarketDepthsStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetDriftMarketDepthStreamResponse](stream, ""), nil
+}

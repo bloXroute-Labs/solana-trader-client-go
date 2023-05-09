@@ -52,7 +52,7 @@ func run() bool {
 	var failed bool
 
 	// informational requests
-	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
+	/*failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
@@ -63,16 +63,18 @@ func run() bool {
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
+	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })*/
+	failed = failed || logCall("callGetDriftMarketDepthWS", func() bool { return callGetDriftMarketDepthWS(w) })
 
 	// streaming methods
-	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
+	/*failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
+	failed = failed || logCall("callDriftMarketDepthsStream", func() bool { return callDriftMarketDepthsStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
@@ -83,7 +85,7 @@ func run() bool {
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
 		return failed
-	}
+	}*/
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -1097,6 +1099,53 @@ func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callDriftMarketDepthsStream(w *provider.WSClient) bool {
+	log.Info("starting get Drift MarketDepth stream")
+
+	ch := make(chan *pb.GetDriftMarketDepthStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetDriftMarketDepthsStream(ctx, &pb.GetDriftMarketDepthsStreamRequest{
+		Contracts: []string{"SOL_PERP", "ETH_PERP"},
+		Limit:     2,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepthsStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetDriftMarketDepthWS(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftMarketDepthWS test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftMarketDepth(ctx, &pb.GetDriftMarketDepthRequest{
+		Contract: "SOL_PERP",
+		Limit:    2,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftMarketDepthWS resp : %s", user)
 	return false
 }
 
