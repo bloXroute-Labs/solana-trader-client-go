@@ -137,6 +137,7 @@ func run() bool {
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(g) })
+		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(g, ownerAddr) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(g, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(g, ownerAddr) })
@@ -1413,7 +1414,6 @@ func callPostMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	defer cancel()
 	request := &pb.PostDriftMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
 		PositionSide:   "short",
@@ -1472,6 +1472,24 @@ func callManageCollateralTransfer(g *provider.GRPCClient) bool {
 		return true
 	}
 	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callDriftEnableMarginTrading(g *provider.GRPCClient, ownerAddress string) bool {
+	log.Info("starting callDriftEnableMarginTrading transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := g.SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+		OwnerAddress: ownerAddress,
+		EnableMargin: true,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftEnableMarginTrading signature : %s", sig)
 	return false
 }
 
