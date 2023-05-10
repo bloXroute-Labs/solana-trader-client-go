@@ -1028,7 +1028,6 @@ func callPostMarginOrder(ownerAddr string) bool {
 	defer cancel()
 	request := &pb.PostDriftMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
 		PositionSide:   "short",
