@@ -80,6 +80,7 @@ func run() bool {
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callDriftPerpOrderbookHTTP", func() bool { return callDriftPerpOrderbookHTTP() })
 	failed = failed || logCall("callDriftGetMarginOrderbookHTTP", func() bool { return callDriftGetMarginOrderbookHTTP() })
+	failed = failed || logCall("callDriftMarketDepthHTTP", func() bool { return callDriftMarketDepthHTTP() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -848,6 +849,26 @@ func callDriftPerpOrderbookHTTP() bool {
 	return false
 }
 
+func callDriftMarketDepthHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	marketDepth, err := h.GetDriftMarketDepth(ctx, &pb.GetDriftMarketDepthRequest{
+		Contract: "SOL_PERP",
+		Limit:    0,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepth request for SOL_PERP: %v", err)
+		return true
+	} else {
+		log.Info(marketDepth)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callDriftGetMarginOrderbookHTTP() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -1001,7 +1022,6 @@ func callPostPerpOrder(ownerAddr string) bool {
 	request := &pb.PostPerpOrderRequest{
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
 		PositionSide:   common.PerpPositionSide_PS_SHORT,

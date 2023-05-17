@@ -58,6 +58,7 @@ func run() bool {
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callDriftPerpOrderbookGRPC", func() bool { return callDriftPerpOrderbookGRPC(g) })
 	failed = failed || logCall("callDriftGetMarginOrderbookGRPC", func() bool { return callDriftGetMarginOrderbookGRPC(g) })
+	failed = failed || logCall("callDriftMarketDepthGRPC", func() bool { return callDriftMarketDepthGRPC(g) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
@@ -79,6 +80,7 @@ func run() bool {
 	failed = failed || logCall("callDriftPerpOrderbookGRPCStream", func() bool { return callDriftPerpOrderbookGRPCStream(g) })
 	failed = failed || logCall("callDriftMarginOrderbooksGRPCStream", func() bool { return callDriftMarginOrderbooksGRPCStream(g) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
+	failed = failed || logCall("callDriftGetMarketDepthsStream", func() bool { return callDriftGetMarketDepthsStream(g) })
 
 	if !cfg.RunTrades {
 		log.Info("skipping trades due to config")
@@ -1228,6 +1230,35 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callDriftGetMarketDepthsStream(g *provider.GRPCClient) bool {
+	log.Info("starting get Drift MarketDepth stream")
+
+	ch := make(chan *pb.GetDriftMarketDepthStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetDriftMarketDepthsStream(ctx, &pb.GetDriftMarketDepthsStreamRequest{
+		Contracts: []string{"SOL_PERP", "ETH_PERP"},
+		Limit:     2,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepthsStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
 func callDriftPerpOrderbookGRPC(g *provider.GRPCClient) bool {
 	orderbook, err := g.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
 		Contract: common.PerpContract_SOL_PERP,
@@ -1239,6 +1270,22 @@ func callDriftPerpOrderbookGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftMarketDepthGRPC(g *provider.GRPCClient) bool {
+	marketDepth, err := g.GetDriftMarketDepth(context.Background(), &pb.GetDriftMarketDepthRequest{
+		Contract: "SOL_PERP",
+		Limit:    0,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepth request for SOL_PERP: %v", err)
+		return true
+	} else {
+		log.Info(marketDepth)
 	}
 
 	fmt.Println()
@@ -1388,7 +1435,6 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	request := &pb.PostPerpOrderRequest{
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
 		PositionSide:   common.PerpPositionSide_PS_SHORT,

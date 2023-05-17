@@ -65,6 +65,7 @@ func run() bool {
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callDriftPerpOrderbookWS", func() bool { return callDriftPerpOrderbookWS(w) })
 	failed = failed || logCall("callDriftGetMarginOrderbookWS", func() bool { return callDriftGetMarginOrderbookWS(w) })
+	failed = failed || logCall("callGetDriftMarketDepthWS", func() bool { return callGetDriftMarketDepthWS(w) })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -75,6 +76,7 @@ func run() bool {
 	failed = failed || logCall("callDriftPerpOrderbookWSStream", func() bool { return callDriftPerpOrderbookWSStream(w) })
 	failed = failed || logCall("callDriftMarginOrderbooksWSStream", func() bool { return callDriftMarginOrderbooksWSStream(w) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
+	failed = failed || logCall("callDriftMarketDepthsStream", func() bool { return callDriftMarketDepthsStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
@@ -1151,6 +1153,53 @@ func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
 	return false
 }
 
+func callDriftMarketDepthsStream(w *provider.WSClient) bool {
+	log.Info("starting get Drift MarketDepth stream")
+
+	ch := make(chan *pb.GetDriftMarketDepthStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetDriftMarketDepthsStream(ctx, &pb.GetDriftMarketDepthsStreamRequest{
+		Contracts: []string{"SOL_PERP", "ETH_PERP"},
+		Limit:     2,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepthsStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetDriftMarketDepthWS(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftMarketDepthWS test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftMarketDepth(ctx, &pb.GetDriftMarketDepthRequest{
+		Contract: "SOL_PERP",
+		Limit:    2,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftMarketDepthWS resp : %s", user)
+	return false
+}
+
 func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callGetOpenPerpOrders test")
 
@@ -1277,7 +1326,6 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	request := &pb.PostPerpOrderRequest{
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
 		PositionSide:   common.PerpPositionSide_PS_SHORT,

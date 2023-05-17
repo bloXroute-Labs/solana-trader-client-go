@@ -75,10 +75,7 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
 	var response pb.GetOrderbookResponse
-	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderbookRequest{
-		Market:  market,
-		Limit:   limit,
-		Project: project}, &response)
+	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderbookRequest{Market: market, Limit: limit, Project: project}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -973,4 +970,22 @@ func (w *WSClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpT
 		return &pb.GetPerpTradesStreamResponse{}
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetPerpTradesStream", request, newResponse)
+}
+
+// GetDriftMarketDepth returns market depth data.
+func (w *WSClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
+	var response pb.GetDriftMarketDepthResponse
+	err := w.conn.Request(ctx, "GetDriftMarketDepth", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftMarketDepthsStream subscribes to a stream for drift market depth data updates.
+func (w *WSClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb.GetDriftMarketDepthsStreamRequest) (connections.Streamer[*pb.GetDriftMarketDepthStreamResponse], error) {
+	newResponse := func() *pb.GetDriftMarketDepthStreamResponse {
+		return &pb.GetDriftMarketDepthStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarketDepthsStream", request, newResponse)
 }
