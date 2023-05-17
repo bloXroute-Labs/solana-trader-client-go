@@ -1435,7 +1435,6 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	request := &pb.PostPerpOrderRequest{
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
 		PositionSide:   common.PerpPositionSide_PS_SHORT,
