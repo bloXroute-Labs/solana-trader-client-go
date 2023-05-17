@@ -302,6 +302,16 @@ func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, erro
 	return &response, nil
 }
 
+// GetDriftMarkets returns the list of all available named markets
+func (w *WSClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+	var response pb.GetDriftMarketsResponse
+	err := w.conn.Request(ctx, "GetDriftMarkets", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetPrice returns the USDC price of requested tokens
 func (w *WSClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
 	var response pb.GetPriceResponse
@@ -390,6 +400,36 @@ func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderR
 	return &response, nil
 }
 
+// PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitPostMarginOrder instead of this.
+func (w *WSClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
+	var response pb.PostDriftMarginOrderResponse
+	err := w.conn.Request(ctx, "PostDriftMarginOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (w *WSClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	var response pb.PostDriftEnableMarginTradingResponse
+	err := w.conn.Request(ctx, "PostDriftEnableMarginTrading", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (w *WSClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := w.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{
@@ -469,6 +509,17 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, opts PostOrderOpts) (string, error) {
 
 	order, err := w.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// SubmitPostDriftMarginOrder builds a margin order, signs it, and submits to the network.
+func (w *WSClient) SubmitPostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, opts PostOrderOpts) (string, error) {
+
+	order, err := w.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -781,6 +832,14 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 	})
 }
 
+// GetDriftMarginOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetDriftMarginOrderbooksStream(ctx context.Context, request *pb.GetDriftMarginOrderbooksRequest) (connections.Streamer[*pb.GetDriftMarginOrderbooksStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarginOrderbooksStream", request, func() *pb.GetDriftMarginOrderbooksStreamResponse {
+		var v pb.GetDriftMarginOrderbooksStreamResponse
+		return &v
+	})
+}
+
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (w *WSClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetMarketDepthsStream", &pb.GetMarketDepthsRequest{
@@ -881,6 +940,16 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 func (w *WSClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
 	var response pb.GetPerpOrderbookResponse
 	err := w.conn.Request(ctx, "GetPerpOrderbook", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (w *WSClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	var response pb.GetDriftMarginOrderbookResponse
+	err := w.conn.Request(ctx, "GetDriftMarginOrderbook", request, &response)
 	if err != nil {
 		return nil, err
 	}

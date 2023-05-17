@@ -78,7 +78,8 @@ func run() bool {
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callDriftOrderbookHTTP", func() bool { return callDriftOrderbookHTTP() })
+	failed = failed || logCall("callDriftPerpOrderbookHTTP", func() bool { return callDriftPerpOrderbookHTTP() })
+	failed = failed || logCall("callDriftGetMarginOrderbookHTTP", func() bool { return callDriftGetMarginOrderbookHTTP() })
 	failed = failed || logCall("callDriftMarketDepthHTTP", func() bool { return callDriftMarketDepthHTTP() })
 
 	cfg, err := config.Load()
@@ -130,7 +131,8 @@ func run() bool {
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
-	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts() })
+	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
+	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
@@ -138,8 +140,10 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
+		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
+		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(ownerAddr) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(ownerAddr) })
@@ -824,7 +828,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 
 }
 
-func callDriftOrderbookHTTP() bool {
+func callDriftPerpOrderbookHTTP() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -859,6 +863,27 @@ func callDriftMarketDepthHTTP() bool {
 		return true
 	} else {
 		log.Info(marketDepth)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftGetMarginOrderbookHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	orderbook, err := h.GetDriftMarginOrderbook(ctx, &pb.GetDriftMarginOrderbookRequest{
+		Market:   "SOL",
+		Limit:    0,
+		Metadata: true,
+	})
+	if err != nil {
+		log.Errorf("error with GetPerpOrderbook request for SOL-PERP: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
 	}
 
 	fmt.Println()
@@ -1016,6 +1041,32 @@ func callPostPerpOrder(ownerAddr string) bool {
 	return false
 }
 
+func callPostMarginOrder(ownerAddr string) bool {
+	log.Info("starting callPostMarginOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostDriftMarginOrderRequest{
+		OwnerAddress:   ownerAddr,
+		Market:         "SOL",
+		AccountAddress: "",
+		PositionSide:   "short",
+		Slippage:       10,
+		Type:           "limit",
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := h.SubmitDriftPostMarginOrder(ctx, request, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostMarginOrder signature : %s", sig)
+	return false
+}
+
 func callManageCollateralWithdraw() bool {
 	log.Info("starting callManageCollateralWithdraw test")
 
@@ -1058,6 +1109,24 @@ func callManageCollateralTransfer() bool {
 		return true
 	}
 	log.Infof("callManageCollateralTransfer signature : %s", sig)
+	return false
+}
+
+func callDriftEnableMarginTrading(ownerAddress string) bool {
+	log.Info("starting callDriftEnableMarginTrading transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := httpClient().SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+		OwnerAddress: ownerAddress,
+		EnableMargin: true,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftEnableMarginTrading signature : %s", sig)
 	return false
 }
 
@@ -1168,8 +1237,8 @@ func callGetAssets(ownerAddr string) bool {
 	return false
 }
 
-func callGetContracts() bool {
-	log.Info("starting callGetContracts test")
+func callGetPerpContracts() bool {
+	log.Info("starting callGetPerpContracts test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1181,7 +1250,22 @@ func callGetContracts() bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetAssets resp : %s", user)
+	log.Infof("callGetPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetDriftMarkets() bool {
+	log.Info("starting callGetDriftMarkets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := httpClient().GetDriftMarkets(ctx, &pb.GetDriftMarketsRequest{})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftMarkets resp : %s", user)
 	return false
 }
 

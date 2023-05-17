@@ -219,6 +219,11 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
+// GetDriftMarkets returns the list of all available named markets
+func (g *GRPCClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+	return g.apiClient.GetDriftMarkets(ctx, request)
+}
+
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
@@ -304,6 +309,26 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
 func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
 	return g.apiClient.PostPerpOrder(ctx, request)
+}
+
+// PostDriftMarginOrder returns a partially signed transaction for placing a Margin order. Typically, you want to use SubmitDriftMarginOrder instead of this.
+func (g *GRPCClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
+	return g.apiClient.PostDriftMarginOrder(ctx, request)
+}
+
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (g *GRPCClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	return g.apiClient.PostDriftEnableMarginTrading(ctx, request)
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (g *GRPCClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := g.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
 }
 
 // PostSubmit posts the transaction string to the Solana network.
@@ -451,6 +476,15 @@ func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 // SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
 func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	resp, err := g.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostMarginOrder builds a create-user txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -620,12 +654,24 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{Markets: markets, Limit: limit, Project: project})
+	stream, err := g.apiClient.GetOrderbooksStream(ctx, &pb.GetOrderbooksRequest{
+		Markets: markets, Limit: limit,
+		Project: project})
 	if err != nil {
 		return nil, err
 	}
 
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+}
+
+// GetDriftMarginOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (g *GRPCClient) GetDriftMarginOrderbooksStream(ctx context.Context, request *pb.GetDriftMarginOrderbooksRequest) (connections.Streamer[*pb.GetDriftMarginOrderbooksStreamResponse], error) {
+	stream, err := g.apiClient.GetDriftMarginOrderbooksStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetDriftMarginOrderbooksStreamResponse](stream, fmt.Sprint(request.GetMarkets())), nil
 }
 
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
@@ -740,6 +786,11 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 // GetPerpOrderbook returns the current state of perpetual contract orderbook.
 func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
 	return g.apiClient.GetPerpOrderbook(ctx, request)
+}
+
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (g *GRPCClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	return g.apiClient.GetDriftMarginOrderbook(ctx, request)
 }
 
 // GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.

@@ -299,6 +299,17 @@ func (h *HTTPClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return markets, nil
 }
 
+// GetDriftMarkets returns the list of all available named markets
+func (h *HTTPClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/markets?metadata=%v", h.baseURL, request.Metadata)
+	markets := new(pb.GetDriftMarketsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftMarketsResponse](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return markets, nil
+}
+
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (h *HTTPClient) GetUnsettled(ctx context.Context, market string, owner string, project pb.Project) (*pb.GetUnsettledResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/unsettled/%s?ownerAddress=%s&project=%s", h.baseURL, market, owner, project)
@@ -539,6 +550,51 @@ func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 	return sig, err
 }
 
+// SubmitDriftMarginOrder builds a margin order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, opts PostOrderOpts) (string, error) {
+	order, err := h.PostDriftMarginOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return sig, err
+}
+
+// PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitDriftMarginOrder instead of this.
+func (h *HTTPClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/margin-place", h.baseURL)
+
+	var response pb.PostDriftMarginOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostDriftMarginOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (h *HTTPClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/enable-margin", h.baseURL)
+
+	var response pb.PostDriftEnableMarginTradingResponse
+	err := connections.HTTPPostWithClient[*pb.PostDriftEnableMarginTradingResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := h.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+}
+
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
 func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
@@ -656,9 +712,19 @@ func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
-// SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
+// SubmitPostPerpOrder builds a post order txn, signs and submits it to the network.
 func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := h.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// SubmitDriftPostMarginOrder builds a margin order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitDriftPostMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -851,6 +917,16 @@ func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOr
 		return nil, err
 	}
 
+	return orderbook, nil
+}
+
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (h *HTTPClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/margin-orderbooks/%s?limit=%d&metadata=%v", h.baseURL, request.Market, request.Limit, request.Metadata)
+	orderbook := new(pb.GetDriftMarginOrderbookResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftMarginOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
+		return nil, err
+	}
 	return orderbook, nil
 }
 
