@@ -126,6 +126,7 @@ func run() bool {
 	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
 
@@ -908,6 +909,26 @@ func callGetOpenPerpOrders(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("GetOpenPerpOrders resp : %s", user)
+	return false
+}
+
+func callGetDriftOpenMarginOrders(ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrders test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Markets:        []string{"SOL"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
 	return false
 }
 

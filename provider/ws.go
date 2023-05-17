@@ -152,6 +152,16 @@ func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPer
 	return &response, nil
 }
 
+// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+func (w *WSClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	var response pb.GetDriftOpenMarginOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftOpenMarginOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostCancelPerpOrder returns a partially signed transaction for canceling perp order
 func (w *WSClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	var response pb.PostCancelPerpOrderResponse

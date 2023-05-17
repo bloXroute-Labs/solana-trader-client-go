@@ -120,6 +120,7 @@ func run() bool {
 	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(w, ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(w, ownerAddr) })
 
@@ -1217,6 +1218,25 @@ func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("GetOpenPerpOrders resp : %s", user)
+	return false
+}
+
+func callGetDriftOpenMarginOrders(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrders test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Markets:        []string{"SOL"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
 	return false
 }
 

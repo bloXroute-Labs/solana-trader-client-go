@@ -122,6 +122,7 @@ func run() bool {
 	failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(g, ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(g, ownerAddr) })
 
@@ -1325,7 +1326,26 @@ func callGetOpenPerpOrders(g *provider.GRPCClient, ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("GetOpenPerpOrders resp : %s", user)
+	log.Infof("callGetOpenPerpOrders resp : %s", user)
+	return false
+}
+
+func callGetDriftOpenMarginOrders(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrders test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := g.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Markets:        []string{"SOL"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
 	return false
 }
 

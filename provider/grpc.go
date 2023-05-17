@@ -149,6 +149,11 @@ func (g *GRPCClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenP
 	return g.apiClient.GetOpenPerpOrders(ctx, request)
 }
 
+// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+func (g *GRPCClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	return g.apiClient.GetDriftOpenMarginOrders(ctx, request)
+}
+
 // PostCancelPerpOrder returns a partially signed transaction for canceling perp order
 func (g *GRPCClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	return g.apiClient.PostCancelPerpOrder(ctx, request)

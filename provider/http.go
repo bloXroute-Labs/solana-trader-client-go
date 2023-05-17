@@ -151,6 +151,19 @@ func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenP
 	return orders, nil
 }
 
+// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+func (h *HTTPClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	marketsString := convertStrSliceArgument("markets", false, request.Markets)
+	url := fmt.Sprintf("%s/api/v2/drift/margin-open-orders?ownerAddress=%s&accountAddress=%s&%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, marketsString)
+	orders := new(pb.GetDriftOpenMarginOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenMarginOrdersResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 // PostCancelPerpOrder returns a partially signed transaction for canceling perp order
 func (h *HTTPClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/cancelbyid", h.baseURL)
