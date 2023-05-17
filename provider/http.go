@@ -151,11 +151,35 @@ func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenP
 	return orders, nil
 }
 
+// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+func (h *HTTPClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	marketsString := convertStrSliceArgument("markets", false, request.Markets)
+	url := fmt.Sprintf("%s/api/v2/drift/margin-open-orders?ownerAddress=%s&accountAddress=%s&%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, marketsString)
+	orders := new(pb.GetDriftOpenMarginOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenMarginOrdersResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 // PostCancelPerpOrder returns a partially signed transaction for canceling perp order
 func (h *HTTPClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/cancelbyid", h.baseURL)
 	response := new(pb.PostCancelPerpOrderResponse)
 	if err := connections.HTTPPostWithClient[*pb.PostCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+func (h *HTTPClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/margin-cancel", h.baseURL)
+	response := new(pb.PostCancelDriftMarginOrderResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCancelDriftMarginOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -689,6 +713,21 @@ func (h *HTTPClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 	}
 
 	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	order, err := h.PostCancelDriftMarginOrder(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	var msgs []*pb.TransactionMessage
+	for _, txn := range order.Transactions {
+		msgs = append(msgs, txn)
+	}
+
+	return h.signAndSubmitBatch(ctx, msgs, opts)
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.

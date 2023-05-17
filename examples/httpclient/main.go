@@ -126,6 +126,7 @@ func run() bool {
 	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
 
@@ -136,6 +137,7 @@ func run() bool {
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
+		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
@@ -911,6 +913,26 @@ func callGetOpenPerpOrders(ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftOpenMarginOrders(ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrders test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Markets:        []string{"SOL"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
+	return false
+}
+
 func callGetPerpPositions(ownerAddr string) bool {
 	log.Info("starting callGetPerpPositions test")
 
@@ -970,6 +992,29 @@ func callCancelPerpOrder(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callCancelPerpOrder signature : %s", sig)
+	return false
+}
+
+func callCancelDriftMarginOrder(ownerAddr string) bool {
+	log.Info("starting callCancelDriftMarginOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.SubmitCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  true,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callCancelDriftMarginOrder signature : %s", sig)
 	return false
 }
 

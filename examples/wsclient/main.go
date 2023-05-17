@@ -120,6 +120,7 @@ func run() bool {
 	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(w, ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(w, ownerAddr) })
 
@@ -130,6 +131,7 @@ func run() bool {
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w) })
@@ -1220,6 +1222,25 @@ func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftOpenMarginOrders(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrders test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Markets:        []string{"SOL"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
+	return false
+}
+
 func callGetPerpPositions(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callGetPerpPositions test")
 
@@ -1276,6 +1297,25 @@ func callCancelPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callCancelPerpOrder signature : %s", sig)
+	return false
+}
+
+func callCancelDriftMarginOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callCancelDriftMarginOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callCancelDriftMarginOrder signature : %s", sig)
 	return false
 }
 

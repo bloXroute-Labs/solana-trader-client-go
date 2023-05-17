@@ -149,9 +149,19 @@ func (g *GRPCClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenP
 	return g.apiClient.GetOpenPerpOrders(ctx, request)
 }
 
+// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+func (g *GRPCClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	return g.apiClient.GetDriftOpenMarginOrders(ctx, request)
+}
+
 // PostCancelPerpOrder returns a partially signed transaction for canceling perp order
 func (g *GRPCClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	return g.apiClient.PostCancelPerpOrder(ctx, request)
+}
+
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+func (g *GRPCClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
+	return g.apiClient.PostCancelDriftMarginOrder(ctx, request)
 }
 
 // PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
@@ -395,6 +405,15 @@ func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 	}
 
 	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostCancelDriftMarginOrder(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
