@@ -172,6 +172,16 @@ func (w *WSClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCanc
 	return &response, nil
 }
 
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+func (w *WSClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
+	var response pb.PostCancelDriftMarginOrderResponse
+	err := w.conn.Request(ctx, "PostCancelDriftMarginOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
 func (w *WSClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrdersResponse, error) {
 	var response pb.PostCancelPerpOrdersResponse
@@ -600,6 +610,17 @@ func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCa
 	}
 
 	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn , signs and submits it to the network.
+func (w *WSClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostCancelDriftMarginOrder(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.

@@ -131,6 +131,7 @@ func run() bool {
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w) })
@@ -1296,6 +1297,25 @@ func callCancelPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callCancelPerpOrder signature : %s", sig)
+	return false
+}
+
+func callCancelDriftMarginOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callCancelDriftMarginOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.SubmitCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+	}, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callCancelDriftMarginOrder signature : %s", sig)
 	return false
 }
 
