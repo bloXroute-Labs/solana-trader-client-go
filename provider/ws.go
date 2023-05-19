@@ -152,10 +152,30 @@ func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPer
 	return &response, nil
 }
 
+// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+func (w *WSClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	var response pb.GetDriftOpenMarginOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftOpenMarginOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostCancelPerpOrder returns a partially signed transaction for canceling perp order
 func (w *WSClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	var response pb.PostCancelPerpOrderResponse
 	err := w.conn.Request(ctx, "PostCancelPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+func (w *WSClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
+	var response pb.PostCancelDriftMarginOrderResponse
+	err := w.conn.Request(ctx, "PostCancelDriftMarginOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -590,6 +610,17 @@ func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCa
 	}
 
 	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn , signs and submits it to the network.
+func (w *WSClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostCancelDriftMarginOrder(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
