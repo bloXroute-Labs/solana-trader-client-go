@@ -154,7 +154,7 @@ func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenP
 // GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
 func (h *HTTPClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
 	marketsString := convertStrSliceArgument("markets", false, request.Markets)
-	url := fmt.Sprintf("%s/api/v2/drift/margin-open-orders?ownerAddress=%s&accountAddress=%s&%s",
+	url := fmt.Sprintf("%s/api/v2/drift/margin-open-orders?ownerAddress=%s&accountAddress=%s%s",
 		h.baseURL, request.OwnerAddress, request.AccountAddress, marketsString)
 	orders := new(pb.GetDriftOpenMarginOrdersResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenMarginOrdersResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
