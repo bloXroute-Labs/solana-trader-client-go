@@ -142,6 +142,7 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
+		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
@@ -1082,6 +1083,27 @@ func callPostPerpOrder(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callPostPerpOrder signature : %s", sig)
+	return false
+}
+
+func callPostModifyOrder(ownerAddr string) bool {
+	log.Info("starting callPostModifyOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostModifyDriftOrderRequest{
+		OwnerAddress:    ownerAddr,
+		AccountAddress:  "",
+		NewLimitPrice:   1000,
+		NewPositionSide: "long",
+	}
+	sig, err := h.SubmitPostModifyDriftOrder(ctx, request, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostModifyOrder signature : %s", sig)
 	return false
 }
 

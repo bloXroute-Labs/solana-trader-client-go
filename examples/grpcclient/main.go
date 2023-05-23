@@ -138,6 +138,7 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g, ownerAddr) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
+		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(g, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(g) })
@@ -1493,6 +1494,26 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callPostPerpOrder signature : %s", sig)
+	return false
+}
+
+func callPostModifyOrder(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callPostModifyOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostModifyDriftOrderRequest{
+		OwnerAddress:    ownerAddr,
+		AccountAddress:  "",
+		NewLimitPrice:   1000,
+		NewPositionSide: "long",
+	}
+	sig, err := g.SubmitPostModifyDriftOrder(ctx, request, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostModifyOrder signature : %s", sig)
 	return false
 }
 
