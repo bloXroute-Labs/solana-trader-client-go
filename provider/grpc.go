@@ -321,6 +321,11 @@ func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrde
 	return g.apiClient.PostPerpOrder(ctx, request)
 }
 
+// PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
+func (g *GRPCClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
+	return g.apiClient.PostModifyDriftOrder(ctx, request)
+}
+
 // PostDriftMarginOrder returns a partially signed transaction for placing a Margin order. Typically, you want to use SubmitDriftMarginOrder instead of this.
 func (g *GRPCClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
 	return g.apiClient.PostDriftMarginOrder(ctx, request)
@@ -495,6 +500,15 @@ func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 // SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
 func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	resp, err := g.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostModifyDriftOrder builds a Drift modify-order txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostModifyDriftOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}

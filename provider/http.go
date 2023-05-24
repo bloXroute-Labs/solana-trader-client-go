@@ -551,6 +551,18 @@ func (h *HTTPClient) PostOrder(ctx context.Context, owner, payer, market string,
 	return &response, nil
 }
 
+// PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
+func (h *HTTPClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/modify-order", h.baseURL)
+
+	var response pb.PostModifyDriftOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostModifyDriftOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
 func (h *HTTPClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/order", h.baseURL)
@@ -754,6 +766,16 @@ func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 // SubmitPostPerpOrder builds a post order txn, signs and submits it to the network.
 func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := h.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// SubmitPostModifyDriftOrder builds a Drift modify-order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostModifyDriftOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
