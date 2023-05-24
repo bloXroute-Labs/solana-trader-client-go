@@ -420,6 +420,16 @@ func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderR
 	return &response, nil
 }
 
+// PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
+func (w *WSClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
+	var response pb.PostModifyDriftOrderResponse
+	err := w.conn.Request(ctx, "PostModifyDriftOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitPostMarginOrder instead of this.
 func (w *WSClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
 	var response pb.PostDriftMarginOrderResponse
@@ -840,6 +850,16 @@ func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserR
 
 func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrderRequest, skipPreFlight bool) (interface{}, interface{}) {
 	resp, err := w.PostPerpOrder(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostModifyDriftOrder builds a Drift modify-order txn, signs and submits it to the network.
+func (w *WSClient) SubmitPostModifyDriftOrder(ctx context.Context, req *pb.PostModifyDriftOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostModifyDriftOrder(ctx, req)
 	if err != nil {
 		return "", err
 	}
