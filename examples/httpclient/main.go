@@ -981,13 +981,13 @@ func callCancelPerpOrder(ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
+	sig, err := h.PostCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
 		Project:       pb.Project_P_DRIFT,
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
 		Contract:      common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1003,13 +1003,10 @@ func callCancelDriftMarginOrder(ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+	sig, err := h.PostCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1025,12 +1022,10 @@ func callClosePerpPositions(ownerAddr string) bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	sig, err := h.SubmitClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
+	sig, err := h.PostClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
 		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
-	}, provider.SubmitOpts{
-		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1047,10 +1042,10 @@ func callCreateUser(ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitCreateUser(ctx, &pb.PostCreateUserRequest{
+	sig, err := h.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1077,7 +1072,7 @@ func callPostPerpOrder(ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := h.SubmitPostPerpOrder(ctx, request, false)
+	sig, err := h.PostPerpOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1098,7 +1093,7 @@ func callPostModifyOrder(ownerAddr string) bool {
 		NewLimitPrice:   1000,
 		NewPositionSide: "long",
 	}
-	sig, err := h.SubmitPostModifyDriftOrder(ctx, request, false)
+	sig, err := h.PostModifyDriftOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1124,7 +1119,7 @@ func callPostMarginOrder(ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := h.SubmitDriftPostMarginOrder(ctx, request, false)
+	sig, err := h.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1140,13 +1135,13 @@ func callManageCollateralWithdraw() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := h.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1162,14 +1157,14 @@ func callManageCollateralTransfer() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := h.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:             common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1184,10 +1179,10 @@ func callDriftEnableMarginTrading(ownerAddress string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := httpClient().SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+	sig, err := httpClient().PostDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
 		OwnerAddress: ownerAddress,
 		EnableMargin: true,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1203,13 +1198,13 @@ func callManageCollateralDeposit() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := h.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1247,17 +1242,17 @@ func callPostSettlePNL(ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := h.SubmitPostSettlePNL(ctx, &pb.PostSettlePNLRequest{
+	sig, err := h.PostSettlePNL(ctx, &pb.PostSettlePNLRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
 		SettleeAccountAddress: ownerAddr,
 		Contract:              common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callManageCollateral signature : %s", sig)
+	log.Infof("callPostSettlePNL signature : %s", sig)
 	return false
 }
 
@@ -1267,20 +1262,17 @@ func callPostSettlePNLs(ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := httpClient().SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
+	sig, err := httpClient().PostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
 		Project:                 pb.Project_P_DRIFT,
 		OwnerAddress:            ownerAddr,
 		SettleeAccountAddresses: []string{ownerAddr},
 		Contract:                common.PerpContract_SOL_PERP,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callManageCollateral signature : %s", sig)
+	log.Infof("callPostSettlePNL signature : %s", sig)
 	return false
 }
 
@@ -1341,13 +1333,13 @@ func callPostLiquidatePerp(ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := httpClient().SubmitPostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
+	sig, err := httpClient().PostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
 		Contract:              common.PerpContract_SOL_PERP,
 		SettleeAccountAddress: ownerAddr,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true

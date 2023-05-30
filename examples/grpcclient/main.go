@@ -9,6 +9,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
+	"google.golang.org/protobuf/encoding/protojson"
 	"math/rand"
 	"os"
 	"time"
@@ -136,7 +137,7 @@ func run() bool {
 		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(g, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(g, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
-		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g, ownerAddr) })
+		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
 		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(g, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(g, ownerAddr) })
@@ -1318,7 +1319,7 @@ func callGetOpenPerpOrders(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := g.GetOpenPerpOrders(ctx, &pb.GetOpenPerpOrdersRequest{
+	perpOrders, err := g.GetOpenPerpOrders(ctx, &pb.GetOpenPerpOrdersRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
 		Contracts:      []common.PerpContract{common.PerpContract_SOL_PERP},
@@ -1328,7 +1329,7 @@ func callGetOpenPerpOrders(g *provider.GRPCClient, ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetOpenPerpOrders resp : %s", user)
+	log.Infof("callGetOpenPerpOrders resp : %s", perpOrders)
 	return false
 }
 
@@ -1338,7 +1339,7 @@ func callGetDriftOpenMarginOrders(g *provider.GRPCClient, ownerAddr string) bool
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := g.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+	openMarginOrders, err := g.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
 		Markets:        []string{"SOL"},
@@ -1347,7 +1348,7 @@ func callGetDriftOpenMarginOrders(g *provider.GRPCClient, ownerAddr string) bool
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", openMarginOrders)
 	return false
 }
 
@@ -1357,7 +1358,7 @@ func callGetPerpPositions(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := g.GetPerpPositions(ctx, &pb.GetPerpPositionsRequest{
+	perpPositions, err := g.GetPerpPositions(ctx, &pb.GetPerpPositionsRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
 		Contracts:      []common.PerpContract{common.PerpContract_SOL_PERP},
@@ -1367,7 +1368,7 @@ func callGetPerpPositions(g *provider.GRPCClient, ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("GetPerpPositions resp : %s", user)
+	log.Infof("GetPerpPositions resp : %s", perpPositions)
 	return false
 }
 
@@ -1395,13 +1396,13 @@ func callCancelPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
+	sig, err := g.PostCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
 		Project:       pb.Project_P_DRIFT,
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
 		Contract:      common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1416,13 +1417,10 @@ func callCancelDriftMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+	sig, err := g.PostCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1437,13 +1435,10 @@ func callClosePerpPositions(g *provider.GRPCClient, ownerAddr string) bool {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	sig, err := g.SubmitClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
+	sig, err := g.PostClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
 		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1459,10 +1454,10 @@ func callCreateUser(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitCreateUser(ctx, &pb.PostCreateUserRequest{
+	sig, err := g.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1474,9 +1469,7 @@ func callCreateUser(g *provider.GRPCClient, ownerAddr string) bool {
 func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting callPostPerpOrder test")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	request := &pb.PostPerpOrderRequest{
+	request, _ := g.PostPerpOrder(context.Background(), &pb.PostPerpOrderRequest{
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
@@ -1487,42 +1480,28 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		Amount:         1,
 		Price:          1000,
 		ClientOrderID:  2,
-	}
-	sig, err := g.SubmitPostPerpOrder(ctx, request, false)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("callPostPerpOrder signature : %s", sig)
+	})
+	log.Infof("callPostPerpOrder request : %s", request)
 	return false
 }
 
 func callPostModifyOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting callPostModifyOrder test")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	request := &pb.PostModifyDriftOrderRequest{
+	request, _ := g.PostModifyDriftOrder(context.Background(), &pb.PostModifyDriftOrderRequest{
 		OwnerAddress:    ownerAddr,
 		AccountAddress:  "",
 		NewLimitPrice:   1000,
 		NewPositionSide: "long",
-	}
-	sig, err := g.SubmitPostModifyDriftOrder(ctx, request, false)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("callPostModifyOrder signature : %s", sig)
+	})
+	log.Infof("callPostModifyOrder request : %s", request)
 	return false
 }
 
 func callPostMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting callPostMarginOrder test")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	request := &pb.PostDriftMarginOrderRequest{
+	req, _ := g.PostDriftMarginOrder(context.Background(), &pb.PostDriftMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
@@ -1532,51 +1511,42 @@ func callPostMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		Amount:         1,
 		Price:          1000,
 		ClientOrderID:  2,
-	}
-	sig, err := g.SubmitPostMarginOrder(ctx, request, false)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("callPostMarginOrder signature : %s", sig)
+	})
+	b, _ := protojson.Marshal(req)
+	log.Infof("callPostMarginOrder request : %s", string(b))
 	return false
 }
 
 func callManageCollateralWithdraw(g *provider.GRPCClient) bool {
 	log.Info("starting callManageCollateral withdraw test")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	request, err := g.PostManageCollateral(context.Background(), &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callManageCollateral signature : %s", sig)
+	b, _ := protojson.Marshal(request)
+	log.Infof("callManageCollateral request : %s", string(b))
 	return false
 }
 
 func callManageCollateralTransfer(g *provider.GRPCClient) bool {
 	log.Info("starting callManageCollateral transfer test")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := g.PostManageCollateral(context.Background(), &pb.PostManageCollateralRequest{
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:             common.PerpCollateralType_PCT_TRANSFER,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1591,10 +1561,10 @@ func callDriftEnableMarginTrading(g *provider.GRPCClient, ownerAddress string) b
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+	sig, err := g.PostDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
 		OwnerAddress: ownerAddress,
 		EnableMargin: true,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1603,19 +1573,19 @@ func callDriftEnableMarginTrading(g *provider.GRPCClient, ownerAddress string) b
 	return false
 }
 
-func callManageCollateralDeposit(g *provider.GRPCClient, ownerAddr string) bool {
+func callManageCollateralDeposit(g *provider.GRPCClient) bool {
 	log.Info("starting callManageCollateral deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := g.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1651,12 +1621,12 @@ func callPostSettlePNL(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitPostSettlePNL(ctx, &pb.PostSettlePNLRequest{
+	sig, err := g.PostSettlePNL(ctx, &pb.PostSettlePNLRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
 		SettleeAccountAddress: ownerAddr,
 		Contract:              common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1671,14 +1641,11 @@ func callPostSettlePNLs(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
+	sig, err := g.PostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
 		Project:                 pb.Project_P_DRIFT,
 		OwnerAddress:            ownerAddr,
 		SettleeAccountAddresses: []string{ownerAddr},
 		Contract:                common.PerpContract_SOL_PERP,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1745,13 +1712,13 @@ func callPostLiquidatePerp(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := g.SubmitPostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
+	sig, err := g.PostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
 		Contract:              common.PerpContract_SOL_PERP,
 		SettleeAccountAddress: ownerAddr,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
