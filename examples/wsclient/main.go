@@ -1345,6 +1345,7 @@ func callCreateUser(w *provider.WSClient, ownerAddr string) bool {
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
 		Action:       "create",
+		SubAccountID: 10,
 	})
 	if err != nil {
 		log.Error(err)
