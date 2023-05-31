@@ -1623,7 +1623,7 @@ func callPostSettlePNL(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.PostSettlePNL(ctx, &pb.PostSettlePNLRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
-		SettleeAccountAddress: ownerAddr,
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Contract:              common.PerpContract_SOL_PERP,
 	})
 	if err != nil {
@@ -1643,7 +1643,7 @@ func callPostSettlePNLs(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.PostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
 		Project:                 pb.Project_P_DRIFT,
 		OwnerAddress:            ownerAddr,
-		SettleeAccountAddresses: []string{ownerAddr},
+		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
 		Contract:                common.PerpContract_SOL_PERP,
 	})
 	if err != nil {
