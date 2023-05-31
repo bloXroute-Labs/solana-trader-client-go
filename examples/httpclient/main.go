@@ -1043,6 +1043,7 @@ func callCreateUser(ownerAddr string) bool {
 	sig, err := h.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
+		Action:       "create",
 	})
 	if err != nil {
 		log.Error(err)

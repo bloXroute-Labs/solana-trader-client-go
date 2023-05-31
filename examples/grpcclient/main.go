@@ -1454,6 +1454,7 @@ func callCreateUser(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
+		Action:       "create",
 	})
 	if err != nil {
 		log.Error(err)

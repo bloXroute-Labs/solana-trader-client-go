@@ -1344,6 +1344,7 @@ func callCreateUser(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
+		Action:       "create",
 	})
 	if err != nil {
 		log.Error(err)
