@@ -1716,7 +1716,7 @@ func callPostLiquidatePerp(g *provider.GRPCClient, ownerAddr string) bool {
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
 		Contract:              common.PerpContract_SOL_PERP,
-		SettleeAccountAddress: ownerAddr,
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
 		log.Error(err)
