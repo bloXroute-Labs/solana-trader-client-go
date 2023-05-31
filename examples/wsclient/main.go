@@ -135,7 +135,6 @@ func run() bool {
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(w, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
-		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(w) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(w) })
 		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(w, ownerAddr) })
@@ -1391,6 +1390,7 @@ func callPostModifyOrder(w *provider.WSClient, ownerAddr string) bool {
 		AccountAddress:  "",
 		NewLimitPrice:   1000,
 		NewPositionSide: "long",
+		OrderID:         1,
 	}
 	sig, err := w.PostModifyDriftOrder(ctx, request)
 	if err != nil {

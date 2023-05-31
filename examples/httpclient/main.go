@@ -1092,6 +1092,7 @@ func callPostModifyOrder(ownerAddr string) bool {
 		AccountAddress:  "",
 		NewLimitPrice:   1000,
 		NewPositionSide: "long",
+		OrderID:         1,
 	}
 	sig, err := h.PostModifyDriftOrder(ctx, request)
 	if err != nil {

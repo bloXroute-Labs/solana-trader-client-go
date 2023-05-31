@@ -1492,6 +1492,7 @@ func callPostModifyOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		AccountAddress:  "",
 		NewLimitPrice:   1000,
 		NewPositionSide: "long",
+		OrderID:         1,
 	})
 	log.Infof("callPostModifyOrder request : %s", request)
 	return false
