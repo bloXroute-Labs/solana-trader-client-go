@@ -83,11 +83,6 @@ func run() bool {
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
 	failed = failed || logCall("callDriftGetMarketDepthsStream", func() bool { return callDriftGetMarketDepthsStream(g) })
 
-	if !cfg.RunTrades {
-		log.Info("skipping trades due to config")
-		return failed
-	}
-
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
@@ -113,14 +108,16 @@ func run() bool {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
-	failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-	failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
-	failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
+	if cfg.RunTrades {
+		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
+		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
+		failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
+		failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
+	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(g, ownerAddr) })
@@ -144,11 +141,11 @@ func run() bool {
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(g) })
 		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(g, ownerAddr) })
-
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(g, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(g, ownerAddr) })
 		failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(g, ownerAddr) })
 	}
+
 	return failed
 }
 
