@@ -84,11 +84,6 @@ func run() bool {
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 	}
 
-	if !cfg.RunTrades {
-		log.Info("skipping trades due to config")
-		return failed
-	}
-
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewWSClient()) to sign transactions
@@ -111,13 +106,15 @@ func run() bool {
 		payerAddr = ownerAddr
 	}
 
-	failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
+	if cfg.RunTrades {
+		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
+		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
+		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
+	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(w, ownerAddr) })
@@ -137,7 +134,6 @@ func run() bool {
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
 		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(w, ownerAddr) })
-		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(w) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(w) })
@@ -1286,13 +1282,13 @@ func callCancelPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
+	sig, err := w.PostCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
 		Project:       pb.Project_P_DRIFT,
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
 		Contract:      common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1307,11 +1303,11 @@ func callCancelDriftMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+	sig, err := w.PostCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1325,13 +1321,10 @@ func callClosePerpPositions(w *provider.WSClient, ownerAddr string) bool {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	sig, err := w.SubmitClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
+	sig, err := w.PostClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
 		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1347,10 +1340,12 @@ func callCreateUser(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitCreateUser(ctx, &pb.PostCreateUserRequest{
+	sig, err := w.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
-	}, false)
+		Action:       "create",
+		SubAccountID: 10,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1376,7 +1371,7 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := w.SubmitPostPerpOrder(ctx, request, false)
+	sig, err := w.PostPerpOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1395,8 +1390,9 @@ func callPostModifyOrder(w *provider.WSClient, ownerAddr string) bool {
 		AccountAddress:  "",
 		NewLimitPrice:   1000,
 		NewPositionSide: "long",
+		OrderID:         1,
 	}
-	sig, err := w.SubmitPostModifyDriftOrder(ctx, request, false)
+	sig, err := w.PostModifyDriftOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1421,9 +1417,7 @@ func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := w.SubmitPostDriftMarginOrder(ctx, request, provider.PostOrderOpts{
-		SkipPreFlight: false,
-	})
+	sig, err := w.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1438,13 +1432,13 @@ func callManageCollateralWithdraw(w *provider.WSClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1459,14 +1453,14 @@ func callManageCollateralTransfer(w *provider.WSClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:             common.PerpCollateralType_PCT_TRANSFER,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1481,10 +1475,10 @@ func callDriftEnableMarginTrading(w *provider.WSClient, ownerAddress string) boo
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+	sig, err := w.PostDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
 		OwnerAddress: ownerAddress,
 		EnableMargin: true,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1499,13 +1493,13 @@ func callManageCollateralDeposit(w *provider.WSClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1541,12 +1535,12 @@ func callPostSettlePNL(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitPostSettlePNL(ctx, &pb.PostSettlePNLRequest{
+	sig, err := w.PostSettlePNL(ctx, &pb.PostSettlePNLRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
-		SettleeAccountAddress: ownerAddr,
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Contract:              common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1561,14 +1555,11 @@ func callPostSettlePNLs(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
+	sig, err := w.PostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
 		Project:                 pb.Project_P_DRIFT,
 		OwnerAddress:            ownerAddr,
-		SettleeAccountAddresses: []string{ownerAddr},
+		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
 		Contract:                common.PerpContract_SOL_PERP,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1635,13 +1626,13 @@ func callPostLiquidatePerp(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitPostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
+	sig, err := w.PostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
 		Contract:              common.PerpContract_SOL_PERP,
-		SettleeAccountAddress: ownerAddr,
-	}, false)
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+	})
 	if err != nil {
 		log.Error(err)
 		return true

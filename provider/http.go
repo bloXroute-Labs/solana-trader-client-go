@@ -783,8 +783,8 @@ func (h *HTTPClient) SubmitPostModifyDriftOrder(ctx context.Context, request *pb
 	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
-// SubmitDriftPostMarginOrder builds a margin order txn, signs and submits it to the network.
-func (h *HTTPClient) SubmitDriftPostMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, skipPreFlight bool) (string, error) {
+// SubmitPostDriftMarginOrder builds a margin order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := h.PostDriftMarginOrder(ctx, request)
 	if err != nil {
 		return "", err
