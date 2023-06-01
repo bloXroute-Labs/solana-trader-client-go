@@ -11,6 +11,7 @@ executors:
       GOTRACEBACK: all
       RUN_TRADES: false
       RUN_SLOW_STREAM: false
+      RUN_PERP_TRADES: true
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
   init:
