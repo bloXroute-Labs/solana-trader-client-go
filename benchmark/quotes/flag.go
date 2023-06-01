@@ -49,7 +49,7 @@ var (
 
 	SwapInitialWaitFlag = &cli.DurationFlag{
 		Name:  "swap-initial-wait",
-		Usage: "initial wait before beginning swaps",
+		Usage: "initial wait before beginning swaps (note that swap timers will automatically finish the test before max-runtime)",
 		Value: 10 * time.Second,
 	}
 

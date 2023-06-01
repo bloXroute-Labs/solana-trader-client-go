@@ -48,30 +48,19 @@ func run() bool {
 
 	var failed bool
 
-	// tx, err := g.SubmitPerpOrder(context.Background(), &pb.PostPerpOrderRequest{
-	// 	Project:        pb.Project_P_DRIFT,
-	// 	OwnerAddress:   "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-	// 	PayerAddress:   "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-	// 	Contract:       common.PerpContract_SOL_PERP,
-	// 	AccountAddress: "",
-	// 	PositionSide:   common.PerpPositionSide_PS_LONG,
-	// 	Slippage:       0,
-	// 	Type:           common.PerpOrderType_POT_MARKET,
-	// 	Amount:         0.1,
-	// 	Price:          0,
-	// 	ClientOrderID:  0,
-	// }, false)
-	tx, err := g.SubmitPostLiquidatePerp(context.Background(), &pb.PostLiquidatePerpRequest{
-		OwnerAddress:          "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-		SettleeAccountAddress: "",
-		Contract:              common.PerpContract_SOL_PERP,
-		Amount:                0,
-		Project:               pb.Pr,
+	tx, err := g.SubmitPerpOrder(context.Background(), &pb.PostPerpOrderRequest{
+		Project:        pb.Project_P_DRIFT,
+		OwnerAddress:   "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
+		PayerAddress:   "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
+		Contract:       common.PerpContract_SOL_PERP,
+		AccountAddress: "",
+		PositionSide:   common.PerpPositionSide_PS_LONG,
+		Slippage:       0,
+		Type:           common.PerpOrderType_POT_MARKET,
+		Amount:         0.1,
+		Price:          0,
+		ClientOrderID:  0,
 	}, false)
-	if err != nil {
-		panic(err)
-	}
-	panic(tx)
 
 	// informational methods
 
