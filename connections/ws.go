@@ -208,7 +208,7 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 	defer func() {
 		w.requestM.Lock()
 		defer w.requestM.Unlock()
-	
+
 		delete(w.requestMap, request.ID.Num)
 	}()
 

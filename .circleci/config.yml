@@ -11,7 +11,6 @@ executors:
       GOTRACEBACK: all
       RUN_TRADES: false
       RUN_SLOW_STREAM: false
-      RUN_PERP_TRADES: true
     working_directory: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
 jobs:
   init:
@@ -61,17 +60,17 @@ jobs:
           name: GRPC Examples (testnet)
           command: |
             unset PRIVATE_KEY
-            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET RUN_TRADES=$RUN_TRADES RUN_SLOW_STREAM=$RUN_SLOW_STREAM RUN_PERP_TRADES=$RUN_PERP_TRADES make grpc-examples
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
       - run:
           name: HTTP Examples (testnet)
           command: |
             unset PRIVATE_KEY
-            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET RUN_TRADES=$RUN_TRADES RUN_SLOW_STREAM=$RUN_SLOW_STREAM RUN_PERP_TRADES=$RUN_PERP_TRADES  make http-examples
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
       - run:
           name: WS Examples (testnet)
           command: |
             unset PRIVATE_KEY
-            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET RUN_TRADES=$RUN_TRADES RUN_SLOW_STREAM=$RUN_SLOW_STREAM RUN_PERP_TRADES=$RUN_PERP_TRADES  make ws-examples
+            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
   integration-mainnet:
     executor: bxgo
     steps:
@@ -87,17 +86,17 @@ jobs:
           name: GRPC Examples (mainnet)
           command: |
             unset PRIVATE_KEY
-            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET RUN_TRADES=$RUN_TRADES RUN_SLOW_STREAM=$RUN_SLOW_STREAM RUN_PERP_TRADES=$RUN_PERP_TRADES  make grpc-examples
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
       - run:
           name: HTTP Examples (mainnet)
           command: |
             unset PRIVATE_KEY
-            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET RUN_TRADES=$RUN_TRADES RUN_SLOW_STREAM=$RUN_SLOW_STREAM RUN_PERP_TRADES=$RUN_PERP_TRADES  make http-examples
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
       - run:
           name: WS Examples (mainnet)
           command: |
             unset PRIVATE_KEY
-            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET RUN_TRADES=$RUN_TRADES RUN_SLOW_STREAM=$RUN_SLOW_STREAM RUN_PERP_TRADES=$RUN_PERP_TRADES  make ws-examples
+            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
       - slack/notify:
           branch_pattern: develop
           custom: |
