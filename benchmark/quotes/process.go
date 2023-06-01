@@ -41,6 +41,7 @@ func (br benchmarkResult) PrintSummary() {
 		endTime := br.lastJupiter().Start
 		fmt.Printf("Start time: %v\n", startTime.Format(time.StampMilli))
 		fmt.Printf("End time: %v\n", endTime.Format(time.StampMilli))
+		fmt.Printf("Slot range: %v => %v\n", br.firstJupiter().Data.ContextSlot, br.lastJupiter().Data.ContextSlot)
 		fmt.Printf("Price change: %v => %v \n", br.firstJupiter().Data.Price(br.mint), br.lastJupiter().Data.Price(br.mint))
 		fmt.Printf("Distinct prices: %v\n", br.distinctJupiter())
 	}

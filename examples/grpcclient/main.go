@@ -48,20 +48,6 @@ func run() bool {
 
 	var failed bool
 
-	tx, err := g.SubmitPerpOrder(context.Background(), &pb.PostPerpOrderRequest{
-		Project:        pb.Project_P_DRIFT,
-		OwnerAddress:   "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-		PayerAddress:   "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-		Contract:       common.PerpContract_SOL_PERP,
-		AccountAddress: "",
-		PositionSide:   common.PerpPositionSide_PS_LONG,
-		Slippage:       0,
-		Type:           common.PerpOrderType_POT_MARKET,
-		Amount:         0.1,
-		Price:          0,
-		ClientOrderID:  0,
-	}, false)
-
 	// informational methods
 
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
