@@ -8,6 +8,8 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"github.com/gagliardetto/solana-go"
+	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -17,12 +19,15 @@ import (
 // requires AUTH_HEADER and PRIVATE_KEY to work.
 
 func main() {
+	utils.SolanaHTTPRPCEndpointFlag.Required = true
+
 	app := &cli.App{
 		Name:  "benchmark-quotes",
 		Usage: "Compares Solana Trader API AMM quotes with Jupiter API",
 		Flags: []cli.Flag{
 			utils.APIWSEndpoint,
 			utils.OutputFileFlag,
+			utils.SolanaHTTPRPCEndpointFlag,
 			MintFlag,
 			TriggerActivityFlag,
 			IterationsFlag,
@@ -75,7 +80,8 @@ func run(c *cli.Context) error {
 		swapAfterWait   = c.Duration(SwapAfterWaitFlag.Name)
 		queryInterval   = c.Duration(QueryIntervalFlag.Name)
 
-		outputFile = c.String(utils.OutputFileFlag.Name)
+		rpcEndpoint = c.String(utils.SolanaHTTPRPCEndpointFlag.Name)
+		outputFile  = c.String(utils.OutputFileFlag.Name)
 	)
 
 	if triggerActivity {
@@ -194,6 +200,11 @@ func run(c *cli.Context) error {
 	tradeHTTPProcessedUpdate, tradeHTTPDuplicates, _ := traderAPIHTTP.Process(tradeHTTPUpdates, true)
 	logger.Log().Infow("ignoring tradeWS duplicates", "count", len(tradeHTTPDuplicates))
 
+	swapUpdates, err := fetchTransactionInfo(ctx, swaps, rpcEndpoint)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println()
 	result := benchmarkResult{
 		mint:                      mint,
@@ -204,9 +215,48 @@ func run(c *cli.Context) error {
 		jupiterProcessedUpdates:   jupiterProcessedUpdate,
 		tradeWSProcessedUpdates:   tradeWSProcessedUpdate,
 		tradeHTTPProcessedUpdates: tradeHTTPProcessedUpdate,
+		swapProcessedUpdates:      swapUpdates,
 	}
 
 	result.PrintSummary()
 	result.PrintRaw()
 	return result.WriteCSV(outputFile)
+}
+
+func fetchTransactionInfo(ctx context.Context, swaps []actor.SwapEvent, rpcEndpoint string) (map[int][]stream.ProcessedUpdate[stream.QuoteResult], error) {
+	rpc := solanarpc.New(rpcEndpoint)
+	transactionEvents, err := utils.AsyncGather(ctx, swaps, func(i int, ctx context.Context, t actor.SwapEvent) (r stream.ProcessedUpdate[stream.QuoteResult], err error) {
+		maxVersion := uint64(0)
+		swap := swaps[i]
+		result, err := rpc.GetTransaction(ctx, solana.MustSignatureFromBase58(swap.Signature), &solanarpc.GetTransactionOpts{
+			Encoding:                       solana.EncodingBase64,
+			Commitment:                     solanarpc.CommitmentConfirmed,
+			MaxSupportedTransactionVersion: &maxVersion,
+		})
+		if err != nil {
+			return
+		}
+
+		r = stream.ProcessedUpdate[stream.QuoteResult]{
+			Timestamp: result.BlockTime.Time(),
+			Slot:      int(result.Slot),
+			Data: stream.QuoteResult{
+				Elapsed:   result.BlockTime.Time().Sub(swap.Timestamp),
+				BuyPrice:  0,
+				SellPrice: 0,
+				Source:    fmt.Sprintf("transaction-%v", swap.Signature),
+			},
+		}
+		return
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[int][]stream.ProcessedUpdate[stream.QuoteResult])
+	for _, event := range transactionEvents {
+		result[event.Slot] = append(result[event.Slot], event)
+	}
+	return result, nil
 }

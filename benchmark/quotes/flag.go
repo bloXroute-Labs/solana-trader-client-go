@@ -26,7 +26,7 @@ var (
 	MaxRuntimeFlag = &cli.DurationFlag{
 		Name:  "runtime",
 		Usage: "max time to run benchmark for",
-		Value: 5 * time.Minute,
+		Value: 10 * time.Minute,
 	}
 
 	SwapAmountFlag = &cli.Float64Flag{
@@ -44,7 +44,7 @@ var (
 	SwapIntervalFlag = &cli.DurationFlag{
 		Name:  "swap-interval",
 		Usage: "time to wait between each swap",
-		Value: 3 * time.Second,
+		Value: 30 * time.Second,
 	}
 
 	SwapInitialWaitFlag = &cli.DurationFlag{

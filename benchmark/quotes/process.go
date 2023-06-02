@@ -23,6 +23,7 @@ type benchmarkResult struct {
 	jupiterProcessedUpdates   map[int][]stream.ProcessedUpdate[stream.QuoteResult]
 	tradeWSProcessedUpdates   map[int][]stream.ProcessedUpdate[stream.QuoteResult]
 	tradeHTTPProcessedUpdates map[int][]stream.ProcessedUpdate[stream.QuoteResult]
+	swapProcessedUpdates      map[int][]stream.ProcessedUpdate[stream.QuoteResult] // not actually a quote, but to fit the data
 }
 
 func (br benchmarkResult) PrintSummary() {
@@ -199,6 +200,11 @@ func (br benchmarkResult) allUpdates() []stream.ProcessedUpdate[stream.QuoteResu
 		}
 	}
 	for _, updates := range br.tradeHTTPProcessedUpdates {
+		for _, update := range updates {
+			allEvents = append(allEvents, update)
+		}
+	}
+	for _, updates := range br.swapProcessedUpdates {
 		for _, update := range updates {
 			allEvents = append(allEvents, update)
 		}
