@@ -60,6 +60,39 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	}
 }
 
+// GetDriftPerpPositions returns all perp positions on Drift platform
+func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp-positions", h.baseURL)
+	response := new(pb.GetDriftPerpPositionsResponse)
+	if err := connections.HTTPPostWithClient[*pb.GetDriftPerpPositionsResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
+func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp-open-orders", h.baseURL)
+	response := new(pb.GetDriftPerpOpenOrdersResponse)
+	if err := connections.HTTPPostWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
+func (h *HTTPClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp-cancel", h.baseURL)
+	response := new(pb.PostDriftCancelPerpOrderResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDriftCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // GetOrderbook returns the requested market's orderbook (e.h. asks and bids). Set limit to 0 for all bids / asks.
 func (h *HTTPClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/market/orderbooks/%s?limit=%v&project=%v", h.baseURL, market, limit, project)
