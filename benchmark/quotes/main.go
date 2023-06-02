@@ -20,6 +20,7 @@ import (
 
 func main() {
 	utils.SolanaHTTPRPCEndpointFlag.Required = true
+	utils.SolanaHTTPRPCEndpointFlag.Value = "https://api.mainnet-beta.solana.com"
 
 	app := &cli.App{
 		Name:  "benchmark-quotes",
