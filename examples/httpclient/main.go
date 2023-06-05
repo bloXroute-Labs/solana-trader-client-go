@@ -769,7 +769,7 @@ func callTradeSwap(ownerAddr string) bool {
 
 	log.Info("trade swap")
 	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL",
-		0.01, 0.1, "raydium", provider.SubmitOpts{
+		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  false,
 		})
