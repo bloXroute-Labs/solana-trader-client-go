@@ -30,6 +30,7 @@ func main() {
 			utils.OutputFileFlag,
 			utils.SolanaHTTPRPCEndpointFlag,
 			MintFlag,
+			MintDecimalsFlag,
 			TriggerActivityFlag,
 			IterationsFlag,
 			PublicKeyFlag,
@@ -39,6 +40,7 @@ func main() {
 			SwapIntervalFlag,
 			SwapInitialWaitFlag,
 			SwapAfterWaitFlag,
+			SwapAlternateFlag,
 			QueryIntervalFlag,
 			EnvFlag,
 		},
@@ -69,6 +71,7 @@ func run(c *cli.Context) error {
 	var (
 		env             = c.String(EnvFlag.Name)
 		mint            = c.String(MintFlag.Name)
+		mintDecimals    = c.Int(MintDecimalsFlag.Name)
 		iterations      = c.Int(IterationsFlag.Name)
 		triggerActivity = c.Bool(TriggerActivityFlag.Name)
 		publicKey       = c.String(PublicKeyFlag.Name)
@@ -78,6 +81,7 @@ func run(c *cli.Context) error {
 		swapMint        = c.String(SwapMintFlag.Name)
 		swapInterval    = c.Duration(SwapIntervalFlag.Name)
 		swapInitialWait = c.Duration(SwapInitialWaitFlag.Name)
+		swapAlternate   = c.Bool(SwapAlternateFlag.Name)
 		swapAfterWait   = c.Duration(SwapAfterWaitFlag.Name)
 		queryInterval   = c.Duration(QueryIntervalFlag.Name)
 
@@ -102,7 +106,7 @@ func run(c *cli.Context) error {
 	syncedTicker := time.NewTicker(queryInterval)
 	defer syncedTicker.Stop()
 
-	jupiterAPI, err := stream.NewJupiterAPI(stream.WithJupiterToken(mint), stream.WithJupiterTicker(syncedTicker))
+	jupiterAPI, err := stream.NewJupiterAPI(stream.WithJupiterToken(mint, mintDecimals), stream.WithJupiterTicker(syncedTicker))
 	if err != nil {
 		return err
 	}
@@ -117,7 +121,7 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterAfterTimeout(swapAfterWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount), actor.WithJupiterClient(httpClient))
+	jupiterActor, err := actor.NewJupiterSwap(actor.WithJupiterTokenPair(swapMint, mint), actor.WithJupiterPublicKey(publicKey), actor.WithJupiterInitialTimeout(swapInitialWait), actor.WithJupiterAfterTimeout(swapAfterWait), actor.WithJupiterInterval(swapInterval), actor.WithJupiterAmount(swapAmount), actor.WithJupiterClient(httpClient), actor.WithJupiterAlternate(swapAlternate))
 	if err != nil {
 		return err
 	}
@@ -245,7 +249,7 @@ func fetchTransactionInfo(ctx context.Context, swaps []actor.SwapEvent, rpcEndpo
 				Elapsed:   result.BlockTime.Time().Sub(swap.Timestamp),
 				BuyPrice:  0,
 				SellPrice: 0,
-				Source:    fmt.Sprintf("transaction-%v", swap.Signature),
+				Source:    fmt.Sprintf("transaction-%v-%v", swap.Signature, swap.Info),
 			},
 		}
 		return

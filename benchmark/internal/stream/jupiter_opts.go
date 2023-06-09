@@ -4,9 +4,10 @@ import "time"
 
 type JupiterOpt func(s *JupiterAPIStream)
 
-func WithJupiterToken(mint string) JupiterOpt {
+func WithJupiterToken(mint string, decimals int) JupiterOpt {
 	return func(s *JupiterAPIStream) {
 		s.mint = mint
+		s.decimals = decimals
 	}
 }
 
