@@ -12,6 +12,12 @@ var (
 		Value: "6D7nXHAhsRbwj8KFZR2agB6GEjMLg4BM7MAqZzRT8F1j", // gosu
 	}
 
+	MintDecimalsFlag = &cli.IntFlag{
+		Name:  "mint-decimals",
+		Usage: "number of decimals for mint token",
+		Value: 8,
+	}
+
 	TriggerActivityFlag = &cli.BoolFlag{
 		Name:  "trigger-activity",
 		Usage: "if true, send trigger transactions to force quote updates (requires PRIVATE_KEY environment variable_",
@@ -32,7 +38,7 @@ var (
 	SwapAmountFlag = &cli.Float64Flag{
 		Name:  "swap-amount",
 		Usage: "amount to swap for each trigger transaction (for unit, see --swap-mint)",
-		Value: 1,
+		Value: 0.1,
 	}
 
 	SwapMintFlag = &cli.StringFlag{
@@ -57,6 +63,11 @@ var (
 		Name:  "swap-after-wait",
 		Usage: "initial wait after finishing swaps",
 		Value: 10 * time.Second,
+	}
+
+	SwapAlternateFlag = &cli.BoolFlag{
+		Name:  "swap-alternate",
+		Usage: "alternate direction of swaps",
 	}
 
 	QueryIntervalFlag = &cli.DurationFlag{

@@ -54,7 +54,18 @@ func (s traderHTTPPriceStream) Run(parent context.Context) ([]RawUpdate[Duration
 	}
 
 	return collectOrderedUpdates(ctx, ticker, func() (*pb.GetPriceResponse, error) {
-		return s.h.GetPrice(ctx, []string{s.mint})
+		res, err := s.h.GetPrice(ctx, []string{s.mint})
+		if err != nil {
+			return nil, err
+		}
+
+		filteredRes := &pb.GetPriceResponse{TokenPrices: nil}
+		for _, price := range res.TokenPrices {
+			if price.Project == pb.Project_P_JUPITER {
+				filteredRes.TokenPrices = append(filteredRes.TokenPrices, price)
+			}
+		}
+		return filteredRes, nil
 	}, &pb.GetPriceResponse{}, func(err error) {
 		s.log().Errorw("could not fetch price", "err", err)
 	})

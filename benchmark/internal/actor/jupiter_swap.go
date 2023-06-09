@@ -30,6 +30,7 @@ type jupiterSwap struct {
 	amount         float64
 	slippage       float64
 	publicKey      string
+	alternate      bool
 
 	client *provider.HTTPClient
 }
@@ -78,6 +79,7 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) ([]SwapEvent, er
 	resultCh := make(chan error, iterations)
 	signatures := make([]SwapEvent, 0, iterations)
 	signatureLock := &sync.Mutex{}
+	lastOutAmount := 0.
 
 	j.log().Infow("starting swap submission", "total", iterations)
 
@@ -87,19 +89,43 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) ([]SwapEvent, er
 			go func(i int) {
 				j.log().Infow("submitting swap", "count", i)
 
-				res, err := j.client.SubmitTradeSwap(ctx, j.publicKey, j.inputMint, j.outputMint, j.amount, j.slippage, pb.Project_P_JUPITER, submitOpts)
+				var (
+					inputMint  = j.inputMint
+					outputMint = j.outputMint
+					amount     = j.amount
+				)
+
+				if j.alternate && i%2 == 1 {
+					inputMint, outputMint = outputMint, inputMint
+					amount = lastOutAmount
+				}
+
+				info := fmt.Sprintf("%v => %v: %v", inputMint, outputMint, amount)
+
+				postResponse, err := j.client.PostTradeSwap(ctx, j.publicKey, inputMint, outputMint, amount, j.slippage, pb.Project_P_JUPITER)
+				if err != nil {
+					errCh <- fmt.Errorf("error posting swap %v: %w", i, err)
+					resultCh <- err
+					return
+				}
+
+				// technically this can be a race condition, but shouldn't be a concern with the ticker times
+				lastOutAmount = postResponse.OutAmount
+
+				submitResponse, err := j.client.SignAndSubmitBatch(ctx, postResponse.Transactions, submitOpts)
 				if err != nil {
 					errCh <- fmt.Errorf("error submitting swap %v: %w", i, err)
 					resultCh <- err
 					return
 				}
 
-				j.log().Infow("completed swap", "transactions", res.Transactions)
+				j.log().Infow("completed swap", "transactions", submitResponse.Transactions)
 				signatureLock.Lock()
-				for _, transaction := range res.Transactions {
+				for _, transaction := range submitResponse.Transactions {
 					signatures = append(signatures, SwapEvent{
 						Timestamp: time.Now(),
 						Signature: transaction.Signature,
+						Info:      info,
 					})
 				}
 				signatureLock.Unlock()
