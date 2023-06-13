@@ -50,7 +50,7 @@ func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
 	case config.EnvTestnet:
 		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.TestnetHTTP))
 	case config.EnvMainnet:
-		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.MainnetHTTP))
+		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.MainnetVirginiaHTTP))
 	}
 	return h
 }

@@ -42,7 +42,7 @@ func run(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	opts := provider.DefaultRPCOpts(provider.MainnetGRPC)
+	opts := provider.DefaultRPCOpts(provider.MainnetVirginiaGRPC)
 	if opts.PrivateKey == nil {
 		return errors.New("PRIVATE_KEY environment variable must be set")
 	}
