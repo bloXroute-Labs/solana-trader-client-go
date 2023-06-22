@@ -64,7 +64,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/drift/perp-positions", h.baseURL)
 	response := new(pb.GetDriftPerpPositionsResponse)
-	if err := connections.HTTPPostWithClient[*pb.GetDriftPerpPositionsResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpPositionsResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -75,7 +75,7 @@ func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetD
 func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/drift/perp-open-orders", h.baseURL)
 	response := new(pb.GetDriftPerpOpenOrdersResponse)
-	if err := connections.HTTPPostWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
