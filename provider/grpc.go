@@ -316,6 +316,21 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 	})
 }
 
+// GetDriftPerpPositions returns all perp positions on Drift platform
+func (g *GRPCClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
+	return g.apiClient.GetDriftPerpPositions(ctx, request)
+}
+
+// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
+func (g *GRPCClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
+	return g.apiClient.GetDriftPerpOpenOrders(ctx, request)
+}
+
+// PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
+func (g *GRPCClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
+	return g.apiClient.PostDriftCancelPerpOrder(ctx, request)
+}
+
 // PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
 func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
 	return g.apiClient.PostPerpOrder(ctx, request)
@@ -428,6 +443,15 @@ func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.Pos
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitDriftCancelPerpOrder builds a Drift cancel perp orders txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostDriftCancelPerpOrder(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Data.Transactions, opts)
 }
 
 // PostCancelOrder builds a Serum cancel order.
