@@ -12,4 +12,5 @@ type Liquidity interface {
 type SwapEvent struct {
 	Timestamp time.Time
 	Signature string
+	Info      string
 }

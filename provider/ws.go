@@ -21,7 +21,7 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetWS)
+	opts := DefaultRPCOpts(MainnetVirginiaWS)
 	return NewWSClientWithOpts(opts)
 }
 
@@ -70,6 +70,36 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 
 func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return w.recentBlockHashStore.get(ctx)
+}
+
+// GetDriftPerpPositions returns all perp positions on Drift platform
+func (w *WSClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
+	var response pb.GetDriftPerpPositionsResponse
+	err := w.conn.Request(ctx, "GetDriftPerpPositions", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
+func (w *WSClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
+	var response pb.GetDriftPerpOpenOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftPerpOpenOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
+func (w *WSClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
+	var response pb.PostDriftCancelPerpOrderResponse
+	err := w.conn.Request(ctx, "PostDriftCancelPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.

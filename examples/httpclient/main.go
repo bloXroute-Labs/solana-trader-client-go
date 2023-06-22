@@ -50,7 +50,7 @@ func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
 	case config.EnvTestnet:
 		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.TestnetHTTP))
 	case config.EnvMainnet:
-		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.MainnetHTTP))
+		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.MainnetVirginiaHTTP))
 	}
 	return h
 }
@@ -126,15 +126,18 @@ func run() bool {
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
 	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(ownerAddr) })
+	failed = failed || logCall("callGetDriftPerpPositions", func() bool { return callGetDriftPerpPositions(ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
+	failed = failed || logCall("callGetDriftPerpOpenOrders", func() bool { return callGetDriftPerpOpenOrders(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
 	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
+		failed = failed || logCall("callDriftCancelPerpOrder", func() bool { return callDriftCancelPerpOrder(ownerAddr) })
 		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
@@ -953,6 +956,26 @@ func callGetPerpPositions(ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftPerpPositions(ownerAddr string) bool {
+	log.Info("starting callGetDriftPerpPositions test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftPerpPositions(ctx, &pb.GetDriftPerpPositionsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contracts:      []string{"SOL_PERP"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftPerpPositions resp : %s", user)
+	return false
+}
+
 func callGetUser(ownerAddr string) bool {
 	log.Info("starting callGetUser test")
 
@@ -991,6 +1014,27 @@ func callCancelPerpOrder(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callCancelPerpOrder signature : %s", sig)
+	return false
+}
+
+func callDriftCancelPerpOrder(ownerAddr string) bool {
+	log.Info("starting callDriftCancelPerpOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.PostDriftCancelPerpOrder(ctx, &pb.PostDriftCancelPerpOrderRequest{
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+		Contract:      "SOL_PERP",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftCancelPerpOrder signature : %s", sig)
 	return false
 }
 
@@ -1233,6 +1277,25 @@ func callGetOpenPerpOrder(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("GetOpenPerpOrder resp : %s", user)
+	return false
+}
+
+func callGetDriftPerpOpenOrders(ownerAddr string) bool {
+	log.Info("starting callGetDriftPerpOpenOrders test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftPerpOpenOrders(ctx, &pb.GetDriftPerpOpenOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftPerpOpenOrders resp : %s", user)
 	return false
 }
 

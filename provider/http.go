@@ -24,7 +24,7 @@ type HTTPClient struct {
 
 // NewHTTPClient connects to Mainnet Trader API
 func NewHTTPClient() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetHTTP)
+	opts := DefaultRPCOpts(MainnetVirginiaHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
@@ -58,6 +58,43 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 		privateKey: opts.PrivateKey,
 		authHeader: opts.AuthHeader,
 	}
+}
+
+// GetDriftPerpPositions returns all perp positions on Drift platform
+func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
+	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
+	url := fmt.Sprintf("%s/api/v2/drift/perp-positions?ownerAddress=%s&accountAddress=%s%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
+	response := new(pb.GetDriftPerpPositionsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpPositionsResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
+func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
+	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
+	url := fmt.Sprintf("%s/api/v2/drift/perp-open-orders?ownerAddress=%s&accountAddress=%s%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
+	response := new(pb.GetDriftPerpOpenOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
+func (h *HTTPClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp-cancel", h.baseURL)
+	response := new(pb.PostDriftCancelPerpOrderResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDriftCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
 
 // GetOrderbook returns the requested market's orderbook (e.h. asks and bids). Set limit to 0 for all bids / asks.
@@ -407,8 +444,8 @@ func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 	return &response, nil
 }
 
-// signAndSubmit signs the given transaction and submits it.
-func (h *HTTPClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
+// SignAndSubmit signs the given transaction and submits it.
+func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
 	if h.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -425,8 +462,8 @@ func (h *HTTPClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 	return response.Signature, nil
 }
 
-// signAndSubmitBatch signs the given transactions and submits them.
-func (h *HTTPClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+// SignAndSubmitBatch signs the given transactions and submits them.
+func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
@@ -463,7 +500,7 @@ func (h *HTTPClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outTok
 	if err != nil {
 		return nil, err
 	}
-	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
@@ -484,7 +521,7 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	if err != nil {
 		return nil, err
 	}
-	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitPostSettlePNL builds a settle-pnl txn, signs and submits it to the network.
@@ -493,7 +530,7 @@ func (h *HTTPClient) SubmitPostSettlePNL(ctx context.Context, request *pb.PostSe
 	if err != nil {
 		return "", err
 	}
-	return h.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitPostSettlePNLs builds one or many settle-pnl txn, signs and submits them to the network.
@@ -502,7 +539,7 @@ func (h *HTTPClient) SubmitPostSettlePNLs(ctx context.Context, request *pb.PostS
 	if err != nil {
 		return nil, err
 	}
-	return h.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitPostLiquidatePerp builds a liquidate-perp txn, signs and submits it to the network.
@@ -511,7 +548,7 @@ func (h *HTTPClient) SubmitPostLiquidatePerp(ctx context.Context, request *pb.Po
 	if err != nil {
 		return "", err
 	}
-	return h.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // SubmitManageCollateral builds a deposit collateral transaction then signs it, and submits to the network.
@@ -520,7 +557,7 @@ func (h *HTTPClient) SubmitManageCollateral(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return "", err
 	}
-	return h.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
@@ -578,7 +615,7 @@ func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 		return "", err
 	}
 
-	sig, err := h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 	return sig, err
 }
 
@@ -589,7 +626,7 @@ func (h *HTTPClient) SubmitDriftMarginOrder(ctx context.Context, request *pb.Pos
 		return "", err
 	}
 
-	sig, err := h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 	return sig, err
 }
 
@@ -624,7 +661,7 @@ func (h *HTTPClient) SubmitDriftEnableMarginTrading(ctx context.Context, request
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, tx.Transaction, skipPreFlight)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -634,7 +671,7 @@ func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 		return "", err
 	}
 
-	sig, err := h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 	return sig, err
 }
 
@@ -683,7 +720,7 @@ func (h *HTTPClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostClosePerpPositions builds cancel perp positions txn.
@@ -710,7 +747,7 @@ func (h *HTTPClient) SubmitClosePerpPositions(ctx context.Context, request *pb.P
 		msgs = append(msgs, txn)
 	}
 
-	return h.signAndSubmitBatch(ctx, msgs, opts)
+	return h.SignAndSubmitBatch(ctx, msgs, opts)
 }
 
 // SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
@@ -720,7 +757,7 @@ func (h *HTTPClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.Post
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn, signs and submits it to the network.
@@ -735,7 +772,7 @@ func (h *HTTPClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *
 		msgs = append(msgs, txn)
 	}
 
-	return h.signAndSubmitBatch(ctx, msgs, opts)
+	return h.SignAndSubmitBatch(ctx, msgs, opts)
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
@@ -744,7 +781,7 @@ func (h *HTTPClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return h.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
 		SkipPreFlight: skipPreFlight,
 	})
 }
@@ -756,7 +793,7 @@ func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitPostPerpOrder builds a post order txn, signs and submits it to the network.
@@ -766,7 +803,7 @@ func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPe
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitPostModifyDriftOrder builds a Drift modify-order txn, signs and submits it to the network.
@@ -776,7 +813,7 @@ func (h *HTTPClient) SubmitPostModifyDriftOrder(ctx context.Context, request *pb
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitPostDriftMarginOrder builds a margin order txn, signs and submits it to the network.
@@ -786,7 +823,7 @@ func (h *HTTPClient) SubmitPostDriftMarginOrder(ctx context.Context, request *pb
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -831,7 +868,7 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (h *HTTPClient) PostCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, project pb.Project) (*pb.PostCancelAllResponse, error) {
@@ -857,7 +894,7 @@ func (h *HTTPClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 	if err != nil {
 		return nil, err
 	}
-	return h.signAndSubmitBatch(ctx, orders.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, orders.Transactions, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -887,7 +924,7 @@ func (h *HTTPClient) SubmitSettle(ctx context.Context, owner, market, baseTokenW
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, skipPreflight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
 func (h *HTTPClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -919,7 +956,7 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
 func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -952,7 +989,7 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 		return "", err
 	}
 
-	return h.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.

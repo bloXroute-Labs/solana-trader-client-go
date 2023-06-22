@@ -49,3 +49,9 @@ func WithJupiterPublicKey(pk string) JupiterOpt {
 		s.publicKey = pk
 	}
 }
+
+func WithJupiterAlternate(alternate bool) JupiterOpt {
+	return func(s *jupiterSwap) {
+		s.alternate = alternate
+	}
+}
