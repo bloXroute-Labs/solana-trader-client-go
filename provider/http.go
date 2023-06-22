@@ -62,7 +62,9 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 
 // GetDriftPerpPositions returns all perp positions on Drift platform
 func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/perp-positions", h.baseURL)
+	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
+	url := fmt.Sprintf("%s/api/v2/drift/perp-positions?ownerAddress=%s&accountAddress=%s%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
 	response := new(pb.GetDriftPerpPositionsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpPositionsResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
@@ -73,7 +75,9 @@ func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetD
 
 // GetDriftPerpOpenOrders returns all open perp orders on Drift platform
 func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/perp-open-orders", h.baseURL)
+	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
+	url := fmt.Sprintf("%s/api/v2/drift/perp-open-orders?ownerAddress=%s&accountAddress=%s%s",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
 	response := new(pb.GetDriftPerpOpenOrdersResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
