@@ -53,10 +53,28 @@ func signTx(solanaTx *solana.Transaction, privateKey solana.PrivateKey) error {
 	signaturesRequired := int(solanaTx.Message.Header.NumRequiredSignatures)
 	signaturesPresent := len(solanaTx.Signatures)
 	if signaturesPresent != signaturesRequired {
+		if signaturesRequired-signaturesPresent == 1 {
+			return appendSignature(solanaTx, privateKey)
+		}
 		return fmt.Errorf("transaction requires %v signatures and has %v signatures", signaturesRequired, signaturesPresent)
 	}
 
 	return replaceZeroSignature(solanaTx, privateKey)
+}
+
+func appendSignature(solanaTx *solana.Transaction, privateKey solana.PrivateKey) error {
+	messageContent, err := solanaTx.Message.MarshalBinary()
+	if err != nil {
+		return fmt.Errorf("unable to encode message for signing: %w", err)
+	}
+
+	signedMessageContent, err := privateKey.Sign(messageContent)
+	if err != nil {
+		return fmt.Errorf("unable to sign message: %v", err)
+	}
+
+	solanaTx.Signatures = append(solanaTx.Signatures, signedMessageContent)
+	return nil
 }
 
 func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) error {

@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
-	"github.com/gagliardetto/solana-go"
 	"google.golang.org/protobuf/encoding/protojson"
 	"math/rand"
 	"os"
@@ -115,8 +113,6 @@ func run() bool {
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callAddMemoWithInstructions", func() bool { return callAddMemoWithInstructions(g, ownerAddr) })
-		failed = failed || logCall("callAddMemoToSerializedTxn", func() bool { return callAddMemoToSerializedTxn(g, ownerAddr) })
 	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
@@ -992,79 +988,6 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	}
 	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
-}
-
-func callAddMemoWithInstructions(g *provider.GRPCClient, ownerAddr string) bool {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	privateKey, err := transaction.LoadPrivateKeyFromEnv()
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	privateKeys := make(map[solana.PublicKey]solana.PrivateKey)
-	privateKeys[privateKey.PublicKey()] = privateKey
-	blockHashResp, err := g.RecentBlockHash(ctx)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	encodedTxn, err := transaction.AddMemo(
-		[]solana.Instruction{},
-		"new memo by dev",
-		solana.MustHashFromBase58(blockHashResp.BlockHash),
-		solana.MustPublicKeyFromBase58(ownerAddr),
-		privateKeys,
-	)
-	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{Content: encodedTxn}, false)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	log.Infof("response.signature : %s", response.Signature)
-	return true
-}
-
-func callAddMemoToSerializedTxn(g *provider.GRPCClient, ownerAddr string) bool {
-	log.Info("add memo to serialized tx")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	privateKey, err := transaction.LoadPrivateKeyFromEnv()
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	privateKeys := make(map[solana.PublicKey]solana.PrivateKey)
-	privateKeys[privateKey.PublicKey()] = privateKey
-	blockHashResp, err := g.RecentBlockHash(ctx)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	encodedTxn, err := transaction.AddMemo(
-		[]solana.Instruction{},
-		"new memo by dev",
-		solana.MustHashFromBase58(blockHashResp.BlockHash),
-		solana.MustPublicKeyFromBase58(ownerAddr),
-		privateKeys,
-	)
-
-	encodedTxn2, err := transaction.AddMemoToSerializedTxn(encodedTxn, "new memo by dev2", solana.MustPublicKeyFromBase58(ownerAddr), privateKeys)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	log.Infof("encodedTxn2 : %s", encodedTxn2)
-	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{Content: encodedTxn2}, false)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	log.Infof("response.signature : %s", response.Signature)
-
-	return true
 }
 
 func callPricesGRPCStream(g *provider.GRPCClient) bool {
