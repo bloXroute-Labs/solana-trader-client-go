@@ -795,6 +795,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 	sig, err := h.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
 		OwnerAddress: ownerAddr,
 		Project:      pb.Project_P_RAYDIUM,
+		Slippage:     0.1,
 		Steps: []*pb.RouteStep{
 			{
 				Project: &pb.StepProject{
