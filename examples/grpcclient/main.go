@@ -953,6 +953,7 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
 		OwnerAddress: ownerAddr,
 		Project:      pb.Project_P_RAYDIUM,
+		Slippage:     0.1,
 		Steps: []*pb.RouteStep{
 			{
 				Project: &pb.StepProject{
