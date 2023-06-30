@@ -109,10 +109,11 @@ func DefaultRPCOpts(endpoint string) RPCOpts {
 }
 
 var stringToAmm = map[string]pb.Project{
-	"unknown": pb.Project_P_UNKNOWN,
-	"jupiter": pb.Project_P_JUPITER,
-	"raydium": pb.Project_P_RAYDIUM,
-	"all":     pb.Project_P_ALL,
+	"unknown":  pb.Project_P_UNKNOWN,
+	"jupiter":  pb.Project_P_JUPITER,
+	"raydium":  pb.Project_P_RAYDIUM,
+	"openbook": pb.Project_P_OPENBOOK,
+	"all":      pb.Project_P_ALL,
 }
 
 func ProjectFromString(project string) (pb.Project, error) {
