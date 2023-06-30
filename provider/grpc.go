@@ -134,7 +134,7 @@ func (g *GRPCClient) GetTickers(ctx context.Context, market string, project pb.P
 	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market, Project: project})
 }
 
-// GetOpenOrders returns all opened orders by owner address and market
+// GetOpenOrders returns all open orders by owner address and market
 func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
 	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project})
 }
@@ -144,12 +144,72 @@ func (g *GRPCClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDReques
 	return g.apiClient.GetOrderByID(ctx, in)
 }
 
-// GetOpenPerpOrders returns all opened perp orders
+// GetOpenPerpOrders returns all open perp orders
 func (g *GRPCClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	return g.apiClient.GetOpenPerpOrders(ctx, request)
 }
 
-// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+// PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
+func (g *GRPCClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
+	return g.apiClient.PostCloseDriftPerpPositions(ctx, request)
+}
+
+// GetDriftPerpOrderbook returns the current state of perpetual contract orderbook on Drift
+func (g *GRPCClient) GetDriftPerpOrderbook(ctx context.Context, request *pb.GetDriftPerpOrderbookRequest) (*pb.GetDriftPerpOrderbookResponse, error) {
+	return g.apiClient.GetDriftPerpOrderbook(ctx, request)
+}
+
+// PostCreateDriftUser returns a partially signed transaction for creating a user on Drift
+func (g *GRPCClient) PostCreateDriftUser(ctx context.Context, request *pb.PostCreateDriftUserRequest) (*pb.PostCreateDriftUserResponse, error) {
+	return g.apiClient.PostCreateDriftUser(ctx, request)
+}
+
+// GetDriftUser returns a user's info on Drift
+func (g *GRPCClient) GetDriftUser(ctx context.Context, request *pb.GetDriftUserRequest) (*pb.GetDriftUserResponse, error) {
+	return g.apiClient.GetDriftUser(ctx, request)
+}
+
+// PostDriftManageCollateral returns a partially signed transaction for managing collateral on Drift
+func (g *GRPCClient) PostDriftManageCollateral(ctx context.Context, request *pb.PostDriftManageCollateralRequest) (*pb.PostDriftManageCollateralResponse, error) {
+	return g.apiClient.PostDriftManageCollateral(ctx, request)
+}
+
+// PostDriftSettlePNL returns partially signed transactions for settling PNL on Drift
+func (g *GRPCClient) PostDriftSettlePNL(ctx context.Context, request *pb.PostDriftSettlePNLRequest) (*pb.PostDriftSettlePNLResponse, error) {
+	return g.apiClient.PostDriftSettlePNL(ctx, request)
+}
+
+// PostDriftSettlePNLs returns partially signed transactions for settling PNLs on Drift
+func (g *GRPCClient) PostDriftSettlePNLs(ctx context.Context, request *pb.PostDriftSettlePNLsRequest) (*pb.PostDriftSettlePNLsResponse, error) {
+	return g.apiClient.PostDriftSettlePNLs(ctx, request)
+}
+
+// GetDriftAssets returns list of assets for user on Drift
+func (g *GRPCClient) GetDriftAssets(ctx context.Context, request *pb.GetDriftAssetsRequest) (*pb.GetDriftAssetsResponse, error) {
+	return g.apiClient.GetDriftAssets(ctx, request)
+}
+
+// GetDriftPerpContracts returns list of available perp contracts on Drift
+func (g *GRPCClient) GetDriftPerpContracts(ctx context.Context, request *pb.GetDriftPerpContractsRequest) (*pb.GetDriftPerpContractsResponse, error) {
+	return g.apiClient.GetDriftPerpContracts(ctx, request)
+}
+
+// PostLiquidateDriftPerp returns a partially signed transaction for liquidating perp position on Drift
+func (g *GRPCClient) PostLiquidateDriftPerp(ctx context.Context, request *pb.PostLiquidateDriftPerpRequest) (*pb.PostLiquidateDriftPerpResponse, error) {
+	return g.apiClient.PostLiquidateDriftPerp(ctx, request)
+}
+
+// GetDriftOpenPerpOrder returns an open perp order on Drift
+func (g *GRPCClient) GetDriftOpenPerpOrder(ctx context.Context, request *pb.GetDriftOpenPerpOrderRequest) (*pb.GetDriftOpenPerpOrderResponse, error) {
+	return g.apiClient.GetDriftOpenPerpOrder(ctx, request)
+}
+
+// GetDriftOpenMarginOrder return a open margin order on Drift
+func (g *GRPCClient) GetDriftOpenMarginOrder(ctx context.Context, request *pb.GetDriftOpenMarginOrderRequest) (*pb.GetDriftOpenMarginOrderResponse, error) {
+	return g.apiClient.GetDriftOpenMarginOrder(ctx, request)
+}
+
+// GetDriftOpenMarginOrders returns all open margin orders on Drift
 func (g *GRPCClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
 	return g.apiClient.GetDriftOpenMarginOrders(ctx, request)
 }
@@ -159,7 +219,7 @@ func (g *GRPCClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCa
 	return g.apiClient.PostCancelPerpOrder(ctx, request)
 }
 
-// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift
 func (g *GRPCClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
 	return g.apiClient.PostCancelDriftMarginOrder(ctx, request)
 }
@@ -316,12 +376,12 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 	})
 }
 
-// GetDriftPerpPositions returns all perp positions on Drift platform
+// GetDriftPerpPositions returns all perp positions on Drift
 func (g *GRPCClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
 	return g.apiClient.GetDriftPerpPositions(ctx, request)
 }
 
-// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
+// GetDriftPerpOpenOrders returns all open perp orders on Drift
 func (g *GRPCClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
 	return g.apiClient.GetDriftPerpOpenOrders(ctx, request)
 }
