@@ -107,7 +107,7 @@ func (h *HTTPClient) GetDriftUser(ctx context.Context, request *pb.GetDriftUserR
 
 // PostDriftManageCollateral returns a partially signed transaction for managing collateral on Drift
 func (h *HTTPClient) PostDriftManageCollateral(ctx context.Context, request *pb.PostDriftManageCollateralRequest) (*pb.PostDriftManageCollateralResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/perp/manage-collateral", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/drift/manage-collateral", h.baseURL)
 	response := new(pb.PostDriftManageCollateralResponse)
 	if err := connections.HTTPPostWithClient[*pb.PostDriftManageCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
@@ -390,7 +390,7 @@ func (h *HTTPClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*
 
 // PostManageCollateral returns a partially signed transaction for managing collateral
 func (h *HTTPClient) PostManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest) (*pb.PostManageCollateralResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/manage-collateral", h.baseURL)
+	url := fmt.Sprintf("%s/api/v1/trade/perp/managecollateral", h.baseURL)
 	response := new(pb.PostManageCollateralResponse)
 	if err := connections.HTTPPostWithClient[*pb.PostManageCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
@@ -776,7 +776,7 @@ func (h *HTTPClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostD
 
 // PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
 func (h *HTTPClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/enable-margin", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/drift/margin-enable", h.baseURL)
 
 	var response pb.PostDriftEnableMarginTradingResponse
 	err := connections.HTTPPostWithClient[*pb.PostDriftEnableMarginTradingResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
