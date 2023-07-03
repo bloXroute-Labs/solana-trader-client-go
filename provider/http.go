@@ -137,7 +137,7 @@ func (h *HTTPClient) PostDriftSettlePNLs(ctx context.Context, request *pb.PostDr
 
 // GetDriftAssets returns list of assets for user on Drift
 func (h *HTTPClient) GetDriftAssets(ctx context.Context, request *pb.GetDriftAssetsRequest) (*pb.GetDriftAssetsResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/perp/assets?ownerAddress=%s&accountAddress=%s", h.baseURL,
+	url := fmt.Sprintf("%s/api/v2/drift/assets?ownerAddress=%s&accountAddress=%s", h.baseURL,
 		request.OwnerAddress, request.AccountAddress)
 	assets := new(pb.GetDriftAssetsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftAssetsResponse](ctx, url, h.httpClient, assets, h.authHeader); err != nil {
