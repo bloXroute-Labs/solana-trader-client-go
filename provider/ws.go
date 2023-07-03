@@ -202,10 +202,10 @@ func (w *WSClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDri
 	return &response, nil
 }
 
-// GetDriftPerpOpenOrders returns all open perp orders on Drift
-func (w *WSClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
-	var response pb.GetDriftPerpOpenOrdersResponse
-	err := w.conn.Request(ctx, "GetDriftPerpOpenOrders", request, &response)
+// GetDriftOpenPerpOrders returns all open perp orders on Drift
+func (w *WSClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
+	var response pb.GetDriftOpenPerpOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftOpenPerpOrders", request, &response)
 	if err != nil {
 		return nil, err
 	}

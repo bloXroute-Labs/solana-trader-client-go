@@ -117,7 +117,7 @@ func run() bool {
 	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(w, ownerAddr) })
-	failed = failed || logCall("callGetDriftPerpOpenOrders", func() bool { return callGetDriftPerpOpenOrders(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(w, ownerAddr) })
 	failed = failed || logCall("callGetDriftPerpPositions", func() bool { return callGetDriftPerpPositions(w, ownerAddr) })
@@ -1239,13 +1239,13 @@ func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callGetDriftPerpOpenOrders(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting callGetDriftPerpOpenOrders test")
+func callGetDriftOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrders test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := w.GetDriftPerpOpenOrders(ctx, &pb.GetDriftPerpOpenOrdersRequest{
+	user, err := w.GetDriftOpenPerpOrders(ctx, &pb.GetDriftOpenPerpOrdersRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
 		Contracts:      []string{"SOL_PERP"},
@@ -1254,7 +1254,7 @@ func callGetDriftPerpOpenOrders(w *provider.WSClient, ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetDriftPerpOpenOrders resp : %s", user)
+	log.Infof("callGetDriftOpenPerpOrders resp : %s", user)
 	return false
 }
 

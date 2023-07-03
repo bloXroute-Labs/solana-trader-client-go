@@ -381,9 +381,9 @@ func (g *GRPCClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetD
 	return g.apiClient.GetDriftPerpPositions(ctx, request)
 }
 
-// GetDriftPerpOpenOrders returns all open perp orders on Drift
-func (g *GRPCClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
-	return g.apiClient.GetDriftPerpOpenOrders(ctx, request)
+// GetDriftOpenPerpOrders returns all open perp orders on Drift
+func (g *GRPCClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
+	return g.apiClient.GetDriftOpenPerpOrders(ctx, request)
 }
 
 // PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)

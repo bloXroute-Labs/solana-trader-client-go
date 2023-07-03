@@ -130,7 +130,7 @@ func run() bool {
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
-	failed = failed || logCall("callGetDriftPerpOpenOrders", func() bool { return callGetDriftPerpOpenOrders(ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
 	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
@@ -1455,14 +1455,14 @@ func callGetDriftOpenPerpOrder(ownerAddr string) bool {
 	return false
 }
 
-func callGetDriftPerpOpenOrders(ownerAddr string) bool {
-	log.Info("starting callGetDriftPerpOpenOrders test")
+func callGetDriftOpenPerpOrders(ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrders test")
 
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := h.GetDriftPerpOpenOrders(ctx, &pb.GetDriftPerpOpenOrdersRequest{
+	user, err := h.GetDriftOpenPerpOrders(ctx, &pb.GetDriftOpenPerpOrdersRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
 	})
@@ -1470,7 +1470,7 @@ func callGetDriftPerpOpenOrders(ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("GetDriftPerpOpenOrders resp : %s", user)
+	log.Infof("GetDriftOpenPerpOrders resp : %s", user)
 	return false
 }
 

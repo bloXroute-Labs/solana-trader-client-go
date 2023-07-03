@@ -205,13 +205,13 @@ func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetD
 	return response, nil
 }
 
-// GetDriftPerpOpenOrders returns all open perp orders on Drift
-func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
+// GetDriftOpenPerpOrders returns all open perp orders on Drift
+func (h *HTTPClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
 	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
 	url := fmt.Sprintf("%s/api/v2/drift/perp/open-orders?ownerAddress=%s&accountAddress=%s%s",
 		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
-	response := new(pb.GetDriftPerpOpenOrdersResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+	response := new(pb.GetDriftOpenPerpOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenPerpOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 

@@ -122,7 +122,7 @@ func run() bool {
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(g, ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(g, ownerAddr) })
-	failed = failed || logCall("callGetDriftPerpOpenOrders", func() bool { return callGetDriftPerpOpenOrders(g, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(g, ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(g) })
 	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets(g) })
@@ -1745,13 +1745,13 @@ func callGetDriftOpenPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callGetDriftPerpOpenOrders(g *provider.GRPCClient, ownerAddr string) bool {
-	log.Info("starting callGetDriftPerpOpenOrders test")
+func callGetDriftOpenPerpOrders(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrders test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := g.GetDriftPerpOpenOrders(ctx, &pb.GetDriftPerpOpenOrdersRequest{
+	user, err := g.GetDriftOpenPerpOrders(ctx, &pb.GetDriftOpenPerpOrdersRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
 	})
@@ -1759,7 +1759,7 @@ func callGetDriftPerpOpenOrders(g *provider.GRPCClient, ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("GetDriftPerpOpenOrders resp : %s", user)
+	log.Infof("GetDriftOpenPerpOrders resp : %s", user)
 	return false
 }
 
