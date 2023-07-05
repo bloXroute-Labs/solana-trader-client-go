@@ -1158,7 +1158,7 @@ func (h *HTTPClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.Ge
 
 // GetDriftMarketDepth returns the current state of Drift market depth.
 func (h *HTTPClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/market-depth/%s?limit=%d", h.baseURL, request.Contract, request.Limit)
+	url := fmt.Sprintf("%s/api/v2/drift/perp/market-depth/%s?limit=%d", h.baseURL, request.Contract, request.Limit)
 	maarketDepthData := new(pb.GetDriftMarketDepthResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftMarketDepthResponse](ctx, url, h.httpClient, maarketDepthData, h.authHeader); err != nil {
 		return nil, err

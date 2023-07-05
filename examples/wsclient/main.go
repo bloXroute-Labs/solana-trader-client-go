@@ -1436,7 +1436,7 @@ func callPostCloseDriftPerpPositions(w *provider.WSClient, ownerAddr string) boo
 	defer cancel()
 	sig, err := w.PostCloseDriftPerpPositions(ctx, &pb.PostCloseDriftPerpPositionsRequest{
 		OwnerAddress: ownerAddr,
-		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
+		Contracts:    []string{"SOL_PERP"},
 	})
 	if err != nil {
 		log.Error(err)
@@ -1587,8 +1587,8 @@ func callPostDriftManageCollateralWithdraw(w *provider.WSClient) bool {
 	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
-		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
-		Token:          common.PerpCollateralToken_PCTK_SOL,
+		Type:           "WITHDRAWAL",
+		Token:          "SOL",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1629,8 +1629,8 @@ func callPostDriftManageCollateralTransfer(w *provider.WSClient) bool {
 	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
-		Type:             common.PerpCollateralType_PCT_TRANSFER,
-		Token:            common.PerpCollateralToken_PCTK_SOL,
+		Type:             "TRANSFER",
+		Token:            "SOL",
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
 	})
 	if err != nil {
@@ -1689,8 +1689,8 @@ func callPostDriftManageCollateralDeposit(w *provider.WSClient) bool {
 	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
-		Type:           common.PerpCollateralType_PCT_DEPOSIT,
-		Token:          common.PerpCollateralToken_PCTK_SOL,
+		Type:           "DEPOSIT",
+		Token:          "SOL",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1787,7 +1787,7 @@ func callPostDriftSettlePNL(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.PostDriftSettlePNL(ctx, &pb.PostDriftSettlePNLRequest{
 		OwnerAddress:          ownerAddr,
 		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
-		Contract:              common.PerpContract_SOL_PERP,
+		Contract:              "SOL_PERP",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1826,7 +1826,7 @@ func callPostDriftSettlePNLs(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.PostDriftSettlePNLs(ctx, &pb.PostDriftSettlePNLsRequest{
 		OwnerAddress:            ownerAddr,
 		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
-		Contract:                common.PerpContract_SOL_PERP,
+		Contract:                "SOL_PERP",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1950,7 +1950,7 @@ func callPostLiquidateDriftPerp(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.PostLiquidateDriftPerp(ctx, &pb.PostLiquidateDriftPerpRequest{
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
-		Contract:              common.PerpContract_SOL_PERP,
+		Contract:              "SOL_PERP",
 		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
@@ -1968,7 +1968,7 @@ func callGetDriftPerpOrderbook(w *provider.WSClient, ownerAddr string) bool {
 	defer cancel()
 
 	sig, err := w.GetDriftPerpOrderbook(ctx, &pb.GetDriftPerpOrderbookRequest{
-		Contract: common.PerpContract_SOL_PERP,
+		Contract: "SOL_PERP",
 		Limit:    12,
 	})
 	if err != nil {

@@ -1471,7 +1471,7 @@ func callPostCloseDriftPerpPositions(g *provider.GRPCClient, ownerAddr string) b
 	defer cancel()
 	sig, err := g.PostCloseDriftPerpPositions(ctx, &pb.PostCloseDriftPerpPositionsRequest{
 		OwnerAddress: ownerAddr,
-		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
+		Contracts:    []string{"SOL_PERP"},
 	})
 	if err != nil {
 		log.Error(err)
@@ -1635,8 +1635,8 @@ func callPostDriftManageCollateralTransfer(g *provider.GRPCClient) bool {
 	sig, err := g.PostDriftManageCollateral(context.Background(), &pb.PostDriftManageCollateralRequest{
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
-		Type:             common.PerpCollateralType_PCT_TRANSFER,
-		Token:            common.PerpCollateralToken_PCTK_SOL,
+		Type:             "TRANSFER",
+		Token:            "SOL",
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
 	})
 	if err != nil {
@@ -1695,8 +1695,8 @@ func callPostDriftManageCollateralDeposit(g *provider.GRPCClient) bool {
 	sig, err := g.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
-		Type:           common.PerpCollateralType_PCT_DEPOSIT,
-		Token:          common.PerpCollateralToken_PCTK_SOL,
+		Type:           "DEPOSIT",
+		Token:          "SOL",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1792,7 +1792,7 @@ func callPostDriftSettlePNL(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.PostDriftSettlePNL(ctx, &pb.PostDriftSettlePNLRequest{
 		OwnerAddress:          ownerAddr,
 		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
-		Contract:              common.PerpContract_SOL_PERP,
+		Contract:              "SOL_PERP",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1831,7 +1831,7 @@ func callPostDriftSettlePNLs(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.PostDriftSettlePNLs(ctx, &pb.PostDriftSettlePNLsRequest{
 		OwnerAddress:            ownerAddr,
 		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
-		Contract:                common.PerpContract_SOL_PERP,
+		Contract:                "SOL_PERP",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1953,7 +1953,7 @@ func callGetDriftPerpOrderbook(g *provider.GRPCClient, ownerAddr string) bool {
 	defer cancel()
 
 	sig, err := g.GetDriftPerpOrderbook(ctx, &pb.GetDriftPerpOrderbookRequest{
-		Contract: common.PerpContract_SOL_PERP,
+		Contract: "SOL_PERP",
 		Limit:    12,
 	})
 	if err != nil {
@@ -1973,7 +1973,7 @@ func callPostLiquidateDriftPerp(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.PostLiquidateDriftPerp(ctx, &pb.PostLiquidateDriftPerpRequest{
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
-		Contract:              common.PerpContract_SOL_PERP,
+		Contract:              "SOL_PERP",
 		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
