@@ -1768,7 +1768,7 @@ func callGetDriftOpenMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.GetDriftOpenMarginOrder(ctx, &pb.GetDriftOpenMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
-		ClientOrderID:  12,
+		ClientOrderID:  13,
 	})
 	if err != nil {
 		log.Error(err)

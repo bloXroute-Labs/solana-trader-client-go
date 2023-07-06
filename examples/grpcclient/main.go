@@ -1302,7 +1302,7 @@ func callGetDriftOpenMarginOrder(g *provider.GRPCClient, ownerAddr string) bool 
 	openMarginOrders, err := g.GetDriftOpenMarginOrder(ctx, &pb.GetDriftOpenMarginOrderRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
-		ClientOrderID:  12,
+		ClientOrderID:  13,
 	})
 	if err != nil {
 		log.Error(err)
