@@ -377,7 +377,7 @@ func callGetQuotesHTTP() bool {
 	defer cancel()
 
 	inToken := "SOL"
-	outToken := "USDC"
+	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
 	limit := 5
@@ -786,7 +786,7 @@ func callTradeSwap(ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL",
+	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDT", "SOL",
 		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  false,
@@ -829,7 +829,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 					Id:    "",
 				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDC",
+				OutToken:     "USDT",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,

@@ -214,7 +214,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDT", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -229,7 +229,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 func callMarketDepthWS(w *provider.WSClient) bool {
 	log.Info("fetching market depth data...")
 
-	mktDepth, err := w.GetMarketDepth(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	mktDepth, err := w.GetMarketDepth(context.Background(), "SOL:USDT", 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetMarketDepth request for SOL:USDC: %v", err)
 		return true
@@ -350,7 +350,7 @@ func callGetQuotes(w *provider.WSClient) bool {
 	log.Info("fetching quotes...")
 
 	inToken := "SOL"
-	outToken := "USDC"
+	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
 	limit := 5
@@ -385,7 +385,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDT"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 		return true
@@ -913,7 +913,7 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDC",
+	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDT",
 		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 			SkipPreFlight:  false,
@@ -956,7 +956,7 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 					Id:    "",
 				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDC",
+				OutToken:     "USDT",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
