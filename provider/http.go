@@ -60,10 +60,142 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	}
 }
 
-// GetDriftPerpPositions returns all perp positions on Drift platform
+// PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
+func (h *HTTPClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/close", h.baseURL)
+	var response pb.PostCloseDriftPerpPositionsResponse
+	err := connections.HTTPPostWithClient[*pb.PostCloseDriftPerpPositionsResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// GetDriftPerpOrderbook returns the current state of perpetual contract orderbook on Drift
+func (h *HTTPClient) GetDriftPerpOrderbook(ctx context.Context, request *pb.GetDriftPerpOrderbookRequest) (*pb.GetDriftPerpOrderbookResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/orderbook/%s?limit=%d", h.baseURL, request.Contract, request.Limit)
+	orderbook := new(pb.GetDriftPerpOrderbookResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orderbook, nil
+}
+
+// PostCreateDriftUser returns a partially signed transaction for creating a user on Drift
+func (h *HTTPClient) PostCreateDriftUser(ctx context.Context, request *pb.PostCreateDriftUserRequest) (*pb.PostCreateDriftUserResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/user", h.baseURL)
+	response := new(pb.PostCreateDriftUserResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostCreateDriftUserResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// GetDriftUser returns a user's info on Drift
+func (h *HTTPClient) GetDriftUser(ctx context.Context, request *pb.GetDriftUserRequest) (*pb.GetDriftUserResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/user?ownerAddress=%s&accountAddress=%s", h.baseURL,
+		request.OwnerAddress, request.AccountAddress)
+	resp := new(pb.GetDriftUserResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftUserResponse](ctx, url, h.httpClient, resp, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// PostDriftManageCollateral returns a partially signed transaction for managing collateral on Drift
+func (h *HTTPClient) PostDriftManageCollateral(ctx context.Context, request *pb.PostDriftManageCollateralRequest) (*pb.PostDriftManageCollateralResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/manage-collateral", h.baseURL)
+	response := new(pb.PostDriftManageCollateralResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDriftManageCollateralResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// PostDriftSettlePNL returns partially signed transactions for settling PNL on Drift
+func (h *HTTPClient) PostDriftSettlePNL(ctx context.Context, request *pb.PostDriftSettlePNLRequest) (*pb.PostDriftSettlePNLResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/settle-pnl", h.baseURL)
+	response := new(pb.PostDriftSettlePNLResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDriftSettlePNLResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// PostDriftSettlePNLs returns partially signed transactions for settling PNLs on Drift
+func (h *HTTPClient) PostDriftSettlePNLs(ctx context.Context, request *pb.PostDriftSettlePNLsRequest) (*pb.PostDriftSettlePNLsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/settle-pnls", h.baseURL)
+	response := new(pb.PostDriftSettlePNLsResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostDriftSettlePNLsResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// GetDriftAssets returns list of assets for user on Drift
+func (h *HTTPClient) GetDriftAssets(ctx context.Context, request *pb.GetDriftAssetsRequest) (*pb.GetDriftAssetsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/assets?ownerAddress=%s&accountAddress=%s", h.baseURL,
+		request.OwnerAddress, request.AccountAddress)
+	assets := new(pb.GetDriftAssetsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftAssetsResponse](ctx, url, h.httpClient, assets, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return assets, nil
+}
+
+// GetDriftPerpContracts returns list of available perp contracts on Drift
+func (h *HTTPClient) GetDriftPerpContracts(ctx context.Context, _ *pb.GetDriftPerpContractsRequest) (*pb.GetDriftPerpContractsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/contracts", h.baseURL)
+	positions := new(pb.GetDriftPerpContractsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpContractsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return positions, nil
+}
+
+// PostLiquidateDriftPerp returns a partially signed transaction for liquidating perp position on Drift
+func (h *HTTPClient) PostLiquidateDriftPerp(ctx context.Context, request *pb.PostLiquidateDriftPerpRequest) (*pb.PostLiquidateDriftPerpResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/liquidate", h.baseURL)
+	response := new(pb.PostLiquidateDriftPerpResponse)
+	if err := connections.HTTPPostWithClient[*pb.PostLiquidateDriftPerpResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// GetDriftOpenPerpOrder returns an open perp order on Drift
+func (h *HTTPClient) GetDriftOpenPerpOrder(ctx context.Context, request *pb.GetDriftOpenPerpOrderRequest) (*pb.GetDriftOpenPerpOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/open-order?ownerAddress=%s&accountAddress=%s&clientOrderID=%d&orderID=%d", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.ClientOrderID, request.OrderID)
+	order := new(pb.GetDriftOpenPerpOrderResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenPerpOrderResponse](ctx, url, h.httpClient, order, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
+
+// GetDriftOpenMarginOrder return a open margin order on Drift
+func (h *HTTPClient) GetDriftOpenMarginOrder(ctx context.Context, request *pb.GetDriftOpenMarginOrderRequest) (*pb.GetDriftOpenMarginOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/margin/open-order?ownerAddress=%s&accountAddress=%s&clientOrderID=%d&orderID=%d",
+		h.baseURL, request.OwnerAddress, request.AccountAddress, request.GetClientOrderID(), request.GetOrderID())
+	order := new(pb.GetDriftOpenMarginOrderResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenMarginOrderResponse](ctx, url, h.httpClient, order, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
+
+// GetDriftPerpPositions returns all perp positions on Drift
 func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
 	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
-	url := fmt.Sprintf("%s/api/v2/drift/perp-positions?ownerAddress=%s&accountAddress=%s%s",
+	url := fmt.Sprintf("%s/api/v2/drift/perp/positions?ownerAddress=%s&accountAddress=%s%s",
 		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
 	response := new(pb.GetDriftPerpPositionsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpPositionsResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
@@ -73,13 +205,13 @@ func (h *HTTPClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetD
 	return response, nil
 }
 
-// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
-func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
+// GetDriftOpenPerpOrders returns all open perp orders on Drift
+func (h *HTTPClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
 	contractsString := convertStrSliceArgument("contracts", false, request.Contracts)
-	url := fmt.Sprintf("%s/api/v2/drift/perp-open-orders?ownerAddress=%s&accountAddress=%s%s",
+	url := fmt.Sprintf("%s/api/v2/drift/perp/open-orders?ownerAddress=%s&accountAddress=%s%s",
 		h.baseURL, request.OwnerAddress, request.AccountAddress, contractsString)
-	response := new(pb.GetDriftPerpOpenOrdersResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetDriftPerpOpenOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+	response := new(pb.GetDriftOpenPerpOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenPerpOrdersResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -88,7 +220,7 @@ func (h *HTTPClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.Get
 
 // PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
 func (h *HTTPClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/perp-cancel", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/drift/perp/cancel", h.baseURL)
 	response := new(pb.PostDriftCancelPerpOrderResponse)
 	if err := connections.HTTPPostWithClient[*pb.PostDriftCancelPerpOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
@@ -153,7 +285,7 @@ func (h *HTTPClient) GetTickers(ctx context.Context, market string, project pb.P
 	return tickers, nil
 }
 
-// GetOpenOrders returns all opened orders by owner address and market
+// GetOpenOrders returns all open orders by owner address and market
 func (h *HTTPClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/openorders/%s?address=%s&openOrdersAddress=%s&project=%s", h.baseURL, market, owner, openOrdersAddress, project)
 	orders := new(pb.GetOpenOrdersResponse)
@@ -175,7 +307,7 @@ func (h *HTTPClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDReques
 	return orders, nil
 }
 
-// GetOpenPerpOrders returns all opened perp orders
+// GetOpenPerpOrders returns all open perp orders
 func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	contractsString := convertSliceArgument("contracts", false, request.Contracts)
 	url := fmt.Sprintf("%s/api/v1/trade/perp/open-orders?ownerAddress=%s&accountAddress=%s&project=%s%s",
@@ -188,10 +320,10 @@ func (h *HTTPClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenP
 	return orders, nil
 }
 
-// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+// GetDriftOpenMarginOrders returns all open margin orders on Drift
 func (h *HTTPClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
 	marketsString := convertStrSliceArgument("markets", false, request.Markets)
-	url := fmt.Sprintf("%s/api/v2/drift/margin-open-orders?ownerAddress=%s&accountAddress=%s%s",
+	url := fmt.Sprintf("%s/api/v2/drift/margin/open-orders?ownerAddress=%s&accountAddress=%s%s",
 		h.baseURL, request.OwnerAddress, request.AccountAddress, marketsString)
 	orders := new(pb.GetDriftOpenMarginOrdersResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftOpenMarginOrdersResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
@@ -212,9 +344,9 @@ func (h *HTTPClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCa
 	return response, nil
 }
 
-// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift
 func (h *HTTPClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/margin-cancel", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/drift/margin/cancel", h.baseURL)
 	response := new(pb.PostCancelDriftMarginOrderResponse)
 	if err := connections.HTTPPostWithClient[*pb.PostCancelDriftMarginOrderResponse](ctx, url, h.httpClient, request, response, h.authHeader); err != nil {
 		return nil, err
@@ -290,12 +422,12 @@ func (h *HTTPClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettleP
 func (h *HTTPClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/perp/assets?ownerAddress=%s&accountAddress=%s&project=%s", h.baseURL,
 		request.OwnerAddress, request.AccountAddress, request.Project)
-	positions := new(pb.GetAssetsResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetAssetsResponse](ctx, url, h.httpClient, positions, h.authHeader); err != nil {
+	assets := new(pb.GetAssetsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetAssetsResponse](ctx, url, h.httpClient, assets, h.authHeader); err != nil {
 		return nil, err
 	}
 
-	return positions, nil
+	return assets, nil
 }
 
 // GetPerpContracts returns list of available perp contracts
@@ -321,8 +453,8 @@ func (h *HTTPClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiqu
 
 // GetOpenPerpOrder returns an open perp order
 func (h *HTTPClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/perp/open-order-by-id?ownerAddress=%s&accountAddress=%s&project=%s&contract=%s&clientOrderID=%d&orderID=%d", h.baseURL,
-		request.OwnerAddress, request.AccountAddress, request.Project, request.Contract, request.ClientOrderID, request.OrderID)
+	url := fmt.Sprintf("%s/api/v1/trade/perp/open-order-by-id?ownerAddress=%s&accountAddress=%s&project=%s&clientOrderID=%d&orderID=%d", h.baseURL,
+		request.OwnerAddress, request.AccountAddress, request.Project, request.ClientOrderID, request.OrderID)
 	order := new(pb.GetOpenPerpOrderResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetOpenPerpOrderResponse](ctx, url, h.httpClient, order, h.authHeader); err != nil {
 		return nil, err
@@ -632,7 +764,7 @@ func (h *HTTPClient) SubmitDriftMarginOrder(ctx context.Context, request *pb.Pos
 
 // PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitDriftMarginOrder instead of this.
 func (h *HTTPClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/margin-place", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/drift/margin/place", h.baseURL)
 
 	var response pb.PostDriftMarginOrderResponse
 	err := connections.HTTPPostWithClient[*pb.PostDriftMarginOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -644,7 +776,7 @@ func (h *HTTPClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostD
 
 // PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
 func (h *HTTPClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/enable-margin", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/drift/margin-enable", h.baseURL)
 
 	var response pb.PostDriftEnableMarginTradingResponse
 	err := connections.HTTPPostWithClient[*pb.PostDriftEnableMarginTradingResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -1016,7 +1148,7 @@ func (h *HTTPClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOr
 
 // GetDriftMarginOrderbook returns the current state of margin contract orderbook.
 func (h *HTTPClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/margin-orderbooks/%s?limit=%d&metadata=%v", h.baseURL, request.Market, request.Limit, request.Metadata)
+	url := fmt.Sprintf("%s/api/v2/drift/margin/orderbooks/%s?limit=%d&metadata=%v", h.baseURL, request.Market, request.Limit, request.Metadata)
 	orderbook := new(pb.GetDriftMarginOrderbookResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftMarginOrderbookResponse](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
 		return nil, err
@@ -1026,7 +1158,7 @@ func (h *HTTPClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.Ge
 
 // GetDriftMarketDepth returns the current state of Drift market depth.
 func (h *HTTPClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/drift/market-depth/%s?limit=%d", h.baseURL, request.Contract, request.Limit)
+	url := fmt.Sprintf("%s/api/v2/drift/perp/market-depth/%s?limit=%d", h.baseURL, request.Contract, request.Limit)
 	maarketDepthData := new(pb.GetDriftMarketDepthResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetDriftMarketDepthResponse](ctx, url, h.httpClient, maarketDepthData, h.authHeader); err != nil {
 		return nil, err

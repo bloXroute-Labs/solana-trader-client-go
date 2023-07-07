@@ -130,10 +130,17 @@ func run() bool {
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
-	failed = failed || logCall("callGetDriftPerpOpenOrders", func() bool { return callGetDriftPerpOpenOrders(ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
 	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
 	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
+
+	failed = failed || logCall("callGetDriftAssets", func() bool { return callGetDriftAssets(ownerAddr) })
+	failed = failed || logCall("callGetDriftPerpContracts", func() bool { return callGetDriftPerpContracts() })
+	failed = failed || logCall("callGetDriftPerpOrderbook", func() bool { return callGetDriftPerpOrderbook() })
+	failed = failed || logCall("callGetDriftUser", func() bool { return callGetDriftUser(ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrder", func() bool { return callGetDriftOpenPerpOrder(ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrder", func() bool { return callGetDriftOpenMarginOrder(ownerAddr) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
@@ -148,10 +155,18 @@ func run() bool {
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
 		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(ownerAddr) })
-
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(ownerAddr) })
 		failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(ownerAddr) })
+
+		failed = failed || logCall("callPostCloseDriftPerpPositions", func() bool { return callPostCloseDriftPerpPositions(ownerAddr) })
+		failed = failed || logCall("callPostCreateDriftUser", func() bool { return callPostCreateDriftUser(ownerAddr) })
+		failed = failed || logCall("callPostDriftManageCollateralDeposit", func() bool { return callPostDriftManageCollateralDeposit() })
+		failed = failed || logCall("callPostDriftManageCollateralWithdraw", func() bool { return callPostDriftManageCollateralWithdraw() })
+		failed = failed || logCall("callPostDriftManageCollateralTransfer", func() bool { return callPostDriftManageCollateralTransfer() })
+		failed = failed || logCall("callPostDriftSettlePNL", func() bool { return callPostDriftSettlePNL(ownerAddr) })
+		failed = failed || logCall("callPostDriftSettlePNLs", func() bool { return callPostDriftSettlePNLs(ownerAddr) })
+		failed = failed || logCall("callPostLiquidateDriftPerp", func() bool { return callPostLiquidateDriftPerp(ownerAddr) })
 	}
 	return failed
 }
@@ -362,7 +377,7 @@ func callGetQuotesHTTP() bool {
 	defer cancel()
 
 	inToken := "SOL"
-	outToken := "USDC"
+	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
 	limit := 5
@@ -771,7 +786,7 @@ func callTradeSwap(ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDC", "SOL",
+	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDT", "SOL",
 		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  false,
@@ -814,7 +829,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 					Id:    "",
 				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDC",
+				OutToken:     "USDT",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
@@ -936,6 +951,26 @@ func callGetDriftOpenMarginOrders(ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftOpenMarginOrder(ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftOpenMarginOrder(ctx, &pb.GetDriftOpenMarginOrderRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		ClientOrderID:  13,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrder resp : %s", user)
+	return false
+}
+
 func callGetPerpPositions(ownerAddr string) bool {
 	log.Info("starting callGetPerpPositions test")
 
@@ -993,6 +1028,24 @@ func callGetUser(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("GetUser resp : %s", user)
+	return false
+}
+
+func callGetDriftUser(ownerAddr string) bool {
+	log.Info("starting callGetDriftUser test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftUser(ctx, &pb.GetDriftUserRequest{
+		OwnerAddress: ownerAddr,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftUser resp : %s", user)
 	return false
 }
 
@@ -1078,6 +1131,24 @@ func callClosePerpPositions(ownerAddr string) bool {
 	return false
 }
 
+func callPostCloseDriftPerpPositions(ownerAddr string) bool {
+	log.Info("starting callPostCloseDriftPerpPositions test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	sig, err := h.PostCloseDriftPerpPositions(ctx, &pb.PostCloseDriftPerpPositionsRequest{
+		OwnerAddress: ownerAddr,
+		Contracts:    []string{"SOL_PERP"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostCloseDriftPerpPositions signature : %s", sig)
+	return false
+}
+
 func callCreateUser(ownerAddr string) bool {
 	log.Info("starting callCreateUser test")
 
@@ -1096,6 +1167,26 @@ func callCreateUser(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callCreateUser signature : %s", sig)
+	return false
+}
+
+func callPostCreateDriftUser(ownerAddr string) bool {
+	log.Info("starting callPostCreateDriftUser test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.PostCreateDriftUser(ctx, &pb.PostCreateDriftUserRequest{
+		OwnerAddress: ownerAddr,
+		Action:       "create",
+		SubAccountID: 10,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostCreateDriftUser signature : %s", sig)
 	return false
 }
 
@@ -1196,6 +1287,27 @@ func callManageCollateralWithdraw() bool {
 	return false
 }
 
+func callPostDriftManageCollateralWithdraw() bool {
+	log.Info("starting callPostDriftManageCollateralWithdraw test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
+		Amount:         1,
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:           "WITHDRAWAL",
+		Token:          "SOL",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftManageCollateralWithdraw signature : %s", sig)
+	return false
+}
+
 func callManageCollateralTransfer() bool {
 	log.Info("starting callManageCollateralTransfer test")
 
@@ -1207,7 +1319,7 @@ func callManageCollateralTransfer() bool {
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
-		Type:             common.PerpCollateralType_PCT_WITHDRAWAL,
+		Type:             common.PerpCollateralType_PCT_TRANSFER,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
 	})
@@ -1216,6 +1328,28 @@ func callManageCollateralTransfer() bool {
 		return true
 	}
 	log.Infof("callManageCollateralTransfer signature : %s", sig)
+	return false
+}
+
+func callPostDriftManageCollateralTransfer() bool {
+	log.Info("starting callPostDriftManageCollateralTransfer test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
+		Amount:           1,
+		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:             "TRANSFER",
+		Token:            "SOL",
+		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftManageCollateralTransfer signature : %s", sig)
 	return false
 }
 
@@ -1259,6 +1393,27 @@ func callManageCollateralDeposit() bool {
 	return false
 }
 
+func callPostDriftManageCollateralDeposit() bool {
+	log.Info("starting callPostDriftManageCollateralDeposit Deposit test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
+		Amount:         1,
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:           "DEPOSIT",
+		Token:          "SOL",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftManageCollateralDeposit signature : %s", sig)
+	return false
+}
+
 func callGetOpenPerpOrder(ownerAddr string) bool {
 	log.Info("starting callGetOpenPerpOrder test")
 
@@ -1269,7 +1424,6 @@ func callGetOpenPerpOrder(ownerAddr string) bool {
 	user, err := h.GetOpenPerpOrder(ctx, &pb.GetOpenPerpOrderRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
-		Contract:       common.PerpContract_SOL_PERP,
 		Project:        pb.Project_P_DRIFT,
 		OrderID:        1,
 	})
@@ -1281,27 +1435,48 @@ func callGetOpenPerpOrder(ownerAddr string) bool {
 	return false
 }
 
-func callGetDriftPerpOpenOrders(ownerAddr string) bool {
-	log.Info("starting callGetDriftPerpOpenOrders test")
+func callGetDriftOpenPerpOrder(ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrder test")
 
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	user, err := h.GetDriftPerpOpenOrders(ctx, &pb.GetDriftPerpOpenOrdersRequest{
+	user, err := h.GetDriftOpenPerpOrder(ctx, &pb.GetDriftOpenPerpOrderRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
+		OrderID:        1,
 	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("GetDriftPerpOpenOrders resp : %s", user)
+	log.Infof("callGetDriftOpenPerpOrder resp : %s", user)
+	return false
+}
+
+func callGetDriftOpenPerpOrders(ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrders test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := h.GetDriftOpenPerpOrders(ctx, &pb.GetDriftOpenPerpOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contracts:      []string{"SOL_PERP"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftOpenPerpOrders resp : %s", user)
 	return false
 }
 
 func callPostSettlePNL(ownerAddr string) bool {
-	log.Info("starting callManageCollateral deposit test")
+	log.Info("starting callPostSettlePNL deposit test")
 
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -1321,8 +1496,28 @@ func callPostSettlePNL(ownerAddr string) bool {
 	return false
 }
 
+func callPostDriftSettlePNL(ownerAddr string) bool {
+	log.Info("starting callPostDriftSettlePNL deposit test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := h.PostDriftSettlePNL(ctx, &pb.PostDriftSettlePNLRequest{
+		OwnerAddress:          ownerAddr,
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+		Contract:              "SOL_PERP",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftSettlePNL signature : %s", sig)
+	return false
+}
+
 func callPostSettlePNLs(ownerAddr string) bool {
-	log.Info("starting callManageCollateral deposit test")
+	log.Info("starting callPostSettlePNLs test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1338,6 +1533,25 @@ func callPostSettlePNLs(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callPostSettlePNL signature : %s", sig)
+	return false
+}
+
+func callPostDriftSettlePNLs(ownerAddr string) bool {
+	log.Info("starting callPostDriftSettlePNLs test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := httpClient().PostDriftSettlePNLs(ctx, &pb.PostDriftSettlePNLsRequest{
+		OwnerAddress:            ownerAddr,
+		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
+		Contract:                "SOL_PERP",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftSettlePNLs signature : %s", sig)
 	return false
 }
 
@@ -1360,6 +1574,24 @@ func callGetAssets(ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftAssets(ownerAddr string) bool {
+	log.Info("starting callGetDriftAssets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := httpClient().GetDriftAssets(ctx, &pb.GetDriftAssetsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftAssets resp : %s", user)
+	return false
+}
+
 func callGetPerpContracts() bool {
 	log.Info("starting callGetPerpContracts test")
 
@@ -1374,6 +1606,39 @@ func callGetPerpContracts() bool {
 		return true
 	}
 	log.Infof("callGetPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetDriftPerpContracts() bool {
+	log.Info("starting callGetDriftPerpContracts test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := httpClient().GetDriftPerpContracts(ctx, &pb.GetDriftPerpContractsRequest{})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetDriftPerpOrderbook() bool {
+	log.Info("starting callGetDriftPerpOrderbook test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := httpClient().GetDriftPerpOrderbook(ctx, &pb.GetDriftPerpOrderbookRequest{
+		Contract: "SOL_PERP",
+		Limit:    12,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftPerpOrderbook resp : %s", user)
 	return false
 }
 
@@ -1410,5 +1675,25 @@ func callPostLiquidatePerp(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callPostLiquidatePerp signature : %s", sig)
+	return false
+}
+
+func callPostLiquidateDriftPerp(ownerAddr string) bool {
+	log.Info("starting callPostLiquidateDriftPerp test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := httpClient().PostLiquidateDriftPerp(ctx, &pb.PostLiquidateDriftPerpRequest{
+		OwnerAddress:          ownerAddr,
+		Amount:                1,
+		Contract:              "SOL_PERP",
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostLiquidateDriftPerp signature : %s", sig)
 	return false
 }

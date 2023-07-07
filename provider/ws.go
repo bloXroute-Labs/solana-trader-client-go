@@ -72,7 +72,127 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 	return w.recentBlockHashStore.get(ctx)
 }
 
-// GetDriftPerpPositions returns all perp positions on Drift platform
+// PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
+func (w *WSClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
+	var response pb.PostCloseDriftPerpPositionsResponse
+	err := w.conn.Request(ctx, "PostCloseDriftPerpPositions", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpOrderbook returns the current state of perpetual contract orderbook on Drift
+func (w *WSClient) GetDriftPerpOrderbook(ctx context.Context, request *pb.GetDriftPerpOrderbookRequest) (*pb.GetDriftPerpOrderbookResponse, error) {
+	var response pb.GetDriftPerpOrderbookResponse
+	err := w.conn.Request(ctx, "GetDriftPerpOrderbook", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCreateDriftUser returns a partially signed transaction for creating a user on Drift
+func (w *WSClient) PostCreateDriftUser(ctx context.Context, request *pb.PostCreateDriftUserRequest) (*pb.PostCreateDriftUserResponse, error) {
+	var response pb.PostCreateDriftUserResponse
+	err := w.conn.Request(ctx, "PostCreateDriftUser", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftUser returns a user's info on Drift
+func (w *WSClient) GetDriftUser(ctx context.Context, request *pb.GetDriftUserRequest) (*pb.GetDriftUserResponse, error) {
+	var response pb.GetDriftUserResponse
+	err := w.conn.Request(ctx, "GetDriftUser", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftManageCollateral returns a partially signed transaction for managing collateral on Drift
+func (w *WSClient) PostDriftManageCollateral(ctx context.Context, request *pb.PostDriftManageCollateralRequest) (*pb.PostDriftManageCollateralResponse, error) {
+	var response pb.PostDriftManageCollateralResponse
+	err := w.conn.Request(ctx, "PostDriftManageCollateral", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftSettlePNL returns partially signed transactions for settling PNL on Drift
+func (w *WSClient) PostDriftSettlePNL(ctx context.Context, request *pb.PostDriftSettlePNLRequest) (*pb.PostDriftSettlePNLResponse, error) {
+	var response pb.PostDriftSettlePNLResponse
+	err := w.conn.Request(ctx, "PostDriftSettlePNL", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftSettlePNLs returns partially signed transactions for settling PNLs on Drift
+func (w *WSClient) PostDriftSettlePNLs(ctx context.Context, request *pb.PostDriftSettlePNLsRequest) (*pb.PostDriftSettlePNLsResponse, error) {
+	var response pb.PostDriftSettlePNLsResponse
+	err := w.conn.Request(ctx, "PostDriftSettlePNLs", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftAssets returns list of assets for user on Drift
+func (w *WSClient) GetDriftAssets(ctx context.Context, request *pb.GetDriftAssetsRequest) (*pb.GetDriftAssetsResponse, error) {
+	var response pb.GetDriftAssetsResponse
+	err := w.conn.Request(ctx, "GetDriftAssets", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpContracts returns list of available perp contracts on Drift
+func (w *WSClient) GetDriftPerpContracts(ctx context.Context, request *pb.GetDriftPerpContractsRequest) (*pb.GetDriftPerpContractsResponse, error) {
+	var response pb.GetDriftPerpContractsResponse
+	err := w.conn.Request(ctx, "GetDriftPerpContracts", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostLiquidateDriftPerp returns a partially signed transaction for liquidating perp position on Drift
+func (w *WSClient) PostLiquidateDriftPerp(ctx context.Context, request *pb.PostLiquidateDriftPerpRequest) (*pb.PostLiquidateDriftPerpResponse, error) {
+	var response pb.PostLiquidateDriftPerpResponse
+	err := w.conn.Request(ctx, "PostLiquidateDriftPerp", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftOpenPerpOrder returns an open perp order on Drift
+func (w *WSClient) GetDriftOpenPerpOrder(ctx context.Context, request *pb.GetDriftOpenPerpOrderRequest) (*pb.GetDriftOpenPerpOrderResponse, error) {
+	var response pb.GetDriftOpenPerpOrderResponse
+	err := w.conn.Request(ctx, "GetDriftOpenPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftOpenMarginOrder return a open margin order on Drift
+func (w *WSClient) GetDriftOpenMarginOrder(ctx context.Context, request *pb.GetDriftOpenMarginOrderRequest) (*pb.GetDriftOpenMarginOrderResponse, error) {
+	var response pb.GetDriftOpenMarginOrderResponse
+	err := w.conn.Request(ctx, "GetDriftOpenMarginOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpPositions returns all perp positions on Drift
 func (w *WSClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
 	var response pb.GetDriftPerpPositionsResponse
 	err := w.conn.Request(ctx, "GetDriftPerpPositions", request, &response)
@@ -82,10 +202,10 @@ func (w *WSClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDri
 	return &response, nil
 }
 
-// GetDriftPerpOpenOrders returns all open perp orders on Drift platform
-func (w *WSClient) GetDriftPerpOpenOrders(ctx context.Context, request *pb.GetDriftPerpOpenOrdersRequest) (*pb.GetDriftPerpOpenOrdersResponse, error) {
-	var response pb.GetDriftPerpOpenOrdersResponse
-	err := w.conn.Request(ctx, "GetDriftPerpOpenOrders", request, &response)
+// GetDriftOpenPerpOrders returns all open perp orders on Drift
+func (w *WSClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
+	var response pb.GetDriftOpenPerpOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftOpenPerpOrders", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +272,7 @@ func (w *WSClient) GetTickers(ctx context.Context, market string, project pb.Pro
 	return &response, nil
 }
 
-// GetOpenOrders returns all opened orders by owner address and market
+// GetOpenOrders returns all open orders by owner address and market
 func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
 	var response pb.GetOpenOrdersResponse
 	err := w.conn.Request(ctx, "GetOpenOrders", &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project}, &response)
@@ -172,7 +292,7 @@ func (w *WSClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDRequest)
 	return &response, nil
 }
 
-// GetOpenPerpOrders returns all opened perp orders
+// GetOpenPerpOrders returns all open perp orders
 func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	var response pb.GetOpenPerpOrdersResponse
 	err := w.conn.Request(ctx, "GetOpenPerpOrders", request, &response)
@@ -182,7 +302,7 @@ func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPer
 	return &response, nil
 }
 
-// GetDriftOpenMarginOrders returns all opened margin orders on Drift platform
+// GetDriftOpenMarginOrders returns all open margin orders on Drift
 func (w *WSClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
 	var response pb.GetDriftOpenMarginOrdersResponse
 	err := w.conn.Request(ctx, "GetDriftOpenMarginOrders", request, &response)
@@ -202,7 +322,7 @@ func (w *WSClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCanc
 	return &response, nil
 }
 
-// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift platform
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift
 func (w *WSClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
 	var response pb.PostCancelDriftMarginOrderResponse
 	err := w.conn.Request(ctx, "PostCancelDriftMarginOrder", request, &response)
