@@ -385,7 +385,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDT"}, 3, pb.Project_P_OPENBOOK)
+	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
 		return true
