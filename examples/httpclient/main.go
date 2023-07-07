@@ -1465,6 +1465,7 @@ func callGetDriftOpenPerpOrders(ownerAddr string) bool {
 	user, err := h.GetDriftOpenPerpOrders(ctx, &pb.GetDriftOpenPerpOrdersRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
+		Contracts:      []string{"SOL_PERP"},
 	})
 	if err != nil {
 		log.Error(err)
