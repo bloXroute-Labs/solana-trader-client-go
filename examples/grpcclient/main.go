@@ -52,13 +52,17 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
 	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
-	/*failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+
+	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
+	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
+	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
 	failed = failed || logCall("callDriftPerpOrderbookGRPC", func() bool { return callDriftPerpOrderbookGRPC(g) })
 	failed = failed || logCall("callDriftGetMarginOrderbookGRPC", func() bool { return callDriftGetMarginOrderbookGRPC(g) })
-	failed = failed || logCall("callDriftMarketDepthGRPC", func() bool { return callDriftMarketDepthGRPC(g) })*/
+	failed = failed || logCall("callDriftMarketDepthGRPC", func() bool { return callDriftMarketDepthGRPC(g) })
 
-	/*if cfg.RunSlowStream {
+	if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	}
@@ -67,18 +71,21 @@ func run() bool {
 		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-	}*/
+	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
 	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
-	/*failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
+
+	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
+	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
+	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 	failed = failed || logCall("callDriftPerpOrderbookGRPCStream", func() bool { return callDriftPerpOrderbookGRPCStream(g) })
 	failed = failed || logCall("callDriftMarginOrderbooksGRPCStream", func() bool { return callDriftMarginOrderbooksGRPCStream(g) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
-	failed = failed || logCall("callDriftGetMarketDepthsStream", func() bool { return callDriftGetMarketDepthsStream(g) })*/
+	failed = failed || logCall("callDriftGetMarketDepthsStream", func() bool { return callDriftGetMarketDepthsStream(g) })
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -112,7 +119,12 @@ func run() bool {
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-	}*/
+		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
+		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
+		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
+		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
+
+	}
 
 	/*failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(g, ownerAddr) })
@@ -299,10 +311,53 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
+	pools, err := g.GetRaydiumPools(context.Background(), &pb.GetRaydiumPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callPriceGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetPrice(context.Background(), []string{"SOL", "ETH"})
 	if err != nil {
 		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(prices)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
+	prices, err := g.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
+		Tokens: []string{"SOL", "ETH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(prices)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
+	prices, err := g.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
+		Tokens: []string{"SOL", "ETH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -341,6 +396,88 @@ func callGetQuotes(g *provider.GRPCClient) bool {
 		} else {
 			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
 		}
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
+	log.Info("starting get Raydium quotes test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+	limit := int32(5)
+
+	quotes, err := g.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+		Limit:    limit,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetJupiterQuotes(g *provider.GRPCClient) bool {
+	log.Info("starting get Jupiter quotes test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+	limit := int32(5)
+
+	quotes, err := g.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+		Limit:    limit,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Jupiter is %v", route)
 	}
 
 	fmt.Println()
@@ -962,6 +1099,56 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("Raydium swap")
+	sig, err := g.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Jupiter swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("Jupiter swap")
+	sig, err := g.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter swap transaction signature : %s", sig)
+	return false
+}
+
 func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
@@ -1007,6 +1194,84 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("route trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Raydium route swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("Raydium route  swap")
+	sig, err := g.SubmitRaydiumRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:  "FIDA",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Jupiter route swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("Jupiter route  swap")
+	sig, err := g.SubmitJupiterRouteSwap(ctx, &pb.PostJupiterRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.JupiterRouteStep{
+			{
+				InToken:  "FIDA",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter route swap transaction signature : %s", sig)
 	return false
 }
 
