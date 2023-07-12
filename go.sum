@@ -59,6 +59,8 @@ github.com/blendle/zapdriver v1.3.1 h1:C3dydBOWYRiOk+B8X9IVZ5IOe+7cl+tGOexN4QqHf
 github.com/blendle/zapdriver v1.3.1/go.mod h1:mdXfREi6u5MArG4j9fewC+FGnXaBR+T4Ox4J2u4eHCc=
 github.com/bloXroute-Labs/solana-trader-proto v1.7.1-0.20230711183310-ef54c2925108 h1:/z5LwKpRr+J6bEWev6EaSUFekBaXsVUPrYxBWGNHPiU=
 github.com/bloXroute-Labs/solana-trader-proto v1.7.1-0.20230711183310-ef54c2925108/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.7.1-0.20230712175952-0cfa789e90b8 h1:WY65cF1q1ynlYqn/Bc4QKz4dGHbGPB/hFDBucRBcQRE=
+github.com/bloXroute-Labs/solana-trader-proto v1.7.1-0.20230712175952-0cfa789e90b8/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
