@@ -1167,6 +1167,217 @@ func (h *HTTPClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDri
 	return maarketDepthData, nil
 }
 
+//V2 Openbook
+
+// GetMarketsV2 returns the list of all available named markets
+func (h *HTTPClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/markets", h.baseURL)
+	markets := new(pb.GetMarketsResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetMarketsResponseV2](ctx, url, h.httpClient, markets, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return markets, nil
+}
+
+// GetOrderbookV2 returns the requested market's orderbook (e.h. asks and bids). Set limit to 0 for all bids / asks.
+func (h *HTTPClient) GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/orderbooks/%s?limit=%v", h.baseURL, market, limit)
+	orderbook := new(pb.GetOrderbookResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetOrderbookResponseV2](ctx, url, h.httpClient, orderbook, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orderbook, nil
+}
+
+// GetMarketDepthV2 returns the requested market's coalesced price data (e.h. asks and bids). Set limit to 0 for all bids / asks.
+func (h *HTTPClient) GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*pb.GetMarketDepthResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/depth/%s?limit=%v", h.baseURL, market, limit)
+	mktDepth := new(pb.GetMarketDepthResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetMarketDepthResponseV2](ctx, url, h.httpClient, mktDepth, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return mktDepth, nil
+}
+
+// GetTickersV2 returns the requested market tickets. Set market to "" for all markets.
+func (h *HTTPClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTickersResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/tickers/%s", h.baseURL, market)
+	tickers := new(pb.GetTickersResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetTickersResponseV2](ctx, url, h.httpClient, tickers, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return tickers, nil
+}
+
+// GetOpenOrdersV2 returns all open orders by owner address and market
+func (h *HTTPClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/open-orders/%s?address=%s&openOrdersAddress=%s&orderID=%s&clientOrderID=%v",
+		h.baseURL, market, owner, openOrdersAddress, orderID, clientOrderID)
+
+	orders := new(pb.GetOpenOrdersResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetOpenOrdersResponse](ctx, url, h.httpClient, orders, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+// GetUnsettledV2 returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner string) (*pb.GetUnsettledResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/unsettled/%s?ownerAddress=%s", h.baseURL, market, owner)
+	result := new(pb.GetUnsettledResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetUnsettledResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/place", h.baseURL)
+	request := &pb.PostOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := h.PostOrderV2(ctx, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return sig, err
+}
+
+// PostCancelOrderV2 builds a Serum cancel order.
+func (h *HTTPClient) PostCancelOrderV2(
+	ctx context.Context,
+	orderID string,
+	clientOrderID uint64,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+) (*pb.PostCancelOrderResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/cancel", h.baseURL)
+	request := &pb.PostCancelOrderRequestV2{
+		OrderID:           orderID,
+		ClientOrderID:     clientOrderID,
+		Side:              side,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
+	}
+
+	var response pb.PostCancelOrderResponseV2
+	err := connections.HTTPPostWithClient[*pb.PostCancelOrderResponseV2](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// SubmitCancelOrderV2 builds a Serum cancel order, signs and submits it to the network.
+func (h *HTTPClient) SubmitCancelOrderV2(
+	ctx context.Context,
+	orderID string,
+	clientOrderID uint64,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+	opts SubmitOpts,
+) (*pb.PostSubmitBatchResponse, error) {
+	order, err := h.PostCancelOrderV2(ctx, orderID, clientOrderID, side, owner, market, openOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.SignAndSubmitBatch(ctx, order.Transactions, opts)
+}
+
+// PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
+func (h *HTTPClient) PostSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/settle", h.baseURL)
+	request := &pb.PostSettleRequestV2{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	}
+
+	var response pb.PostSettleResponse
+	err := connections.HTTPPostWithClient[*pb.PostSettleResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitSettleV2 builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (h *HTTPClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
+	order, err := h.PostSettleV2(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight)
+}
+
+func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/openbook/replace", h.baseURL)
+	request := &pb.PostReplaceOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+		OrderID:           orderID,
+	}
+
+	var response pb.PostOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := h.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
 type stringable interface {
 	String() string
 }

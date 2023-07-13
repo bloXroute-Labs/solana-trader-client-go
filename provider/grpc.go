@@ -944,3 +944,142 @@ func (g *GRPCClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb
 
 	return connections.GRPCStream[pb.GetDriftMarketDepthStreamResponse](stream, ""), nil
 }
+
+// V2 Openbook
+
+// GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (g *GRPCClient) GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error) {
+	return g.apiClient.GetOrderbookV2(ctx, &pb.GetOrderbookRequestV2{Market: market, Limit: limit})
+}
+
+// GetMarketDepthV2 returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (g *GRPCClient) GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*pb.GetMarketDepthResponseV2, error) {
+	return g.apiClient.GetMarketDepthV2(ctx, &pb.GetMarketDepthRequestV2{Market: market, Limit: limit})
+}
+
+// GetTickersV2 returns the requested market tickets. Set market to "" for all markets.
+func (g *GRPCClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTickersResponseV2, error) {
+	return g.apiClient.GetTickersV2(ctx, &pb.GetTickersRequestV2{Market: market})
+}
+
+// GetOpenOrdersV2 returns all open orders by owner address and market
+func (g *GRPCClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
+	return g.apiClient.GetOpenOrdersV2(ctx, &pb.GetOpenOrdersRequestV2{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, OrderID: orderID, ClientOrderID: clientOrderID})
+}
+
+// GetUnsettledV2 returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (g *GRPCClient) GetUnsettledV2(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
+	return g.apiClient.GetUnsettledV2(ctx, &pb.GetUnsettledRequestV2{Market: market, OwnerAddress: ownerAddress})
+}
+
+// GetMarketsV2 returns the list of all available named markets
+func (g *GRPCClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponseV2, error) {
+	return g.apiClient.GetMarketsV2(ctx, &pb.GetMarketsRequestV2{})
+}
+
+// PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	})
+}
+
+// SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
+func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2(ctx, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// PostCancelOrderV2 builds a Serum cancel order.
+func (g *GRPCClient) PostCancelOrderV2(
+	ctx context.Context,
+	orderID string,
+	clientOrderID uint64,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+) (*pb.PostCancelOrderResponseV2, error) {
+	return g.apiClient.PostCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
+		OrderID:           orderID,
+		Side:              side,
+		OwnerAddress:      owner,
+		MarketAddress:     market,
+		OpenOrdersAddress: openOrders,
+		ClientOrderID:     clientOrderID,
+	})
+}
+
+// SubmitCancelOrderV2 builds a Serum cancel order, signs and submits it to the network.
+func (g *GRPCClient) SubmitCancelOrderV2(
+	ctx context.Context,
+	orderID string,
+	clientOrderID uint64,
+	side pb.Side,
+	owner,
+	market,
+	openOrders string,
+	opts SubmitOpts,
+) (*pb.PostSubmitBatchResponse, error) {
+	order, err := g.PostCancelOrderV2(ctx, orderID, clientOrderID, side, owner, market, openOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	return g.signAndSubmitBatch(ctx, order.Transactions, opts)
+}
+
+// PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
+func (g *GRPCClient) PostSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	return g.apiClient.PostSettleV2(ctx, &pb.PostSettleRequestV2{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	})
+}
+
+// SubmitSettleV2 builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (g *GRPCClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
+	order, err := g.PostSettleV2(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction, skipPreflight)
+}
+
+func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	return g.apiClient.PostReplaceOrderV2(ctx, &pb.PostReplaceOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+		OrderID:           orderID,
+	})
+}
+
+func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}

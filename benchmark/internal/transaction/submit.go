@@ -127,7 +127,7 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (sol
 }
 
 const (
-	market = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
+	market = "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6"
 )
 
 var (

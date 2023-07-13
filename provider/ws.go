@@ -1190,3 +1190,173 @@ func (w *WSClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb.G
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarketDepthsStream", request, newResponse)
 }
+
+// V2 Openbook
+
+// GetMarketsV2 returns the list of all available named markets
+func (w *WSClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponse, error) {
+	var response pb.GetMarketsResponse
+	err := w.conn.Request(ctx, "GetMarketsV2", &pb.GetMarketsRequestV2{}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (w *WSClient) GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error) {
+	var response pb.GetOrderbookResponseV2
+	err := w.conn.Request(ctx, "GetOrderbookV2", &pb.GetOrderbookRequestV2{Market: market, Limit: limit}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetMarketDepthV2 returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (w *WSClient) GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*pb.GetMarketDepthResponseV2, error) {
+	var response pb.GetMarketDepthResponseV2
+	err := w.conn.Request(ctx, "GetMarketDepthV2", &pb.GetMarketDepthRequestV2{Market: market, Limit: limit}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetTickersV2 returns the requested market tickets. Set market to "" for all markets.
+func (w *WSClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTickersResponseV2, error) {
+	var response pb.GetTickersResponseV2
+	err := w.conn.Request(ctx, "GetTickersV2", &pb.GetTickersRequestV2{Market: market}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOpenOrdersV2 returns all open orders by owner address and market
+func (w *WSClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
+	var response pb.GetOpenOrdersResponse
+	err := w.conn.Request(ctx, "GetOpenOrdersV2", &pb.GetOpenOrdersRequestV2{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, OrderID: orderID, ClientOrderID: clientOrderID}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetUnsettledV2 returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (w *WSClient) GetUnsettledV2(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
+	var response pb.GetUnsettledResponse
+	err := w.conn.Request(ctx, "GetUnsettledV2", &pb.GetUnsettledRequestV2{Market: market, OwnerAddress: ownerAddress}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	request := &pb.PostOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+	var response pb.PostOrderResponse
+	err := w.conn.Request(ctx, "PostOrderV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
+func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostOrderV2(ctx, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// PostCancelOrderV2 builds a Serum cancel order.
+func (w *WSClient) PostCancelOrderV2(ctx context.Context, request *pb.PostCancelOrderRequestV2) (*pb.PostCancelOrderResponseV2, error) {
+	var response pb.PostCancelOrderResponseV2
+	err := w.conn.Request(ctx, "PostCancelOrderV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitCancelOrderV2 builds a Serum cancel order, signs and submits it to the network.
+func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCancelOrderRequestV2, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	order, err := w.PostCancelOrderV2(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.signAndSubmitBatch(ctx, order.Transactions, SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  skipPreFlight,
+	})
+}
+
+// PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
+func (w *WSClient) PostSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	request := &pb.PostSettleRequestV2{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	}
+	var response pb.PostSettleResponse
+	err := w.conn.Request(ctx, "PostSettleV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitSettleV2 builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (w *WSClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
+	order, err := w.PostSettleV2(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
+}
+
+func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	request := &pb.PostReplaceOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+		OrderID:           orderID,
+	}
+	var response pb.PostOrderResponse
+	err := w.conn.Request(ctx, "PostReplaceOrderV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
