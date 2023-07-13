@@ -52,7 +52,7 @@ func run() bool {
 	var failed bool
 
 	// informational requests
-	/*failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
+	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
@@ -87,7 +87,7 @@ func run() bool {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
-	}*/
+	}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:

@@ -9,6 +9,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"google.golang.org/protobuf/encoding/protojson"
 	"math/rand"
+	"os"
 	"time"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -92,7 +93,7 @@ func run() bool {
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
-	/*iownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return failed
@@ -112,7 +113,7 @@ func run() bool {
 		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
-	f cfg.RunTrades {
+	if cfg.RunTrades {
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr) })
@@ -126,7 +127,7 @@ func run() bool {
 
 	}
 
-	/*failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
+	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(g, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(g, ownerAddr) })
 	failed = failed || logCall("callGetDriftPerpPositions", func() bool { return callGetDriftPerpPositions(g, ownerAddr) })
@@ -171,7 +172,7 @@ func run() bool {
 		failed = failed || logCall("callPostDriftSettlePNL", func() bool { return callPostDriftSettlePNL(g, ownerAddr) })
 		failed = failed || logCall("callPostDriftSettlePNLs", func() bool { return callPostDriftSettlePNLs(g, ownerAddr) })
 		failed = failed || logCall("callPostLiquidateDriftPerp", func() bool { return callPostLiquidateDriftPerp(g, ownerAddr) })
-	}*/
+	}
 
 	return failed
 }
