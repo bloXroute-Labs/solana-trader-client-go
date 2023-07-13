@@ -72,6 +72,96 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 	return w.recentBlockHashStore.get(ctx)
 }
 
+// GetRaydiumPools returns pools on Raydium
+func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
+	var response pb.GetRaydiumPoolsResponse
+	err := w.conn.Request(ctx, "GetRaydiumPools", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRaydiumQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium
+func (w *WSClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQuotesRequest) (*pb.GetRaydiumQuotesResponse, error) {
+	var response pb.GetRaydiumQuotesResponse
+	err := w.conn.Request(ctx, "GetRaydiumQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRaydiumPrices returns the USDC price of requested tokens on Raydium
+func (w *WSClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
+	var response pb.GetRaydiumPricesResponse
+	err := w.conn.Request(ctx, "GetRaydiumPrices", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (w *WSClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	var response pb.PostRaydiumSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (w *WSClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	var response pb.PostRaydiumRouteSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumRouteSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetJupiterQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Jupiter
+func (w *WSClient) GetJupiterQuotes(ctx context.Context, request *pb.GetJupiterQuotesRequest) (*pb.GetJupiterQuotesResponse, error) {
+	var response pb.GetJupiterQuotesResponse
+	err := w.conn.Request(ctx, "GetJupiterQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetJupiterPrices returns the USDC price of requested tokens on Jupiter
+func (w *WSClient) GetJupiterPrices(ctx context.Context, request *pb.GetJupiterPricesRequest) (*pb.GetJupiterPricesResponse, error) {
+	var response pb.GetJupiterPricesResponse
+	err := w.conn.Request(ctx, "GetJupiterPrices", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostJupiterSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (w *WSClient) PostJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest) (*pb.PostJupiterSwapResponse, error) {
+	var response pb.PostJupiterSwapResponse
+	err := w.conn.Request(ctx, "PostJupiterSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (w *WSClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
+	var response pb.PostJupiterRouteSwapResponse
+	err := w.conn.Request(ctx, "PostJupiterRouteSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
 func (w *WSClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
 	var response pb.PostCloseDriftPerpPositionsResponse
@@ -679,6 +769,42 @@ func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
 func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostRouteTradeSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostRaydiumRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostJupiterSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostJupiterRouteSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}

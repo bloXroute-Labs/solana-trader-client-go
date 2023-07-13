@@ -73,11 +73,16 @@ func run() bool {
 	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
+	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 	failed = failed || logCall("callDriftPerpOrderbookHTTP", func() bool { return callDriftPerpOrderbookHTTP() })
 	failed = failed || logCall("callDriftGetMarginOrderbookHTTP", func() bool { return callDriftGetMarginOrderbookHTTP() })
 	failed = failed || logCall("callDriftMarketDepthHTTP", func() bool { return callDriftMarketDepthHTTP() })
@@ -89,7 +94,7 @@ func run() bool {
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
+	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
@@ -121,6 +126,10 @@ func run() bool {
 		failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
+		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
+		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
+		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
+		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
 	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
@@ -337,6 +346,23 @@ func callPoolsHTTP() bool {
 	return false
 }
 
+func callRaydiumPools() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pools, err := h.GetRaydiumPools(ctx, &pb.GetRaydiumPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callPriceHTTP() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -345,6 +371,44 @@ func callPriceHTTP() bool {
 	prices, err := h.GetPrice(ctx, []string{"SOL", "ETH"})
 	if err != nil {
 		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(prices)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callRaydiumPrices() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	prices, err := h.GetRaydiumPrices(ctx, &pb.GetRaydiumPricesRequest{
+		Tokens: []string{"SOL", "ETH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(prices)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callJupiterPrices() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	prices, err := h.GetJupiterPrices(ctx, &pb.GetJupiterPricesRequest{
+		Tokens: []string{"SOL", "ETH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -399,6 +463,86 @@ func callGetQuotesHTTP() bool {
 		} else {
 			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
 		}
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumQuotes() bool {
+	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+	limit := int32(5)
+
+	quotes, err := h.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+		Limit:    limit,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetJupiterQuotes() bool {
+	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+	limit := int32(5)
+
+	quotes, err := h.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+		Limit:    limit,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 2 {
+		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Jupiter is %v", route)
 	}
 
 	fmt.Println()
@@ -798,6 +942,136 @@ func callTradeSwap(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumSwap(ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium swap")
+	sig, err := h.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumRouteSwap(ownerAddr string) bool {
+	log.Info("starting Raydium route swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium route swap")
+	sig, err := h.SubmitRaydiumRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:      "FIDA",
+				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterRouteSwap(ownerAddr string) bool {
+	log.Info("starting Jupiter route swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Jupiter route swap")
+	sig, err := h.SubmitJupiterRouteSwap(ctx, &pb.PostJupiterRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.JupiterRouteStep{
+			{
+				InToken:      "FIDA",
+				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter route swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterSwap(ownerAddr string) bool {
+	log.Info("starting Jupiter swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Jupiter swap")
+	sig, err := h.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter swap transaction signature : %s", sig)
 	return false
 }
 

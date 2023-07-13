@@ -109,6 +109,51 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+// GetRaydiumPools returns pools on Raydium
+func (g *GRPCClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
+	return g.apiClient.GetRaydiumPools(ctx, request)
+}
+
+// GetRaydiumQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium
+func (g *GRPCClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQuotesRequest) (*pb.GetRaydiumQuotesResponse, error) {
+	return g.apiClient.GetRaydiumQuotes(ctx, request)
+}
+
+// GetRaydiumPrices returns the USDC price of requested tokens on Raydium
+func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
+	return g.apiClient.GetRaydiumPrices(ctx, request)
+}
+
+// PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (g *GRPCClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	return g.apiClient.PostRaydiumSwap(ctx, request)
+}
+
+// PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (g *GRPCClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	return g.apiClient.PostRaydiumRouteSwap(ctx, request)
+}
+
+// GetJupiterQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Jupiter
+func (g *GRPCClient) GetJupiterQuotes(ctx context.Context, request *pb.GetJupiterQuotesRequest) (*pb.GetJupiterQuotesResponse, error) {
+	return g.apiClient.GetJupiterQuotes(ctx, request)
+}
+
+// GetJupiterPrices returns the USDC price of requested tokens on Jupiter
+func (g *GRPCClient) GetJupiterPrices(ctx context.Context, request *pb.GetJupiterPricesRequest) (*pb.GetJupiterPricesResponse, error) {
+	return g.apiClient.GetJupiterPrices(ctx, request)
+}
+
+// PostJupiterSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (g *GRPCClient) PostJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest) (*pb.PostJupiterSwapResponse, error) {
+	return g.apiClient.PostJupiterSwap(ctx, request)
+}
+
+// PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (g *GRPCClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
+	return g.apiClient.PostJupiterRouteSwap(ctx, request)
+}
+
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
 	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit, Project: project})
@@ -451,6 +496,42 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := g.PostRouteTradeSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostRaydiumRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostJupiterSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostJupiterRouteSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}

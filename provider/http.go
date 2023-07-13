@@ -60,6 +60,113 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	}
 }
 
+// GetRaydiumPools returns pools on Raydium
+func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
+	pools := new(pb.GetRaydiumPoolsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolsResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
+// GetRaydiumQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium
+func (h *HTTPClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQuotesRequest) (*pb.GetRaydiumQuotesResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v",
+		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage, request.Limit)
+	response := new(pb.GetRaydiumQuotesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetRaydiumPrices returns the USDC price of requested tokens on Raydium
+func (h *HTTPClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
+	tokensArg := convertStrSliceArgument("tokens", true, request.Tokens)
+	url := fmt.Sprintf("%s/api/v2/raydium/prices%s", h.baseURL, tokensArg)
+	respons := new(pb.GetRaydiumPricesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPricesResponse](ctx, url, h.httpClient, respons, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return respons, nil
+}
+
+// PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (h *HTTPClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/swap", h.baseURL)
+	var response pb.PostRaydiumSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (h *HTTPClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/route-swap", h.baseURL)
+	var response pb.PostRaydiumRouteSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumRouteSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// GetJupiterQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Jupiter
+func (h *HTTPClient) GetJupiterQuotes(ctx context.Context, request *pb.GetJupiterQuotesRequest) (*pb.GetJupiterQuotesResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/jupiter/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v",
+		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage, request.Limit)
+	response := new(pb.GetJupiterQuotesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetJupiterQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetJupiterPrices returns the USDC price of requested tokens on Jupiter
+func (h *HTTPClient) GetJupiterPrices(ctx context.Context, request *pb.GetJupiterPricesRequest) (*pb.GetJupiterPricesResponse, error) {
+	tokensArg := convertStrSliceArgument("tokens", true, request.Tokens)
+	url := fmt.Sprintf("%s/api/v2/jupiter/prices%s", h.baseURL, tokensArg)
+	response := new(pb.GetJupiterPricesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetJupiterPricesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// PostJupiterSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (h *HTTPClient) PostJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest) (*pb.PostJupiterSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/jupiter/swap", h.baseURL)
+	var response pb.PostJupiterSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostJupiterSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (h *HTTPClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/jupiter/route-swap", h.baseURL)
+	var response pb.PostJupiterRouteSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostJupiterRouteSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
 func (h *HTTPClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/drift/perp/close", h.baseURL)
@@ -650,6 +757,42 @@ func (h *HTTPClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
 func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := h.PostRouteTradeSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostRaydiumRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostJupiterSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostJupiterRouteSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
