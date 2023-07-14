@@ -124,6 +124,7 @@ func run() bool {
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
+		failed = failed || logCall("callJupiterRouteTradeSwapV2", func() bool { return callJupiterRouteSwapV2(g, ownerAddr) })
 
 	}
 
@@ -1243,30 +1244,94 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	quote, err := g.GetQuotes(ctx, "SOL", "FIDA", 0.1, 0.1, 1, []pb.Project{pb.Project_P_JUPITER})
+
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	if len(quote.Quotes[0].Routes[0].Steps) == 0 {
+		log.Error("Jupiter route not found")
+		return true
+	}
+
+	var steps []*pb.RouteStep
+
+	for _, step := range quote.Quotes[0].Routes[0].Steps {
+		steps = append(steps, &pb.RouteStep{
+			InToken:      step.InToken,
+			InAmount:     step.InAmount,
+			OutToken:     step.OutToken,
+			OutAmount:    step.OutAmount,
+			OutAmountMin: step.OutAmountMin,
+			Project:      step.Project,
+		})
+	}
+
+	log.Info("Jupiter route  swap")
+	sig, err := g.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
+		Project:      pb.Project_P_JUPITER,
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps:        steps,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  true,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter route swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterRouteSwapV2(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Jupiter route swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	quote, err := g.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
+		InToken:  "SOL",
+		OutToken: "USDT",
+		InAmount: 0.1,
+		Slippage: 0.1,
+		Limit:    1,
+	})
+
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	if len(quote.Routes[0].Steps) == 0 {
+		log.Error("Jupiter route not found")
+		return true
+	}
+
+	var steps []*pb.JupiterRouteStep
+
+	for _, step := range quote.Routes[0].Steps {
+		steps = append(steps, &pb.JupiterRouteStep{
+			InToken:      step.InToken,
+			InAmount:     step.InAmount,
+			OutToken:     step.OutToken,
+			OutAmount:    step.OutAmount,
+			OutAmountMin: step.OutAmountMin,
+			Project:      step.Project,
+		})
+	}
+
 	log.Info("Jupiter route  swap")
 	sig, err := g.SubmitJupiterRouteSwap(ctx, &pb.PostJupiterRouteSwapRequest{
 		OwnerAddress: ownerAddr,
 		Slippage:     0.1,
-		Steps: []*pb.JupiterRouteStep{
-			{
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-			},
-			{
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
-			},
-		},
+		Steps:        steps,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
