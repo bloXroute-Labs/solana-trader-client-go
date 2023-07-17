@@ -73,7 +73,7 @@ func run() bool {
 	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
+	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
@@ -478,14 +478,12 @@ func callGetRaydiumQuotes() bool {
 	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(5)
 
 	quotes, err := h.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		Limit:    limit,
 	})
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
@@ -497,8 +495,8 @@ func callGetRaydiumQuotes() bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {
@@ -518,7 +516,7 @@ func callGetJupiterQuotes() bool {
 	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(5)
+	limit := int32(3)
 
 	quotes, err := h.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
@@ -537,8 +535,8 @@ func callGetJupiterQuotes() bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) != 3 {
+		log.Errorf("did not get back 3 quotes, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {
