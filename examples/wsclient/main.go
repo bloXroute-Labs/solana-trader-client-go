@@ -440,22 +440,20 @@ func callGetRaydiumQuotes(w *provider.WSClient) bool {
 	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(5)
 
 	quotes, err := w.GetRaydiumQuotes(context.Background(), &pb.GetRaydiumQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		Limit:    limit,
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
-	if len(quotes.Routes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quote, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {
@@ -473,7 +471,7 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(5)
+	limit := int32(3)
 
 	quotes, err := w.GetJupiterQuotes(context.Background(), &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
@@ -487,8 +485,8 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) != 3 {
+		log.Errorf("did not get back 3 quotes, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {

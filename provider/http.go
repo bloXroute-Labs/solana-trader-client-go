@@ -73,8 +73,8 @@ func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydium
 
 // GetRaydiumQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium
 func (h *HTTPClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQuotesRequest) (*pb.GetRaydiumQuotesResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v&limit=%v",
-		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage, request.Limit)
+	url := fmt.Sprintf("%s/api/v2/raydium/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v",
+		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
 	response := new(pb.GetRaydiumQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRaydiumQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err

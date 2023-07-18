@@ -413,14 +413,12 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(5)
 
 	quotes, err := g.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		Limit:    limit,
 	})
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
@@ -432,8 +430,8 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {
@@ -454,7 +452,7 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(5)
+	limit := int32(3)
 
 	quotes, err := g.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
@@ -473,8 +471,8 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) != 3 {
+		log.Errorf("did not get back 3 quotes, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {
