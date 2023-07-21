@@ -883,9 +883,32 @@ func (h *HTTPClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrde
 	return &response, nil
 }
 
+// PostDriftPerpOrder returns a partially signed transaction for placing a Drift perp order. Typically, you want to use SubmitDriftPerpOrder instead of this.
+func (h *HTTPClient) PostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest) (*pb.PostDriftPerpOrderResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/drift/perp/place", h.baseURL)
+
+	var response pb.PostDriftPerpOrderResponse
+	err := connections.HTTPPostWithClient[*pb.PostDriftPerpOrderResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SubmitPerpOrder builds a perp order, signs it, and submits to the network.
 func (h *HTTPClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, opts PostOrderOpts) (string, error) {
 	order, err := h.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	return sig, err
+}
+
+// SubmitDriftPerpOrder builds a Drift perp order, signs it, and submits to the network.
+func (h *HTTPClient) SubmitDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest, opts PostOrderOpts) (string, error) {
+	order, err := h.PostDriftPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}
@@ -1074,6 +1097,16 @@ func (h *HTTPClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 // SubmitPostPerpOrder builds a post order txn, signs and submits it to the network.
 func (h *HTTPClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	order, err := h.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
+// SubmitPostDriftPerpOrder builds a Drift post order txn, signs and submits it to the network.
+func (h *HTTPClient) SubmitPostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := h.PostDriftPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}

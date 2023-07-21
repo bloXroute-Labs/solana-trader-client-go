@@ -441,6 +441,11 @@ func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrde
 	return g.apiClient.PostPerpOrder(ctx, request)
 }
 
+// PostDriftPerpOrder returns a partially signed transaction for placing a Drift perp order. Typically, you want to use SubmitDriftPerpOrder instead of this.
+func (g *GRPCClient) PostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest) (*pb.PostDriftPerpOrderResponse, error) {
+	return g.apiClient.PostDriftPerpOrder(ctx, request)
+}
+
 // PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
 func (g *GRPCClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
 	return g.apiClient.PostModifyDriftOrder(ctx, request)
@@ -558,6 +563,16 @@ func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOr
 	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
+// SubmitDriftPerpOrder builds a Drift perp order, signs it, and submits to the network.
+func (g *GRPCClient) SubmitDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest, skipPreFlight bool) (string, error) {
+	order, err := g.PostDriftPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+}
+
 // SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
 func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool) (string, error) {
 	resp, err := g.PostCancelPerpOrder(ctx, request)
@@ -662,9 +677,18 @@ func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreat
 	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
-// SubmitPostPerpOrder builds a create-user txn, signs and submits it to the network.
+// SubmitPostPerpOrder builds a perp order txn, signs and submits it to the network.
 func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
 	resp, err := g.PostPerpOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostDriftPerpOrder builds a Drift perp order txn, signs and submits it to the network.
+func (g *GRPCClient) SubmitPostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := g.PostDriftPerpOrder(ctx, request)
 	if err != nil {
 		return "", err
 	}

@@ -159,6 +159,7 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
+		failed = failed || logCall("callPostDriftPerpOrder", func() bool { return callPostDriftPerpOrder(ownerAddr) })
 		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
@@ -1488,6 +1489,32 @@ func callPostPerpOrder(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("callPostPerpOrder signature : %s", sig)
+	return false
+}
+
+func callPostDriftPerpOrder(ownerAddr string) bool {
+	log.Info("starting callPostDriftPerpOrder test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostDriftPerpOrderRequest{
+		OwnerAddress:   ownerAddr,
+		Contract:       "SOL_PERP",
+		AccountAddress: "",
+		PositionSide:   "SHORT",
+		Slippage:       10,
+		Type:           "LIMIT",
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := h.PostDriftPerpOrder(ctx, request)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftPerpOrder signature : %s", sig)
 	return false
 }
 

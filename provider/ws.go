@@ -660,6 +660,16 @@ func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderR
 	return &response, nil
 }
 
+// PostDriftPerpOrder returns a partially signed transaction for placing a Drift perp order. Typically, you want to use SubmitDriftPerpOrder instead of this.
+func (w *WSClient) PostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest) (*pb.PostDriftPerpOrderResponse, error) {
+	var response pb.PostDriftPerpOrderResponse
+	err := w.conn.Request(ctx, "PostDriftPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
 func (w *WSClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
 	var response pb.PostModifyDriftOrderResponse
