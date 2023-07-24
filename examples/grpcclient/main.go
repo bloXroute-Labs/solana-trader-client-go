@@ -124,7 +124,6 @@ func run() bool {
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
-
 	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(g, ownerAddr) })
@@ -155,6 +154,7 @@ func run() bool {
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(g) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(g, ownerAddr) })
+		failed = failed || logCall("callPostDriftPerpOrder", func() bool { return callPostDriftPerpOrder(g, ownerAddr) })
 		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(g, ownerAddr) })
 		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(g, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(g) })
@@ -1803,6 +1803,24 @@ func callPostPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		ClientOrderID:  2,
 	})
 	log.Infof("callPostPerpOrder request : %s", request)
+	return false
+}
+
+func callPostDriftPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting callPostDriftPerpOrder test")
+
+	request, _ := g.PostDriftPerpOrder(context.Background(), &pb.PostDriftPerpOrderRequest{
+		OwnerAddress:   ownerAddr,
+		Contract:       "SOL_PERP",
+		AccountAddress: "",
+		PositionSide:   "SHORT",
+		Slippage:       10,
+		Type:           "LIMIT",
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	})
+	log.Infof("callPostDriftPerpOrder request : %s", request)
 	return false
 }
 
