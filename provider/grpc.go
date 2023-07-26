@@ -1068,7 +1068,7 @@ func (g *GRPCClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTi
 }
 
 // GetOpenOrdersV2 returns all open orders by owner address and market
-func (g *GRPCClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
+func (g *GRPCClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponseV2, error) {
 	return g.apiClient.GetOpenOrdersV2(ctx, &pb.GetOpenOrdersRequestV2{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, OrderID: orderID, ClientOrderID: clientOrderID})
 }
 
@@ -1119,7 +1119,7 @@ func (g *GRPCClient) PostCancelOrderV2(
 ) (*pb.PostCancelOrderResponseV2, error) {
 	return g.apiClient.PostCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
 		OrderID:           orderID,
-		Side:              side,
+		Side:              convertProtoSideToString(side),
 		OwnerAddress:      owner,
 		MarketAddress:     market,
 		OpenOrdersAddress: openOrders,

@@ -1461,7 +1461,7 @@ func (h *HTTPClient) PostCancelOrderV2(
 	request := &pb.PostCancelOrderRequestV2{
 		OrderID:           orderID,
 		ClientOrderID:     clientOrderID,
-		Side:              side,
+		Side:              convertProtoSideToString(side),
 		OwnerAddress:      owner,
 		MarketAddress:     market,
 		OpenOrdersAddress: openOrders,
