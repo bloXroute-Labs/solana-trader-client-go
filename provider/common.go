@@ -151,3 +151,16 @@ func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana
 	}
 	return &oneRequest, nil
 }
+
+func convertProtoSideToString(side pb.Side) string {
+	switch side {
+	case pb.Side_S_UNKNOWN:
+		return pb.Side_name[0]
+	case pb.Side_S_BID:
+		return pb.Side_name[1]
+	case pb.Side_S_ASK:
+		return pb.Side_name[2]
+	default:
+		return pb.Side_name[0]
+	}
+}
