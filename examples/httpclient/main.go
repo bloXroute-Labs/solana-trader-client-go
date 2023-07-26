@@ -572,7 +572,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	}
 
 	// create order without actually submitting
-	response, err := h.PostOrderV2(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	response, err := h.PostOrderV2(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -581,7 +581,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 
 	// sign/submit transaction after creation
 	sig, err := h.SubmitOrderV2(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderAmount,
+		orderSide, common.OrderType_OT_LIMIT, orderAmount,
 		orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
@@ -648,7 +648,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -656,7 +656,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err = h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -739,7 +739,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -768,7 +768,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = h.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = h.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -831,7 +831,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -861,7 +861,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = h.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true

@@ -748,7 +748,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	}
 
 	// create order without actually submitting
-	response, err := g.PostOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	response, err := g.PostOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -757,7 +757,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrderV2(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderAmount, orderPrice, opts)
+		orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return 0, true
@@ -822,7 +822,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -830,7 +830,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err = g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -911,7 +911,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -940,7 +940,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = g.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = g.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1003,7 +1003,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1016,7 +1016,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 		log.Error(err)
 		return true
 	}
-	var found1 *pb.Order
+	var found1 *pb.OrderV2
 
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
@@ -1032,7 +1032,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = g.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, common.OrderType_OT_LIMIT, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1047,7 +1047,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 		log.Error(err)
 		return true
 	}
-	var found2 *pb.Order
+	var found2 *pb.OrderV2
 
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {

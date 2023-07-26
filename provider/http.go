@@ -1417,8 +1417,9 @@ func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner st
 func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/openbook/place", h.baseURL)
 	request := &pb.PostOrderRequestV2{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
+		OwnerAddress: owner,
+		PayerAddress: payer,
+
 		Market:            market,
 		Side:              convertProtoSideToString(side),
 		Type:              convertOrderTypeToString(orderType),
