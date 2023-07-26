@@ -1390,12 +1390,13 @@ func (w *WSClient) GetUnsettledV2(ctx context.Context, market string, ownerAddre
 }
 
 // PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request := &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              convertProtoSideToString(side),
+		Type:              convertOrderTypeToString(orderType),
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -1410,8 +1411,8 @@ func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string,
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := w.PostOrderV2(ctx, owner, payer, market, side, amount, price, opts)
+func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
 	}
@@ -1468,12 +1469,13 @@ func (w *WSClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenW
 	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
-func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	request := &pb.PostReplaceOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              convertProtoSideToString(side),
+		Type:              convertOrderTypeToString(orderType),
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -1488,8 +1490,8 @@ func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer
 	return &response, nil
 }
 
-func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := w.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, amount, price, opts)
+func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
 	}
