@@ -57,13 +57,20 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
+	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
+	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
+	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
 	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
 	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
 	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callDriftOrderbookWS", func() bool { return callDriftOrderbookWS(w) })
+	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
+	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
+	failed = failed || logCall("callDriftPerpOrderbookWS", func() bool { return callDriftPerpOrderbookWS(w) })
+	failed = failed || logCall("callDriftGetMarginOrderbookWS", func() bool { return callDriftGetMarginOrderbookWS(w) })
+	failed = failed || logCall("callGetDriftMarketDepthWS", func() bool { return callGetDriftMarketDepthWS(w) })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -71,18 +78,15 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
-	failed = failed || logCall("callDriftOrderbookWSStream", func() bool { return callDriftOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftPerpOrderbookWSStream", func() bool { return callDriftPerpOrderbookWSStream(w) })
+	failed = failed || logCall("callDriftMarginOrderbooksWSStream", func() bool { return callDriftMarginOrderbooksWSStream(w) })
 	failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(w) })
+	failed = failed || logCall("callDriftMarketDepthsStream", func() bool { return callDriftMarketDepthsStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
-	}
-
-	if !cfg.RunTrades {
-		log.Info("skipping trades due to config")
-		return failed
 	}
 
 	// calls below this place an order and immediately cancel it
@@ -107,34 +111,66 @@ func run() bool {
 		payerAddr = ownerAddr
 	}
 
-	failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr) })
-	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
-	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
+	if cfg.RunTrades {
+		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
+		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
+		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
+		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
+		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(w, ownerAddr) })
+		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(w, ownerAddr) })
+		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(w, ownerAddr) })
+		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(w, ownerAddr) })
+	}
 
 	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(w, ownerAddr) })
 	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftPerpPositions", func() bool { return callGetDriftPerpPositions(w, ownerAddr) })
 	failed = failed || logCall("callGetUser", func() bool { return callGetUser(w, ownerAddr) })
 
 	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(w, ownerAddr) })
 	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(w, ownerAddr) })
-	failed = failed || logCall("callGetContracts", func() bool { return callGetContracts(w) })
+	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts(w) })
+	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets(w) })
+
+	failed = failed || logCall("callGetDriftAssets", func() bool { return callGetDriftAssets(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftPerpContracts", func() bool { return callGetDriftPerpContracts(w) })
+	failed = failed || logCall("callGetDriftPerpOrderbook", func() bool { return callGetDriftPerpOrderbook(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftUser", func() bool { return callGetDriftUser(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenPerpOrder", func() bool { return callGetDriftOpenPerpOrder(w, ownerAddr) })
+	failed = failed || logCall("callGetDriftOpenMarginOrder", func() bool { return callGetDriftOpenMarginOrder(w, ownerAddr) })
 
 	if cfg.RunPerpTrades {
 		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callDriftCancelPerpOrder", func() bool { return callDriftCancelPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(w, ownerAddr) })
 		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(w, ownerAddr) })
-		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w, ownerAddr) })
+		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit(w) })
 		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callPostDriftPerpOrder", func() bool { return callPostDriftPerpOrder(w, ownerAddr) })
+		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(w, ownerAddr) })
+		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(w, ownerAddr) })
 		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw(w) })
 		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer(w) })
+		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(w, ownerAddr) })
 
 		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(w, ownerAddr) })
 		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(w, ownerAddr) })
 		failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(w, ownerAddr) })
+
+		failed = failed || logCall("callPostCloseDriftPerpPositions", func() bool { return callPostCloseDriftPerpPositions(w, ownerAddr) })
+		failed = failed || logCall("callPostCreateDriftUser", func() bool { return callPostCreateDriftUser(w, ownerAddr) })
+		failed = failed || logCall("callPostDriftManageCollateralDeposit", func() bool { return callPostDriftManageCollateralDeposit(w) })
+		failed = failed || logCall("callPostDriftManageCollateralWithdraw", func() bool { return callPostDriftManageCollateralWithdraw(w) })
+		failed = failed || logCall("callPostDriftManageCollateralTransfer", func() bool { return callPostDriftManageCollateralTransfer(w) })
+		failed = failed || logCall("callPostDriftSettlePNL", func() bool { return callPostDriftSettlePNL(w, ownerAddr) })
+		failed = failed || logCall("callPostDriftSettlePNLs", func() bool { return callPostDriftSettlePNLs(w, ownerAddr) })
+		failed = failed || logCall("callPostLiquidateDriftPerp", func() bool { return callPostLiquidateDriftPerp(w, ownerAddr) })
 	}
 	return failed
 }
@@ -153,7 +189,7 @@ func logCall(name string, call func() bool) bool {
 func callMarketsWS(w *provider.WSClient) bool {
 	log.Info("fetching markets...")
 
-	markets, err := w.GetMarkets(context.Background())
+	markets, err := w.GetMarketsV2(context.Background())
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
@@ -168,7 +204,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callOrderbookWS(w *provider.WSClient) bool {
 	log.Info("fetching orderbooks...")
 
-	orderbook, err := w.GetOrderbook(context.Background(), "SOL-USDT", 0, pb.Project_P_OPENBOOK)
+	orderbook, err := w.GetOrderbookV2(context.Background(), "SOL-USDT", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
@@ -178,7 +214,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook(context.Background(), "SOLUSDT", 2, pb.Project_P_OPENBOOK)
+	orderbook, err = w.GetOrderbookV2(context.Background(), "SOLUSDT", 2)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
 		return true
@@ -188,7 +224,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 
 	fmt.Println()
 
-	orderbook, err = w.GetOrderbook(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	orderbook, err = w.GetOrderbookV2(context.Background(), "SOL:USDT", 3)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
 		return true
@@ -203,7 +239,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 func callMarketDepthWS(w *provider.WSClient) bool {
 	log.Info("fetching market depth data...")
 
-	mktDepth, err := w.GetMarketDepth(context.Background(), "SOL:USDC", 3, pb.Project_P_OPENBOOK)
+	mktDepth, err := w.GetMarketDepthV2(context.Background(), "SOL:USDT", 3)
 	if err != nil {
 		log.Errorf("error with GetMarketDepth request for SOL:USDC: %v", err)
 		return true
@@ -245,6 +281,21 @@ func callPoolsWS(w *provider.WSClient) bool {
 	return false
 }
 
+func callRaydiumPoolsWS(w *provider.WSClient) bool {
+	log.Info("fetching Raydium pools...")
+
+	pools, err := w.GetRaydiumPools(context.Background(), &pb.GetRaydiumPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callPriceWS(w *provider.WSClient) bool {
 	log.Info("fetching prices...")
 
@@ -256,14 +307,45 @@ func callPriceWS(w *provider.WSClient) bool {
 		log.Info(pools)
 	}
 
-	fmt.Println()
+	return false
+}
+
+func callRaydiumPricesWS(w *provider.WSClient) bool {
+	log.Info("fetching Raydium prices...")
+
+	pools, err := w.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
+		Tokens: []string{"SOL", "ETH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	return false
+}
+
+func callJupiterPricesWS(w *provider.WSClient) bool {
+	log.Info("fetching Jupiter prices...")
+
+	pools, err := w.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
+		Tokens: []string{"SOL", "ETH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
 	return false
 }
 
 func callOpenOrdersWS(w *provider.WSClient) bool {
 	log.Info("fetching open orders...")
 
-	orders, err := w.GetOpenOrders(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", pb.Project_P_OPENBOOK)
+	orders, err := w.GetOpenOrdersV2(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", "", 0)
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
 		return true
@@ -278,7 +360,7 @@ func callOpenOrdersWS(w *provider.WSClient) bool {
 func callUnsettledWS(w *provider.WSClient) bool {
 	log.Info("fetching unsettled...")
 
-	response, err := w.GetUnsettled(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", pb.Project_P_OPENBOOK)
+	response, err := w.GetUnsettledV2(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetUnsettled request for SOL-USDT: %v", err)
 		return true
@@ -308,7 +390,7 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 func callTickersWS(w *provider.WSClient) bool {
 	log.Info("fetching tickers...")
 
-	tickers, err := w.GetTickers(context.Background(), "SOLUSDC", pb.Project_P_OPENBOOK)
+	tickers, err := w.GetTickersV2(context.Background(), "SOLUSDC")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOL-USDT: %v", err)
 		return true
@@ -324,7 +406,7 @@ func callGetQuotes(w *provider.WSClient) bool {
 	log.Info("fetching quotes...")
 
 	inToken := "SOL"
-	outToken := "USDC"
+	outToken := "USDT"
 	amount := 0.01
 	slippage := float64(5)
 	limit := 5
@@ -346,6 +428,70 @@ func callGetQuotes(w *provider.WSClient) bool {
 		} else {
 			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
 		}
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumQuotes(w *provider.WSClient) bool {
+	log.Info("fetching Raydium quotes...")
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetRaydiumQuotes(context.Background(), &pb.GetRaydiumQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quote, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetJupiterQuotes(w *provider.WSClient) bool {
+	log.Info("fetching Jupiter quotes...")
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+	limit := int32(3)
+
+	quotes, err := w.GetJupiterQuotes(context.Background(), &pb.GetJupiterQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+		Limit:    limit,
+	})
+	if err != nil {
+		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 3 {
+		log.Errorf("did not get back 3 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Jupiter is %v", route)
 	}
 
 	fmt.Println()
@@ -473,7 +619,7 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 
 const (
 	// SOL/USDC market
-	marketAddr = "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT"
+	marketAddr = "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6"
 
 	orderSide   = pb.Side_S_ASK
 	orderType   = common.OrderType_OT_LIMIT
@@ -558,18 +704,9 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 		OpenOrdersAddress: ooAddr,
 	}
 
-	// create order without actually submitting
-	response, err := w.PostOrder(context.Background(), ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
-	if err != nil {
-		log.Errorf("failed to create order (%v)", err)
-		return 0, true
-	}
-	log.Infof("created unsigned place order transaction: %v", response.Transaction)
-
 	// sign/submit transaction after creation
-	sig, err := w.SubmitOrder(context.Background(), ownerAddr, payerAddr, marketAddr,
-		orderSide, []common.OrderType{orderType}, orderAmount,
-		orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrderV2(context.Background(), ownerAddr, payerAddr, marketAddr,
+		orderSide, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return 0, true
@@ -583,8 +720,14 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64) bool {
 	log.Info("trying to cancel order")
 
-	_, err := w.SubmitCancelByClientOrderID(context.Background(), clientOrderID, ownerAddr,
-		marketAddr, ooAddr, pb.Project_P_OPENBOOK, true)
+	_, err := w.SubmitCancelOrderV2(context.Background(), &pb.PostCancelOrderRequestV2{
+		OrderID:           "",
+		Side:              pb.Side_S_ASK,
+		MarketAddress:     marketAddr,
+		OwnerAddress:      ownerAddr,
+		OpenOrdersAddress: ooAddr,
+		ClientOrderID:     clientOrderID,
+	}, true)
 	if err != nil {
 		log.Errorf("failed to cancel order by client ID (%v)", err)
 		return true
@@ -597,7 +740,8 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	log.Info("starting post settle")
 
-	sig, err := w.SubmitSettle(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, pb.Project_P_OPENBOOK, false)
+	sig, err := w.SubmitSettleV2(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7",
+		"4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
 	if err != nil {
 		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
 		return true
@@ -625,7 +769,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -633,7 +777,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err = w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -643,7 +787,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -668,10 +812,14 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
-	})
+	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
+		OrderID:           "",
+		Side:              pb.Side_S_ASK,
+		MarketAddress:     marketAddr,
+		OwnerAddress:      ownerAddr,
+		OpenOrdersAddress: ooAddr,
+		ClientOrderID:     0,
+	}, true)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -682,7 +830,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	time.Sleep(time.Minute)
 
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -715,7 +863,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -724,7 +872,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	}
 	time.Sleep(time.Minute)
 	// Check order is there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -744,7 +892,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = w.SubmitReplaceByClientOrderID(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = w.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -754,7 +902,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 
 	// Check order #2 is in orderbook
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -775,10 +923,14 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	time.Sleep(time.Minute)
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
-	})
+	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
+		OrderID:           "",
+		Side:              pb.Side_S_ASK,
+		MarketAddress:     marketAddr,
+		OwnerAddress:      ownerAddr,
+		OpenOrdersAddress: ooAddr,
+		ClientOrderID:     0,
+	}, true)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -807,15 +959,16 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrder(ctx, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice, pb.Project_P_OPENBOOK, opts)
+	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 	log.Infof("submitting place order #1, signature %s", sig)
 
+	time.Sleep(time.Minute)
 	// Check orders are there
-	orders, err := w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -836,7 +989,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitReplaceOrder(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, []common.OrderType{orderType}, orderAmount, orderPrice/2, pb.Project_P_OPENBOOK, opts)
+	sig, err = w.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, pb.Side_S_ASK, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -846,7 +999,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	time.Sleep(time.Minute)
 
 	// Check orders are there
-	orders, err = w.GetOpenOrders(ctx, marketAddr, ownerAddr, "", pb.Project_P_OPENBOOK)
+	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
 	if err != nil {
 		log.Error(err)
 	}
@@ -866,10 +1019,14 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelAll(ctx, marketAddr, ownerAddr, []string{ooAddr}, pb.Project_P_OPENBOOK, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
-	})
+	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
+		OrderID:           "",
+		Side:              pb.Side_S_ASK,
+		MarketAddress:     marketAddr,
+		OwnerAddress:      ownerAddr,
+		OpenOrdersAddress: ooAddr,
+		ClientOrderID:     0,
+	}, true)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -887,7 +1044,7 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDC",
+	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDT",
 		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 			SkipPreFlight:  false,
@@ -897,6 +1054,30 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
 }
 
@@ -910,6 +1091,7 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
 		OwnerAddress: ownerAddr,
 		Project:      pb.Project_P_RAYDIUM,
+		Slippage:     0.1,
 		Steps: []*pb.RouteStep{
 			{
 				Project: &pb.StepProject{
@@ -929,7 +1111,7 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 					Id:    "",
 				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDC",
+				OutToken:     "USDT",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
@@ -944,6 +1126,106 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("route trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitRaydiumRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:  "FIDA",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Jupiter swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterRouteSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Jupiter swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitJupiterRouteSwap(ctx, &pb.PostJupiterRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.JupiterRouteStep{
+			{
+				InToken:  "FIDA",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter route swap transaction signature : %s", sig)
 	return false
 }
 
@@ -1022,8 +1304,8 @@ func callBlockWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callDriftOrderbookWS(w *provider.WSClient) bool {
-	log.Info("fetching drift orderbooks...")
+func callDriftPerpOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift perp orderbooks...")
 
 	orderbook, err := w.GetPerpOrderbook(context.Background(), &pb.GetPerpOrderbookRequest{
 		Contract: common.PerpContract_SOL_PERP,
@@ -1041,8 +1323,8 @@ func callDriftOrderbookWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callDriftOrderbookWSStream(w *provider.WSClient) bool {
-	log.Info("starting drift orderbook stream")
+func callDriftPerpOrderbookWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift perp orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -1054,6 +1336,51 @@ func callDriftOrderbookWSStream(w *provider.WSClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetPerpOrderbooksStream request for SOL-PERP: %v", err)
+		return true
+	}
+
+	orderbookCh := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callDriftGetMarginOrderbookWS(w *provider.WSClient) bool {
+	log.Info("fetching drift spot orderbooks...")
+
+	orderbook, err := w.GetDriftMarginOrderbook(context.Background(), &pb.GetDriftMarginOrderbookRequest{
+		Market:   "SOL",
+		Limit:    0,
+		Metadata: true,
+	})
+	if err != nil {
+		log.Errorf("error with GetMarginOrderbook request for SOL-MARGIN: %v", err)
+		return true
+	} else {
+		log.Info(orderbook)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callDriftMarginOrderbooksWSStream(w *provider.WSClient) bool {
+	log.Info("starting drift spot orderbook stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetDriftMarginOrderbooksStream(ctx, &pb.GetDriftMarginOrderbooksRequest{
+		Markets: []string{"SOL"},
+		Limit:   0,
+	})
+	if err != nil {
+		log.Errorf("error with GetMarginOrderbooksStream request for SOL-MARGIN: %v", err)
 		return true
 	}
 
@@ -1100,6 +1427,53 @@ func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
 	return false
 }
 
+func callDriftMarketDepthsStream(w *provider.WSClient) bool {
+	log.Info("starting get Drift MarketDepth stream")
+
+	ch := make(chan *pb.GetDriftMarketDepthStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := w.GetDriftMarketDepthsStream(ctx, &pb.GetDriftMarketDepthsStreamRequest{
+		Contracts: []string{"SOL_PERP", "ETH_PERP"},
+		Limit:     2,
+	})
+	if err != nil {
+		log.Errorf("error with GetDriftMarketDepthsStream stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetDriftMarketDepthWS(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftMarketDepthWS test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftMarketDepth(ctx, &pb.GetDriftMarketDepthRequest{
+		Contract: "SOL_PERP",
+		Limit:    2,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftMarketDepthWS resp : %s", user)
+	return false
+}
+
 func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callGetOpenPerpOrders test")
 
@@ -1117,6 +1491,44 @@ func callGetOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("GetOpenPerpOrders resp : %s", user)
+	return false
+}
+
+func callGetDriftOpenPerpOrders(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrders test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftOpenPerpOrders(ctx, &pb.GetDriftOpenPerpOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contracts:      []string{"SOL_PERP"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenPerpOrders resp : %s", user)
+	return false
+}
+
+func callGetDriftOpenMarginOrders(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrders test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftOpenMarginOrders(ctx, &pb.GetDriftOpenMarginOrdersRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Markets:        []string{"SOL"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrders resp : %s", user)
 	return false
 }
 
@@ -1140,6 +1552,25 @@ func callGetPerpPositions(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftPerpPositions(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftPerpPositions test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftPerpPositions(ctx, &pb.GetDriftPerpPositionsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		Contracts:      []string{"SOL_PERP"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftPerpPositions resp : %s", user)
+	return false
+}
+
 func callGetUser(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callGetUser test")
 
@@ -1158,19 +1589,36 @@ func callGetUser(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callGetDriftUser(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftUser test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftUser(ctx, &pb.GetDriftUserRequest{
+		OwnerAddress: ownerAddr,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftUser resp : %s", user)
+	return false
+}
+
 func callCancelPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callCancelPerpOrder test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
+	sig, err := w.PostCancelPerpOrder(ctx, &pb.PostCancelPerpOrderRequest{
 		Project:       pb.Project_P_DRIFT,
 		OwnerAddress:  ownerAddr,
 		OrderID:       1,
 		ClientOrderID: 0,
 		Contract:      common.PerpContract_SOL_PERP,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1179,18 +1627,54 @@ func callCancelPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callDriftCancelPerpOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callDriftCancelPerpOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostDriftCancelPerpOrder(ctx, &pb.PostDriftCancelPerpOrderRequest{
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+		Contract:      "SOL_PERP",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftCancelPerpOrder signature : %s", sig)
+	return false
+}
+
+func callCancelDriftMarginOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callCancelDriftMarginOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostCancelDriftMarginOrder(ctx, &pb.PostCancelDriftMarginOrderRequest{
+		OwnerAddress:  ownerAddr,
+		OrderID:       1,
+		ClientOrderID: 0,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callCancelDriftMarginOrder signature : %s", sig)
+	return false
+}
+
 func callClosePerpPositions(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callClosePerpPositions test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	sig, err := w.SubmitClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
+	sig, err := w.PostClosePerpPositions(ctx, &pb.PostClosePerpPositionsRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
 		Contracts:    []common.PerpContract{common.PerpContract_SOL_PERP},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1200,21 +1684,59 @@ func callClosePerpPositions(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callPostCloseDriftPerpPositions(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostCloseDriftPerpPositions test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	sig, err := w.PostCloseDriftPerpPositions(ctx, &pb.PostCloseDriftPerpPositionsRequest{
+		OwnerAddress: ownerAddr,
+		Contracts:    []string{"SOL_PERP"},
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostCloseDriftPerpPositions signature : %s", sig)
+	return false
+}
+
 func callCreateUser(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting callCreateUser test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitCreateUser(ctx, &pb.PostCreateUserRequest{
+	sig, err := w.PostCreateUser(ctx, &pb.PostCreateUserRequest{
 		Project:      pb.Project_P_DRIFT,
 		OwnerAddress: ownerAddr,
-	}, false)
+		Action:       "create",
+		SubAccountID: 10,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 	log.Infof("callCreateUser signature : %s", sig)
+	return false
+}
+
+func callPostCreateDriftUser(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostCreateDriftUser test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostCreateDriftUser(ctx, &pb.PostCreateDriftUserRequest{
+		OwnerAddress: ownerAddr,
+		Action:       "create",
+		SubAccountID: 10,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostCreateDriftUser signature : %s", sig)
 	return false
 }
 
@@ -1226,7 +1748,6 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	request := &pb.PostPerpOrderRequest{
 		Project:        pb.Project_P_DRIFT,
 		OwnerAddress:   ownerAddr,
-		PayerAddress:   ownerAddr,
 		Contract:       common.PerpContract_SOL_PERP,
 		AccountAddress: "",
 		PositionSide:   common.PerpPositionSide_PS_SHORT,
@@ -1236,7 +1757,7 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 		Price:          1000,
 		ClientOrderID:  2,
 	}
-	sig, err := w.SubmitPostPerpOrder(ctx, request, false)
+	sig, err := w.PostPerpOrder(ctx, request)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1245,41 +1766,132 @@ func callPostPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callPostDriftPerpOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostDriftPerpOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostDriftPerpOrderRequest{
+		OwnerAddress:   ownerAddr,
+		Contract:       "SOL_PERP",
+		AccountAddress: "",
+		PositionSide:   "SHORT",
+		Slippage:       10,
+		Type:           "LIMIT",
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := w.PostDriftPerpOrder(ctx, request)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostPerpOrder signature : %s", sig)
+	return false
+}
+
+func callPostModifyOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostModifyOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostModifyDriftOrderRequest{
+		OwnerAddress:    ownerAddr,
+		AccountAddress:  "",
+		NewLimitPrice:   1000,
+		NewPositionSide: "long",
+		OrderID:         1,
+	}
+	sig, err := w.PostModifyDriftOrder(ctx, request)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostModifyOrder signature : %s", sig)
+	return false
+}
+
+func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostMarginOrder test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	request := &pb.PostDriftMarginOrderRequest{
+		OwnerAddress:   ownerAddr,
+		Market:         "SOL",
+		AccountAddress: "",
+		PositionSide:   "short",
+		Slippage:       10,
+		Type:           "limit",
+		Amount:         1,
+		Price:          1000,
+		ClientOrderID:  2,
+	}
+	sig, err := w.PostDriftMarginOrder(ctx, request)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostMarginOrder signature : %s", sig)
+	return false
+}
+
 func callManageCollateralWithdraw(w *provider.WSClient) bool {
-	log.Info("starting callManageCollateralWithdraw withdraw test")
+	log.Info("starting callManageCollateralWithdraw test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callManageCollateral signature : %s", sig)
+	log.Infof("callManageCollateralWithdraw signature : %s", sig)
 	return false
 }
 
-func callManageCollateralTransfer(w *provider.WSClient) bool {
-	log.Info("starting callManageCollateralTransfer withdraw test")
+func callPostDriftManageCollateralWithdraw(w *provider.WSClient) bool {
+	log.Info("starting callPostDriftManageCollateralWithdraw test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
+		Amount:         1,
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:           "WITHDRAWAL",
+		Token:          "SOL",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftManageCollateralWithdraw signature : %s", sig)
+	return false
+}
+
+func callManageCollateralTransfer(w *provider.WSClient) bool {
+	log.Info("starting callManageCollateralTransfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
 		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:             common.PerpCollateralType_PCT_TRANSFER,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
 		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1288,24 +1900,83 @@ func callManageCollateralTransfer(w *provider.WSClient) bool {
 	return false
 }
 
-func callManageCollateralDeposit(w *provider.WSClient, ownerAddr string) bool {
+func callPostDriftManageCollateralTransfer(w *provider.WSClient) bool {
+	log.Info("starting callPostDriftManageCollateralTransfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
+		Amount:           1,
+		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:             "TRANSFER",
+		Token:            "SOL",
+		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftManageCollateralTransfer signature : %s", sig)
+	return false
+}
+
+func callDriftEnableMarginTrading(w *provider.WSClient, ownerAddress string) bool {
+	log.Info("starting callDriftEnableMarginTrading transfer test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostDriftEnableMarginTrading(ctx, &pb.PostDriftEnableMarginTradingRequest{
+		OwnerAddress: ownerAddress,
+		EnableMargin: true,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callDriftEnableMarginTrading signature : %s", sig)
+	return false
+}
+
+func callManageCollateralDeposit(w *provider.WSClient) bool {
 	log.Info("starting callManageCollateralDeposit deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitManageCollateral(ctx, &pb.PostManageCollateralRequest{
+	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
 		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
-	}, false)
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 	log.Infof("callManageCollateral signature : %s", sig)
+	return false
+}
+
+func callPostDriftManageCollateralDeposit(w *provider.WSClient) bool {
+	log.Info("starting callPostDriftManageCollateralDeposit deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
+		Amount:         1,
+		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		Type:           "DEPOSIT",
+		Token:          "SOL",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftManageCollateralDeposit signature : %s", sig)
 	return false
 }
 
@@ -1318,7 +1989,6 @@ func callGetOpenPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	user, err := w.GetOpenPerpOrder(ctx, &pb.GetOpenPerpOrderRequest{
 		OwnerAddress:   ownerAddr,
 		AccountAddress: "",
-		Contract:       common.PerpContract_SOL_PERP,
 		Project:        pb.Project_P_DRIFT,
 		OrderID:        1,
 	})
@@ -1330,46 +2000,119 @@ func callGetOpenPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callPostSettlePNL(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting SubmitPostSettlePNL deposit test")
+func callGetDriftOpenPerpOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenPerpOrder test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitPostSettlePNL(ctx, &pb.PostSettlePNLRequest{
-		Project:               pb.Project_P_DRIFT,
-		OwnerAddress:          ownerAddr,
-		SettleeAccountAddress: ownerAddr,
-		Contract:              common.PerpContract_SOL_PERP,
-	}, false)
+	user, err := w.GetDriftOpenPerpOrder(ctx, &pb.GetDriftOpenPerpOrderRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		OrderID:        1,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
-	log.Infof("SubmitPostSettlePNL signature : %s", sig)
+	log.Infof("callGetDriftOpenPerpOrder resp : %s", user)
 	return false
 }
 
-func callPostSettlePNLs(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting callPostSettlePNLs deposit test")
+func callPostSettlePNL(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostSettlePNL deposit test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitPostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
+	sig, err := w.PostSettlePNL(ctx, &pb.PostSettlePNLRequest{
+		Project:               pb.Project_P_DRIFT,
+		OwnerAddress:          ownerAddr,
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+		Contract:              common.PerpContract_SOL_PERP,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostSettlePNL signature : %s", sig)
+	return false
+}
+
+func callGetDriftOpenMarginOrder(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftOpenMarginOrder deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.GetDriftOpenMarginOrder(ctx, &pb.GetDriftOpenMarginOrderRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+		ClientOrderID:  13,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftOpenMarginOrder signature : %s", sig)
+	return false
+}
+
+func callPostDriftSettlePNL(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostDriftSettlePNL deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostDriftSettlePNL(ctx, &pb.PostDriftSettlePNLRequest{
+		OwnerAddress:          ownerAddr,
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+		Contract:              "SOL_PERP",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftSettlePNL signature : %s", sig)
+	return false
+}
+
+func callPostSettlePNLs(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostSettlePNLs test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostSettlePNLs(ctx, &pb.PostSettlePNLsRequest{
 		Project:                 pb.Project_P_DRIFT,
 		OwnerAddress:            ownerAddr,
-		SettleeAccountAddresses: []string{ownerAddr},
+		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
 		Contract:                common.PerpContract_SOL_PERP,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
 	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 	log.Infof("callPostSettlePNLs signature : %s", sig)
+	return false
+}
+
+func callPostDriftSettlePNLs(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostDriftSettlePNLs test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostDriftSettlePNLs(ctx, &pb.PostDriftSettlePNLsRequest{
+		OwnerAddress:            ownerAddr,
+		SettleeAccountAddresses: []string{"9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS"},
+		Contract:                "SOL_PERP",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostDriftSettlePNLs signature : %s", sig)
 	return false
 }
 
@@ -1392,8 +2135,26 @@ func callGetAssets(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callGetContracts(w *provider.WSClient) bool {
-	log.Info("starting callGetContracts test")
+func callGetDriftAssets(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftAssets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftAssets(ctx, &pb.GetDriftAssetsRequest{
+		OwnerAddress:   ownerAddr,
+		AccountAddress: "",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftAssets resp : %s", user)
+	return false
+}
+
+func callGetPerpContracts(w *provider.WSClient) bool {
+	log.Info("starting callGetPerpContracts test")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -1405,7 +2166,37 @@ func callGetContracts(w *provider.WSClient) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("callGetAssets resp : %s", user)
+	log.Infof("callGetPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetDriftPerpContracts(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftPerpContracts test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftPerpContracts(ctx, &pb.GetDriftPerpContractsRequest{})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftPerpContracts resp : %s", user)
+	return false
+}
+
+func callGetDriftMarkets(w *provider.WSClient) bool {
+	log.Info("starting callGetDriftMarkets test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	user, err := w.GetDriftMarkets(ctx, &pb.GetDriftMarketsRequest{})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("GetDriftMarkets resp : %s", user)
 	return false
 }
 
@@ -1415,17 +2206,55 @@ func callPostLiquidatePerp(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sig, err := w.SubmitPostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
+	sig, err := w.PostLiquidatePerp(ctx, &pb.PostLiquidatePerpRequest{
 		Project:               pb.Project_P_DRIFT,
 		OwnerAddress:          ownerAddr,
 		Amount:                1,
 		Contract:              common.PerpContract_SOL_PERP,
-		SettleeAccountAddress: ownerAddr,
-	}, false)
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+	})
 	if err != nil {
 		log.Error(err)
 		return true
 	}
 	log.Infof("callPostLiquidatePerp signature : %s", sig)
+	return false
+}
+
+func callPostLiquidateDriftPerp(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callPostLiquidateDriftPerp deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.PostLiquidateDriftPerp(ctx, &pb.PostLiquidateDriftPerpRequest{
+		OwnerAddress:          ownerAddr,
+		Amount:                1,
+		Contract:              "SOL_PERP",
+		SettleeAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callPostLiquidateDriftPerp signature : %s", sig)
+	return false
+}
+
+func callGetDriftPerpOrderbook(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting callGetDriftPerpOrderbook deposit test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sig, err := w.GetDriftPerpOrderbook(ctx, &pb.GetDriftPerpOrderbookRequest{
+		Contract: "SOL_PERP",
+		Limit:    12,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("callGetDriftPerpOrderbook signature : %s", sig)
 	return false
 }

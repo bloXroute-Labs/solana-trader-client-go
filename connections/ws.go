@@ -33,7 +33,9 @@ type WS struct {
 	err           error
 	writeCh       chan []byte
 
-	requestMap      map[uint64]requestTracker
+	requestMap map[uint64]requestTracker
+	requestM   sync.RWMutex
+
 	subscriptionMap map[string]subscriptionEntry
 
 	// public to allow overriding of (un)subscribe method name
@@ -150,7 +152,9 @@ func (w *WS) writeLoop() {
 
 func (w *WS) processRPCResponse(response jsonrpc2.Response) {
 	requestID := response.ID.Num
+	w.requestM.RLock()
 	rt, ok := w.requestMap[requestID]
+	w.requestM.RUnlock()
 	if !ok {
 		_ = w.Close(fmt.Errorf("unknown request ID: got %v, most recent %v", requestID, w.requestID.Current()))
 		return
@@ -225,11 +229,17 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 
 	// setup listener for next request ID that matches response
 	responseCh := make(chan responseUpdate)
+	w.requestM.Lock()
 	w.requestMap[request.ID.Num] = requestTracker{
 		ch:           responseCh,
 		lockRequired: lockRequired,
 	}
+	w.requestM.Unlock()
+
 	defer func() {
+		w.requestM.Lock()
+		defer w.requestM.Unlock()
+
 		delete(w.requestMap, request.ID.Num)
 	}()
 
