@@ -3,9 +3,9 @@ module github.com/bloXroute-Labs/solana-trader-client-go
 go 1.18
 
 require (
-	github.com/bloXroute-Labs/solana-trader-proto v1.3.1-0.20230213173948-fb52abf2c72e
-	github.com/gagliardetto/binary v0.7.2-0.20220918220700-6a22eaf7d87e
-	github.com/gagliardetto/solana-go v1.6.1-0.20221018174950-475b9d64e462
+	github.com/bloXroute-Labs/solana-trader-proto v1.8.1-0.20230724162915-31ce0b7e556a
+	github.com/gagliardetto/binary v0.7.7
+	github.com/gagliardetto/solana-go v1.8.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.2.0
@@ -57,11 +57,12 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	go.mongodb.org/mongo-driver v1.11.0 // indirect
 	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect

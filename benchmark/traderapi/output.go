@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/arrival"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/output"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
 	gserum "github.com/gagliardetto/solana-go/programs/serum"
-	"golang.org/x/exp/maps"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -102,24 +101,10 @@ func (d Datapoint) FormatCSV() [][]string {
 	return lines
 }
 
-func SortRange[T any](slotRange map[int]T) []int {
-	slots := maps.Keys(slotRange)
-	sort.Ints(slots)
-	return slots
-}
-
-func FormatSortRange[T any](slotRange map[int]T) string {
-	if len(slotRange) == 0 {
-		return "-"
-	}
-	sr := SortRange(slotRange)
-	return fmt.Sprintf("%v-%v", sr[0], sr[len(sr)-1])
-}
-
 // SlotRange enumerate the superset range of slots used in Trader API and Solana updates
-func SlotRange(traderResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) []int {
-	traderSlots := SortRange(traderResults)
-	solanaSlots := SortRange(solanaResults)
+func SlotRange(traderResults map[int][]stream.ProcessedUpdate[stream.TraderAPIUpdate], solanaResults map[int][]stream.ProcessedUpdate[stream.SolanaUpdate]) []int {
+	traderSlots := output.SortRange(traderResults)
+	solanaSlots := output.SortRange(solanaResults)
 
 	slots := make([]int, 0, len(traderResults))
 	solanaIndex := 0
@@ -149,10 +134,10 @@ func SlotRange(traderResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPI
 }
 
 // Merge combines Trader API and Solana updates over the specified slots, indicating the difference in slot times and any updates that were not included in the other.
-func Merge(slots []int, traderResults map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], solanaResults map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate]) ([]Datapoint, map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate], map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate], error) {
+func Merge(slots []int, traderResults map[int][]stream.ProcessedUpdate[stream.TraderAPIUpdate], solanaResults map[int][]stream.ProcessedUpdate[stream.SolanaUpdate]) ([]Datapoint, map[int][]stream.ProcessedUpdate[stream.TraderAPIUpdate], map[int][]stream.ProcessedUpdate[stream.SolanaUpdate], error) {
 	datapoints := make([]Datapoint, 0)
-	leftoverTrader := make(map[int][]arrival.ProcessedUpdate[arrival.TraderAPIUpdate])
-	leftoverSolana := make(map[int][]arrival.ProcessedUpdate[arrival.SolanaUpdate])
+	leftoverTrader := make(map[int][]stream.ProcessedUpdate[stream.TraderAPIUpdate])
+	leftoverSolana := make(map[int][]stream.ProcessedUpdate[stream.SolanaUpdate])
 
 	for _, slot := range slots {
 		traderData, traderOK := traderResults[slot]

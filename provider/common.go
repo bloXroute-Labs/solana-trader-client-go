@@ -13,19 +13,64 @@ import (
 )
 
 const (
-	MainnetHTTP = "https://virginia.solana.dex.blxrbdn.com"
-	MainnetWS   = "wss://virginia.solana.dex.blxrbdn.com/ws"
-	MainnetGRPC = "virginia.solana.dex.blxrbdn.com:443"
-	TestnetHTTP = "http://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
-	TestnetWS   = "ws://serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com/ws"
-	TestnetGRPC = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com:80"
-	DevnetHTTP  = "http://solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
-	DevnetWS    = "ws://solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com/ws"
-	DevnetGRPC  = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com:80"
-	LocalWS     = "ws://localhost:9000/ws"
-	LocalGRPC   = "localhost:9000"
-	LocalHTTP   = "http://127.0.0.1:9000"
+	mainnetVirginia  = "virginia.solana.dex.blxrbdn.com"
+	mainnetNY        = "ny.solana.dex.blxrbdn.com"
+	mainnetFrankfurt = "frankfurt.solana.dex.blxrbdn.com"
+	mainnetUK        = "uk.solana.dex.blxrbdn.com"
+	testnet          = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
+	devnet           = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
+
+var (
+	MainnetVirginiaHTTP  = httpEndpoint(mainnetVirginia, true)
+	MainnetNYHTTP        = httpEndpoint(mainnetNY, true)
+	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, true)
+	MainnetUKHTTP        = httpEndpoint(mainnetUK, true)
+	MainnetVirginiaWS    = wsEndpoint(mainnetVirginia, true)
+	MainnetNYWS          = wsEndpoint(mainnetNY, true)
+	MainnetFrankfurtWS   = wsEndpoint(mainnetFrankfurt, true)
+	MainnetUKWS          = wsEndpoint(mainnetUK, true)
+	MainnetVirginiaGRPC  = grpcEndpoint(mainnetVirginia, true)
+	MainnetNYGRPC        = grpcEndpoint(mainnetNY, true)
+	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, true)
+	MainnetUKGRPC        = grpcEndpoint(mainnetUK, true)
+
+	TestnetHTTP = httpEndpoint(testnet, false)
+	TestnetWS   = wsEndpoint(testnet, false)
+	TestnetGRPC = grpcEndpoint(testnet, false)
+
+	DevnetHTTP = httpEndpoint(devnet, false)
+	DevnetWS   = wsEndpoint(devnet, false)
+	DevnetGRPC = grpcEndpoint(devnet, false)
+
+	LocalHTTP = "http://localhost:9000"
+	LocalWS   = "ws://localhost:9000/ws"
+	LocalGRPC = "localhost:9000"
+)
+
+func httpEndpoint(baseUrl string, secure bool) string {
+	prefix := "http"
+	if secure {
+		prefix = "https"
+	}
+	return fmt.Sprintf("%v://%v", prefix, baseUrl)
+}
+
+func wsEndpoint(baseUrl string, secure bool) string {
+	prefix := "ws"
+	if secure {
+		prefix = "wss"
+	}
+	return fmt.Sprintf("%v://%v/ws", prefix, baseUrl)
+}
+
+func grpcEndpoint(baseUrl string, secure bool) string {
+	port := "80"
+	if secure {
+		port = "443"
+	}
+	return fmt.Sprintf("%v:%v", baseUrl, port)
+}
 
 var ErrPrivateKeyNotFound = errors.New("private key not provided for signing transaction")
 

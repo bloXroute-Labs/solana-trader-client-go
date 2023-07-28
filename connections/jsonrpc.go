@@ -28,7 +28,13 @@ func (s SubscribeParams) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	params := []json.RawMessage{nameB, s.StreamOpts}
+	var params []json.RawMessage
+	if s.StreamOpts == nil {
+		params = []json.RawMessage{nameB}
+	} else {
+		params = []json.RawMessage{nameB, s.StreamOpts}
+	}
+
 	return json.Marshal(params)
 }
 

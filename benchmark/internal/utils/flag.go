@@ -16,4 +16,9 @@ var (
 		Name:  "solana-ws-endpoint",
 		Usage: "WS RPC server endpoint to make blockchain pub/sub queries against",
 	}
+	APIWSEndpoint = &cli.StringFlag{
+		Name:  "solana-trader-ws-endpoint",
+		Usage: "Solana Trader API API websocket connection endpoint",
+		Value: "wss://virginia.solana.dex.blxrbdn.com/ws",
+	}
 )

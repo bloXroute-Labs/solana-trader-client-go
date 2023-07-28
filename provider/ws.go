@@ -21,7 +21,7 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetWS)
+	opts := DefaultRPCOpts(MainnetVirginiaWS)
 	return NewWSClientWithOpts(opts)
 }
 
@@ -70,6 +70,246 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 
 func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return w.recentBlockHashStore.get(ctx)
+}
+
+// GetRaydiumPools returns pools on Raydium
+func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
+	var response pb.GetRaydiumPoolsResponse
+	err := w.conn.Request(ctx, "GetRaydiumPools", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRaydiumQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium
+func (w *WSClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQuotesRequest) (*pb.GetRaydiumQuotesResponse, error) {
+	var response pb.GetRaydiumQuotesResponse
+	err := w.conn.Request(ctx, "GetRaydiumQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRaydiumPrices returns the USDC price of requested tokens on Raydium
+func (w *WSClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
+	var response pb.GetRaydiumPricesResponse
+	err := w.conn.Request(ctx, "GetRaydiumPrices", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (w *WSClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	var response pb.PostRaydiumSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (w *WSClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	var response pb.PostRaydiumRouteSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumRouteSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetJupiterQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Jupiter
+func (w *WSClient) GetJupiterQuotes(ctx context.Context, request *pb.GetJupiterQuotesRequest) (*pb.GetJupiterQuotesResponse, error) {
+	var response pb.GetJupiterQuotesResponse
+	err := w.conn.Request(ctx, "GetJupiterQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetJupiterPrices returns the USDC price of requested tokens on Jupiter
+func (w *WSClient) GetJupiterPrices(ctx context.Context, request *pb.GetJupiterPricesRequest) (*pb.GetJupiterPricesResponse, error) {
+	var response pb.GetJupiterPricesResponse
+	err := w.conn.Request(ctx, "GetJupiterPrices", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostJupiterSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (w *WSClient) PostJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest) (*pb.PostJupiterSwapResponse, error) {
+	var response pb.PostJupiterSwapResponse
+	err := w.conn.Request(ctx, "PostJupiterSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
+func (w *WSClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
+	var response pb.PostJupiterRouteSwapResponse
+	err := w.conn.Request(ctx, "PostJupiterRouteSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
+func (w *WSClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
+	var response pb.PostCloseDriftPerpPositionsResponse
+	err := w.conn.Request(ctx, "PostCloseDriftPerpPositions", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpOrderbook returns the current state of perpetual contract orderbook on Drift
+func (w *WSClient) GetDriftPerpOrderbook(ctx context.Context, request *pb.GetDriftPerpOrderbookRequest) (*pb.GetDriftPerpOrderbookResponse, error) {
+	var response pb.GetDriftPerpOrderbookResponse
+	err := w.conn.Request(ctx, "GetDriftPerpOrderbook", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCreateDriftUser returns a partially signed transaction for creating a user on Drift
+func (w *WSClient) PostCreateDriftUser(ctx context.Context, request *pb.PostCreateDriftUserRequest) (*pb.PostCreateDriftUserResponse, error) {
+	var response pb.PostCreateDriftUserResponse
+	err := w.conn.Request(ctx, "PostCreateDriftUser", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftUser returns a user's info on Drift
+func (w *WSClient) GetDriftUser(ctx context.Context, request *pb.GetDriftUserRequest) (*pb.GetDriftUserResponse, error) {
+	var response pb.GetDriftUserResponse
+	err := w.conn.Request(ctx, "GetDriftUser", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftManageCollateral returns a partially signed transaction for managing collateral on Drift
+func (w *WSClient) PostDriftManageCollateral(ctx context.Context, request *pb.PostDriftManageCollateralRequest) (*pb.PostDriftManageCollateralResponse, error) {
+	var response pb.PostDriftManageCollateralResponse
+	err := w.conn.Request(ctx, "PostDriftManageCollateral", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftSettlePNL returns partially signed transactions for settling PNL on Drift
+func (w *WSClient) PostDriftSettlePNL(ctx context.Context, request *pb.PostDriftSettlePNLRequest) (*pb.PostDriftSettlePNLResponse, error) {
+	var response pb.PostDriftSettlePNLResponse
+	err := w.conn.Request(ctx, "PostDriftSettlePNL", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftSettlePNLs returns partially signed transactions for settling PNLs on Drift
+func (w *WSClient) PostDriftSettlePNLs(ctx context.Context, request *pb.PostDriftSettlePNLsRequest) (*pb.PostDriftSettlePNLsResponse, error) {
+	var response pb.PostDriftSettlePNLsResponse
+	err := w.conn.Request(ctx, "PostDriftSettlePNLs", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftAssets returns list of assets for user on Drift
+func (w *WSClient) GetDriftAssets(ctx context.Context, request *pb.GetDriftAssetsRequest) (*pb.GetDriftAssetsResponse, error) {
+	var response pb.GetDriftAssetsResponse
+	err := w.conn.Request(ctx, "GetDriftAssets", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpContracts returns list of available perp contracts on Drift
+func (w *WSClient) GetDriftPerpContracts(ctx context.Context, request *pb.GetDriftPerpContractsRequest) (*pb.GetDriftPerpContractsResponse, error) {
+	var response pb.GetDriftPerpContractsResponse
+	err := w.conn.Request(ctx, "GetDriftPerpContracts", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostLiquidateDriftPerp returns a partially signed transaction for liquidating perp position on Drift
+func (w *WSClient) PostLiquidateDriftPerp(ctx context.Context, request *pb.PostLiquidateDriftPerpRequest) (*pb.PostLiquidateDriftPerpResponse, error) {
+	var response pb.PostLiquidateDriftPerpResponse
+	err := w.conn.Request(ctx, "PostLiquidateDriftPerp", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftOpenPerpOrder returns an open perp order on Drift
+func (w *WSClient) GetDriftOpenPerpOrder(ctx context.Context, request *pb.GetDriftOpenPerpOrderRequest) (*pb.GetDriftOpenPerpOrderResponse, error) {
+	var response pb.GetDriftOpenPerpOrderResponse
+	err := w.conn.Request(ctx, "GetDriftOpenPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftOpenMarginOrder return a open margin order on Drift
+func (w *WSClient) GetDriftOpenMarginOrder(ctx context.Context, request *pb.GetDriftOpenMarginOrderRequest) (*pb.GetDriftOpenMarginOrderResponse, error) {
+	var response pb.GetDriftOpenMarginOrderResponse
+	err := w.conn.Request(ctx, "GetDriftOpenMarginOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftPerpPositions returns all perp positions on Drift
+func (w *WSClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
+	var response pb.GetDriftPerpPositionsResponse
+	err := w.conn.Request(ctx, "GetDriftPerpPositions", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftOpenPerpOrders returns all open perp orders on Drift
+func (w *WSClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
+	var response pb.GetDriftOpenPerpOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftOpenPerpOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
+func (w *WSClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
+	var response pb.PostDriftCancelPerpOrderResponse
+	err := w.conn.Request(ctx, "PostDriftCancelPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
 // GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
@@ -122,7 +362,7 @@ func (w *WSClient) GetTickers(ctx context.Context, market string, project pb.Pro
 	return &response, nil
 }
 
-// GetOpenOrders returns all opened orders by owner address and market
+// GetOpenOrders returns all open orders by owner address and market
 func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
 	var response pb.GetOpenOrdersResponse
 	err := w.conn.Request(ctx, "GetOpenOrders", &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project}, &response)
@@ -132,10 +372,30 @@ func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner strin
 	return &response, nil
 }
 
-// GetOpenPerpOrders returns all opened perp orders
+// GetOrderByID returns an order by id
+func (w *WSClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDRequest) (*pb.GetOrderByIDResponse, error) {
+	var response pb.GetOrderByIDResponse
+	err := w.conn.Request(ctx, "GetOrderByID", &pb.GetOrderByIDRequest{OrderID: in.OrderID, Market: in.Market, Project: in.Project}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOpenPerpOrders returns all open perp orders
 func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
 	var response pb.GetOpenPerpOrdersResponse
 	err := w.conn.Request(ctx, "GetOpenPerpOrders", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftOpenMarginOrders returns all open margin orders on Drift
+func (w *WSClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
+	var response pb.GetDriftOpenMarginOrdersResponse
+	err := w.conn.Request(ctx, "GetDriftOpenMarginOrders", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +406,16 @@ func (w *WSClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPer
 func (w *WSClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
 	var response pb.PostCancelPerpOrderResponse
 	err := w.conn.Request(ctx, "PostCancelPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift
+func (w *WSClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
+	var response pb.PostCancelDriftMarginOrderResponse
+	err := w.conn.Request(ctx, "PostCancelDriftMarginOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -182,20 +452,70 @@ func (w *WSClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb
 	return &response, nil
 }
 
-// PostDepositCollateral returns a partially signed transaction for posting collateral
-func (w *WSClient) PostDepositCollateral(ctx context.Context, req *pb.PostDepositCollateralRequest) (*pb.PostDepositCollateralResponse, error) {
-	var response pb.PostDepositCollateralResponse
-	err := w.conn.Request(ctx, "PostDepositCollateral", req, &response)
+// PostManageCollateral returns a partially signed transaction for managing collateral
+func (w *WSClient) PostManageCollateral(ctx context.Context, req *pb.PostManageCollateralRequest) (*pb.PostManageCollateralResponse, error) {
+	var response pb.PostManageCollateralResponse
+	err := w.conn.Request(ctx, "PostManageCollateral", req, &response)
 	if err != nil {
 		return nil, err
 	}
 	return &response, nil
 }
 
-// PostWithdrawCollateral returns a partially signed transaction for withdrawing collateral
-func (w *WSClient) PostWithdrawCollateral(ctx context.Context, req *pb.PostWithdrawCollateralRequest) (*pb.PostWithdrawCollateralResponse, error) {
-	var response pb.PostWithdrawCollateralResponse
-	err := w.conn.Request(ctx, "PostWithdrawCollateral", req, &response)
+// PostSettlePNL returns a partially signed transaction for settling PNL
+func (w *WSClient) PostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest) (*pb.PostSettlePNLResponse, error) {
+	var response pb.PostSettlePNLResponse
+	err := w.conn.Request(ctx, "PostSettlePNL", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostSettlePNLs returns partially signed transactions for settling PNLs
+func (w *WSClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest) (*pb.PostSettlePNLsResponse, error) {
+	var response pb.PostSettlePNLsResponse
+	err := w.conn.Request(ctx, "PostSettlePNLs", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetAssets returns list of assets for user
+func (w *WSClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
+	var response pb.GetAssetsResponse
+	err := w.conn.Request(ctx, "GetAssets", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetPerpContracts returns list of available perp contracts
+func (w *WSClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
+	var response pb.GetPerpContractsResponse
+	err := w.conn.Request(ctx, "GetPerpContracts", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostLiquidatePerp returns a partially signed transaction for liquidating perp position
+func (w *WSClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
+	var response pb.PostLiquidatePerpResponse
+	err := w.conn.Request(ctx, "PostLiquidatePerp", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOpenPerpOrder returns an open perp order
+func (w *WSClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
+	var response pb.GetOpenPerpOrderResponse
+	err := w.conn.Request(ctx, "GetOpenPerpOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -236,6 +556,16 @@ func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.Get
 func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	var response pb.GetMarketsResponse
 	err := w.conn.Request(ctx, "GetMarkets", &pb.GetMarketsRequest{}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftMarkets returns the list of all available named markets
+func (w *WSClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
+	var response pb.GetDriftMarketsResponse
+	err := w.conn.Request(ctx, "GetDriftMarkets", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -330,6 +660,56 @@ func (w *WSClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderR
 	return &response, nil
 }
 
+// PostDriftPerpOrder returns a partially signed transaction for placing a Drift perp order. Typically, you want to use SubmitDriftPerpOrder instead of this.
+func (w *WSClient) PostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest) (*pb.PostDriftPerpOrderResponse, error) {
+	var response pb.PostDriftPerpOrderResponse
+	err := w.conn.Request(ctx, "PostDriftPerpOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
+func (w *WSClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
+	var response pb.PostModifyDriftOrderResponse
+	err := w.conn.Request(ctx, "PostModifyDriftOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftMarginOrder returns a partially signed transaction for placing a margin order. Typically, you want to use SubmitPostMarginOrder instead of this.
+func (w *WSClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
+	var response pb.PostDriftMarginOrderResponse
+	err := w.conn.Request(ctx, "PostDriftMarginOrder", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
+func (w *WSClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
+	var response pb.PostDriftEnableMarginTradingResponse
+	err := w.conn.Request(ctx, "PostDriftEnableMarginTrading", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
+func (w *WSClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
+	tx, err := w.PostDriftEnableMarginTrading(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{
@@ -405,6 +785,42 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
+// SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostRaydiumRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostJupiterSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostJupiterRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
 // SubmitPerpOrder builds a perp order, signs it, and submits to the network.
 func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, opts PostOrderOpts) (string, error) {
 
@@ -413,9 +829,18 @@ func (w *WSClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrde
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{
-		Content: order.Transaction,
-	}, opts.SkipPreFlight)
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// SubmitPostDriftMarginOrder builds a margin order, signs it, and submits to the network.
+func (w *WSClient) SubmitPostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, opts PostOrderOpts) (string, error) {
+
+	order, err := w.PostDriftMarginOrder(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -466,7 +891,7 @@ func (w *WSClient) SubmitClosePerpPositions(ctx context.Context, request *pb.Pos
 	}
 	var msgs []*pb.TransactionMessage
 	for _, txn := range resp.Transactions {
-		msgs = append(msgs, &pb.TransactionMessage{Content: txn})
+		msgs = append(msgs, txn)
 	}
 
 	return w.signAndSubmitBatch(ctx, msgs, opts)
@@ -480,17 +905,29 @@ func (w *WSClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCa
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn , signs and submits it to the network.
+func (w *WSClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostCancelDriftMarginOrder(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
-func (w *WSClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (string, error) {
+func (w *WSClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostCancelPerpOrders(ctx, request)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmitBatch(ctx, resp.Transactions, SubmitOpts{
+		SkipPreFlight: skipPreFlight,
+	})
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -652,13 +1089,40 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-func (w *WSClient) SubmitDepositCollateral(ctx context.Context, req *pb.PostDepositCollateralRequest, skipPreFlight bool) (string, error) {
-	resp, err := w.PostDepositCollateral(ctx, req)
+// SubmitPostSettlePNL builds a settle-pnl txn, signs and submits it to the network.
+func (w *WSClient) SubmitPostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostSettlePNL(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+// SubmitPostSettlePNLs builds one or many settle-pnl txn, signs and submits them to the network.
+func (w *WSClient) SubmitPostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostSettlePNLs(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitPostLiquidatePerp builds a liquidate-perp txn, signs and submits it to the network.
+func (w *WSClient) SubmitPostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostLiquidatePerp(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
+}
+
+func (w *WSClient) SubmitManageCollateral(ctx context.Context, req *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostManageCollateral(ctx, req)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserRequest, skipPreFlight bool) (interface{}, interface{}) {
@@ -667,7 +1131,7 @@ func (w *WSClient) SubmitCreateUser(ctx context.Context, req *pb.PostCreateUserR
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrderRequest, skipPreFlight bool) (interface{}, interface{}) {
@@ -676,17 +1140,17 @@ func (w *WSClient) SubmitPostPerpOrder(ctx context.Context, req *pb.PostPerpOrde
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
-// SubmitWithdrawCollateral builds a withdrawal collateral transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitWithdrawCollateral(ctx context.Context, req *pb.PostWithdrawCollateralRequest, skipPreFlight bool) (interface{}, interface{}) {
-	resp, err := w.PostWithdrawCollateral(ctx, req)
+// SubmitPostModifyDriftOrder builds a Drift modify-order txn, signs and submits it to the network.
+func (w *WSClient) SubmitPostModifyDriftOrder(ctx context.Context, req *pb.PostModifyDriftOrderRequest, skipPreFlight bool) (string, error) {
+	resp, err := w.PostModifyDriftOrder(ctx, req)
 	if err != nil {
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transaction}, skipPreFlight)
+	return w.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) Close() error {
@@ -701,6 +1165,14 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 		Project: project,
 	}, func() *pb.GetOrderbooksStreamResponse {
 		var v pb.GetOrderbooksStreamResponse
+		return &v
+	})
+}
+
+// GetDriftMarginOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
+func (w *WSClient) GetDriftMarginOrderbooksStream(ctx context.Context, request *pb.GetDriftMarginOrderbooksRequest) (connections.Streamer[*pb.GetDriftMarginOrderbooksStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarginOrderbooksStream", request, func() *pb.GetDriftMarginOrderbooksStreamResponse {
+		var v pb.GetDriftMarginOrderbooksStreamResponse
 		return &v
 	})
 }
@@ -811,10 +1283,216 @@ func (w *WSClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrde
 	return &response, nil
 }
 
+// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
+func (w *WSClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
+	var response pb.GetDriftMarginOrderbookResponse
+	err := w.conn.Request(ctx, "GetDriftMarginOrderbook", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
 func (w *WSClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetPerpOrderbooksRequest) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
 	newResponse := func() *pb.GetPerpOrderbooksStreamResponse {
 		return &pb.GetPerpOrderbooksStreamResponse{}
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetPerpOrderbooksStream", request, newResponse)
+}
+
+// GetPerpTradesStream subscribes to a stream for trades to the requested contracts
+func (w *WSClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpTradesStreamRequest) (connections.Streamer[*pb.GetPerpTradesStreamResponse], error) {
+	newResponse := func() *pb.GetPerpTradesStreamResponse {
+		return &pb.GetPerpTradesStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetPerpTradesStream", request, newResponse)
+}
+
+// GetDriftMarketDepth returns market depth data.
+func (w *WSClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
+	var response pb.GetDriftMarketDepthResponse
+	err := w.conn.Request(ctx, "GetDriftMarketDepth", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetDriftMarketDepthsStream subscribes to a stream for drift market depth data updates.
+func (w *WSClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb.GetDriftMarketDepthsStreamRequest) (connections.Streamer[*pb.GetDriftMarketDepthStreamResponse], error) {
+	newResponse := func() *pb.GetDriftMarketDepthStreamResponse {
+		return &pb.GetDriftMarketDepthStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetDriftMarketDepthsStream", request, newResponse)
+}
+
+// V2 Openbook
+
+// GetMarketsV2 returns the list of all available named markets
+func (w *WSClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponse, error) {
+	var response pb.GetMarketsResponse
+	err := w.conn.Request(ctx, "GetMarketsV2", &pb.GetMarketsRequestV2{}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (w *WSClient) GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error) {
+	var response pb.GetOrderbookResponseV2
+	err := w.conn.Request(ctx, "GetOrderbookV2", &pb.GetOrderbookRequestV2{Market: market, Limit: limit}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetMarketDepthV2 returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
+func (w *WSClient) GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*pb.GetMarketDepthResponseV2, error) {
+	var response pb.GetMarketDepthResponseV2
+	err := w.conn.Request(ctx, "GetMarketDepthV2", &pb.GetMarketDepthRequestV2{Market: market, Limit: limit}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetTickersV2 returns the requested market tickets. Set market to "" for all markets.
+func (w *WSClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTickersResponseV2, error) {
+	var response pb.GetTickersResponseV2
+	err := w.conn.Request(ctx, "GetTickersV2", &pb.GetTickersRequestV2{Market: market}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetOpenOrdersV2 returns all open orders by owner address and market
+func (w *WSClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
+	var response pb.GetOpenOrdersResponse
+	err := w.conn.Request(ctx, "GetOpenOrdersV2", &pb.GetOpenOrdersRequestV2{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, OrderID: orderID, ClientOrderID: clientOrderID}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetUnsettledV2 returns all OpenOrders accounts for a given market with the amounts of unsettled funds
+func (w *WSClient) GetUnsettledV2(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
+	var response pb.GetUnsettledResponse
+	err := w.conn.Request(ctx, "GetUnsettledV2", &pb.GetUnsettledRequestV2{Market: market, OwnerAddress: ownerAddress}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	request := &pb.PostOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+	}
+	var response pb.PostOrderResponse
+	err := w.conn.Request(ctx, "PostOrderV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
+func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostOrderV2(ctx, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// PostCancelOrderV2 builds a Serum cancel order.
+func (w *WSClient) PostCancelOrderV2(ctx context.Context, request *pb.PostCancelOrderRequestV2) (*pb.PostCancelOrderResponseV2, error) {
+	var response pb.PostCancelOrderResponseV2
+	err := w.conn.Request(ctx, "PostCancelOrderV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitCancelOrderV2 builds a Serum cancel order, signs and submits it to the network.
+func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCancelOrderRequestV2, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
+	order, err := w.PostCancelOrderV2(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.signAndSubmitBatch(ctx, order.Transactions, SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  skipPreFlight,
+	})
+}
+
+// PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
+func (w *WSClient) PostSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
+	request := &pb.PostSettleRequestV2{
+		OwnerAddress:      owner,
+		Market:            market,
+		BaseTokenWallet:   baseTokenWallet,
+		QuoteTokenWallet:  quoteTokenWallet,
+		OpenOrdersAddress: openOrdersAccount,
+	}
+	var response pb.PostSettleResponse
+	err := w.conn.Request(ctx, "PostSettleV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitSettleV2 builds a market SubmitSettle transaction, signs it, and submits to the network.
+func (w *WSClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
+	order, err := w.PostSettleV2(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
+	if err != nil {
+		return "", err
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
+}
+
+func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	request := &pb.PostReplaceOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ClientOrderID:     opts.ClientOrderID,
+		OrderID:           orderID,
+	}
+	var response pb.PostOrderResponse
+	err := w.conn.Request(ctx, "PostReplaceOrderV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := w.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }

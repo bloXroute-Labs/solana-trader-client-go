@@ -1,4 +1,4 @@
-package arrival
+package stream
 
 import (
 	"context"
@@ -68,7 +68,7 @@ func (s apiOrderbookStream) Name() string {
 }
 
 // Run stops when parent ctx is canceled
-func (s apiOrderbookStream) Run(parent context.Context) ([]StreamUpdate[[]byte], error) {
+func (s apiOrderbookStream) Run(parent context.Context) ([]RawUpdate[[]byte], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -80,7 +80,7 @@ func (s apiOrderbookStream) Run(parent context.Context) ([]StreamUpdate[[]byte],
 
 	s.log().Debugw("subscription created")
 
-	wsMessages := make(chan StreamUpdate[[]byte], 100)
+	wsMessages := make(chan RawUpdate[[]byte], 100)
 	go func() {
 		for {
 			if ctx.Err() != nil {
@@ -93,11 +93,11 @@ func (s apiOrderbookStream) Run(parent context.Context) ([]StreamUpdate[[]byte],
 				return
 			}
 
-			wsMessages <- NewStreamUpdate(b)
+			wsMessages <- NewRawUpdate(b)
 		}
 	}()
 
-	messages := make([]StreamUpdate[[]byte], 0)
+	messages := make([]RawUpdate[[]byte], 0)
 	for {
 		select {
 		case msg := <-wsMessages:
@@ -117,7 +117,7 @@ type subscriptionUpdate struct {
 	Result         json.RawMessage `json:"result"`
 }
 
-func (s apiOrderbookStream) Process(updates []StreamUpdate[[]byte], removeDuplicates bool) (map[int][]ProcessedUpdate[TraderAPIUpdate], map[int][]ProcessedUpdate[TraderAPIUpdate], error) {
+func (s apiOrderbookStream) Process(updates []RawUpdate[[]byte], removeDuplicates bool) (map[int][]ProcessedUpdate[TraderAPIUpdate], map[int][]ProcessedUpdate[TraderAPIUpdate], error) {
 	var (
 		err      error
 		previous *TraderAPIUpdate

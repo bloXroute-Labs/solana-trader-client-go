@@ -3,6 +3,7 @@ package transaction
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"github.com/gagliardetto/solana-go"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 )
@@ -29,22 +30,35 @@ func CreateTraderAPIMemoInstruction(msg string) solana.Instruction {
 	return instruction
 }
 
-func AddMemo(instructions []solana.Instruction, memoContent string, blockhash solana.Hash, owner solana.PublicKey, privateKeys map[solana.PublicKey]solana.PrivateKey) (string, error) {
-	memo := CreateTraderAPIMemoInstruction(memoContent)
-
-	instructions = append(instructions, memo)
-
-	txnBytes, err := buildFullySignedTxn(blockhash, owner, instructions, privateKeys)
+func addMemo(tx *solana.Transaction) error {
+	memoInstruction := CreateTraderAPIMemoInstruction("")
+	memoData, err := memoInstruction.Data()
 	if err != nil {
-		return "", err
+		return err
 	}
-	return base64.StdEncoding.EncodeToString(txnBytes), nil
+
+	cutoff := uint16(len(tx.Message.AccountKeys))
+	for _, instruction := range tx.Message.Instructions {
+		for i, accountIdx := range instruction.Accounts {
+			if accountIdx >= cutoff {
+				instruction.Accounts[i] = accountIdx + 1
+			}
+		}
+	}
+
+	tx.Message.AccountKeys = append(tx.Message.AccountKeys, memoInstruction.ProgramID())
+	tx.Message.Instructions = append(tx.Message.Instructions, solana.CompiledInstruction{
+		ProgramIDIndex: cutoff,
+		Accounts:       nil,
+		Data:           memoData,
+	})
+
+	return nil
 }
 
-// AddMemoToSerializedTxn adds memo instruction to a serialized transaction, it's primarily used if the user
+// AddMemoAndSign adds memo instruction to a serialized transaction, it's primarily used if the user
 // doesn't want to interact with Trader-API directly
-func AddMemoToSerializedTxn(txBase64, memoContent string,
-	owner solana.PublicKey, privateKeys map[solana.PublicKey]solana.PrivateKey) (string, error) {
+func AddMemoAndSign(txBase64 string, privateKey solana.PrivateKey) (string, error) {
 	signedTxBytes, err := solanarpc.DataBytesOrJSONFromBase64(txBase64)
 	if err != nil {
 		return "", err
@@ -55,47 +69,31 @@ func AddMemoToSerializedTxn(txBase64, memoContent string,
 		return "", err
 	}
 
-	var instructions []solana.Instruction
-	for _, cmpInst := range solanaTx.Message.Instructions {
-		accounts := cmpInst.ResolveInstructionAccounts(&solanaTx.Message)
-		instProgID, err := solanaTx.Message.ResolveProgramIDIndex(cmpInst.ProgramIDIndex)
-		if err != nil {
-			return "", err
+	if len(solanaTx.Message.AccountKeys) >= 32 {
+		return "", fmt.Errorf("transaction has too many account keys")
+	}
+
+	for _, key := range solanaTx.Message.AccountKeys {
+		if key == TraderAPIMemoProgram {
+			return "", fmt.Errorf("transaction already has bloXroute memo instruction")
 		}
-		instructions = append(instructions, &solana.GenericInstruction{
-			AccountValues: accounts,
-			ProgID:        instProgID,
-			DataBytes:     cmpInst.Data,
-		})
 	}
 
-	return AddMemo(instructions, memoContent, solanaTx.Message.RecentBlockhash, owner, privateKeys)
-}
-
-func buildFullySignedTxn(recentBlockHash solana.Hash, owner solana.PublicKey, instructions []solana.Instruction, privateKeys map[solana.PublicKey]solana.PrivateKey) ([]byte, error) {
-
-	privateKeysGetter := func(key solana.PublicKey) *solana.PrivateKey {
-		if pbKey, ok := privateKeys[key]; ok {
-			return &pbKey
-		}
-		return nil
-	}
-
-	txBuilder := solana.NewTransactionBuilder()
-	for _, inst := range instructions {
-		txBuilder.AddInstruction(inst)
-	}
-
-	txBuilder.SetRecentBlockHash(recentBlockHash)
-	txBuilder.SetFeePayer(owner)
-
-	tx, err := txBuilder.Build()
+	err = addMemo(solanaTx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	_, err = tx.Sign(privateKeysGetter)
+
+	err = signTx(solanaTx, privateKey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return tx.MarshalBinary()
+
+	txnBytes, err := solanaTx.MarshalBinary()
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(txnBytes), nil
+
 }

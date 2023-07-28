@@ -31,8 +31,14 @@ type WS struct {
 	err           error
 	writeCh       chan []byte
 
-	requestMap      map[uint64]requestTracker
+	requestMap map[uint64]requestTracker
+	requestM   sync.RWMutex
+
 	subscriptionMap map[string]subscriptionEntry
+
+	// public to allow overriding of (un)subscribe method name
+	SubscribeMethodName   string
+	UnsubscribeMethodName string
 }
 
 func NewWS(endpoint string, authHeader string) (*WS, error) {
@@ -46,13 +52,15 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	ws := &WS{
-		requestID:       utils.NewRequestID(),
-		conn:            conn,
-		ctx:             ctx,
-		cancel:          cancel,
-		writeCh:         make(chan []byte, 100),
-		requestMap:      make(map[uint64]requestTracker),
-		subscriptionMap: make(map[string]subscriptionEntry),
+		requestID:             utils.NewRequestID(),
+		conn:                  conn,
+		ctx:                   ctx,
+		cancel:                cancel,
+		writeCh:               make(chan []byte, 100),
+		requestMap:            make(map[uint64]requestTracker),
+		subscriptionMap:       make(map[string]subscriptionEntry),
+		SubscribeMethodName:   subscribeMethod,
+		UnsubscribeMethodName: unsubscribeMethod,
 	}
 	go ws.readLoop()
 	go ws.writeLoop()
@@ -113,7 +121,9 @@ func (w *WS) writeLoop() {
 
 func (w *WS) processRPCResponse(response jsonrpc2.Response) {
 	requestID := response.ID.Num
+	w.requestM.RLock()
 	rt, ok := w.requestMap[requestID]
+	w.requestM.RUnlock()
 	if !ok {
 		_ = w.Close(fmt.Errorf("unknown request ID: got %v, most recent %v", requestID, w.requestID.Current()))
 		return
@@ -188,11 +198,17 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 
 	// setup listener for next request ID that matches response
 	responseCh := make(chan responseUpdate)
+	w.requestM.Lock()
 	w.requestMap[request.ID.Num] = requestTracker{
 		ch:           responseCh,
 		lockRequired: lockRequired,
 	}
+	w.requestM.Unlock()
+
 	defer func() {
+		w.requestM.Lock()
+		defer w.requestM.Unlock()
+
 		delete(w.requestMap, request.ID.Num)
 	}()
 
@@ -219,10 +235,20 @@ func (w *WS) request(ctx context.Context, request jsonrpc2.Request, lockRequired
 }
 
 func WSStreamAny[T any](w *WS, ctx context.Context, streamName string, streamParams interface{}) (Streamer[T], error) {
-	streamParamsB, err := json.Marshal(streamParams)
-	if err != nil {
-		return nil, err
+	var (
+		err           error
+		streamParamsB []byte
+	)
+
+	if streamParams == nil {
+		streamParamsB = nil
+	} else {
+		streamParamsB, err = json.Marshal(streamParams)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return wsStream(w, ctx, streamName, streamParamsB, func(b []byte) (T, error) {
 		var v T
 		err := json.Unmarshal(b, &v)
@@ -247,13 +273,15 @@ func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams
 		StreamName: streamName,
 		StreamOpts: streamParams,
 	}
+
 	paramsB, err := json.Marshal(params)
 	if err != nil {
 		return nil, err
 	}
+
 	rawParams := json.RawMessage(paramsB)
 	rpcRequest := jsonrpc2.Request{
-		Method: subscribeMethod,
+		Method: w.SubscribeMethodName,
 		ID:     jsonrpc2.ID{Num: w.requestID.Next()},
 		Params: &rawParams,
 	}
@@ -297,7 +325,7 @@ func wsStream[T any](w *WS, ctx context.Context, streamName string, streamParams
 
 		unsubscribeMessage := jsonrpc2.Request{
 			ID:     jsonrpc2.ID{Num: w.requestID.Next()},
-			Method: unsubscribeMethod,
+			Method: w.UnsubscribeMethodName,
 			Params: &rm,
 		}
 
