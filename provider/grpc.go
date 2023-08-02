@@ -183,7 +183,7 @@ func (g *GRPCClient) GetTickers(ctx context.Context, market string, project pb.P
 
 // GetKline returns the requested market's candles over a certain time period and resolution
 func (g *GRPCClient) GetKline(ctx context.Context, market string, from time.Time, to time.Time, resolution time.Duration) (*pb.GetKlineResponse, error) {
-	return g.apiClient.GetKline(ctx, &pb.GetKlineRequest{Market: market, From: timestamppb.New(from), To: timestamppb.New(to), Resolution: resolution.String()})
+	return g.apiClient.GetKline(ctx, &pb.GetKlineRequest{Market: market, From: timestamppb.New(from.UTC()), To: timestamppb.New(to.UTC()), Resolution: resolution.String()})
 }
 
 // GetOpenOrders returns all open orders by owner address and market

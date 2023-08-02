@@ -1374,7 +1374,7 @@ func (w *WSClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTick
 // GetKline returns the requested market's candles over a certain time period and resolution
 func (w *WSClient) GetKline(ctx context.Context, market string, from time.Time, to time.Time, resolution time.Duration) (*pb.GetKlineResponse, error) {
 	var response pb.GetKlineResponse
-	err := w.conn.Request(ctx, "GetKline", &pb.GetKlineRequest{Market: market, From: timestamppb.New(from), To: timestamppb.New(to), Resolution: resolution.String()}, &response)
+	err := w.conn.Request(ctx, "GetKline", &pb.GetKlineRequest{Market: market, From: timestamppb.New(from.UTC()), To: timestamppb.New(to.UTC()), Resolution: resolution.String()}, &response)
 	if err != nil {
 		return nil, err
 	}

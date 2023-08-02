@@ -1392,7 +1392,7 @@ func (h *HTTPClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTi
 
 // GetKline returns the requested market's candles over a certain time period and resolution
 func (h *HTTPClient) GetKline(ctx context.Context, market string, from time.Time, to time.Time, resolution time.Duration) (*pb.GetKlineResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/market/kline/%s?from=%s&to=%s&resolution=%s", h.baseURL, market, from.Format(time.RFC3339), to.Format(time.RFC3339), resolution.String())
+	url := fmt.Sprintf("%s/api/v1/market/kline/%s?from=%s&to=%s&resolution=%s", h.baseURL, market, from.UTC().Format(time.RFC3339), to.UTC().Format(time.RFC3339), resolution.String())
 	klines := new(pb.GetKlineResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetKlineResponse](ctx, url, h.httpClient, klines, h.authHeader); err != nil {
 		return nil, err
