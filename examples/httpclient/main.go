@@ -78,6 +78,7 @@ func run() bool {
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	failed = failed || logCall("callKlineHTTP", func() bool { return callKlineHTTP() })
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
@@ -427,6 +428,27 @@ func callTickersHTTP() bool {
 	tickers, err := h.GetTickersV2(ctx, "SOLUSDT")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDT: %v", err)
+		return true
+	} else {
+		log.Info(tickers)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callKlineHTTP() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	start := time.Now().UTC().Add(time.Hour * -5)
+	end := time.Now().UTC()
+	resolution := time.Hour
+
+	tickers, err := h.GetKline(ctx, "SOLUSDT", start, end, resolution)
+	if err != nil {
+		log.Errorf("error with GetKline request for SOLUSDT: %v", err)
 		return true
 	} else {
 		log.Info(tickers)

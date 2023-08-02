@@ -63,6 +63,7 @@ func run() bool {
 	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
 	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
 	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
+	failed = failed || logCall("callKlineWS", func() bool { return callKlineWS(w) })
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
@@ -396,6 +397,26 @@ func callTickersWS(w *provider.WSClient) bool {
 		return true
 	} else {
 		log.Info(tickers)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callKlineWS(w *provider.WSClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	start := time.Now().UTC().Add(time.Hour * -5)
+	end := time.Now().UTC()
+	resolution := time.Hour
+
+	kline, err := w.GetKline(ctx, "SOLUSDT", start, end, resolution)
+	if err != nil {
+		log.Errorf("error with GetKline request for SOLUSDT: %v", err)
+		return true
+	} else {
+		log.Info(kline)
 	}
 
 	fmt.Println()
