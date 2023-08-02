@@ -53,6 +53,7 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
 	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
+	failed = failed || logCall("callKlineGRPC", func() bool { return callKlineGRPC(g) })
 
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
@@ -293,6 +294,23 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(orders)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callKlineGRPC(g *provider.GRPCClient) bool {
+	start := time.Now().UTC().Add(time.Hour * -5)
+	end := time.Now().UTC()
+	resolution := time.Hour
+
+	kline, err := g.GetKline(context.Background(), "SOLUSDC", start, end, resolution)
+	if err != nil {
+		log.Errorf("error with GetKline request for SOLUSDC: %v", err)
+		return true
+	} else {
+		log.Info(kline)
 	}
 
 	fmt.Println()
