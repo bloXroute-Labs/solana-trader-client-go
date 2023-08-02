@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 type GRPCClient struct {
@@ -177,6 +179,11 @@ func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32,
 // GetTickers returns the requested market tickets. Set market to "" for all markets.
 func (g *GRPCClient) GetTickers(ctx context.Context, market string, project pb.Project) (*pb.GetTickersResponse, error) {
 	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market, Project: project})
+}
+
+// GetKline returns the requested market's candles over a certain time period and resolution
+func (g *GRPCClient) GetKline(ctx context.Context, market string, from time.Time, to time.Time, resolution time.Duration) (*pb.GetKlineResponse, error) {
+	return g.apiClient.GetKline(ctx, &pb.GetKlineRequest{Market: market, From: timestamppb.New(from), To: timestamppb.New(to), Resolution: resolution.String()})
 }
 
 // GetOpenOrders returns all open orders by owner address and market

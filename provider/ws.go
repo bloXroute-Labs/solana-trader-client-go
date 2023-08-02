@@ -8,6 +8,8 @@ import (
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 type WSClient struct {
@@ -1363,6 +1365,16 @@ func (w *WSClient) GetMarketDepthV2(ctx context.Context, market string, limit ui
 func (w *WSClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTickersResponseV2, error) {
 	var response pb.GetTickersResponseV2
 	err := w.conn.Request(ctx, "GetTickersV2", &pb.GetTickersRequestV2{Market: market}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetKline returns the requested market's candles over a certain time period and resolution
+func (w *WSClient) GetKline(ctx context.Context, market string, from time.Time, to time.Time, resolution time.Duration) (*pb.GetKlineResponse, error) {
+	var response pb.GetKlineResponse
+	err := w.conn.Request(ctx, "GetKline", &pb.GetKlineRequest{Market: market, From: timestamppb.New(from), To: timestamppb.New(to), Resolution: resolution.String()}, &response)
 	if err != nil {
 		return nil, err
 	}
