@@ -1414,15 +1414,15 @@ func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner st
 }
 
 // PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/openbook/place", h.baseURL)
 	request := &pb.PostOrderRequestV2{
 		OwnerAddress: owner,
 		PayerAddress: payer,
 
 		Market:            market,
-		Side:              convertProtoSideToString(side),
-		Type:              convertOrderTypeToString(orderType),
+		Side:              side,
+		Type:              orderType,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -1438,7 +1438,7 @@ func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
-func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
@@ -1453,7 +1453,7 @@ func (h *HTTPClient) PostCancelOrderV2(
 	ctx context.Context,
 	orderID string,
 	clientOrderID uint64,
-	side pb.Side,
+	side string,
 	owner,
 	market,
 	openOrders string,
@@ -1462,7 +1462,7 @@ func (h *HTTPClient) PostCancelOrderV2(
 	request := &pb.PostCancelOrderRequestV2{
 		OrderID:           orderID,
 		ClientOrderID:     clientOrderID,
-		Side:              convertProtoSideToString(side),
+		Side:              side,
 		OwnerAddress:      owner,
 		MarketAddress:     market,
 		OpenOrdersAddress: openOrders,
@@ -1482,7 +1482,7 @@ func (h *HTTPClient) SubmitCancelOrderV2(
 	ctx context.Context,
 	orderID string,
 	clientOrderID uint64,
-	side pb.Side,
+	side string,
 	owner,
 	market,
 	openOrders string,
@@ -1525,14 +1525,14 @@ func (h *HTTPClient) SubmitSettleV2(ctx context.Context, owner, market, baseToke
 	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
-func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/openbook/replace", h.baseURL)
 	request := &pb.PostReplaceOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
-		Side:              convertProtoSideToString(side),
-		Type:              convertOrderTypeToString(orderType),
+		Side:              side,
+		Type:              orderType,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -1548,7 +1548,7 @@ func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	return &response, nil
 }
 
-func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, orderType common.OrderType, amount, price float64, opts PostOrderOpts) (string, error) {
+func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := h.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
