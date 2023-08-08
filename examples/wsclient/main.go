@@ -15,6 +15,14 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	sideBid      = "bid"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	typeIOC      = "ioc"
+	typePostOnly = "postonly"
+)
+
 func main() {
 	utils.InitLogger()
 	failed := run()
@@ -115,7 +123,7 @@ func run() bool {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
@@ -645,7 +653,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 
 	time.Sleep(time.Second * 10)
 
-	clientOrderID, fail := callPlaceOrderWS(w, ownerAddr, payerAddr, ooAddr)
+	clientOrderID, fail := callPlaceOrderWS(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit)
 	if fail {
 		return true
 	}
@@ -668,7 +676,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	fmt.Println()
 	time.Sleep(time.Second * 10)
 
-	fail = callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID)
+	fail = callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID, sideAsk)
 	if fail {
 		return true
 	}
@@ -692,7 +700,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	return false
 }
 
-func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) (uint64, bool) {
+func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	log.Info("trying to place an order")
 
 	// generate a random clientOrderId for this order
@@ -706,7 +714,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// sign/submit transaction after creation
 	sig, err := w.SubmitOrderV2(context.Background(), ownerAddr, payerAddr, marketAddr,
-		orderSide, orderAmount, orderPrice, opts)
+		orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return 0, true
@@ -717,12 +725,12 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	return clientOrderID, false
 }
 
-func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64) bool {
+func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64, orderSide string) bool {
 	log.Info("trying to cancel order")
 
 	_, err := w.SubmitCancelOrderV2(context.Background(), &pb.PostCancelOrderRequestV2{
 		OrderID:           "",
-		Side:              pb.Side_S_ASK,
+		Side:              orderSide,
 		MarketAddress:     marketAddr,
 		OwnerAddress:      ownerAddr,
 		OpenOrdersAddress: ooAddr,
@@ -751,7 +759,7 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	return false
 }
 
-func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
+func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
@@ -769,7 +777,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -777,7 +785,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err = w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -814,7 +822,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("cancelling the orders")
 	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
 		OrderID:           "",
-		Side:              pb.Side_S_ASK,
+		Side:              pb.Side_S_ASK.String(),
 		MarketAddress:     marketAddr,
 		OwnerAddress:      ownerAddr,
 		OpenOrdersAddress: ooAddr,
@@ -846,7 +854,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	return false
 }
 
-func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
+func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
@@ -863,7 +871,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -892,7 +900,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = w.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = w.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -925,7 +933,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	log.Info("cancelling the orders")
 	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
 		OrderID:           "",
-		Side:              pb.Side_S_ASK,
+		Side:              orderSide,
 		MarketAddress:     marketAddr,
 		OwnerAddress:      ownerAddr,
 		OpenOrdersAddress: ooAddr,
@@ -941,7 +949,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	return false
 }
 
-func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
+func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
@@ -959,7 +967,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -989,7 +997,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, pb.Side_S_ASK, orderAmount, orderPrice/2, opts)
+	sig, err = w.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1021,7 +1029,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string)
 	log.Info("cancelling the orders")
 	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
 		OrderID:           "",
-		Side:              pb.Side_S_ASK,
+		Side:              orderSide,
 		MarketAddress:     marketAddr,
 		OwnerAddress:      ownerAddr,
 		OpenOrdersAddress: ooAddr,

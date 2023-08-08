@@ -16,6 +16,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	sideBid      = "bid"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	typeIOC      = "ioc"
+	typePostOnly = "postonly"
+)
+
 func httpClient() *provider.HTTPClient {
 	cfg, err := config.Load()
 	if err != nil {
@@ -116,13 +124,13 @@ func run() bool {
 
 	if cfg.RunTrades {
 		// Order lifecycle
-		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr)
+		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
 		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
 		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
 		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
@@ -557,7 +565,7 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
+func callPlaceOrderHTTP(ownerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -572,7 +580,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 	}
 
 	// create order without actually submitting
-	response, err := h.PostOrderV2(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	response, err := h.PostOrderV2(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -581,7 +589,7 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string) (uint64, bool) {
 
 	// sign/submit transaction after creation
 	sig, err := h.SubmitOrderV2(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderAmount,
+		orderSide, orderType, orderAmount,
 		orderPrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
@@ -599,7 +607,7 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err := h.SubmitCancelOrderV2(ctx, "", clientOrderID, pb.Side_S_ASK, ownerAddr,
+	_, err := h.SubmitCancelOrderV2(ctx, "", clientOrderID, sideAsk, ownerAddr,
 		marketAddr, ooAddr, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 			SkipPreFlight:  false,
@@ -629,7 +637,7 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 	return false
 }
 
-func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
+func cancelAll(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
@@ -648,7 +656,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -656,7 +664,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err = h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -691,7 +699,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, pb.Side_S_ASK, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
+	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -721,7 +729,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string) bool {
 	return false
 }
 
-func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
+func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
@@ -739,7 +747,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -768,7 +776,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("order placed successfully")
 
 	// replacing order
-	sig, err = h.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = h.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -798,7 +806,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, pb.Side_S_ASK, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
+	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})
@@ -812,7 +820,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string) bool {
 	return false
 }
 
-func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
+func callReplaceOrder(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
@@ -831,7 +839,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice, opts)
+	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -861,7 +869,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 	}
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, orderAmount, orderPrice/2, opts)
+	sig, err = h.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, typeLimit, orderAmount, orderPrice/2, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -892,7 +900,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string) bool {
 
 	// Cancel all the orders
 	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, pb.Side_S_ASK, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
+	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  true,
 	})

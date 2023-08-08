@@ -16,9 +16,11 @@ import (
 )
 
 const (
-	handshakeTimeout       = 5 * time.Second
-	subscriptionBuffer     = 1000
-	unsubscribeGracePeriod = 3 * time.Second
+	handshakeTimeout        = 5 * time.Second
+	connectionRetryTimeout  = 15 * time.Second
+	connectionRetryInterval = 100 * time.Millisecond
+	subscriptionBuffer      = 1000
+	unsubscribeGracePeriod  = 3 * time.Second
 )
 
 type WS struct {
@@ -39,13 +41,13 @@ type WS struct {
 	// public to allow overriding of (un)subscribe method name
 	SubscribeMethodName   string
 	UnsubscribeMethodName string
+
+	endpoint   string
+	authHeader string
 }
 
 func NewWS(endpoint string, authHeader string) (*WS, error) {
-	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
-	header := http.Header{}
-	header.Set("Authorization", authHeader)
-	conn, _, err := dialer.Dial(endpoint, header)
+	conn, err := connect(endpoint, authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +55,8 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ws := &WS{
 		requestID:             utils.NewRequestID(),
+		endpoint:              endpoint,
+		authHeader:            authHeader,
 		conn:                  conn,
 		ctx:                   ctx,
 		cancel:                cancel,
@@ -65,6 +69,19 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 	go ws.readLoop()
 	go ws.writeLoop()
 	return ws, nil
+}
+
+func connect(endpoint string, auth string) (*websocket.Conn, error) {
+	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
+	header := http.Header{}
+	header.Set("Authorization", auth)
+
+	conn, _, err := dialer.Dial(endpoint, header)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, err
 }
 
 func (w *WS) readLoop() {
@@ -82,8 +99,22 @@ func (w *WS) readLoop() {
 
 		_, msg, err := w.conn.ReadMessage()
 		if err != nil {
-			_ = w.Close(err)
-			return
+			// reconnect the websocket connection if connection read message fails
+			for {
+				select {
+				case <-time.After(connectionRetryTimeout):
+					_ = w.Close(err)
+					return
+				default:
+					w.conn, err = connect(w.endpoint, w.authHeader)
+					if err != nil {
+						time.Sleep(connectionRetryInterval)
+					} else {
+						// websocket connection re-established
+						break
+					}
+				}
+			}
 		}
 
 		// try response format first

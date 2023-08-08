@@ -1068,7 +1068,7 @@ func (g *GRPCClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTi
 }
 
 // GetOpenOrdersV2 returns all open orders by owner address and market
-func (g *GRPCClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
+func (g *GRPCClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponseV2, error) {
 	return g.apiClient.GetOpenOrdersV2(ctx, &pb.GetOpenOrdersRequestV2{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, OrderID: orderID, ClientOrderID: clientOrderID})
 }
 
@@ -1083,12 +1083,13 @@ func (g *GRPCClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponseV2
 }
 
 // PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              side,
+		Type:              orderType,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -1097,8 +1098,8 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrderV2(ctx, owner, payer, market, side, amount, price, opts)
+func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
 	}
@@ -1111,7 +1112,7 @@ func (g *GRPCClient) PostCancelOrderV2(
 	ctx context.Context,
 	orderID string,
 	clientOrderID uint64,
-	side pb.Side,
+	side string,
 	owner,
 	market,
 	openOrders string,
@@ -1131,7 +1132,7 @@ func (g *GRPCClient) SubmitCancelOrderV2(
 	ctx context.Context,
 	orderID string,
 	clientOrderID uint64,
-	side pb.Side,
+	side string,
 	owner,
 	market,
 	openOrders string,
@@ -1166,12 +1167,13 @@ func (g *GRPCClient) SubmitSettleV2(ctx context.Context, owner, market, baseToke
 	return g.signAndSubmit(ctx, order.Transaction, skipPreflight)
 }
 
-func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostReplaceOrderV2(ctx, &pb.PostReplaceOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
 		Market:            market,
 		Side:              side,
+		Type:              orderType,
 		Amount:            amount,
 		Price:             price,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
@@ -1180,8 +1182,8 @@ func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	})
 }
 
-func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side pb.Side, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, amount, price, opts)
+func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
 	}
