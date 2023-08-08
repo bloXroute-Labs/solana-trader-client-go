@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"os"
 	"strings"
 	"time"
@@ -151,33 +150,4 @@ func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana
 		Content: signedTxBase64,
 	}
 	return &oneRequest, nil
-}
-
-func convertProtoSideToString(side pb.Side) string {
-	switch side {
-	case pb.Side_S_UNKNOWN:
-		return "validation-error"
-	case pb.Side_S_BID:
-		return "bid"
-	case pb.Side_S_ASK:
-		return "ask"
-	default:
-		return "validation-error"
-	}
-}
-
-func convertOrderTypeToString(orderType common.OrderType) string {
-	switch orderType {
-	case common.OrderType_OT_MARKET: // OrderType_OT_MARKET
-		return "market"
-	case common.OrderType_OT_LIMIT: // OrderType_OT_LIMIT
-		return "limit"
-	case common.OrderType_OT_IOC: // OrderType_OT_IOC
-		return "ioc"
-	case common.OrderType_OT_POST: // OrderType_OT_POST
-		return "postonly"
-	default:
-		return "validation-error"
-	}
-
 }
