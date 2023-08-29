@@ -25,7 +25,7 @@ type GRPCClient struct {
 
 // NewGRPCClient connects to Mainnet Trader API
 func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetVirginiaGRPC)
+	opts := DefaultRPCOpts(MainnetNYGRPC)
 	opts.UseTLS = true
 	return NewGRPCClientWithOpts(opts)
 }

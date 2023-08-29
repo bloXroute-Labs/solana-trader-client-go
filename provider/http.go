@@ -24,7 +24,7 @@ type HTTPClient struct {
 
 // NewHTTPClient connects to Mainnet Trader API
 func NewHTTPClient() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetVirginiaHTTP)
+	opts := DefaultRPCOpts(MainnetNYHTTP)
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
