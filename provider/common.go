@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	mainnetVirginia  = "virginia.solana.dex.blxrbdn.com"
 	mainnetNY        = "ny.solana.dex.blxrbdn.com"
 	mainnetFrankfurt = "frankfurt.solana.dex.blxrbdn.com"
 	mainnetUK        = "uk.solana.dex.blxrbdn.com"
@@ -22,15 +21,12 @@ const (
 )
 
 var (
-	MainnetVirginiaHTTP  = httpEndpoint(mainnetVirginia, true)
 	MainnetNYHTTP        = httpEndpoint(mainnetNY, true)
 	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, true)
 	MainnetUKHTTP        = httpEndpoint(mainnetUK, true)
-	MainnetVirginiaWS    = wsEndpoint(mainnetVirginia, true)
 	MainnetNYWS          = wsEndpoint(mainnetNY, true)
 	MainnetFrankfurtWS   = wsEndpoint(mainnetFrankfurt, true)
 	MainnetUKWS          = wsEndpoint(mainnetUK, true)
-	MainnetVirginiaGRPC  = grpcEndpoint(mainnetVirginia, true)
 	MainnetNYGRPC        = grpcEndpoint(mainnetNY, true)
 	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, true)
 	MainnetUKGRPC        = grpcEndpoint(mainnetUK, true)

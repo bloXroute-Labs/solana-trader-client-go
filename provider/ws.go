@@ -21,7 +21,7 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetVirginiaWS)
+	opts := DefaultRPCOpts(MainnetNYWS)
 	return NewWSClientWithOpts(opts)
 }
 
