@@ -16,11 +16,8 @@ import (
 )
 
 const (
-	sideBid      = "bid"
-	sideAsk      = "ask"
-	typeLimit    = "limit"
-	typeIOC      = "ioc"
-	typePostOnly = "postonly"
+	sideAsk   = "ask"
+	typeLimit = "limit"
 )
 
 func main() {
@@ -1784,6 +1781,7 @@ func callPostDriftPerpOrder(w *provider.WSClient, ownerAddr string) bool {
 		Contract:       "SOL_PERP",
 		AccountAddress: "",
 		PositionSide:   "SHORT",
+		PostOnly:       "NONE",
 		Slippage:       10,
 		Type:           "LIMIT",
 		Amount:         1,
@@ -1829,7 +1827,8 @@ func callPostMarginOrder(w *provider.WSClient, ownerAddr string) bool {
 		OwnerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
-		PositionSide:   "short",
+		PositionSide:   "SELL",
+		PostOnly:       "NONE",
 		Slippage:       10,
 		Type:           "limit",
 		Amount:         1,
@@ -1854,7 +1853,7 @@ func callManageCollateralWithdraw(w *provider.WSClient) bool {
 	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	})
@@ -1874,7 +1873,7 @@ func callPostDriftManageCollateralWithdraw(w *provider.WSClient) bool {
 
 	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           "WITHDRAWAL",
 		Token:          "SOL",
 	})
@@ -1895,10 +1894,10 @@ func callManageCollateralTransfer(w *provider.WSClient) bool {
 	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
-		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress:   "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:             common.PerpCollateralType_PCT_TRANSFER,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
-		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+		ToAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1916,10 +1915,10 @@ func callPostDriftManageCollateralTransfer(w *provider.WSClient) bool {
 
 	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:           1,
-		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress:   "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:             "TRANSFER",
 		Token:            "SOL",
-		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+		ToAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1956,7 +1955,7 @@ func callManageCollateralDeposit(w *provider.WSClient) bool {
 	sig, err := w.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	})
@@ -1976,7 +1975,7 @@ func callPostDriftManageCollateralDeposit(w *provider.WSClient) bool {
 
 	sig, err := w.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           "DEPOSIT",
 		Token:          "SOL",
 	})
