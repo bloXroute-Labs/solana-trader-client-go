@@ -1418,7 +1418,7 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 	log.Info("starting get Drift PerpTrades stream")
 
 	ch := make(chan *pb.GetPerpTradesStreamResponse)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	// Stream response
