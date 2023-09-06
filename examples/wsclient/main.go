@@ -1410,8 +1410,7 @@ func callDriftGetPerpTradesStream(w *provider.WSClient) bool {
 	// Stream response
 	stream, err := w.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
 		Contracts: []common.PerpContract{
-			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
-			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+			common.PerpContract_ALL,
 		},
 		Project: pb.Project_P_DRIFT,
 	})

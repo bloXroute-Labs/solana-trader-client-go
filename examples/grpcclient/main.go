@@ -1424,8 +1424,7 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 	// Stream response
 	stream, err := g.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
 		Contracts: []common.PerpContract{
-			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
-			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+			common.PerpContract_ALL,
 		},
 		Project: pb.Project_P_DRIFT,
 	})
