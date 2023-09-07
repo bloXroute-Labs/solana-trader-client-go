@@ -17,11 +17,8 @@ import (
 )
 
 const (
-	sideBid      = "bid"
-	sideAsk      = "ask"
-	typeLimit    = "limit"
-	typeIOC      = "ioc"
-	typePostOnly = "postonly"
+	sideAsk   = "ask"
+	typeLimit = "limit"
 )
 
 func main() {
@@ -107,21 +104,20 @@ func run() bool {
 		return failed
 	}
 
-	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
-	payerAddr, ok := os.LookupEnv("PAYER")
-	if !ok {
-		log.Infof("PAYER environment variable not set: will be set to owner address")
-		payerAddr = ownerAddr
-	}
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
 	if cfg.RunTrades {
+		payerAddr, ok := os.LookupEnv("PAYER")
+		if !ok {
+			log.Infof("PAYER environment variable not set: will be set to owner address")
+			payerAddr = ownerAddr
+		}
+		if !ok {
+			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+		}
+
+		ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+		if !ok {
+			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+		}
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
@@ -1422,14 +1418,13 @@ func callDriftGetPerpTradesStream(g *provider.GRPCClient) bool {
 	log.Info("starting get Drift PerpTrades stream")
 
 	ch := make(chan *pb.GetPerpTradesStreamResponse)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	// Stream response
 	stream, err := g.GetPerpTradesStream(ctx, &pb.GetPerpTradesStreamRequest{
 		Contracts: []common.PerpContract{
-			common.PerpContract_SOL_PERP, common.PerpContract_ETH_PERP,
-			common.PerpContract_BTC_PERP, common.PerpContract_APT_PERP,
+			common.PerpContract_ALL,
 		},
 		Project: pb.Project_P_DRIFT,
 	})
@@ -1821,7 +1816,8 @@ func callPostDriftPerpOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		OwnerAddress:   ownerAddr,
 		Contract:       "SOL_PERP",
 		AccountAddress: "",
-		PositionSide:   "SHORT",
+		PositionSide:   "SELL",
+		PostOnly:       "NONE",
 		Slippage:       10,
 		Type:           "LIMIT",
 		Amount:         1,
@@ -1853,7 +1849,7 @@ func callPostMarginOrder(g *provider.GRPCClient, ownerAddr string) bool {
 		OwnerAddress:   ownerAddr,
 		Market:         "SOL",
 		AccountAddress: "",
-		PositionSide:   "short",
+		PositionSide:   "SELL",
 		Slippage:       10,
 		Type:           "limit",
 		Amount:         1,
@@ -1871,7 +1867,7 @@ func callManageCollateralWithdraw(g *provider.GRPCClient) bool {
 	request, err := g.PostManageCollateral(context.Background(), &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	})
@@ -1890,7 +1886,7 @@ func callPostDriftManageCollateralWithdraw(g *provider.GRPCClient) bool {
 	request, err := g.PostManageCollateral(context.Background(), &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           common.PerpCollateralType_PCT_WITHDRAWAL,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	})
@@ -1909,10 +1905,10 @@ func callManageCollateralTransfer(g *provider.GRPCClient) bool {
 	sig, err := g.PostManageCollateral(context.Background(), &pb.PostManageCollateralRequest{
 		Project:          pb.Project_P_DRIFT,
 		Amount:           1,
-		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress:   "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:             common.PerpCollateralType_PCT_TRANSFER,
 		Token:            common.PerpCollateralToken_PCTK_SOL,
-		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+		ToAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1927,10 +1923,10 @@ func callPostDriftManageCollateralTransfer(g *provider.GRPCClient) bool {
 
 	sig, err := g.PostDriftManageCollateral(context.Background(), &pb.PostDriftManageCollateralRequest{
 		Amount:           1,
-		AccountAddress:   "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress:   "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:             "TRANSFER",
 		Token:            "SOL",
-		ToAccountAddress: "BTHDMaruPPTyUAZDv6w11qSMtyNAaNX6zFTPPepY863V",
+		ToAccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 	})
 	if err != nil {
 		log.Error(err)
@@ -1967,7 +1963,7 @@ func callManageCollateralDeposit(g *provider.GRPCClient) bool {
 	sig, err := g.PostManageCollateral(ctx, &pb.PostManageCollateralRequest{
 		Project:        pb.Project_P_DRIFT,
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           common.PerpCollateralType_PCT_DEPOSIT,
 		Token:          common.PerpCollateralToken_PCTK_SOL,
 	})
@@ -1987,7 +1983,7 @@ func callPostDriftManageCollateralDeposit(g *provider.GRPCClient) bool {
 
 	sig, err := g.PostDriftManageCollateral(ctx, &pb.PostDriftManageCollateralRequest{
 		Amount:         1,
-		AccountAddress: "61bvX2qCwzPKNztgVQF3ktDHM2hZGdivCE28RrC99EAS",
+		AccountAddress: "9UnwdvTf5EfGeLyLrF4GZDUs7LKRUeJQzW7qsDVGQ8sS",
 		Type:           "DEPOSIT",
 		Token:          "SOL",
 	})
