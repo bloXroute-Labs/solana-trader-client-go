@@ -63,6 +63,7 @@ func run() bool {
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
 	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
+	failed = failed || logCall("callRaydiumCLMMPoolsWS", func() bool { return callRaydiumCLMMPoolsWS(w) })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
 	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
@@ -72,6 +73,7 @@ func run() bool {
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
+	failed = failed || logCall("callGetRaydiumCLMMQuotes", func() bool { return callGetRaydiumCLMMQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callDriftPerpOrderbookWS", func() bool { return callDriftPerpOrderbookWS(w) })
 	failed = failed || logCall("callDriftGetMarginOrderbookWS", func() bool { return callDriftGetMarginOrderbookWS(w) })
@@ -125,8 +127,10 @@ func run() bool {
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(w, ownerAddr) })
+		failed = failed || logCall("callRaydiumCLMMSwap", func() bool { return callRaydiumCLMMSwap(w, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(w, ownerAddr) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(w, ownerAddr) })
+		failed = failed || logCall("callRaydiumRouteSwap", func() bool { return callRaydiumRouteSwap(w, ownerAddr) })
+		failed = failed || logCall("callRaydiumCLMMRouteSwap", func() bool { return callRaydiumCLMMRouteSwap(w, ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(w, ownerAddr) })
 	}
 
@@ -301,6 +305,21 @@ func callRaydiumPoolsWS(w *provider.WSClient) bool {
 	return false
 }
 
+func callRaydiumCLMMPoolsWS(w *provider.WSClient) bool {
+	log.Info("fetching Raydium CLMM pools...")
+
+	pools, err := w.GetRaydiumCLMMPools(context.Background(), &pb.GetRaydiumCLMMPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callPriceWS(w *provider.WSClient) bool {
 	log.Info("fetching prices...")
 
@@ -455,6 +474,36 @@ func callGetRaydiumQuotes(w *provider.WSClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quote, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+func callGetRaydiumCLMMQuotes(w *provider.WSClient) bool {
+	log.Info("fetching Raydium CLMM quotes...")
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetRaydiumCLMMQuotes(context.Background(), &pb.GetRaydiumCLMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
@@ -1086,6 +1135,30 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumCLMMSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumCLMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium CLMM swap transaction signature : %s", sig)
+	return false
+}
+
 func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
@@ -1141,6 +1214,44 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 	defer cancel()
 
 	sig, err := w.SubmitRaydiumRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:  "FIDA",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumCLMMRouteSwap(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumCLMMRouteSwapRequest{
 		OwnerAddress: ownerAddr,
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{

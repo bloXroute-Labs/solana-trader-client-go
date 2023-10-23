@@ -72,6 +72,46 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 	return w.recentBlockHashStore.get(ctx)
 }
 
+// GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
+func (w *WSClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {
+	var response pb.GetRaydiumCLMMQuotesResponse
+	err := w.conn.Request(ctx, "GetRaydiumCLMMQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRaydiumCLMMPools returns the CLMM pools on Raydium
+func (w *WSClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error) {
+	var response pb.GetRaydiumCLMMPoolsResponse
+	err := w.conn.Request(ctx, "GetRaydiumCLMMPools", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumCLMMSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (w *WSClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumCLMMSwapRequest) (*pb.PostRaydiumCLMMSwapResponse, error) {
+	var response pb.PostRaydiumCLMMSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumCLMMSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumCLMMRouteSwap returns a partially signed transaction(s) for submitting a route swap request on Raydium
+func (w *WSClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumCLMMRouteSwapRequest) (*pb.PostRaydiumCLMMRouteSwapResponse, error) {
+	var response pb.PostRaydiumCLMMRouteSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumCLMMRouteSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	var response pb.GetRaydiumPoolsResponse
@@ -797,6 +837,24 @@ func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
 func (w *WSClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostRaydiumRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumCLMMSwap builds a Raydium Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumCLMMSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostRaydiumCLMMSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitRaydiumCLMMRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumCLMMRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostRaydiumCLMMRouteSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
