@@ -1,4 +1,4 @@
-FROM golang:1.18 as builder
+FROM golang:1.20.1 as builder
 
 # setup environment
 RUN mkdir -p /app/solana-trader-client-go
@@ -12,7 +12,7 @@ RUN go mod download
 RUN rm -rf bin
 RUN go build -o bin/ ./benchmark/traderapi
 
-FROM golang:1.18
+FROM golang:1.20.1
 
 RUN apt-get update
 RUN apt-get install -y net-tools
