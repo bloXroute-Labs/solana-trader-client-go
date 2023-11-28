@@ -683,6 +683,31 @@ func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 	return &response, nil
 }
 
+// PostSubmitV2 posts the transaction string to the Solana network.
+func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
+	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
+
+	var response pb.PostSubmitResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostSubmitBatchV2 posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (h *HTTPClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/submit-batch", h.baseURL)
+
+	var response pb.PostSubmitBatchResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitBatchResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // SignAndSubmit signs the given transaction and submits it.
 func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
 	if h.privateKey == nil {
