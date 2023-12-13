@@ -736,6 +736,32 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 	return &response, nil
 }
 
+// PostSubmitV2 posts the transaction string to the Solana network.
+func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	request := &pb.PostSubmitRequest{
+		Transaction: &pb.TransactionMessage{
+			Content: txBase64,
+		},
+		SkipPreFlight: skipPreFlight,
+	}
+	var response pb.PostSubmitResponse
+	err := w.conn.Request(ctx, "PostSubmitV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostSubmitBatchV2 posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (w *WSClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	var response pb.PostSubmitBatchResponse
+	err := w.conn.Request(ctx, "PostSubmitBatchV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // signAndSubmit signs the given transaction and submits it.
 func (w *WSClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
 	if w.privateKey == nil {
