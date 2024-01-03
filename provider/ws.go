@@ -1227,6 +1227,14 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	})
 }
 
+// GetNewRaydiumPoolsStream subscribes to a stream for new Raydium Pools when they are created.
+func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream", &pb.GetNewRaydiumPoolsRequest{}, func() *pb.GetNewRaydiumPoolsResponse {
+		var v pb.GetNewRaydiumPoolsResponse
+		return &v
+	})
+}
+
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
 func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, project pb.Project) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{

@@ -1004,6 +1004,18 @@ func (g *GRPCClient) GetSwapsStream(
 	return connections.GRPCStream[pb.GetSwapsStreamResponse](stream, ""), nil
 }
 
+// GetNewRaydiumPoolsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
+func (g *GRPCClient) GetNewRaydiumPoolsStream(
+	ctx context.Context,
+) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
+	stream, err := g.apiClient.GetNewRaydiumPoolsStream(ctx, &pb.GetNewRaydiumPoolsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
+}
+
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
