@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"net/http"
-	"sync"
-	"time"
 )
 
 const (
@@ -75,6 +76,8 @@ func connect(endpoint string, auth string) (*websocket.Conn, error) {
 	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
 	header := http.Header{}
 	header.Set("Authorization", auth)
+	header.Set("X-SDK", "solana-trader-client-go")
+	header.Set("X-SDK-Version", utils.Version())
 
 	conn, _, err := dialer.Dial(endpoint, header)
 	if err != nil {
