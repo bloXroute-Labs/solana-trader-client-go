@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  slack: circleci/slack@4.1
 executors:
   bxgo:
     docker:
@@ -98,39 +96,6 @@ jobs:
           command: |
             unset PRIVATE_KEY
             API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
-      - slack/notify:
-          branch_pattern: develop
-          custom: |
-            {
-              "text": "solana-trader-client-go Build failed [develop]",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "solana-trader-client-go Build failed",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "@here The latest merge seems to have broken builds.\n\nLast commit: <https://github.com/bloXroute-Labs/solana-trader-client-go/commit/$COMMIT_HASH|$COMMIT_HASH> \nAuthor: $COMMIT_AUTHOR"
-                  },
-                  "accessory": {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "CircleCI",
-                      "emoji": true
-                    },
-                    "url": "https://app.circleci.com/pipelines/github/bloXroute-Labs/solana-trader-client-go?branch=develop"
-                  }
-                }
-              ]
-            }
-          event: fail
 workflows:
   version: 2
   test-branch:
@@ -141,7 +106,6 @@ workflows:
       - init:
           context: circleci
       - unit:
-          context: slack
           requires:
             - init
       - integration-testnet:
@@ -152,7 +116,6 @@ workflows:
             - unit
       - integration-mainnet:
           context:
-            - slack
             - trader-api-sdk
           requires:
             - init
@@ -175,7 +138,6 @@ workflows:
             - unit
       - integration-mainnet:
           context:
-            - slack
             - trader-api-sdk
           requires:
             - init
