@@ -3,9 +3,9 @@ module github.com/bloXroute-Labs/solana-trader-client-go
 go 1.18
 
 require (
-	github.com/bloXroute-Labs/solana-trader-proto v1.8.1-0.20240102180533-17da32ce5d18
+	github.com/bloXroute-Labs/solana-trader-proto v1.8.1-0.20240109191607-00c150027c46
 	github.com/gagliardetto/binary v0.7.7
-	github.com/gagliardetto/solana-go v1.8.2
+	github.com/gagliardetto/solana-go v1.8.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.2.0
@@ -25,7 +25,6 @@ require (
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/GeertJohan/go.rice v1.0.0 // indirect
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
-	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect

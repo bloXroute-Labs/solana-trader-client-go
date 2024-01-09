@@ -1120,9 +1120,38 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 	})
 }
 
+// PostOrderV2WithPriorityFee returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
+		OwnerAddress:      owner,
+		PayerAddress:      payer,
+		Market:            market,
+		Side:              side,
+		Type:              orderType,
+		Amount:            amount,
+		Price:             price,
+		OpenOrdersAddress: opts.OpenOrdersAddress,
+		ComputeLimit:      computeLimit,
+		ComputePrice:      computePrice,
+		ClientOrderID:     opts.ClientOrderID,
+	})
+}
+
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
 func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+}
+
+// SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network with specified computeLimit and computePrice
+func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, opts)
 	if err != nil {
 		return "", err
 	}

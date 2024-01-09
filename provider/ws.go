@@ -618,6 +618,32 @@ func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, out
 	return &response, nil
 }
 
+// PostTradeSwapWithPriorityFee returns a partially signed transaction for submitting a swap request with computeLimit and computePrice
+func (w *WSClient) PostTradeSwapWithPriorityFee(ctx context.Context, ownerAddress, inToken, outToken string, inAmount,
+	slippage float64, computeLimit uint32, computePrice uint64, projectStr string) (*pb.TradeSwapResponse, error) {
+	project, err := ProjectFromString(projectStr)
+	if err != nil {
+		return nil, err
+	}
+	request := &pb.TradeSwapRequest{
+		OwnerAddress: ownerAddress,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     inAmount,
+		Slippage:     slippage,
+		Project:      project,
+		ComputeLimit: computeLimit,
+		ComputePrice: computePrice,
+	}
+
+	var response pb.TradeSwapResponse
+	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
 func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
 	var response pb.TradeSwapResponse
@@ -796,6 +822,17 @@ func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
+	if err != nil {
+		return nil, err
+	}
+	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// SubmitTradeSwapWithPriorityFee builds a TradeSwap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitTradeSwapWithPriorityFee(ctx context.Context, owner, inToken, outToken string,
+	inAmount, slippage float64, project string, computeLimit uint32, computePrice uint64, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := w.PostTradeSwapWithPriorityFee(ctx, owner, inToken, outToken, inAmount, slippage, computeLimit,
+		computePrice, project)
 	if err != nil {
 		return nil, err
 	}
