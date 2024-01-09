@@ -500,7 +500,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream error response
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, pb.Project_P_OPENBOOK)
+	stream, err := g.GetOrderbookStream(ctx, []string{"", "xxx"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true

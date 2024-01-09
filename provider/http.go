@@ -1462,7 +1462,7 @@ func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 	return &response, nil
 }
 
-// PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+// PostOrderV2WithPriorityFee returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (h *HTTPClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
 	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/openbook/place", h.baseURL)
@@ -1501,7 +1501,7 @@ func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	return sig, err
 }
 
-// SubmitOrderV2WithComputePRice builds a Serum market order, signs it, and submits to the network.
+// SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network.
 func (h *HTTPClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
 	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (string, error) {
 	order, err := h.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price,
