@@ -121,6 +121,11 @@ func run() bool {
 		}
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+
+		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
+			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 2000, typeLimit)
+		})
+
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
@@ -495,7 +500,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream error response
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDC", "xxx"}, 3, pb.Project_P_OPENBOOK)
+	stream, err := g.GetOrderbookStream(ctx, []string{"", "xxx"}, 3, pb.Project_P_OPENBOOK)
 	if err != nil {
 		log.Errorf("connection could not be established. error: %v", err)
 		return true
@@ -770,6 +775,44 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 	return clientOrderID, false
+}
+
+func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string,
+	computeLimit uint32, computePrice uint64, orderType string) bool {
+	log.Info("starting place order")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// generate a random clientOrderID for this order
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID,
+		OpenOrdersAddress: ooAddr,
+		SkipPreFlight:     true,
+	}
+
+	// create order without actually submitting
+	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
+		orderAmount, orderPrice, computeLimit, computePrice, opts)
+	if err != nil {
+		log.Errorf("failed to create order (%v)", err)
+		return true
+	}
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
+
+	// sign/submit transaction after creation
+	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
+		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, opts)
+	if err != nil {
+		log.Errorf("failed to submit order (%v)", err)
+		return true
+	}
+
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+	return false
 }
 
 func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string, clientID uint64) bool {

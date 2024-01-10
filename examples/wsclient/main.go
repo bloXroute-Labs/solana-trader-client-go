@@ -16,8 +16,10 @@ import (
 )
 
 const (
-	sideAsk   = "ask"
-	typeLimit = "limit"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	computeLimit = 10000
+	computePrice = 2000
 )
 
 func main() {
@@ -124,6 +126,7 @@ func run() bool {
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
+		failed = failed || logCall("callTradeSwapWithPriorityFee", func() bool { return callTradeSwapWithPriorityFee(w, ownerAddr, computeLimit, computePrice) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(w, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(w, ownerAddr) })
@@ -1077,6 +1080,27 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("trade swap")
 	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDT",
 		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+			SkipPreFlight:  false,
+		})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("trade swap transaction signature : %s", sig)
+	return false
+}
+
+func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
+	log.Info("starting trade swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("trade swap")
+	sig, err := w.SubmitTradeSwapWithPriorityFee(ctx, ownerAddr, "USDT",
+		"SOL", 0.01, 0.1, "raydium", computeLimit, computePrice,
+		provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 			SkipPreFlight:  false,
 		})

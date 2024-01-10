@@ -127,6 +127,9 @@ func run() bool {
 		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
 		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
 		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+		failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
+			return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+		})
 		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
@@ -599,6 +602,43 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string, orderSide string, orderType st
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 
 	return clientOrderID, false
+}
+
+func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide string, orderType string,
+	computeLimit uint32, computePrice uint64) bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// generate a random clientOrderId for this order
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID,
+		OpenOrdersAddress: ooAddr,
+	}
+
+	// create order without actually submitting
+	response, err := h.PostOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, orderType,
+		orderAmount, orderPrice, computeLimit, computePrice, opts)
+	if err != nil {
+		log.Errorf("failed to create order (%v)", err)
+		return true
+	}
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
+
+	// sign/submit transaction after creation
+	sig, err := h.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
+		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, opts)
+	if err != nil {
+		log.Errorf("failed to submit order (%v)", err)
+		return true
+	}
+
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+
+	return false
 }
 
 func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) bool {
