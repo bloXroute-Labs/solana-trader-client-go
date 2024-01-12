@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"net/http"
-	"sync"
-	"time"
 )
 
 const (
@@ -21,6 +22,8 @@ const (
 	connectionRetryInterval = 100 * time.Millisecond
 	subscriptionBuffer      = 1000
 	unsubscribeGracePeriod  = 3 * time.Second
+	pingInterval            = 30 * time.Second
+	pingWriteWait           = 10 * time.Second
 )
 
 type WS struct {
@@ -68,6 +71,7 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 	}
 	go ws.readLoop()
 	go ws.writeLoop()
+	go ws.pingLoop()
 	return ws, nil
 }
 
@@ -145,6 +149,23 @@ func (w *WS) writeLoop() {
 		err := w.conn.WriteMessage(websocket.TextMessage, m)
 		if err != nil {
 			_ = w.Close(fmt.Errorf("error sending message: %w", err))
+			return
+		}
+	}
+}
+
+func (w *WS) pingLoop() {
+	ticker := time.NewTicker(pingInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			err := w.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(pingWriteWait))
+			if err != nil {
+				_ = w.Close(fmt.Errorf("ping failed: %w", err))
+				return
+			}
+		case <-w.ctx.Done():
 			return
 		}
 	}
