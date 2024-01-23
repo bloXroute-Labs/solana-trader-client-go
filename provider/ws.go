@@ -72,6 +72,16 @@ func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashR
 	return w.recentBlockHashStore.get(ctx)
 }
 
+// GetTransaction returns details of a recent transaction
+func (w *WSClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
+	var response pb.GetTransactionResponse
+	err := w.conn.Request(ctx, "GetTransaction", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	var response pb.GetRaydiumPoolsResponse

@@ -60,6 +60,17 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	}
 }
 
+// GetTransaction returns details of a recent transaction
+func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/transaction?signature=%s", h.baseURL, request.Signature)
+	response := new(pb.GetTransactionResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetTransactionResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)

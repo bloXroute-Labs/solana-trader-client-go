@@ -61,6 +61,8 @@ func run() bool {
 
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
+	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
+	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
 	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
@@ -316,6 +318,21 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetTransactionGRPC(g *provider.GRPCClient) bool {
+	tx, err := g.GetTransaction(context.Background(), &pb.GetTransactionRequest{
+		Signature: "2s48MnhH54GfJbRwwiEK7iWKoEh3uNbS2zDEVBPNu7DaCjPXe3bfqo6RuCg9NgHRFDn3L28sMVfEh65xevf4o5W3",
+	})
+	if err != nil {
+		log.Errorf("error with GetTransaction request: %v", err)
+		return true
+	} else {
+		log.Info(tx)
 	}
 
 	fmt.Println()
