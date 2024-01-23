@@ -1158,9 +1158,8 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 					Label: "Raydium",
 					Id:    "",
 				},
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
+				InToken:      "FIDA",
+				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
@@ -1234,25 +1233,26 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	log.Info("Jupiter route  swap")
+	log.Info("Jupiter route swap")
 	sig, err := g.SubmitJupiterRouteSwap(ctx, &pb.PostJupiterRouteSwapRequest{
 		OwnerAddress: ownerAddr,
-		Slippage:     0.1,
+		Slippage:     0.25,
 		Steps: []*pb.JupiterRouteStep{
 			{
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
+				Project: &pb.StepProject{
+					Label: "Whirlpool",
+					Id:    "83v8iPyZihDEjDdY8RdZddyZNyUtXngz69Lgo9Kt5d6d",
+				},
+				InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+				OutToken:     "So11111111111111111111111111111111111111112",
 				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-			},
-			{
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
+				OutAmountMin: 0.000123327,
+				OutAmount:    0.000123636,
+				Fee: &common.Fee{
+					Amount:  0,
+					Mint:    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+					Percent: 0,
+				},
 			},
 		},
 	}, provider.SubmitOpts{

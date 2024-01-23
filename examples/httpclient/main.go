@@ -13,6 +13,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -1018,21 +1019,23 @@ func callJupiterRouteSwap(ownerAddr string) bool {
 	log.Info("Jupiter route swap")
 	sig, err := h.SubmitJupiterRouteSwap(ctx, &pb.PostJupiterRouteSwapRequest{
 		OwnerAddress: ownerAddr,
-		Slippage:     0.1,
+		Slippage:     0.25,
 		Steps: []*pb.JupiterRouteStep{
 			{
-				InToken:      "FIDA",
-				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "61acRgpURKTU8LKPJKs6WQa18KzD9ogavXzjxfD84KLu",
+				},
+				InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+				OutToken:     "So11111111111111111111111111111111111111112",
 				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-			},
-			{
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
+				OutAmountMin: 0.000123117,
+				OutAmount:    0.000123425,
+				Fee: &common.Fee{
+					Amount:  0.000025,
+					Mint:    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+					Percent: 0.0025062656,
+				},
 			},
 		},
 	}, provider.SubmitOpts{
