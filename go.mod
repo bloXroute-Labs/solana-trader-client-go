@@ -7,6 +7,7 @@ require (
 	github.com/gagliardetto/binary v0.7.7
 	github.com/gagliardetto/solana-go v1.8.4
 	github.com/gorilla/websocket v1.4.2
+	github.com/joho/godotenv v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.2.0
 	github.com/sourcegraph/jsonrpc2 v0.1.0
