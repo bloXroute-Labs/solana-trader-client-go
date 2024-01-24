@@ -10,7 +10,6 @@ type Example struct {
 	Env           Env
 	RunSlowStream bool
 	RunTrades     bool
-	RunPerpTrades bool
 }
 
 func Load() (Example, error) {
@@ -31,17 +30,10 @@ func Load() (Example, error) {
 		runTrades = false
 	}
 
-	runPerpTrades := true
-	rptV := os.Getenv("RUN_PERP_TRADES")
-	if rptV == "false" {
-		runPerpTrades = false
-	}
-
 	return Example{
 		Env:           env,
 		RunTrades:     runTrades,
 		RunSlowStream: runSlowStream,
-		RunPerpTrades: runPerpTrades,
 	}, nil
 }
 
