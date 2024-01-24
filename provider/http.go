@@ -18,7 +18,7 @@ type HTTPClient struct {
 	baseURL    string
 	httpClient *http.Client
 	requestID  utils.RequestID
-	privateKey *solana.PrivateKey
+	PrivateKey *solana.PrivateKey
 	authHeader string
 }
 
@@ -55,7 +55,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	return &HTTPClient{
 		baseURL:    opts.Endpoint,
 		httpClient: client,
-		privateKey: opts.PrivateKey,
+		PrivateKey: opts.PrivateKey,
 		authHeader: opts.AuthHeader,
 	}
 }
@@ -671,6 +671,27 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 	return &response, nil
 }
 
+// PostSubmitJitoBundle posts the transaction string to the Solana network.
+func (h *HTTPClient) PostSubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/submit-jito", h.baseURL)
+
+	var transactionMessages []*pb.TransactionMessageJito
+	for _, tx := range txBase64 {
+		request := pb.TransactionMessageJito{Content: tx}
+		transactionMessages = append(transactionMessages, &request)
+	}
+
+	request := &pb.PostSubmitJitoBundleRequest{Transactions: transactionMessages}
+
+	var response pb.PostSubmitJitoBundleResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitJitoBundleResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
@@ -710,10 +731,10 @@ func (h *HTTPClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubm
 
 // SignAndSubmit signs the given transaction and submits it.
 func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
-	if h.privateKey == nil {
+	if h.PrivateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.privateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.PrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -728,10 +749,10 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 
 // SignAndSubmitBatch signs the given transactions and submits them.
 func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	if h.privateKey == nil {
+	if h.PrivateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *h.PrivateKey, opts)
 	if err != nil {
 		return nil, err
 	}

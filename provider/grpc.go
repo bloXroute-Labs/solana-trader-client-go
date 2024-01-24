@@ -19,7 +19,7 @@ type GRPCClient struct {
 
 	apiClient pb.ApiClient
 
-	privateKey           *solana.PrivateKey
+	PrivateKey           *solana.PrivateKey
 	recentBlockHashStore *recentBlockHashStore
 }
 
@@ -88,7 +88,7 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 
 	client := &GRPCClient{
 		apiClient:  pb.NewApiClient(conn),
-		privateKey: opts.PrivateKey,
+		PrivateKey: opts.PrivateKey,
 	}
 	client.recentBlockHashStore = newRecentBlockHashStore(
 		client.GetRecentBlockHash,
@@ -356,10 +356,10 @@ func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 
 // signAndSubmit signs the given transaction and submits it.
 func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
-	if g.privateKey == nil {
+	if g.PrivateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.PrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -377,10 +377,10 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 
 // signAndSubmitBatch signs the given transactions and submits them.
 func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	if g.privateKey == nil {
+	if g.PrivateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *g.PrivateKey, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -475,6 +475,11 @@ func (g *GRPCClient) SubmitDriftEnableMarginTrading(ctx context.Context, request
 func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
 		SkipPreFlight: skipPreFlight})
+}
+
+// PostSubmitJitoBundle sends a bundle of transactions to the solana network through a Jito Validator
+func (g *GRPCClient) PostSubmitJitoBundle(ctx context.Context, request *pb.PostSubmitJitoBundleRequest) (*pb.PostSubmitJitoBundleResponse, error) {
+	return g.apiClient.PostSubmitJitoBundle(ctx, request)
 }
 
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
@@ -1122,7 +1127,7 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 
 // PostOrderV2WithPriorityFee returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
-	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, bundleTip *uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -1135,7 +1140,35 @@ func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, paye
 		ComputeLimit:      computeLimit,
 		ComputePrice:      computePrice,
 		ClientOrderID:     opts.ClientOrderID,
+		BundleTip:         bundleTip,
 	})
+}
+
+// PostSubmit posts the transaction string to the Solana network.
+func (g *GRPCClient) SubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
+	var transactionMessages []*pb.TransactionMessageJito
+	for _, tx := range txBase64 {
+		if g.PrivateKey == nil {
+			return nil, fmt.Errorf("PRIVATE_KEY missing")
+		}
+
+		signedTx, err := transaction.SignTxWithPrivateKey(tx, *g.PrivateKey)
+		if err != nil {
+			return nil, err
+		}
+
+		request := pb.TransactionMessageJito{Content: signedTx}
+		transactionMessages = append(transactionMessages, &request)
+	}
+
+	request := &pb.PostSubmitJitoBundleRequest{Transactions: transactionMessages}
+
+	response, err := g.PostSubmitJitoBundle(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
@@ -1150,8 +1183,8 @@ func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 
 // SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network with specified computeLimit and computePrice
 func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
-	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, opts)
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, bundleTip *uint64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, bundleTip, opts)
 	if err != nil {
 		return "", err
 	}

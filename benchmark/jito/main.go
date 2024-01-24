@@ -1,1 +1,5 @@
-package jito
+package main
+
+func main() {
+
+}

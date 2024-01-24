@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"math/rand"
@@ -75,25 +76,25 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
-	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	failed = failed || logCall("callDriftPerpOrderbookHTTP", func() bool { return callDriftPerpOrderbookHTTP() })
-	failed = failed || logCall("callDriftGetMarginOrderbookHTTP", func() bool { return callDriftGetMarginOrderbookHTTP() })
-	failed = failed || logCall("callDriftMarketDepthHTTP", func() bool { return callDriftMarketDepthHTTP() })
+	//failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	//failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	//failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
+	//failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
+	//failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	//failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	//failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
+	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
+	//failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	//failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	//failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	//failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	//failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	//failed = failed || logCall("callDriftPerpOrderbookHTTP", func() bool { return callDriftPerpOrderbookHTTP() })
+	//failed = failed || logCall("callDriftGetMarginOrderbookHTTP", func() bool { return callDriftGetMarginOrderbookHTTP() })
+	//failed = failed || logCall("callDriftMarketDepthHTTP", func() bool { return callDriftMarketDepthHTTP() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -122,73 +123,79 @@ func run() bool {
 		payerAddr = ownerAddr
 	}
 
-	if cfg.RunTrades {
-		// Order lifecycle
-		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
-		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-		failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
-			return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
-		})
-		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
-		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
-		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
-	}
+	fmt.Println(payerAddr)
+	fmt.Println(cfg)
+	fmt.Println(ooAddr)
 
-	failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
-	failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(ownerAddr) })
-	failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(ownerAddr) })
-	failed = failed || logCall("callGetDriftPerpPositions", func() bool { return callGetDriftPerpPositions(ownerAddr) })
-	failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
+	callPlaceOrderHTTPWithJito()
 
-	failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
-	failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(ownerAddr) })
-	failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
-	failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
-	failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
-
-	failed = failed || logCall("callGetDriftAssets", func() bool { return callGetDriftAssets(ownerAddr) })
-	failed = failed || logCall("callGetDriftPerpContracts", func() bool { return callGetDriftPerpContracts() })
-	failed = failed || logCall("callGetDriftPerpOrderbook", func() bool { return callGetDriftPerpOrderbook() })
-	failed = failed || logCall("callGetDriftUser", func() bool { return callGetDriftUser(ownerAddr) })
-	failed = failed || logCall("callGetDriftOpenPerpOrder", func() bool { return callGetDriftOpenPerpOrder(ownerAddr) })
-	failed = failed || logCall("callGetDriftOpenMarginOrder", func() bool { return callGetDriftOpenMarginOrder(ownerAddr) })
-
-	if cfg.RunPerpTrades {
-		failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
-		failed = failed || logCall("callDriftCancelPerpOrder", func() bool { return callDriftCancelPerpOrder(ownerAddr) })
-		failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(ownerAddr) })
-		failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(ownerAddr) })
-		failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
-		failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
-		failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
-		failed = failed || logCall("callPostDriftPerpOrder", func() bool { return callPostDriftPerpOrder(ownerAddr) })
-		failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(ownerAddr) })
-		failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
-		failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
-		failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
-		failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(ownerAddr) })
-		failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(ownerAddr) })
-		failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(ownerAddr) })
-		failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(ownerAddr) })
-
-		failed = failed || logCall("callPostCloseDriftPerpPositions", func() bool { return callPostCloseDriftPerpPositions(ownerAddr) })
-		failed = failed || logCall("callPostCreateDriftUser", func() bool { return callPostCreateDriftUser(ownerAddr) })
-		failed = failed || logCall("callPostDriftManageCollateralDeposit", func() bool { return callPostDriftManageCollateralDeposit() })
-		failed = failed || logCall("callPostDriftManageCollateralWithdraw", func() bool { return callPostDriftManageCollateralWithdraw() })
-		failed = failed || logCall("callPostDriftManageCollateralTransfer", func() bool { return callPostDriftManageCollateralTransfer() })
-		failed = failed || logCall("callPostDriftSettlePNL", func() bool { return callPostDriftSettlePNL(ownerAddr) })
-		failed = failed || logCall("callPostDriftSettlePNLs", func() bool { return callPostDriftSettlePNLs(ownerAddr) })
-		failed = failed || logCall("callPostLiquidateDriftPerp", func() bool { return callPostLiquidateDriftPerp(ownerAddr) })
-	}
+	//if cfg.RunTrades {
+	//	// Order lifecycle
+	//_, _ = callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
+	//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
+	//	failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+	//	failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
+	//		return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+	//	})
+	//	failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
+	//	failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	//	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	//	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	//	failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
+	//	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
+	//	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
+	//	failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
+	//	failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
+	//	failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
+	//	failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
+	//}
+	//
+	//failed = failed || logCall("callGetOpenPerpOrders", func() bool { return callGetOpenPerpOrders(ownerAddr) })
+	//failed = failed || logCall("callGetDriftOpenMarginOrders", func() bool { return callGetDriftOpenMarginOrders(ownerAddr) })
+	//failed = failed || logCall("callGetPerpPositions", func() bool { return callGetPerpPositions(ownerAddr) })
+	//failed = failed || logCall("callGetDriftPerpPositions", func() bool { return callGetDriftPerpPositions(ownerAddr) })
+	//failed = failed || logCall("callGetUser", func() bool { return callGetUser(ownerAddr) })
+	//
+	//failed = failed || logCall("callGetOpenPerpOrder", func() bool { return callGetOpenPerpOrder(ownerAddr) })
+	//failed = failed || logCall("callGetDriftOpenPerpOrders", func() bool { return callGetDriftOpenPerpOrders(ownerAddr) })
+	//failed = failed || logCall("callGetAssets", func() bool { return callGetAssets(ownerAddr) })
+	//failed = failed || logCall("callGetPerpContracts", func() bool { return callGetPerpContracts() })
+	//failed = failed || logCall("callGetDriftMarkets", func() bool { return callGetDriftMarkets() })
+	//
+	//failed = failed || logCall("callGetDriftAssets", func() bool { return callGetDriftAssets(ownerAddr) })
+	//failed = failed || logCall("callGetDriftPerpContracts", func() bool { return callGetDriftPerpContracts() })
+	//failed = failed || logCall("callGetDriftPerpOrderbook", func() bool { return callGetDriftPerpOrderbook() })
+	//failed = failed || logCall("callGetDriftUser", func() bool { return callGetDriftUser(ownerAddr) })
+	//failed = failed || logCall("callGetDriftOpenPerpOrder", func() bool { return callGetDriftOpenPerpOrder(ownerAddr) })
+	//failed = failed || logCall("callGetDriftOpenMarginOrder", func() bool { return callGetDriftOpenMarginOrder(ownerAddr) })
+	//
+	//if cfg.RunPerpTrades {
+	//	failed = failed || logCall("callCancelPerpOrder", func() bool { return callCancelPerpOrder(ownerAddr) })
+	//	failed = failed || logCall("callDriftCancelPerpOrder", func() bool { return callDriftCancelPerpOrder(ownerAddr) })
+	//	failed = failed || logCall("callCancelDriftMarginOrder", func() bool { return callCancelDriftMarginOrder(ownerAddr) })
+	//	failed = failed || logCall("callClosePerpPositions", func() bool { return callClosePerpPositions(ownerAddr) })
+	//	failed = failed || logCall("callCreateUser", func() bool { return callCreateUser(ownerAddr) })
+	//	failed = failed || logCall("callManageCollateralDeposit", func() bool { return callManageCollateralDeposit() })
+	//	failed = failed || logCall("callPostPerpOrder", func() bool { return callPostPerpOrder(ownerAddr) })
+	//	failed = failed || logCall("callPostDriftPerpOrder", func() bool { return callPostDriftPerpOrder(ownerAddr) })
+	//	failed = failed || logCall("callPostModifyOrder", func() bool { return callPostModifyOrder(ownerAddr) })
+	//	failed = failed || logCall("callPostMarginOrder", func() bool { return callPostMarginOrder(ownerAddr) })
+	//	failed = failed || logCall("callManageCollateralWithdraw", func() bool { return callManageCollateralWithdraw() })
+	//	failed = failed || logCall("callManageCollateralTransfer", func() bool { return callManageCollateralTransfer() })
+	//	failed = failed || logCall("callDriftEnableMarginTrading", func() bool { return callDriftEnableMarginTrading(ownerAddr) })
+	//	failed = failed || logCall("callPostSettlePNL", func() bool { return callPostSettlePNL(ownerAddr) })
+	//	failed = failed || logCall("callPostSettlePNLs", func() bool { return callPostSettlePNLs(ownerAddr) })
+	//	failed = failed || logCall("callPostLiquidatePerp", func() bool { return callPostLiquidatePerp(ownerAddr) })
+	//
+	//	failed = failed || logCall("callPostCloseDriftPerpPositions", func() bool { return callPostCloseDriftPerpPositions(ownerAddr) })
+	//	failed = failed || logCall("callPostCreateDriftUser", func() bool { return callPostCreateDriftUser(ownerAddr) })
+	//	failed = failed || logCall("callPostDriftManageCollateralDeposit", func() bool { return callPostDriftManageCollateralDeposit() })
+	//	failed = failed || logCall("callPostDriftManageCollateralWithdraw", func() bool { return callPostDriftManageCollateralWithdraw() })
+	//	failed = failed || logCall("callPostDriftManageCollateralTransfer", func() bool { return callPostDriftManageCollateralTransfer() })
+	//	failed = failed || logCall("callPostDriftSettlePNL", func() bool { return callPostDriftSettlePNL(ownerAddr) })
+	//	failed = failed || logCall("callPostDriftSettlePNLs", func() bool { return callPostDriftSettlePNLs(ownerAddr) })
+	//	failed = failed || logCall("callPostLiquidateDriftPerp", func() bool { return callPostLiquidateDriftPerp(ownerAddr) })
+	//}
 	return failed
 }
 
@@ -278,9 +285,9 @@ func callOpenOrdersHTTP() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	orders, err := h.GetOpenOrdersV2(ctx, "SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", "", 0)
+	orders, err := h.GetOpenOrdersV2(ctx, "SOL/USDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", "", 0)
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 		return true
 	} else {
 		log.Info(orders)
@@ -633,10 +640,113 @@ func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide strin
 		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
-		return true
 	}
 
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+
+	return false
+}
+
+func callPlaceOrderHTTPWithJito() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if h.PrivateKey == nil {
+		log.Errorf("failed to find private key, check your .env")
+		return false
+	}
+
+	hash, err := h.GetRecentBlockHash(ctx)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	} else {
+		log.Info(hash)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID:     clientOrderID,
+		OpenOrdersAddress: "GMJnAg5UENG4aeL3w38EHow6mDUgiJypqEgYVG9Ajkf9",
+	}
+
+	//response, err := h.PostOrderV2(ctx, "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
+	//	"AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", marketAddr, sideAsk, typeLimit, orderAmount, orderPrice, opts)
+	//if err != nil {
+	//	log.Errorf("failed to create order (%v)", err)
+	//	return false
+	//}
+	//log.Infof("created unsigned place order transaction: %v", response.Transaction)
+
+	// sign/submit transaction after creation
+	sig, err := h.SubmitOrderV2(ctx, "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", marketAddr,
+		sideAsk, typeLimit, orderAmount,
+		orderPrice, opts)
+	if err != nil {
+		log.Errorf("failed to submit order (%v)", err)
+		return false
+	}
+
+	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+
+	//bundleTip := uint64(1025)
+	//swap, err := h.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+	//	OwnerAddress: "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
+	//	InToken:      "So11111111111111111111111111111111111111112",
+	//	OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+	//	Slippage:     0.1,
+	//	InAmount:     0.001,
+	//	BundleTip:    &bundleTip,
+	//})
+
+	//raydiumSwap, err := h.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+	//	OwnerAddress: "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
+	//	InToken:      "So11111111111111111111111111111111111111112",
+	//	OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+	//	Slippage:     0.1,
+	//	InAmount:     0.001,
+	//}, provider.SubmitOpts{
+	//	SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+	//	SkipPreFlight:  true,
+	//})
+
+	//if err != nil {
+	//	return false
+	//}
+	//
+	//fmt.Println(raydiumSwap.String())
+
+	//tx, err := transaction.CreateSampleTx(*h.PrivateKey, solana.MustHashFromBase58(hash.BlockHash))
+	//txBase64, err := tx.ToBase64()
+	//if err != nil {
+	//	log.Errorf("error converting jito tx to base64")
+	//}
+
+	var transactionMessages []string
+
+	for _, tx := range raydiumSwap.Transactions {
+
+		signedTx, err := transaction.SignTxWithPrivateKey(tx.String(), *h.PrivateKey)
+		if err != nil {
+			return false
+		}
+
+		transactionMessages = append(transactionMessages, signedTx)
+	}
+
+	resp, err := h.PostSubmitJitoBundle(ctx, transactionMessages)
+	if err != nil {
+		return false
+	}
+
+	if err != nil {
+		log.Errorf("failed to submit order (%v)", err)
+	}
+
+	log.Infof("placed order with jito UUIDs %v", resp.Uuids)
 
 	return false
 }
