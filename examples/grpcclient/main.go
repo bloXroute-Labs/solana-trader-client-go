@@ -1240,18 +1240,18 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		Steps: []*pb.JupiterRouteStep{
 			{
 				Project: &pb.StepProject{
-					Label: "Whirlpool",
-					Id:    "83v8iPyZihDEjDdY8RdZddyZNyUtXngz69Lgo9Kt5d6d",
+					Label: "Raydium",
+					Id:    "61acRgpURKTU8LKPJKs6WQa18KzD9ogavXzjxfD84KLu",
 				},
 				InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				OutToken:     "So11111111111111111111111111111111111111112",
 				InAmount:     0.01,
-				OutAmountMin: 0.000123327,
-				OutAmount:    0.000123636,
+				OutAmountMin: 0.000123117,
+				OutAmount:    0.000123425,
 				Fee: &common.Fee{
-					Amount:  0,
+					Amount:  0.000025,
 					Mint:    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-					Percent: 0,
+					Percent: 0.0025062656,
 				},
 			},
 		},
