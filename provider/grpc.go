@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -194,141 +195,6 @@ func (g *GRPCClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDReques
 	return g.apiClient.GetOrderByID(ctx, in)
 }
 
-// GetOpenPerpOrders returns all open perp orders
-func (g *GRPCClient) GetOpenPerpOrders(ctx context.Context, request *pb.GetOpenPerpOrdersRequest) (*pb.GetOpenPerpOrdersResponse, error) {
-	return g.apiClient.GetOpenPerpOrders(ctx, request)
-}
-
-// PostCloseDriftPerpPositions returns a partially signed transaction for canceling perp positions on Drift
-func (g *GRPCClient) PostCloseDriftPerpPositions(ctx context.Context, request *pb.PostCloseDriftPerpPositionsRequest) (*pb.PostCloseDriftPerpPositionsResponse, error) {
-	return g.apiClient.PostCloseDriftPerpPositions(ctx, request)
-}
-
-// GetDriftPerpOrderbook returns the current state of perpetual contract orderbook on Drift
-func (g *GRPCClient) GetDriftPerpOrderbook(ctx context.Context, request *pb.GetDriftPerpOrderbookRequest) (*pb.GetDriftPerpOrderbookResponse, error) {
-	return g.apiClient.GetDriftPerpOrderbook(ctx, request)
-}
-
-// PostCreateDriftUser returns a partially signed transaction for creating a user on Drift
-func (g *GRPCClient) PostCreateDriftUser(ctx context.Context, request *pb.PostCreateDriftUserRequest) (*pb.PostCreateDriftUserResponse, error) {
-	return g.apiClient.PostCreateDriftUser(ctx, request)
-}
-
-// GetDriftUser returns a user's info on Drift
-func (g *GRPCClient) GetDriftUser(ctx context.Context, request *pb.GetDriftUserRequest) (*pb.GetDriftUserResponse, error) {
-	return g.apiClient.GetDriftUser(ctx, request)
-}
-
-// PostDriftManageCollateral returns a partially signed transaction for managing collateral on Drift
-func (g *GRPCClient) PostDriftManageCollateral(ctx context.Context, request *pb.PostDriftManageCollateralRequest) (*pb.PostDriftManageCollateralResponse, error) {
-	return g.apiClient.PostDriftManageCollateral(ctx, request)
-}
-
-// PostDriftSettlePNL returns partially signed transactions for settling PNL on Drift
-func (g *GRPCClient) PostDriftSettlePNL(ctx context.Context, request *pb.PostDriftSettlePNLRequest) (*pb.PostDriftSettlePNLResponse, error) {
-	return g.apiClient.PostDriftSettlePNL(ctx, request)
-}
-
-// PostDriftSettlePNLs returns partially signed transactions for settling PNLs on Drift
-func (g *GRPCClient) PostDriftSettlePNLs(ctx context.Context, request *pb.PostDriftSettlePNLsRequest) (*pb.PostDriftSettlePNLsResponse, error) {
-	return g.apiClient.PostDriftSettlePNLs(ctx, request)
-}
-
-// GetDriftAssets returns list of assets for user on Drift
-func (g *GRPCClient) GetDriftAssets(ctx context.Context, request *pb.GetDriftAssetsRequest) (*pb.GetDriftAssetsResponse, error) {
-	return g.apiClient.GetDriftAssets(ctx, request)
-}
-
-// GetDriftPerpContracts returns list of available perp contracts on Drift
-func (g *GRPCClient) GetDriftPerpContracts(ctx context.Context, request *pb.GetDriftPerpContractsRequest) (*pb.GetDriftPerpContractsResponse, error) {
-	return g.apiClient.GetDriftPerpContracts(ctx, request)
-}
-
-// PostLiquidateDriftPerp returns a partially signed transaction for liquidating perp position on Drift
-func (g *GRPCClient) PostLiquidateDriftPerp(ctx context.Context, request *pb.PostLiquidateDriftPerpRequest) (*pb.PostLiquidateDriftPerpResponse, error) {
-	return g.apiClient.PostLiquidateDriftPerp(ctx, request)
-}
-
-// GetDriftOpenPerpOrder returns an open perp order on Drift
-func (g *GRPCClient) GetDriftOpenPerpOrder(ctx context.Context, request *pb.GetDriftOpenPerpOrderRequest) (*pb.GetDriftOpenPerpOrderResponse, error) {
-	return g.apiClient.GetDriftOpenPerpOrder(ctx, request)
-}
-
-// GetDriftOpenMarginOrder return a open margin order on Drift
-func (g *GRPCClient) GetDriftOpenMarginOrder(ctx context.Context, request *pb.GetDriftOpenMarginOrderRequest) (*pb.GetDriftOpenMarginOrderResponse, error) {
-	return g.apiClient.GetDriftOpenMarginOrder(ctx, request)
-}
-
-// GetDriftOpenMarginOrders returns all open margin orders on Drift
-func (g *GRPCClient) GetDriftOpenMarginOrders(ctx context.Context, request *pb.GetDriftOpenMarginOrdersRequest) (*pb.GetDriftOpenMarginOrdersResponse, error) {
-	return g.apiClient.GetDriftOpenMarginOrders(ctx, request)
-}
-
-// PostCancelPerpOrder returns a partially signed transaction for canceling perp order
-func (g *GRPCClient) PostCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest) (*pb.PostCancelPerpOrderResponse, error) {
-	return g.apiClient.PostCancelPerpOrder(ctx, request)
-}
-
-// PostCancelDriftMarginOrder returns a partially signed transaction for canceling margin orders on Drift
-func (g *GRPCClient) PostCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest) (*pb.PostCancelDriftMarginOrderResponse, error) {
-	return g.apiClient.PostCancelDriftMarginOrder(ctx, request)
-}
-
-// PostCancelPerpOrders returns a partially signed transaction for canceling all perp orders of a user
-func (g *GRPCClient) PostCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest) (*pb.PostCancelPerpOrdersResponse, error) {
-	return g.apiClient.PostCancelPerpOrders(ctx, request)
-}
-
-// PostCreateUser returns a partially signed transaction for creating a user
-func (g *GRPCClient) PostCreateUser(ctx context.Context, request *pb.PostCreateUserRequest) (*pb.PostCreateUserResponse, error) {
-	return g.apiClient.PostCreateUser(ctx, request)
-}
-
-// GetUser returns a user's info
-func (g *GRPCClient) GetUser(ctx context.Context, request *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	return g.apiClient.GetUser(ctx, request)
-}
-
-// PostManageCollateral returns a partially signed transaction for managing collateral
-func (g *GRPCClient) PostManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest) (*pb.PostManageCollateralResponse, error) {
-	return g.apiClient.PostManageCollateral(ctx, request)
-}
-
-// PostSettlePNL returns a partially signed transaction for settling PNL
-func (g *GRPCClient) PostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest) (*pb.PostSettlePNLResponse, error) {
-	return g.apiClient.PostSettlePNL(ctx, request)
-}
-
-// PostSettlePNLs returns partially signed transactions for settling PNLs
-func (g *GRPCClient) PostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest) (*pb.PostSettlePNLsResponse, error) {
-	return g.apiClient.PostSettlePNLs(ctx, request)
-}
-
-// GetAssets returns list of assets for user
-func (g *GRPCClient) GetAssets(ctx context.Context, request *pb.GetAssetsRequest) (*pb.GetAssetsResponse, error) {
-	return g.apiClient.GetAssets(ctx, request)
-}
-
-// GetPerpContracts returns list of available perp contracts
-func (g *GRPCClient) GetPerpContracts(ctx context.Context, request *pb.GetPerpContractsRequest) (*pb.GetPerpContractsResponse, error) {
-	return g.apiClient.GetPerpContracts(ctx, request)
-}
-
-// PostLiquidatePerp returns a partially signed transaction for liquidating perp position
-func (g *GRPCClient) PostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest) (*pb.PostLiquidatePerpResponse, error) {
-	return g.apiClient.PostLiquidatePerp(ctx, request)
-}
-
-// GetOpenPerpOrder returns an open perp order
-func (g *GRPCClient) GetOpenPerpOrder(ctx context.Context, request *pb.GetOpenPerpOrderRequest) (*pb.GetOpenPerpOrderResponse, error) {
-	return g.apiClient.GetOpenPerpOrder(ctx, request)
-}
-
-// GetPerpPositions returns all perp positions by owner address and market
-func (g *GRPCClient) GetPerpPositions(ctx context.Context, request *pb.GetPerpPositionsRequest) (*pb.GetPerpPositionsResponse, error) {
-	return g.apiClient.GetPerpPositions(ctx, request)
-}
-
 // GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddress string, project pb.Project) (*pb.GetUnsettledResponse, error) {
 	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress, Project: project})
@@ -337,11 +203,6 @@ func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddre
 // GetMarkets returns the list of all available named markets
 func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
-}
-
-// GetDriftMarkets returns the list of all available named markets
-func (g *GRPCClient) GetDriftMarkets(ctx context.Context, request *pb.GetDriftMarketsRequest) (*pb.GetDriftMarketsResponse, error) {
-	return g.apiClient.GetDriftMarkets(ctx, request)
 }
 
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
@@ -424,56 +285,6 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ClientOrderID:     opts.ClientOrderID,
 	})
-}
-
-// GetDriftPerpPositions returns all perp positions on Drift
-func (g *GRPCClient) GetDriftPerpPositions(ctx context.Context, request *pb.GetDriftPerpPositionsRequest) (*pb.GetDriftPerpPositionsResponse, error) {
-	return g.apiClient.GetDriftPerpPositions(ctx, request)
-}
-
-// GetDriftOpenPerpOrders returns all open perp orders on Drift
-func (g *GRPCClient) GetDriftOpenPerpOrders(ctx context.Context, request *pb.GetDriftOpenPerpOrdersRequest) (*pb.GetDriftOpenPerpOrdersResponse, error) {
-	return g.apiClient.GetDriftOpenPerpOrders(ctx, request)
-}
-
-// PostDriftCancelPerpOrder returns a partially signed transaction for canceling Drift perp order(s)
-func (g *GRPCClient) PostDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest) (*pb.PostDriftCancelPerpOrderResponse, error) {
-	return g.apiClient.PostDriftCancelPerpOrder(ctx, request)
-}
-
-// PostPerpOrder returns a partially signed transaction for placing a perp order. Typically, you want to use SubmitPerpOrder instead of this.
-func (g *GRPCClient) PostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest) (*pb.PostPerpOrderResponse, error) {
-	return g.apiClient.PostPerpOrder(ctx, request)
-}
-
-// PostDriftPerpOrder returns a partially signed transaction for placing a Drift perp order. Typically, you want to use SubmitDriftPerpOrder instead of this.
-func (g *GRPCClient) PostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest) (*pb.PostDriftPerpOrderResponse, error) {
-	return g.apiClient.PostDriftPerpOrder(ctx, request)
-}
-
-// PostModifyDriftOrder returns a partially signed transaction for modifying a Drift order. Typically, you want to use SubmitPostModifyDriftOrder instead of this.
-func (g *GRPCClient) PostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest) (*pb.PostModifyDriftOrderResponse, error) {
-	return g.apiClient.PostModifyDriftOrder(ctx, request)
-}
-
-// PostDriftMarginOrder returns a partially signed transaction for placing a Margin order. Typically, you want to use SubmitDriftMarginOrder instead of this.
-func (g *GRPCClient) PostDriftMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest) (*pb.PostDriftMarginOrderResponse, error) {
-	return g.apiClient.PostDriftMarginOrder(ctx, request)
-}
-
-// PostDriftEnableMarginTrading returns a partially signed transaction for enabling/disabling margin trading.
-func (g *GRPCClient) PostDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest) (*pb.PostDriftEnableMarginTradingResponse, error) {
-	return g.apiClient.PostDriftEnableMarginTrading(ctx, request)
-}
-
-// SubmitDriftEnableMarginTrading builds a perp order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitDriftEnableMarginTrading(ctx context.Context, request *pb.PostDriftEnableMarginTradingRequest, skipPreFlight bool) (string, error) {
-	tx, err := g.PostDriftEnableMarginTrading(ctx, request)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, tx.Transaction, skipPreFlight)
 }
 
 // PostSubmit posts the transaction string to the Solana network.
@@ -569,63 +380,6 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
-// SubmitPerpOrder builds a perp order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
-	order, err := g.PostPerpOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
-}
-
-// SubmitDriftPerpOrder builds a Drift perp order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest, skipPreFlight bool) (string, error) {
-	order, err := g.PostDriftPerpOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
-}
-
-// SubmitCancelPerpOrder builds a cancel perp order txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelPerpOrder(ctx context.Context, request *pb.PostCancelPerpOrderRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostCancelPerpOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitCancelDriftMarginOrder builds a cancel Drift margin order txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelDriftMarginOrder(ctx context.Context, request *pb.PostCancelDriftMarginOrderRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostCancelDriftMarginOrder(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
-// SubmitCancelPerpOrders builds a cancel perp orders txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelPerpOrders(ctx context.Context, request *pb.PostCancelPerpOrdersRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostCancelPerpOrders(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
-// SubmitDriftCancelPerpOrder builds a Drift cancel perp orders txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitDriftCancelPerpOrder(ctx context.Context, request *pb.PostDriftCancelPerpOrderRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostDriftCancelPerpOrder(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, resp.Data.Transactions, opts)
-}
-
 // PostCancelOrder builds a Serum cancel order.
 func (g *GRPCClient) PostCancelOrder(
 	ctx context.Context,
@@ -663,106 +417,6 @@ func (g *GRPCClient) SubmitCancelOrder(
 	}
 
 	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
-}
-
-// PostClosePerpPositions builds cancel perp positions txn.
-func (g *GRPCClient) PostClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest) (*pb.PostClosePerpPositionsResponse, error) {
-	return g.apiClient.PostClosePerpPositions(ctx, request)
-}
-
-// SubmitClosePerpPositions builds a close perp positions txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitClosePerpPositions(ctx context.Context, request *pb.PostClosePerpPositionsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	order, err := g.PostClosePerpPositions(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	var msgs []*pb.TransactionMessage
-	for _, txn := range order.Transactions {
-		msgs = append(msgs, txn)
-	}
-
-	return g.signAndSubmitBatch(ctx, msgs, opts)
-}
-
-// SubmitCreateUser builds a create-user txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitCreateUser(ctx context.Context, request *pb.PostCreateUserRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostCreateUser(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitPostPerpOrder builds a perp order txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitPostPerpOrder(ctx context.Context, request *pb.PostPerpOrderRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostPerpOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitPostDriftPerpOrder builds a Drift perp order txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitPostDriftPerpOrder(ctx context.Context, request *pb.PostDriftPerpOrderRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostDriftPerpOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitPostModifyDriftOrder builds a Drift modify-order txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitPostModifyDriftOrder(ctx context.Context, request *pb.PostModifyDriftOrderRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostModifyDriftOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitPostMarginOrder builds a create-user txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitPostMarginOrder(ctx context.Context, request *pb.PostDriftMarginOrderRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostDriftMarginOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitPostSettlePNL builds a settle-pnl txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitPostSettlePNL(ctx context.Context, request *pb.PostSettlePNLRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostSettlePNL(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitPostSettlePNLs builds one or many settle-pnl txn, signs and submits them to the network.
-func (g *GRPCClient) SubmitPostSettlePNLs(ctx context.Context, request *pb.PostSettlePNLsRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostSettlePNLs(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
-// SubmitPostLiquidatePerp builds a liquidate-perp txn, signs and submits it to the network.
-func (g *GRPCClient) SubmitPostLiquidatePerp(ctx context.Context, request *pb.PostLiquidatePerpRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostLiquidatePerp(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
-}
-
-// SubmitManageCollateral builds a deposit collateral transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitManageCollateral(ctx context.Context, request *pb.PostManageCollateralRequest, skipPreFlight bool) (string, error) {
-	resp, err := g.PostManageCollateral(ctx, request)
-	if err != nil {
-		return "", err
-	}
-	return g.signAndSubmit(ctx, resp.Transaction, skipPreFlight)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -902,16 +556,6 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, l
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
 }
 
-// GetDriftMarginOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (g *GRPCClient) GetDriftMarginOrderbooksStream(ctx context.Context, request *pb.GetDriftMarginOrderbooksRequest) (connections.Streamer[*pb.GetDriftMarginOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetDriftMarginOrderbooksStream(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.GRPCStream[pb.GetDriftMarginOrderbooksStreamResponse](stream, fmt.Sprint(request.GetMarkets())), nil
-}
-
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (g *GRPCClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
 	stream, err := g.apiClient.GetMarketDepthsStream(ctx, &pb.GetMarketDepthsRequest{Markets: markets, Limit: limit, Project: project})
@@ -1029,53 +673,6 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 	}
 
 	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
-}
-
-// ------- Drift ----
-
-// GetPerpOrderbook returns the current state of perpetual contract orderbook.
-func (g *GRPCClient) GetPerpOrderbook(ctx context.Context, request *pb.GetPerpOrderbookRequest) (*pb.GetPerpOrderbookResponse, error) {
-	return g.apiClient.GetPerpOrderbook(ctx, request)
-}
-
-// GetDriftMarginOrderbook returns the current state of margin contract orderbook.
-func (g *GRPCClient) GetDriftMarginOrderbook(ctx context.Context, request *pb.GetDriftMarginOrderbookRequest) (*pb.GetDriftMarginOrderbookResponse, error) {
-	return g.apiClient.GetDriftMarginOrderbook(ctx, request)
-}
-
-// GetPerpOrderbooksStream subscribes to a stream for perpetual orderbook updates.
-func (g *GRPCClient) GetPerpOrderbooksStream(ctx context.Context, request *pb.GetPerpOrderbooksRequest) (connections.Streamer[*pb.GetPerpOrderbooksStreamResponse], error) {
-	stream, err := g.apiClient.GetPerpOrderbooksStream(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.GRPCStream[pb.GetPerpOrderbooksStreamResponse](stream, ""), nil
-}
-
-// GetPerpTradesStream subscribes to a stream for trades to the requested contracts
-func (g *GRPCClient) GetPerpTradesStream(ctx context.Context, request *pb.GetPerpTradesStreamRequest) (connections.Streamer[*pb.GetPerpTradesStreamResponse], error) {
-	stream, err := g.apiClient.GetPerpTradesStream(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.GRPCStream[pb.GetPerpTradesStreamResponse](stream, ""), nil
-}
-
-// GetDriftMarketDepth returns Drift market depth data.
-func (g *GRPCClient) GetDriftMarketDepth(ctx context.Context, request *pb.GetDriftMarketDepthRequest) (*pb.GetDriftMarketDepthResponse, error) {
-	return g.apiClient.GetDriftMarketDepth(ctx, request)
-}
-
-// GetDriftMarketDepthsStream subscribes to a stream for drift market depth data updates.
-func (g *GRPCClient) GetDriftMarketDepthsStream(ctx context.Context, request *pb.GetDriftMarketDepthsStreamRequest) (connections.Streamer[*pb.GetDriftMarketDepthStreamResponse], error) {
-	stream, err := g.apiClient.GetDriftMarketDepthsStream(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.GRPCStream[pb.GetDriftMarketDepthStreamResponse](stream, ""), nil
 }
 
 // V2 Openbook

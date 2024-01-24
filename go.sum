@@ -55,10 +55,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJmJgSg28kpZDP6UIiPt0e0Oz0kqKNGyRaWEPv84=
 github.com/blendle/zapdriver v1.3.1 h1:C3dydBOWYRiOk+B8X9IVZ5IOe+7cl+tGOexN4QqHfpE=
 github.com/blendle/zapdriver v1.3.1/go.mod h1:mdXfREi6u5MArG4j9fewC+FGnXaBR+T4Ox4J2u4eHCc=
-github.com/bloXroute-Labs/solana-trader-proto v1.8.1-0.20240109191607-00c150027c46 h1:ooXjoPlc1Q2LJrayadXy17gelkeIRN5GRA2zPBh6Hh8=
-github.com/bloXroute-Labs/solana-trader-proto v1.8.1-0.20240109191607-00c150027c46/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240118192228-a5da91be5779 h1:d87wMJNSyD2ooPbYoe3E0SxYZ3Y1BhCLaPqND5IKWOQ=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240118192228-a5da91be5779/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240124153410-6dee35c0a2bf h1:Bthdojj04oqhw3i4mwls8+s1evglM4cJdPSFo7o9j0Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240124153410-6dee35c0a2bf/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
