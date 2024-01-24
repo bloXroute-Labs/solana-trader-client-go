@@ -110,6 +110,11 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+// GetTransaction returns details of a recent transaction
+func (g *GRPCClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
+	return g.apiClient.GetTransaction(ctx, request)
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (g *GRPCClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	return g.apiClient.GetRaydiumPools(ctx, request)
