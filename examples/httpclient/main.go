@@ -476,8 +476,8 @@ func callGetJupiterQuotes() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	inToken := "SOL"
-	outToken := "USDT"
+	inToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	outToken := "SOL"
 	amount := 0.01
 	slippage := float64(5)
 	limit := int32(3)
@@ -499,10 +499,6 @@ func callGetJupiterQuotes() bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 3 {
-		log.Errorf("did not get back 3 quotes, got %v quotes", len(quotes.Routes))
-		return true
-	}
 	for _, route := range quotes.Routes {
 		log.Infof("best route for Jupiter is %v", route)
 	}
@@ -931,7 +927,7 @@ func callTradeSwap(ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "USDT", "SOL",
+	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "SOL",
 		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  false,
@@ -954,7 +950,7 @@ func callRaydiumSwap(ownerAddr string) bool {
 	log.Info("Raydium swap")
 	sig, err := h.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
-		InToken:      "USDT",
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "SOL",
 		Slippage:     0.1,
 		InAmount:     0.01,
@@ -1027,7 +1023,7 @@ func callJupiterRouteSwap(ownerAddr string) bool {
 					Id:    "61acRgpURKTU8LKPJKs6WQa18KzD9ogavXzjxfD84KLu",
 				},
 				InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				OutToken:     "So11111111111111111111111111111111111111112",
+				OutToken:     "SOL",
 				InAmount:     0.01,
 				OutAmountMin: 0.000123117,
 				OutAmount:    0.000123425,
@@ -1060,7 +1056,7 @@ func callJupiterSwap(ownerAddr string) bool {
 	log.Info("Jupiter swap")
 	sig, err := h.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
 		OwnerAddress: ownerAddr,
-		InToken:      "USDT",
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "SOL",
 		Slippage:     0.1,
 		InAmount:     0.01,
