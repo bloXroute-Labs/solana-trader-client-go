@@ -57,23 +57,30 @@ func run() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var i uint64 = 0
+	for {
+		tx, err := createTx(privateKey, recipient, recentBlockhash.BlockHash, i)
+		txBase64, err := tx.ToBase64()
+		if err != nil {
+			log.Fatalf("transaction not converted to bytes successfully: %v", err)
+		}
+		response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
+			Content:   txBase64,
+			IsCleanup: false,
+		}, true)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("i : ", i, "response.Signature : ", response.Signature)
+		i++
+		if i >= 100 {
+			break
+		}
+	}
 
-	tx, err := createTx(privateKey, recipient, recentBlockhash.BlockHash)
-	txBase64, err := tx.ToBase64()
-	if err != nil {
-		log.Fatalf("transaction not converted to bytes successfully: %v", err)
-	}
-	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
-		Content:   txBase64,
-		IsCleanup: false,
-	}, true)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("response.Signature : ", response.Signature)
 }
 
-func createTx(privateKeyStr string, recipientAddress, recentBlockHash string) (*solana.Transaction, error) {
+func createTx(privateKeyStr string, recipientAddress, recentBlockHash string, i uint64) (*solana.Transaction, error) {
 	privateKey, err := solana.PrivateKeyFromBase58(privateKeyStr)
 	if err != nil {
 		return nil, err
@@ -81,7 +88,7 @@ func createTx(privateKeyStr string, recipientAddress, recentBlockHash string) (*
 	recipient := solana.MustPublicKeyFromBase58(recipientAddress)
 
 	tx, err := solana.NewTransaction([]solana.Instruction{
-		system.NewTransferInstruction(1, privateKey.PublicKey(), recipient).Build(),
+		system.NewTransferInstruction(i, privateKey.PublicKey(), recipient).Build(),
 	}, solana.MustHashFromBase58(recentBlockHash))
 	if err != nil {
 		return nil, err
