@@ -122,11 +122,15 @@ func run() bool {
 		//failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		//failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
-		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
-			//return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
+		failed = failed || logCall("callPlaceOrderGRPCWithJitoBundle", func() bool {
 			return callPlaceOrderGRPCWithJitoBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
 				typeLimit, uint64(1030))
+		})
 
+		os.Exit(1)
+
+		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
+			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
 		})
 
 		os.Exit(1)
@@ -791,8 +795,7 @@ func callPlaceOrderGRPCWithJitoBundle(g *provider.GRPCClient, ownerAddr, payerAd
 		return false
 	}
 
-	return true
-
+	return false
 }
 
 func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string,

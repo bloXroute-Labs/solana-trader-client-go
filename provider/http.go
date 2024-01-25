@@ -19,7 +19,7 @@ type HTTPClient struct {
 	baseURL    string
 	httpClient *http.Client
 	requestID  utils.RequestID
-	PrivateKey *solana.PrivateKey
+	privateKey *solana.PrivateKey
 	authHeader string
 }
 
@@ -56,7 +56,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	return &HTTPClient{
 		baseURL:    opts.Endpoint,
 		httpClient: client,
-		PrivateKey: opts.PrivateKey,
+		privateKey: opts.PrivateKey,
 		authHeader: opts.AuthHeader,
 	}
 }
@@ -329,13 +329,22 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 	return &response, nil
 }
 
-// PostSubmitJitoBundle posts the transaction string to the Solana network.
+// PostSubmitJitoBundle takes in a list of transactions, signs them, and submits them to PostSubmitJitoEndpoint
 func (h *HTTPClient) PostSubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/submit-jito", h.baseURL)
-
 	var transactionMessages []*pb.TransactionMessageJito
 	for _, tx := range txBase64 {
-		request := pb.TransactionMessageJito{Content: tx}
+		if h.privateKey == nil {
+			return &pb.PostSubmitJitoBundleResponse{}, ErrPrivateKeyNotFound
+		}
+
+		signedTx, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
+		if err != nil {
+			return &pb.PostSubmitJitoBundleResponse{}, err
+		}
+
+		request := pb.TransactionMessageJito{Content: signedTx}
+
 		transactionMessages = append(transactionMessages, &request)
 	}
 
@@ -389,10 +398,10 @@ func (h *HTTPClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubm
 
 // SignAndSubmit signs the given transaction and submits it.
 func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
-	if h.PrivateKey == nil {
+	if h.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.PrivateKey)
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -407,10 +416,10 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 
 // SignAndSubmitBatch signs the given transactions and submits them.
 func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	if h.PrivateKey == nil {
+	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *h.PrivateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -1007,6 +1016,19 @@ func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, pay
 		return nil, err
 	}
 	return &response, nil
+}
+
+func (h *HTTPClient) SignTx(privateKey solana.PrivateKey, tx string) (string, error) {
+	if h.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(tx, privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	return txBase64, nil
 }
 
 func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {

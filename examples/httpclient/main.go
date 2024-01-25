@@ -127,7 +127,7 @@ func run() bool {
 	fmt.Println(cfg)
 	fmt.Println(ooAddr)
 
-	callPlaceOrderHTTPWithJito()
+	callPlaceOrderHTTPWithJito(ownerAddr, uint64(1030))
 
 	//if cfg.RunTrades {
 	//	// Order lifecycle
@@ -662,107 +662,75 @@ func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide strin
 	return false
 }
 
-func callPlaceOrderHTTPWithJito() bool {
+func callPlaceOrderHTTPWithJito(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting jupiter swap test")
+
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if h.PrivateKey == nil {
-		log.Errorf("failed to find private key, check your .env")
-		return false
+	log.Info("jupiter swap to be sent with Jito Bundling")
+
+	request := &pb.PostJupiterSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "SOL",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.2,
+		InAmount:     0.01,
+		BundleTip:    &bundleTip,
 	}
 
-	hash, err := h.GetRecentBlockHash(ctx)
+	resp, err := h.PostJupiterSwap(ctx, request)
 	if err != nil {
-		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		log.Errorf("failed to post jupiter swap: %w", err.Error())
 		return true
-	} else {
-		log.Info(hash)
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID := rand.Uint64()
-
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID,
-		OpenOrdersAddress: "GMJnAg5UENG4aeL3w38EHow6mDUgiJypqEgYVG9Ajkf9",
-	}
-
-	//response, err := h.PostOrderV2(ctx, "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-	//	"AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", marketAddr, sideAsk, typeLimit, orderAmount, orderPrice, opts)
-	//if err != nil {
-	//	log.Errorf("failed to create order (%v)", err)
-	//	return false
-	//}
-	//log.Infof("created unsigned place order transaction: %v", response.Transaction)
-
-	// sign/submit transaction after creation
-	sig, err := h.SubmitOrderV2(ctx, "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ", marketAddr,
-		sideAsk, typeLimit, orderAmount,
-		orderPrice, opts)
+	_, _ = h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content}, true)
 	if err != nil {
-		log.Errorf("failed to submit order (%v)", err)
 		return false
 	}
 
-	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
-
-	//bundleTip := uint64(1025)
-	//swap, err := h.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
-	//	OwnerAddress: "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-	//	InToken:      "So11111111111111111111111111111111111111112",
-	//	OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-	//	Slippage:     0.1,
-	//	InAmount:     0.001,
-	//	BundleTip:    &bundleTip,
-	//})
-
-	//raydiumSwap, err := h.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
-	//	OwnerAddress: "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ",
-	//	InToken:      "So11111111111111111111111111111111111111112",
-	//	OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-	//	Slippage:     0.1,
-	//	InAmount:     0.001,
-	//}, provider.SubmitOpts{
-	//	SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-	//	SkipPreFlight:  true,
-	//})
-
+	//signedJupiter, err := h.SignTx(key, resp.Transactions[0].Content)
 	//if err != nil {
 	//	return false
 	//}
 	//
-	//fmt.Println(raydiumSwap.String())
-
-	//tx, err := transaction.CreateSampleTx(*h.PrivateKey, solana.MustHashFromBase58(hash.BlockHash))
-	//txBase64, err := tx.ToBase64()
+	//hash, err := h.GetRecentBlockHash(ctx)
 	//if err != nil {
-	//	log.Errorf("error converting jito tx to base64")
+	//	panic(err)
+	//}
+	//
+	//solanaHash, err := solana.HashFromBase58(hash.String())
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//signedJitoTx, err := utils.CreateBloxrouteTipTransactionToUseJitoBundles(key, 1030, solanaHash)
+	//if err != nil {
+	//	panic(err)
 	//}
 
-	var transactionMessages []string
+	//var txs []string
+	//for _, t := range resp.Transactions {
+	//	txs = append(txs, t.Content)
+	//}
 
-	for _, tx := range raydiumSwap.Transactions {
-
-		signedTx, err := transaction.SignTxWithPrivateKey(tx.String(), *h.PrivateKey)
-		if err != nil {
-			return false
-		}
-
-		transactionMessages = append(transactionMessages, signedTx)
-	}
-
-	resp, err := h.PostSubmitJitoBundle(ctx, transactionMessages)
+	submit, err := h.PostSubmit(ctx, resp.Transactions[0].Content, false)
 	if err != nil {
 		return false
 	}
 
-	if err != nil {
-		log.Errorf("failed to submit order (%v)", err)
-	}
+	fmt.Println(submit.Signature)
 
-	log.Infof("placed order with jito UUIDs %v", resp.Uuids)
+	os.Exit(1)
 
+	//jitoResp, err := h.PostSubmitJitoBundle(ctx, txs)
+	//if err != nil {
+	//	log.Errorf("failed to submit jito bundle : %w", err.Error())
+	//}
+	//
+	//log.Infof("Jito bundle successfully submitted with uuid : %s", jitoResp.Uuids)
 	return false
 }
 

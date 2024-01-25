@@ -119,13 +119,16 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
-	for _, tx := range transactions {
-		request, err := createBatchRequestEntry(opts, tx.Content, privateKey)
-		if err != nil {
-			return nil, err
-		}
+	for i, tx := range transactions {
+		if i == 0 {
+			request, err := createBatchRequestEntry(opts, tx.Content, privateKey)
+			if err != nil {
+				return nil, err
+			}
 
-		batchRequest.Entries = append(batchRequest.Entries, request)
+			batchRequest.Entries = append(batchRequest.Entries, request)
+
+		}
 	}
 
 	return &batchRequest, nil

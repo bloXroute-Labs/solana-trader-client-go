@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"errors"
-
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -379,6 +378,15 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	if w.privateKey == nil {
+		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(txBase64, *w.privateKey)
+	if err != nil {
+		return &pb.PostSubmitResponse{}, err
+	}
+
 	request := &pb.PostSubmitRequest{
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
@@ -386,10 +394,39 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 		SkipPreFlight: skipPreFlight,
 	}
 	var response pb.PostSubmitResponse
-	err := w.conn.Request(ctx, "PostSubmit", request, &response)
+	err = w.conn.Request(ctx, "PostSubmit", request, &response)
 	if err != nil {
 		return nil, err
 	}
+	return &response, nil
+}
+
+// PostSubmitJitoBundle takes in a list of transactions, signs them, and submits them to PostSubmitJitoEndpoint
+func (w *WSClient) PostSubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
+	var transactionMessages []*pb.TransactionMessageJito
+	for _, tx := range txBase64 {
+		if w.privateKey == nil {
+			return &pb.PostSubmitJitoBundleResponse{}, ErrPrivateKeyNotFound
+		}
+
+		signedTx, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
+		if err != nil {
+			return &pb.PostSubmitJitoBundleResponse{}, err
+		}
+
+		request := pb.TransactionMessageJito{Content: signedTx}
+
+		transactionMessages = append(transactionMessages, &request)
+	}
+
+	request := &pb.PostSubmitJitoBundleRequest{Transactions: transactionMessages}
+
+	var response pb.PostSubmitJitoBundleResponse
+	err := w.conn.Request(ctx, "PostSubmitJitoBundle", request, &response)
+	if err != nil {
+		return nil, err
+	}
+
 	return &response, nil
 }
 
@@ -405,6 +442,15 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 
 // PostSubmitV2 posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	if w.privateKey == nil {
+		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(txBase64, *w.privateKey)
+	if err != nil {
+		return &pb.PostSubmitResponse{}, err
+	}
+
 	request := &pb.PostSubmitRequest{
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
@@ -412,7 +458,7 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFli
 		SkipPreFlight: skipPreFlight,
 	}
 	var response pb.PostSubmitResponse
-	err := w.conn.Request(ctx, "PostSubmitV2", request, &response)
+	err = w.conn.Request(ctx, "PostSubmitV2", request, &response)
 	if err != nil {
 		return nil, err
 	}

@@ -746,12 +746,12 @@ func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, paye
 	})
 }
 
-// PostSubmit posts the transaction string to the Solana network.
+// SubmitJitoBundle takes in a list of transactions, signs them and forms a request to send jito bundles to solana-trader-api
 func (g *GRPCClient) SubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
 	var transactionMessages []*pb.TransactionMessageJito
 	for _, tx := range txBase64 {
 		if g.PrivateKey == nil {
-			return nil, fmt.Errorf("PRIVATE_KEY missing")
+			return nil, fmt.Errorf("PRIVATE_KEY missing, please check your .env variables")
 		}
 
 		signedTx, err := transaction.SignTxWithPrivateKey(tx, *g.PrivateKey)
