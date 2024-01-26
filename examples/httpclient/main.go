@@ -18,11 +18,8 @@ import (
 )
 
 const (
-	sideBid      = "bid"
-	sideAsk      = "ask"
-	typeLimit    = "limit"
-	typeIOC      = "ioc"
-	typePostOnly = "postonly"
+	sideAsk   = "ask"
+	typeLimit = "limit"
 )
 
 func httpClient() *provider.HTTPClient {
@@ -86,11 +83,9 @@ func run() bool {
 	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 
@@ -132,10 +127,7 @@ func run() bool {
 		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
@@ -347,23 +339,6 @@ func callGetTransaction() bool {
 	return false
 }
 
-func callPriceHTTP() bool {
-	h := httpClient()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	prices, err := h.GetPrice(ctx, []string{"SOL", "ETH"})
-	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
-		return true
-	} else {
-		log.Info(prices)
-	}
-
-	fmt.Println()
-	return false
-}
-
 func callRaydiumPrices() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -413,40 +388,6 @@ func callTickersHTTP() bool {
 		return true
 	} else {
 		log.Info(tickers)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetQuotesHTTP() bool {
-	h := httpClientWithTimeout(time.Second * 60)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	inToken := "SOL"
-	outToken := "USDT"
-	amount := 0.01
-	slippage := float64(5)
-	limit := 5
-
-	quotes, err := h.GetQuotes(ctx, inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if len(quotes.Quotes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
-		return true
-	}
-	for _, quote := range quotes.Quotes {
-		if len(quote.Routes) == 0 {
-			log.Errorf("no routes gotten for project %s", quote.Project)
-			return true
-		} else {
-			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
-		}
 	}
 
 	fmt.Println()
@@ -828,100 +769,6 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string, orderSide s
 	return false
 }
 
-func callReplaceOrder(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting replace order test")
-	fmt.Println()
-
-	h := httpClient()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	clientOrderID2 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
-	}
-
-	// Place order in orderbook
-	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	} else {
-		log.Infof("submitting place order #1, signature %s", sig)
-	}
-	time.Sleep(time.Minute)
-	// Check orders are there
-	orders, err := h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	var found1 *pb.Order
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = order
-			continue
-		}
-	}
-	if found1 == nil {
-		log.Error("order not found in orderbook")
-		return true
-	} else {
-		log.Info("order placed successfully")
-	}
-
-	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, typeLimit, orderAmount, orderPrice/2, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check orders are there
-	orders, err = h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	var found2 *pb.Order
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
-			found2 = order
-		}
-	}
-	if found2 == nil {
-		log.Error("order 2 not found in orderbook")
-		return true
-	} else {
-		log.Info("order 2 placed successfully")
-	}
-
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-	return false
-}
-
 func callGetRecentBlockHash() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -936,27 +783,6 @@ func callGetRecentBlockHash() bool {
 	}
 
 	fmt.Println()
-	return false
-}
-
-func callTradeSwap(ownerAddr string) bool {
-	log.Info("starting trade swap test")
-
-	h := httpClient()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "SOL",
-		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  false,
-		})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("trade swap transaction signature : %s", sig)
 	return false
 }
 
@@ -1090,53 +916,4 @@ func callJupiterSwap(ownerAddr string) bool {
 	}
 	log.Infof("Jupiter swap transaction signature : %s", sig)
 	return false
-}
-
-func callRouteTradeSwap(ownerAddr string) bool {
-	log.Info("starting route trade swap test")
-
-	h := httpClient()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	log.Info("route trade swap")
-	sig, err := h.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
-		OwnerAddress: ownerAddr,
-		Project:      pb.Project_P_RAYDIUM,
-		Slippage:     0.1,
-		Steps: []*pb.RouteStep{
-			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
-				InToken:      "FIDA",
-				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-			},
-			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
-			},
-		},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("route trade swap transaction signature : %s", sig)
-	return false
-
 }
