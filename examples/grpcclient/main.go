@@ -52,18 +52,15 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
 	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
 
-	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
-	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
 	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
 
@@ -81,8 +78,6 @@ func run() bool {
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
 	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
-
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
@@ -123,7 +118,6 @@ func run() bool {
 
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
@@ -256,19 +250,6 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callPoolsGRPC(g *provider.GRPCClient) bool {
-	pools, err := g.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
-	if err != nil {
-		log.Errorf("error with GetPools request for Raydium: %v", err)
-		return true
-	} else {
-		log.Info(pools)
-	}
-
-	fmt.Println()
-	return false
-}
-
 func callGetTransactionGRPC(g *provider.GRPCClient) bool {
 	tx, err := g.GetTransaction(context.Background(), &pb.GetTransactionRequest{
 		Signature: "2s48MnhH54GfJbRwwiEK7iWKoEh3uNbS2zDEVBPNu7DaCjPXe3bfqo6RuCg9NgHRFDn3L28sMVfEh65xevf4o5W3",
@@ -291,19 +272,6 @@ func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(pools)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callPriceGRPC(g *provider.GRPCClient) bool {
-	prices, err := g.GetPrice(context.Background(), []string{"SOL", "ETH"})
-	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
-		return true
-	} else {
-		log.Info(prices)
 	}
 
 	fmt.Println()
@@ -334,41 +302,6 @@ func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(prices)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetQuotes(g *provider.GRPCClient) bool {
-	log.Info("starting get quotes test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	inToken := "SOL"
-	outToken := "USDT"
-	amount := 0.01
-	slippage := float64(5)
-	limit := 5
-
-	quotes, err := g.GetQuotes(ctx, inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if len(quotes.Quotes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
-		return true
-	}
-	for _, quote := range quotes.Quotes {
-		if len(quote.Routes) == 0 {
-			log.Errorf("no routes gotten for project %s", quote.Project)
-			return true
-		} else {
-			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
-		}
 	}
 
 	fmt.Println()
@@ -631,10 +564,7 @@ func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
 
 const (
 	// SOL/USDC market
-	marketAddr = "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6"
-
-	orderSide   = pb.Side_S_ASK
-	orderType   = common.OrderType_OT_LIMIT
+	marketAddr  = "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6"
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
@@ -1088,26 +1018,6 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	return false
 }
 
-func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
-	log.Info("starting trade swap test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	log.Info("trade swap")
-	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDT",
-		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  false,
-		})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("trade swap transaction signature : %s", sig)
-	return false
-}
-
 func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
@@ -1165,16 +1075,11 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("route trade swap")
-	sig, err := g.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
+	sig, err := g.SubmitRaydiumRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
 		OwnerAddress: ownerAddr,
-		Project:      pb.Project_P_RAYDIUM,
 		Slippage:     0.1,
-		Steps: []*pb.RouteStep{
+		Steps: []*pb.RaydiumRouteStep{
 			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
 				InToken:      "FIDA",
 				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				InAmount:     0.01,
@@ -1182,10 +1087,6 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 				OutAmount:    0.0074,
 			},
 			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 				OutToken:     "USDT",
 				InAmount:     0.007505,

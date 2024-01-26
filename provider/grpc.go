@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -218,6 +219,51 @@ func (g *GRPCClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.Pos
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+}
+
+// signAndSubmit signs the given transaction and submits it.
+func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
+	if g.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
+		Content:   txBase64,
+		IsCleanup: tx.IsCleanup,
+	}, skipPreFlight)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Signature, nil
+}
+
+// PostSubmit posts the transaction string to the Solana network.
+func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+	return g.apiClient.PostSubmitV2(ctx, &pb.PostSubmitRequest{Transaction: tx,
+		SkipPreFlight: skipPreFlight})
+}
+
+// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
+func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
+	return g.apiClient.PostSubmitBatchV2(ctx, request)
+}
+
+// signAndSubmitBatch signs the given transactions and submits them.
+func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	if g.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return g.PostSubmitBatch(ctx, batchRequest)
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
