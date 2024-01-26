@@ -996,7 +996,8 @@ func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, comput
 		OutToken: "SOL",
 		InAmount: 0.01, Slippage: 0.1,
 		ComputeLimit: computeLimit,
-		ComputePrice: computePrice}, provider.SubmitOpts{
+		ComputePrice: computePrice,
+	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  false,
 	})
