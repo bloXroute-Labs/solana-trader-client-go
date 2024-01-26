@@ -69,12 +69,10 @@ func run() bool {
 	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
-	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
 	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
 	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
 	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 
@@ -115,14 +113,10 @@ func run() bool {
 	}
 
 	if cfg.RunTrades {
-		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
+		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })*/
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callTradeSwapWithPriorityFee", func() bool { return callTradeSwapWithPriorityFee(w, ownerAddr, computeLimit, computePrice) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(w, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(w, ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(w, ownerAddr) })
@@ -270,20 +264,6 @@ func callRaydiumPoolsWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callPriceWS(w *provider.WSClient) bool {
-	log.Info("fetching prices...")
-
-	pools, err := w.GetPrice(context.Background(), []string{"SOL", "ETH"})
-	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
-		return true
-	} else {
-		log.Info(pools)
-	}
-
-	return false
-}
-
 func callRaydiumPricesWS(w *provider.WSClient) bool {
 	log.Info("fetching Raydium prices...")
 
@@ -370,38 +350,6 @@ func callTickersWS(w *provider.WSClient) bool {
 		return true
 	} else {
 		log.Info(tickers)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetQuotes(w *provider.WSClient) bool {
-	log.Info("fetching quotes...")
-
-	inToken := "SOL"
-	outToken := "USDT"
-	amount := 0.01
-	slippage := float64(5)
-	limit := 5
-
-	quotes, err := w.GetQuotes(context.Background(), inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if len(quotes.Quotes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
-		return true
-	}
-	for _, quote := range quotes.Quotes {
-		if len(quote.Routes) == 0 {
-			log.Errorf("no routes gotten for project %s", quote.Project)
-			return true
-		} else {
-			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
-		}
 	}
 
 	fmt.Println()
@@ -972,7 +920,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 		log.Error(err)
 		return true
 	}
-	var found1 *pb.Order
+	var found1 *pb.OrderV2
 
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
@@ -1002,7 +950,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	if err != nil {
 		log.Error(err)
 	}
-	var found2 *pb.Order
+	var found2 *pb.OrderV2
 
 	for _, order := range orders.Orders {
 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
@@ -1036,26 +984,6 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	return false
 }
 
-func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting trade swap test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDT",
-		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  false,
-		})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("trade swap transaction signature : %s", sig)
-	return false
-}
-
 func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
 	log.Info("starting trade swap test")
 
@@ -1063,12 +991,15 @@ func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, comput
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwapWithPriorityFee(ctx, ownerAddr, "USDT",
-		"SOL", 0.01, 0.1, "raydium", computeLimit, computePrice,
-		provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  false,
-		})
+	sig, err := w.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		InToken:  "USDT",
+		OutToken: "SOL",
+		InAmount: 0.01, Slippage: 0.1,
+		ComputeLimit: computeLimit,
+		ComputePrice: computePrice}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  false,
+	})
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1098,54 +1029,6 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Raydium swap transaction signature : %s", sig)
-	return false
-}
-
-func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
-	log.Info("starting route trade swap test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	log.Info("route trade swap")
-	sig, err := w.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
-		OwnerAddress: ownerAddr,
-		Project:      pb.Project_P_RAYDIUM,
-		Slippage:     0.1,
-		Steps: []*pb.RouteStep{
-			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-			},
-			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
-			},
-		},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
 }
 
