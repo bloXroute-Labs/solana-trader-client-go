@@ -319,64 +319,6 @@ func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, out
 	return &response, nil
 }
 
-// PostTradeSwapWithPriorityFee returns a partially signed transaction for submitting a swap request with computeLimit and computePrice
-func (w *WSClient) PostTradeSwapWithPriorityFee(ctx context.Context, ownerAddress, inToken, outToken string, inAmount,
-	slippage float64, computeLimit uint32, computePrice uint64, projectStr string) (*pb.TradeSwapResponse, error) {
-	project, err := ProjectFromString(projectStr)
-	if err != nil {
-		return nil, err
-	}
-	request := &pb.TradeSwapRequest{
-		OwnerAddress: ownerAddress,
-		InToken:      inToken,
-		OutToken:     outToken,
-		InAmount:     inAmount,
-		Slippage:     slippage,
-		Project:      project,
-		ComputeLimit: computeLimit,
-		ComputePrice: computePrice,
-	}
-
-	var response pb.TradeSwapResponse
-	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
-func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
-	var response pb.TradeSwapResponse
-	err := w.conn.Request(ctx, "PostRouteTradeSwap", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request := &pb.PostOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-		Project:           project,
-	}
-	var response pb.PostOrderResponse
-	err := w.conn.Request(ctx, "PostOrder", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
 	request := &pb.PostSubmitRequest{

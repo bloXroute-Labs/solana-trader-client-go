@@ -396,56 +396,6 @@ func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.
 	return h.PostSubmitBatch(ctx, batchRequest)
 }
 
-// PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (h *HTTPClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/swap", h.baseURL)
-	request := &pb.TradeSwapRequest{
-		OwnerAddress: ownerAddress,
-		InToken:      inToken,
-		OutToken:     outToken,
-		InAmount:     inAmount,
-		Slippage:     slippage,
-		Project:      project,
-	}
-
-	var response pb.TradeSwapResponse
-	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := h.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
-	if err != nil {
-		return nil, err
-	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
-// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
-func (h *HTTPClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/route-swap", h.baseURL)
-
-	var response pb.TradeSwapResponse
-	err := connections.HTTPPostWithClient[*pb.TradeSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := h.PostRouteTradeSwap(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
 func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := h.PostRaydiumSwap(ctx, request)

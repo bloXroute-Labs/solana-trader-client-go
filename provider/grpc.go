@@ -6,9 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -160,34 +158,9 @@ func (g *GRPCClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJ
 	return g.apiClient.PostJupiterRouteSwap(ctx, request)
 }
 
-// GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (g *GRPCClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
-	return g.apiClient.GetOrderbook(ctx, &pb.GetOrderbookRequest{Market: market, Limit: limit, Project: project})
-}
-
-// GetMarketDepth returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (g *GRPCClient) GetMarketDepth(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetMarketDepthResponse, error) {
-	return g.apiClient.GetMarketDepth(ctx, &pb.GetMarketDepthRequest{Market: market, Limit: limit, Project: project})
-}
-
-// GetPools returns pools for given projects.
-func (g *GRPCClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
-	return g.apiClient.GetPools(ctx, &pb.GetPoolsRequest{Projects: projects})
-}
-
 // GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
 func (g *GRPCClient) GetTrades(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetTradesResponse, error) {
 	return g.apiClient.GetTrades(ctx, &pb.GetTradesRequest{Market: market, Limit: limit, Project: project})
-}
-
-// GetTickers returns the requested market tickets. Set market to "" for all markets.
-func (g *GRPCClient) GetTickers(ctx context.Context, market string, project pb.Project) (*pb.GetTickersResponse, error) {
-	return g.apiClient.GetTickers(ctx, &pb.GetTickersRequest{Market: market, Project: project})
-}
-
-// GetOpenOrders returns all open orders by owner address and market
-func (g *GRPCClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
-	return g.apiClient.GetOpenOrders(ctx, &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project})
 }
 
 // GetOrderByID returns an order by id
@@ -195,107 +168,9 @@ func (g *GRPCClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDReques
 	return g.apiClient.GetOrderByID(ctx, in)
 }
 
-// GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (g *GRPCClient) GetUnsettled(ctx context.Context, market string, ownerAddress string, project pb.Project) (*pb.GetUnsettledResponse, error) {
-	return g.apiClient.GetUnsettled(ctx, &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress, Project: project})
-}
-
-// GetMarkets returns the list of all available named markets
-func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
-	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
-}
-
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
-}
-
-// GetPrice returns the USDC price of requested tokens
-func (g *GRPCClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
-	return g.apiClient.GetPrice(ctx, &pb.GetPriceRequest{Tokens: tokens})
-}
-
-// GetQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it
-func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error) {
-	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects})
-}
-
-// signAndSubmit signs the given transaction and submits it.
-func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
-	if g.privateKey == nil {
-		return "", ErrPrivateKeyNotFound
-	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
-		Content:   txBase64,
-		IsCleanup: tx.IsCleanup,
-	}, skipPreFlight)
-	if err != nil {
-		return "", err
-	}
-
-	return response.Signature, nil
-}
-
-// signAndSubmitBatch signs the given transactions and submits them.
-func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	if g.privateKey == nil {
-		return nil, ErrPrivateKeyNotFound
-	}
-	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return g.PostSubmitBatch(ctx, batchRequest)
-}
-
-// PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (g *GRPCClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error) {
-	return g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
-		OwnerAddress: ownerAddress,
-		InToken:      inToken,
-		OutToken:     outToken,
-		InAmount:     inAmount,
-		Slippage:     slippage,
-		Project:      project,
-	})
-}
-
-// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
-func (g *GRPCClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
-	return g.apiClient.PostRouteTradeSwap(ctx, request)
-}
-
-// PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	return g.apiClient.PostOrder(ctx, &pb.PostOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		Project:           project,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-	})
-}
-
-// PostSubmit posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
-	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
-		SkipPreFlight: skipPreFlight})
-}
-
-// PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
-func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
-	return g.apiClient.PostSubmitBatch(ctx, request)
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
@@ -307,31 +182,6 @@ func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage
 // PostSubmitBatchV2 posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (g *GRPCClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
 	return g.apiClient.PostSubmitBatchV2(ctx, request)
-}
-
-// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
-		OwnerAddress: ownerAddress,
-		InToken:      inToken,
-		OutToken:     outToken,
-		InAmount:     inAmount,
-		Slippage:     slippage,
-		Project:      project,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
-// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostRouteTradeSwap(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -368,180 +218,6 @@ func (g *GRPCClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.Pos
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
-}
-
-// SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
-}
-
-// PostCancelOrder builds a Serum cancel order.
-func (g *GRPCClient) PostCancelOrder(
-	ctx context.Context,
-	orderID string,
-	side pb.Side,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-) (*pb.PostCancelOrderResponse, error) {
-	return g.apiClient.PostCancelOrder(ctx, &pb.PostCancelOrderRequest{
-		OrderID:           orderID,
-		Side:              side,
-		OwnerAddress:      owner,
-		MarketAddress:     market,
-		OpenOrdersAddress: openOrders,
-		Project:           project,
-	})
-}
-
-// SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelOrder(
-	ctx context.Context,
-	orderID string,
-	side pb.Side,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-	skipPreFlight bool,
-) (string, error) {
-	order, err := g.PostCancelOrder(ctx, orderID, side, owner, market, openOrders, project)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
-}
-
-// PostCancelByClientOrderID builds a Serum cancel order by client ID.
-func (g *GRPCClient) PostCancelByClientOrderID(
-	ctx context.Context,
-	clientOrderID uint64,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-
-) (*pb.PostCancelOrderResponse, error) {
-	return g.apiClient.PostCancelByClientOrderID(ctx, &pb.PostCancelByClientOrderIDRequest{
-		ClientOrderID:     clientOrderID,
-		OwnerAddress:      owner,
-		MarketAddress:     market,
-		OpenOrdersAddress: openOrders,
-		Project:           project,
-	})
-}
-
-// SubmitCancelByClientOrderID builds a Serum cancel order by client ID, signs and submits it to the network.
-func (g *GRPCClient) SubmitCancelByClientOrderID(
-	ctx context.Context,
-	clientOrderID uint64,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-	skipPreFlight bool,
-) (string, error) {
-	order, err := g.PostCancelByClientOrderID(ctx, clientOrderID, owner, market, openOrders, project)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
-}
-
-func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, openOrders []string, project pb.Project) (*pb.PostCancelAllResponse, error) {
-	return g.apiClient.PostCancelAll(ctx, &pb.PostCancelAllRequest{
-		Market:              market,
-		OwnerAddress:        owner,
-		OpenOrdersAddresses: openOrders,
-		Project:             project,
-	})
-}
-
-func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	orders, err := g.PostCancelAll(ctx, market, owner, openOrdersAddresses, project)
-	if err != nil {
-		return nil, err
-	}
-	return g.signAndSubmitBatch(ctx, orders.Transactions, opts)
-}
-
-// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
-func (g *GRPCClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project pb.Project) (*pb.PostSettleResponse, error) {
-	return g.apiClient.PostSettle(ctx, &pb.PostSettleRequest{
-		OwnerAddress:      owner,
-		Market:            market,
-		BaseTokenWallet:   baseTokenWallet,
-		QuoteTokenWallet:  quoteTokenWallet,
-		OpenOrdersAddress: openOrdersAccount,
-		Project:           project,
-	})
-}
-
-// SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
-func (g *GRPCClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project pb.Project, skipPreflight bool) (string, error) {
-	order, err := g.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount, project)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, skipPreflight)
-}
-
-func (g *GRPCClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	return g.apiClient.PostReplaceByClientOrderID(ctx, &pb.PostOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		Project:           project,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-	})
-}
-
-func (g *GRPCClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := g.PostReplaceByClientOrderID(ctx, owner, payer, market, side, types, amount, price, project, opts)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
-}
-
-func (g *GRPCClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	return g.apiClient.PostReplaceOrder(ctx, &pb.PostReplaceOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		Project:           project,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-		OrderID:           orderID,
-	})
-}
-
-func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := g.PostReplaceOrder(ctx, orderID, owner, payer, market, side, types, amount, price, project, opts)
-	if err != nil {
-		return "", err
-	}
-
-	return g.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
