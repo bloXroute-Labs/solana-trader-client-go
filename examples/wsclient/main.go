@@ -732,19 +732,19 @@ func callPlaceOrderWithJitoBundle(w *provider.WSClient, ownerAddr string, jitoTi
 		OutToken:     "SOL",
 		Slippage:     0.2,
 		InAmount:     0.01,
-		BundleTip:    &jitoTipAmount})
+		Tip:          &jitoTipAmount})
 
 	if err != nil {
 		log.Errorf("failed to generate raydium swap: %w", err)
 		return true
 	}
 
-	var tx []string
-	for _, t := range resp.Transactions {
-		tx = append(tx, t.Content)
-	}
+	//var tx []string
+	//for _, t := range resp.Transactions {
+	//	tx = append(tx, t.Content)
+	//}
 
-	jitoResp, err := w.PostSubmitJitoBundle(ctx, tx)
+	signature, err := w.PostSubmit(ctx, resp.Transactions[0].Content, true, true)
 	if err != nil {
 		log.Errorf("failed to submit tx: %w", err)
 		return true
@@ -754,7 +754,7 @@ func callPlaceOrderWithJitoBundle(w *provider.WSClient, ownerAddr string, jitoTi
 		panic(err)
 	}
 
-	log.Infof("submitted jito bundle with uuid: %s", jitoResp.Uuids)
+	log.Infof("submitted bundle with signature: %s", signature)
 	return false
 }
 

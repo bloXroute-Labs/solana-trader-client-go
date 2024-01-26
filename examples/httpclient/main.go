@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"math/rand"
 	"net/http"
 	"os"
@@ -126,8 +127,6 @@ func run() bool {
 	fmt.Println(payerAddr)
 	fmt.Println(cfg)
 	fmt.Println(ooAddr)
-
-	callPlaceOrderHTTPWithJito(ownerAddr, uint64(1030))
 
 	//if cfg.RunTrades {
 	//	// Order lifecycle
@@ -662,75 +661,85 @@ func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide strin
 	return false
 }
 
-func callPlaceOrderHTTPWithJito(ownerAddr string, bundleTip uint64) bool {
-	log.Info("starting jupiter swap test")
+func callPlaceOrderBundleUsingBatch(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing order with bundle, using a raydium swap")
 
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	log.Info("jupiter swap to be sent with Jito Bundling")
-
-	request := &pb.PostJupiterSwapRequest{
+	request := &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "SOL",
 		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		Slippage:     0.2,
 		InAmount:     0.01,
-		BundleTip:    &bundleTip,
+		Tip:          &bundleTip,
 	}
 
-	resp, err := h.PostJupiterSwap(ctx, request)
+	resp, err := h.PostRaydiumSwap(ctx, request)
 	if err != nil {
 		log.Errorf("failed to post jupiter swap: %w", err.Error())
 		return true
 	}
 
-	_, _ = h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content}, true)
+	signedTx, err := transaction.SignTx(resp.Transactions[0].Content)
 	if err != nil {
-		return false
+		panic(err)
 	}
 
-	//signedJupiter, err := h.SignTx(key, resp.Transactions[0].Content)
-	//if err != nil {
-	//	return false
-	//}
-	//
-	//hash, err := h.GetRecentBlockHash(ctx)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//solanaHash, err := solana.HashFromBase58(hash.String())
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//signedJitoTx, err := utils.CreateBloxrouteTipTransactionToUseJitoBundles(key, 1030, solanaHash)
-	//if err != nil {
-	//	panic(err)
-	//}
+	useBundle := true
 
-	//var txs []string
-	//for _, t := range resp.Transactions {
-	//	txs = append(txs, t.Content)
-	//}
-
-	submit, err := h.PostSubmit(ctx, resp.Transactions[0].Content, false)
-	if err != nil {
-		return false
+	batchEntry := pb.PostSubmitRequestEntry{
+		Transaction:   &pb.TransactionMessage{Content: signedTx},
+		SkipPreFlight: true,
 	}
 
-	fmt.Println(submit.Signature)
+	batchRequest := pb.PostSubmitBatchRequest{
+		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry},
+		SubmitStrategy: 1,
+		UseBundle:      &useBundle,
+	}
 
-	os.Exit(1)
+	batchResp, err := h.PostSubmitBatchV2(ctx, &batchRequest)
+	if err != nil {
+		panic(err)
+	}
 
-	//jitoResp, err := h.PostSubmitJitoBundle(ctx, txs)
-	//if err != nil {
-	//	log.Errorf("failed to submit jito bundle : %w", err.Error())
-	//}
-	//
-	//log.Infof("Jito bundle successfully submitted with uuid : %s", jitoResp.Uuids)
+	log.Infof("successfully placed bundle batch order with signature : %s", batchResp.Transactions[0].Signature)
+
+	return false
+}
+
+func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing order with bundle, using a raydium swap")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	request := &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "SOL",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.2,
+		InAmount:     0.01,
+		Tip:          &bundleTip,
+	}
+
+	resp, err := h.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		log.Errorf("failed to post jupiter swap: %w", err.Error())
+		return true
+	}
+
+	tx, err := h.PostSubmitWithBundle(ctx, resp.Transactions[0].Content)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Infof("successfully placed bundle batch order with signature : %s", tx)
+
 	return false
 }
 

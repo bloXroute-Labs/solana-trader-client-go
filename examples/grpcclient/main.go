@@ -791,6 +791,8 @@ func callPlaceOrderGRPCWithJitoBundle(g *provider.GRPCClient, ownerAddr, payerAd
 
 	log.Infof("submitted bundle to jito with uuid: %s", resp.Uuids)
 
+	fmt.Println(resp.Signatures)
+
 	if err != nil {
 		return false
 	}

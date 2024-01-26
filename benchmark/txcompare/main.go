@@ -56,9 +56,10 @@ func run(c *cli.Context) error {
 	recentBlockHashFn := func() (solana.Hash, error) {
 		return querier.RecentBlockHash(ctx)
 	}
+
 	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(*opts.PrivateKey, recentBlockHashFn))
 
-	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
+	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations, opts.AuthHeader)
 	if err != nil {
 		return err
 	}

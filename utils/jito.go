@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	bloxRouteTipAddress = "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ"
+	BloxrouteTipAddress = "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ"
 	jitoTipAddress      = "96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5"
 	memoProgramIDV2     = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
 )
@@ -48,7 +48,7 @@ func CreateBloxrouteTipTransactionToUseJitoBundles(privateKey solana.PrivateKey,
 	// as of 1/17/2024, all bundle requests must include a transaction at the end of the bundle tipping 1000 lamports
 	// to jitoTipAddress
 
-	recipient := solana.MustPublicKeyFromBase58(bloxRouteTipAddress)
+	recipient := solana.MustPublicKeyFromBase58(BloxrouteTipAddress)
 
 	tx, err := solana.NewTransaction([]solana.Instruction{
 		system.NewTransferInstruction(tipAmount, privateKey.PublicKey(), recipient).Build()}, recentBlockHash)
@@ -74,7 +74,7 @@ func CreateBloxrouteTipTransactionToUseJitoBundles(privateKey solana.PrivateKey,
 // CreateBloxrouteTipInstructionToUseJitoBundles creates a transaction you can use to when using PostSubmitJitoBundle endpoints.
 // This instruction should be the LAST transaction in your submission bundle
 func CreateBloxrouteTipInstructionToUseJitoBundles(senderAddress solana.PublicKey, tipAmount uint64) (solana.Instruction, error) {
-	recipient := solana.MustPublicKeyFromBase58(bloxRouteTipAddress)
+	recipient := solana.MustPublicKeyFromBase58(BloxrouteTipAddress)
 
 	return system.NewTransferInstruction(tipAmount, senderAddress, recipient).Build(), nil
 }

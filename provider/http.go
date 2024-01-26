@@ -329,34 +329,26 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 	return &response, nil
 }
 
-// PostSubmitJitoBundle takes in a list of transactions, signs them, and submits them to PostSubmitJitoEndpoint
-func (h *HTTPClient) PostSubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/submit-jito", h.baseURL)
-	var transactionMessages []*pb.TransactionMessageJito
-	for _, tx := range txBase64 {
-		if h.privateKey == nil {
-			return &pb.PostSubmitJitoBundleResponse{}, ErrPrivateKeyNotFound
-		}
+// PostSubmitWithBundle signs a transaction and submits it using front running protection
+func (h *HTTPClient) PostSubmitWithBundle(ctx context.Context, txBase64 string) (*pb.PostSubmitResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
 
-		signedTx, err := transaction.SignTxWithPrivateKey(tx, *h.privateKey)
-		if err != nil {
-			return &pb.PostSubmitJitoBundleResponse{}, err
-		}
-
-		request := pb.TransactionMessageJito{Content: signedTx}
-
-		transactionMessages = append(transactionMessages, &request)
+	signedTx, err := transaction.SignTxWithPrivateKey(txBase64, *h.privateKey)
+	if err != nil {
+		return &pb.PostSubmitResponse{}, err
 	}
 
-	request := &pb.PostSubmitJitoBundleRequest{Transactions: transactionMessages}
+	frontRunningProtection := true
 
-	var response pb.PostSubmitJitoBundleResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitJitoBundleResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: signedTx}, FrontRunningProtection: &frontRunningProtection}
+
+	var resp pb.PostSubmitResponse
+	err = connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &resp, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
 
-	return &response, nil
+	return &resp, nil
 }
 
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
