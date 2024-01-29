@@ -41,9 +41,9 @@ func CreateJitoTipTx(privateKey solana.PrivateKey, recentBlockHash solana.Hash) 
 	return tx, nil
 }
 
-// CreateBloxrouteTipTransactionToUseJitoBundles creates a transaction you can use to when using PostSubmitJitoBundle endpoints.
+// CreateBloxrouteTipTransactionToUseBundles creates a transaction you can use to when using PostSubmitJitoBundle endpoints.
 // This transaction should be the LAST transaction in your submission bundle
-func CreateBloxrouteTipTransactionToUseJitoBundles(privateKey solana.PrivateKey, tipAmount uint64, recentBlockHash solana.Hash) (*solana.Transaction, error) {
+func CreateBloxrouteTipTransactionToUseBundles(privateKey solana.PrivateKey, tipAmount uint64, recentBlockHash solana.Hash) (*solana.Transaction, error) {
 	// https://jito-labs.gitbook.io/mev/searcher-resources/bundles
 	// as of 1/17/2024, all bundle requests must include a transaction at the end of the bundle tipping 1000 lamports
 	// to jitoTipAddress

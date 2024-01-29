@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"math/rand"
 	"os"
 	"time"
@@ -53,47 +54,39 @@ func run() bool {
 
 	// informational methods
 	//
-	//failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
-	//failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
-	//failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
-	//failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
-	//failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
-	//
-	//failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
-	//failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
-	//failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
-	//failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
-	//failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
-	//failed = failed || logCall("callDriftPerpOrderbookGRPC", func() bool { return callDriftPerpOrderbookGRPC(g) })
-	//failed = failed || logCall("callDriftGetMarginOrderbookGRPC", func() bool { return callDriftGetMarginOrderbookGRPC(g) })
-	//failed = failed || logCall("callDriftMarketDepthGRPC", func() bool { return callDriftMarketDepthGRPC(g) })
+	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
+	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
+	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
+	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
+	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
 
-	//if cfg.RunSlowStream {
-	//	failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-	//	failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-	//}
-	//
-	//if cfg.RunSlowStream {
-	//	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-	//	failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-	//	failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-	//	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-	//}
+	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
+	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
+	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
+	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
 
-	//failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
-	//failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
-	//
-	//failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
-	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
-	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
-	//failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
-	//failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
-	//failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
-	//failed = failed || logCall("callDriftPerpOrderbookGRPCStream", func() bool { return callDriftPerpOrderbookGRPCStream(g) })
-	//failed = failed || logCall("callDriftMarginOrderbooksGRPCStream", func() bool { return callDriftMarginOrderbooksGRPCStream(g) })
-	//failed = failed || logCall("callDriftGetPerpTradesStream", func() bool { return callDriftGetPerpTradesStream(g) })
-	//failed = failed || logCall("callDriftGetMarketDepthsStream", func() bool { return callDriftGetMarketDepthsStream(g) })
+	if cfg.RunSlowStream {
+		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+	}
 
+	if cfg.RunSlowStream {
+		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
+		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
+		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+	}
+
+	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
+	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
+
+	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
+	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
+	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
+	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
+	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
+	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
@@ -119,24 +112,22 @@ func run() bool {
 		if !ok {
 			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 		}
-		//failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
-		//failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
-		failed = failed || logCall("callPlaceOrderGRPCWithJitoBundle", func() bool {
-			return callPlaceOrderGRPCWithJitoBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
+		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
+			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
 				typeLimit, uint64(1030))
 		})
 
-		os.Exit(1)
+		failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
+			return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
+				typeLimit, uint64(1030))
+		})
 
 		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
 			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
 		})
-
-		os.Exit(1)
-
-		time.Sleep(30 * time.Second)
-
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
@@ -757,9 +748,9 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	return clientOrderID, false
 }
 
-func callPlaceOrderGRPCWithJitoBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
+func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
 	orderSide string, computeLimit uint32, computePrice uint64, orderType string, jitoTipAmount uint64) bool {
-	log.Info("starting place order with jito bundle")
+	log.Info("starting place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -781,17 +772,65 @@ func callPlaceOrderGRPCWithJitoBundle(g *provider.GRPCClient, ownerAddr, payerAd
 	}
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
-	var transactionMessages []string
-	transactionMessages = append(transactionMessages, response.Transaction.Content)
-
-	resp, err := g.SubmitJitoBundle(ctx, transactionMessages)
+	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{Content: response.Transaction.Content}, true, true)
 	if err != nil {
-		return false
+		log.Errorf("failed to sign and submit order (%v)", err)
+		return true
 	}
 
-	log.Infof("submitted bundle to jito with uuid: %s", resp.Uuids)
+	log.Infof("submitted bundle order to trader api %v", resp)
 
-	fmt.Println(resp.Signatures)
+	return false
+}
+
+func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
+	orderSide string, computeLimit uint32, computePrice uint64, orderType string, jitoTipAmount uint64) bool {
+	log.Info("starting place order jito bundle")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// generate a random clientOrderID for this order
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID: clientOrderID,
+		SkipPreFlight: true,
+	}
+
+	// create order without actually submitting
+	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
+		orderAmount, orderPrice, computeLimit, computePrice, &jitoTipAmount, opts)
+	if err != nil {
+		log.Errorf("failed to create order (%v)", err)
+		return true
+	}
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
+
+	signedTx, err := transaction.SignTx(response.GetTransaction().Content)
+	if err != nil {
+		panic(err)
+	}
+
+	useBundle := true
+
+	batchEntry := pb.PostSubmitRequestEntry{
+		Transaction:   &pb.TransactionMessage{Content: signedTx},
+		SkipPreFlight: true,
+	}
+
+	batchRequest := pb.PostSubmitBatchRequest{
+		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry},
+		SubmitStrategy: 1,
+		UseBundle:      &useBundle,
+	}
+
+	batchResp, err := g.PostSubmitBatchV2(ctx, &batchRequest)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Infof("successfully placed bundle batch order with signature : %s", batchResp.Transactions[0].Signature)
 
 	if err != nil {
 		return false

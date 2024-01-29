@@ -688,7 +688,9 @@ func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
 		return true
 	}
 
-	tx, err := h.PostSubmitWithBundle(ctx, resp.Transactions[0].Content)
+	tx, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content, IsCleanup: false},
+		true,
+		true)
 	if err != nil {
 		panic(err)
 	}
