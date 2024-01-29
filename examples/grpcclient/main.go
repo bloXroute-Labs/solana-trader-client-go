@@ -857,15 +857,6 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 
 	tip := uint64(1025)
 
-	// create order without actually submitting
-	//response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
-	//	orderAmount, orderPrice, computeLimit, computePrice, &tip, opts)
-	//if err != nil {
-	//	log.Errorf("failed to create order (%v)", err)
-	//	return true
-	//}
-	//log.Infof("created unsigned place order transaction: %v", response.Transaction)
-
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
 		orderSide, orderType, orderAmount, orderPrice, 0, 0, &tip, opts)

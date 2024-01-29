@@ -743,34 +743,6 @@ func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, paye
 	})
 }
 
-//
-//// SubmitJitoBundle takes in a list of transactions, signs them and forms a request to send jito bundles to solana-trader-api
-//func (g *GRPCClient) SubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
-//	var transactionMessages []*pb.TransactionMessageJito
-//	for _, tx := range txBase64 {
-//		if g.PrivateKey == nil {
-//			return nil, fmt.Errorf("PRIVATE_KEY missing, please check your .env variables")
-//		}
-//
-//		signedTx, err := transaction.SignTxWithPrivateKey(tx, *g.PrivateKey)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		request := pb.TransactionMessageJito{Content: signedTx}
-//		transactionMessages = append(transactionMessages, &request)
-//	}
-//
-//	request := &pb.PostSubmitJitoBundleRequest{Transactions: transactionMessages}
-//
-//	response, err := g.PostSubmitJitoBundle(ctx, request)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return response, nil
-//}
-
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
 func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
