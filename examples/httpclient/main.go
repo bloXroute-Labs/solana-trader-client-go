@@ -634,7 +634,7 @@ func callPlaceOrderBundleUsingBatch(ownerAddr string, bundleTip uint64) bool {
 
 	resp, err := h.PostRaydiumSwap(ctx, request)
 	if err != nil {
-		log.Errorf("failed to post jupiter swap: %w", err.Error())
+		log.Error(fmt.Errorf("failed to post raydium swap: %w", err))
 		return true
 	}
 
@@ -684,7 +684,7 @@ func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
 
 	resp, err := h.PostRaydiumSwap(ctx, request)
 	if err != nil {
-		log.Errorf("failed to post jupiter swap: %w", err.Error())
+		log.Error(fmt.Errorf("failed to post jupiter swap: %w", err))
 		return true
 	}
 

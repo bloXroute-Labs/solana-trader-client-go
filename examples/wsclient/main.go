@@ -734,7 +734,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount 
 		Tip:          &jitoTipAmount})
 
 	if err != nil {
-		log.Errorf("failed to generate raydium swap: %w", err)
+		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
 		return true
 	}
 
@@ -742,7 +742,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount 
 		true,
 		true)
 	if err != nil {
-		log.Errorf("failed to sign and submit tx: %s", err.Error())
+		log.Errorf("failed to sign and submit tx: %s", err)
 		return true
 	}
 
@@ -766,7 +766,7 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoT
 		Tip:          &jitoTipAmount})
 
 	if err != nil {
-		log.Errorf("failed to generate raydium swap: %w", err)
+		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
 		return true
 	}
 
