@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"go.uber.org/zap"
@@ -67,7 +68,7 @@ func (j *jupiterSwap) log() *zap.SugaredLogger {
 func (j *jupiterSwap) Swap(ctx context.Context, iterations int) ([]SwapEvent, error) {
 	submitOpts := provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	}
 
 	time.Sleep(j.initialTimeout)
