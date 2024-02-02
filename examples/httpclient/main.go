@@ -83,6 +83,7 @@ func run() bool {
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
+	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
 	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
@@ -328,6 +329,23 @@ func callRaydiumPools() bool {
 	return false
 }
 
+func callGetRateLimit() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := h.GetRateLimit(ctx, &pb.GetRateLimitRequest{})
+	if err != nil {
+		log.Errorf("error with GetTransaction request: %v", err)
+		return true
+	} else {
+		log.Info(tx)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callGetTransaction() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -352,9 +370,9 @@ func callPriceHTTP() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	prices, err := h.GetPrice(ctx, []string{"SOL", "ETH"})
+	prices, err := h.GetPrice(ctx, []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
 	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
+		log.Errorf("error with GetPrice request for SOL and BONK: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -370,10 +388,10 @@ func callRaydiumPrices() bool {
 	defer cancel()
 
 	prices, err := h.GetRaydiumPrices(ctx, &pb.GetRaydiumPricesRequest{
-		Tokens: []string{"SOL", "ETH"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
 	})
 	if err != nil {
-		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
+		log.Errorf("error with GetRaydiumPrices request for SOL and BONK: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -389,10 +407,10 @@ func callJupiterPrices() bool {
 	defer cancel()
 
 	prices, err := h.GetJupiterPrices(ctx, &pb.GetJupiterPricesRequest{
-		Tokens: []string{"SOL", "ETH"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
 	})
 	if err != nil {
-		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
+		log.Errorf("error with GetJupiterPrices request for SOL and BONK: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -424,8 +442,8 @@ func callGetQuotesHTTP() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	inToken := "SOL"
-	outToken := "USDT"
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
 	limit := 5
@@ -458,8 +476,8 @@ func callGetRaydiumQuotes() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	inToken := "SOL"
-	outToken := "USDT"
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
 
@@ -497,7 +515,7 @@ func callGetJupiterQuotes() bool {
 	defer cancel()
 
 	inToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-	outToken := "SOL"
+	outToken := "So11111111111111111111111111111111111111112"
 	amount := 0.01
 	slippage := float64(5)
 	limit := int32(3)
@@ -947,7 +965,7 @@ func callTradeSwap(ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "SOL",
+	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "So11111111111111111111111111111111111111112",
 		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  config.BoolPtr(false),
@@ -971,7 +989,7 @@ func callRaydiumSwap(ownerAddr string) bool {
 	sig, err := h.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-		OutToken:     "SOL",
+		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
@@ -1007,7 +1025,7 @@ func callRaydiumRouteSwap(ownerAddr string) bool {
 			},
 			{
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
@@ -1043,7 +1061,7 @@ func callJupiterRouteSwap(ownerAddr string) bool {
 					Id:    "61acRgpURKTU8LKPJKs6WQa18KzD9ogavXzjxfD84KLu",
 				},
 				InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				OutToken:     "SOL",
+				OutToken:     "So11111111111111111111111111111111111111112",
 				InAmount:     0.01,
 				OutAmountMin: 0.000123117,
 				OutAmount:    0.000123425,
@@ -1077,7 +1095,7 @@ func callJupiterSwap(ownerAddr string) bool {
 	sig, err := h.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-		OutToken:     "SOL",
+		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
@@ -1122,7 +1140,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 					Id:    "",
 				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
