@@ -298,7 +298,7 @@ func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 }
 
 func callPriceGRPC(g *provider.GRPCClient) bool {
-	prices, err := g.GetPrice(context.Background(), []string{"SOL", "ETH"})
+	prices, err := g.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"})
 	if err != nil {
 		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
 		return true
@@ -312,7 +312,7 @@ func callPriceGRPC(g *provider.GRPCClient) bool {
 
 func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
-		Tokens: []string{"SOL", "ETH"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
@@ -327,7 +327,7 @@ func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 
 func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
-		Tokens: []string{"SOL", "ETH"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
 	})
 	if err != nil {
 		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
