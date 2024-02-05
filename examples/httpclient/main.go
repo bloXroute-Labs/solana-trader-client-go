@@ -618,7 +618,7 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 	_, err := h.SubmitCancelOrderV2(ctx, "", clientOrderID, sideAsk, ownerAddr,
 		marketAddr, ooAddr, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  false,
+			SkipPreFlight:  config.BoolPtr(false),
 		})
 	if err != nil {
 		log.Errorf("failed to cancel order by client ID (%v)", err)
@@ -659,7 +659,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType 
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place 2 orders in orderbook
@@ -709,7 +709,7 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType 
 	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -750,7 +750,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string, orderSide s
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place order in orderbook
@@ -816,7 +816,7 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string, orderSide s
 	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -842,7 +842,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string, orderSide string, ord
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place order in orderbook
@@ -910,7 +910,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string, orderSide string, ord
 	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -950,7 +950,7 @@ func callTradeSwap(ownerAddr string) bool {
 	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "SOL",
 		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  false,
+			SkipPreFlight:  config.BoolPtr(false),
 		})
 	if err != nil {
 		log.Error(err)
@@ -976,7 +976,7 @@ func callRaydiumSwap(ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1015,7 +1015,7 @@ func callRaydiumRouteSwap(ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1056,7 +1056,7 @@ func callJupiterRouteSwap(ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1082,7 +1082,7 @@ func callJupiterSwap(ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1130,7 +1130,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)

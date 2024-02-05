@@ -12,6 +12,10 @@ type Example struct {
 	RunTrades     bool
 }
 
+func BoolPtr(val bool) *bool {
+	return &val
+}
+
 func Load() (Example, error) {
 	env, err := loadEnv()
 	if err != nil {

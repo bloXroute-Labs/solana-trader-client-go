@@ -763,7 +763,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderS
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place 2 orders in orderbook
@@ -857,7 +857,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place order in orderbook
@@ -953,7 +953,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place order in orderbook
@@ -1046,7 +1046,7 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "USDT",
 		"SOL", 0.01, 0.1, "raydium", provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  false,
+			SkipPreFlight:  config.BoolPtr(false),
 		})
 	if err != nil {
 		log.Error(err)
@@ -1067,7 +1067,7 @@ func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, comput
 		"SOL", 0.01, 0.1, "raydium", computeLimit, computePrice,
 		provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  false,
+			SkipPreFlight:  config.BoolPtr(false),
 		})
 	if err != nil {
 		log.Error(err)
@@ -1091,7 +1091,7 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1139,7 +1139,7 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1177,7 +1177,7 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1201,7 +1201,7 @@ func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1240,7 +1240,7 @@ func callJupiterRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)

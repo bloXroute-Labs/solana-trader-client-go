@@ -298,7 +298,7 @@ func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 }
 
 func callPriceGRPC(g *provider.GRPCClient) bool {
-	prices, err := g.GetPrice(context.Background(), []string{"SOL", "ETH"})
+	prices, err := g.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"})
 	if err != nil {
 		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
 		return true
@@ -312,7 +312,7 @@ func callPriceGRPC(g *provider.GRPCClient) bool {
 
 func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
-		Tokens: []string{"SOL", "ETH"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
@@ -327,7 +327,7 @@ func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 
 func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
-		Tokens: []string{"SOL", "ETH"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
 	})
 	if err != nil {
 		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
@@ -716,7 +716,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// create order without actually submitting
@@ -753,7 +753,7 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// create order without actually submitting
@@ -787,7 +787,7 @@ func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr str
 	sig, err := g.SubmitCancelOrderV2(ctx, "", clientID, sideAsk, ownerAddr,
 		marketAddr, ooAddr, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  true,
+			SkipPreFlight:  config.BoolPtr(true),
 		})
 	if err != nil {
 		log.Errorf("failed to cancel order by client order ID (%v)", err)
@@ -827,7 +827,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place 2 orders in orderbook
@@ -877,7 +877,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -916,7 +916,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place order in orderbook
@@ -983,7 +983,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1008,7 +1008,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	opts := provider.PostOrderOpts{
 		ClientOrderID:     clientOrderID1,
 		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     true,
+		SkipPreFlight:     config.BoolPtr(true),
 	}
 
 	// Place order in orderbook
@@ -1076,7 +1076,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  true,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1098,7 +1098,7 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDT",
 		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  false,
+			SkipPreFlight:  config.BoolPtr(false),
 		})
 	if err != nil {
 		log.Error(err)
@@ -1123,7 +1123,7 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1148,7 +1148,7 @@ func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1195,7 +1195,7 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1234,7 +1234,7 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1274,7 +1274,7 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(false),
 	})
 	if err != nil {
 		log.Error(err)

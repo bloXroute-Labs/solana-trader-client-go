@@ -531,8 +531,11 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 	if err != nil {
 		return "", err
 	}
-
-	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -679,8 +682,11 @@ func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, paye
 	if err != nil {
 		return "", err
 	}
-
-	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -710,8 +716,11 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	if err != nil {
 		return "", err
 	}
-
-	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) Close() error {
@@ -923,8 +932,11 @@ func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market strin
 	if err != nil {
 		return "", err
 	}
-
-	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -946,7 +958,7 @@ func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCanc
 
 	return w.signAndSubmitBatch(ctx, order.Transactions, SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  skipPreFlight,
+		SkipPreFlight:  &skipPreFlight,
 	})
 }
 
@@ -1002,6 +1014,9 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	if err != nil {
 		return "", err
 	}
-
-	return w.signAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
 }

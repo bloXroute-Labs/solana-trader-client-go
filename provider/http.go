@@ -513,7 +513,14 @@ func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 		return "", err
 	}
 
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	if err != nil {
+		return "", err
+	}
 	return sig, err
 }
 
@@ -694,8 +701,11 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if err != nil {
 		return "", err
 	}
-
-	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -727,8 +737,11 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if err != nil {
 		return "", err
 	}
-
-	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.
@@ -870,8 +883,11 @@ func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if err != nil {
 		return "", err
 	}
-
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 	return sig, err
 }
 
@@ -883,8 +899,11 @@ func (h *HTTPClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if err != nil {
 		return "", err
 	}
-
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 	return sig, err
 }
 
@@ -993,8 +1012,11 @@ func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if err != nil {
 		return "", err
 	}
-
-	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 type stringable interface {
