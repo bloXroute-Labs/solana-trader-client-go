@@ -90,7 +90,7 @@ func run() bool {
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
+		failed = failed || logCall("callGetBundleResultsStream", func() bool { return callGetBundleResultsStream(w) })
 	}
 
 	// calls below this place an order and immediately cancel it
