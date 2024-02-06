@@ -992,19 +992,6 @@ func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	return &response, nil
 }
 
-func (h *HTTPClient) SignTx(privateKey solana.PrivateKey, tx string) (string, error) {
-	if h.privateKey == nil {
-		return "", ErrPrivateKeyNotFound
-	}
-
-	txBase64, err := transaction.SignTxWithPrivateKey(tx, privateKey)
-	if err != nil {
-		return "", err
-	}
-
-	return txBase64, nil
-}
-
 func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := h.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
