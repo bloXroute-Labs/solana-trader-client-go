@@ -331,28 +331,6 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 	return &response, nil
 }
 
-// PostSubmitWithBundle signs a transaction and submits it using front running protection
-func (h *HTTPClient) PostSubmitWithBundle(ctx context.Context, txBase64 string) (*pb.PostSubmitResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
-
-	signedTx, err := transaction.SignTxWithPrivateKey(txBase64, *h.privateKey)
-	if err != nil {
-		return &pb.PostSubmitResponse{}, err
-	}
-
-	frontRunningProtection := true
-
-	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: signedTx}, FrontRunningProtection: &frontRunningProtection}
-
-	var resp pb.PostSubmitResponse
-	err = connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &resp, h.authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp, nil
-}
-
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
