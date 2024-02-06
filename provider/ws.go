@@ -397,35 +397,6 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 	return &response, nil
 }
 
-// PostSubmitJitoBundle takes in a list of transactions, signs them, and submits them to PostSubmitJitoEndpoint
-//func (w *WSClient) PostSubmitJitoBundle(ctx context.Context, txBase64 []string) (*pb.PostSubmitJitoBundleResponse, error) {
-//	var transactionMessages []*pb.TransactionMessageJito
-//	for _, tx := range txBase64 {
-//		if w.privateKey == nil {
-//			return &pb.PostSubmitJitoBundleResponse{}, ErrPrivateKeyNotFound
-//		}
-//
-//		signedTx, err := transaction.SignTxWithPrivateKey(tx, *w.privateKey)
-//		if err != nil {
-//			return &pb.PostSubmitJitoBundleResponse{}, err
-//		}
-//
-//		request := pb.TransactionMessageJito{Content: signedTx}
-//
-//		transactionMessages = append(transactionMessages, &request)
-//	}
-//
-//	request := &pb.PostSubmitJitoBundleRequest{Transactions: transactionMessages}
-//
-//	var response pb.PostSubmitJitoBundleResponse
-//	err := w.conn.Request(ctx, "PostSubmitJitoBundle", request, &response)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return &response, nil
-//}
-
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
 	var response pb.PostSubmitBatchResponse
