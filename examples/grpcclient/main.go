@@ -76,6 +76,8 @@ func run() bool {
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+		failed = failed || logCall("callBundleResultsStream", func() bool { return callGetBundleResultsStream(g) })
+
 	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
@@ -729,7 +731,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	}
 
 	// create order without actually submitting
-	response, err := g.PostOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+	response, err := g.PostOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, nil, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return 0, true
@@ -738,7 +740,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrderV2(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderType, orderAmount, orderPrice, opts)
+		orderSide, orderType, orderAmount, orderPrice, nil, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return 0, true
@@ -855,11 +857,9 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 		SkipPreFlight: true,
 	}
 
-	tip := uint64(1025)
-
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderType, orderAmount, orderPrice, 0, 0, &tip, opts)
+		orderSide, orderType, orderAmount, orderPrice, 0, 0, nil, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return true
@@ -924,7 +924,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 
 	// Place 2 orders in orderbook
 	log.Info("placing orders")
-	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, nil, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -932,7 +932,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 	log.Infof("submitting place order #1, signature %s", sig)
 
 	opts.ClientOrderID = clientOrderID2
-	sig, err = g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+	sig, err = g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, nil, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1013,7 +1013,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, nil, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1105,7 +1105,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 
 	// Place order in orderbook
 	log.Info("placing order")
-	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+	sig, err := g.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, nil, opts)
 	if err != nil {
 		log.Error(err)
 		return true
@@ -1439,6 +1439,32 @@ func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
 	stream, err := g.GetNewRaydiumPoolsStream(ctx)
 	if err != nil {
 		log.Errorf("error with GetNewRaydiumPools stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetBundleResultsStream(g *provider.GRPCClient) bool {
+	log.Info("starting get new raydium pools stream")
+
+	ch := make(chan *pb.GetBundleResultsStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetBundleResultsStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetBundleResults stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)

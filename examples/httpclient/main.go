@@ -77,22 +77,22 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
-	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	//failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	//failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	//failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
+	//failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
+	//failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	//failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	//failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
+	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
+	//failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	//failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	//failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	//failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	//failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -123,17 +123,23 @@ func run() bool {
 
 	if cfg.RunTrades {
 		// Order Lifecycle
-		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
-		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
-		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-		failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
-			return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
-		})
-		failed = failed || logCall("callPlaceOrderBundle", func() bool {
-			return callPlaceOrderBundle(ownerAddr, 1030) // this is using raydium swap
-		})
+		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
+		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
+		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
+		//failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+		//failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
+		//	return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+		//})
 
+		for i := 1; i < 3; i++ {
+			time.Sleep(1 * time.Second)
+
+			failed = failed || logCall("callPlaceOrderBundle", func() bool {
+				return callPlaceOrderBundle(ownerAddr, 3000) // this is using raydium swap
+			})
+		}
+
+		os.Exit(1)
 		failed = failed || logCall("callPlaceOrderBundleWithBatch", func() bool {
 			return callPlaceOrderBundleUsingBatch(ownerAddr, 1030) // this is using raydium swap
 		})
@@ -684,7 +690,7 @@ func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
 
 	resp, err := h.PostRaydiumSwap(ctx, request)
 	if err != nil {
-		log.Error(fmt.Errorf("failed to post jupiter swap: %w", err))
+		log.Error(fmt.Errorf("failed to post raydium swap: %w", err))
 		return true
 	}
 

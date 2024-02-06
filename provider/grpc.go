@@ -667,6 +667,18 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
+// GetBundleResultsStream subscribes to a stream for getting a user's submitted bundles
+func (g *GRPCClient) GetBundleResultsStream(
+	ctx context.Context,
+) (connections.Streamer[*pb.GetBundleResultsStreamResponse], error) {
+	stream, err := g.apiClient.GetBundleResultsStream(ctx, &pb.GetBundleResultsStreamRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetBundleResultsStreamResponse](stream, ""), nil
+}
+
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
@@ -710,7 +722,7 @@ func (g *GRPCClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponseV2
 }
 
 // PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, bundleTip *uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -719,6 +731,7 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 		Type:              orderType,
 		Amount:            amount,
 		Price:             price,
+		Tip:               bundleTip,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ClientOrderID:     opts.ClientOrderID,
 	})
@@ -726,7 +739,7 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 
 // PostOrderV2WithPriorityFee returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
-	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, bundleTip *uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -738,13 +751,14 @@ func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, paye
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ComputeLimit:      computeLimit,
 		ComputePrice:      computePrice,
+		Tip:               bundleTip,
 		ClientOrderID:     opts.ClientOrderID,
 	})
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
+func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, bundleTip *uint64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, bundleTip, opts)
 	if err != nil {
 		return "", err
 	}
@@ -754,8 +768,8 @@ func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 
 // SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network with specified computeLimit and computePrice
 func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
-	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, opts)
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, bundleTip *uint64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, bundleTip, opts)
 	if err != nil {
 		return "", err
 	}
