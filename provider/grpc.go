@@ -110,6 +110,10 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+func (g *GRPCClient) GetPriorityFee(ctx context.Context, request *pb.GetPriorityFeeRequest) (*pb.GetPriorityFeeResponse, error) {
+	return g.apiClient.GetPriorityFee(ctx, request)
+}
+
 // GetTransaction returns details of a recent transaction
 func (g *GRPCClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
 	return g.apiClient.GetTransaction(ctx, request)
@@ -682,6 +686,16 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 	}
 
 	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
+}
+
+// GetPriorityFeeStream subscribes to a stream of priority fees for a given percentile
+func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, percentile float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	stream, err := g.apiClient.GetPriorityFeeStream(ctx, &pb.GetPriorityFeeRequest{Percentile: &percentile})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
 // V2 Openbook

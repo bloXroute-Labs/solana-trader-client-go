@@ -843,6 +843,15 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 	return connections.WSStreamProto(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
 }
 
+// GetPriorityFeeStream subscribes to a stream for getting a recent priority fee estimate based on a percentile.
+func (w *WSClient) GetPriorityFeeStream(ctx context.Context, percentile float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPriorityFeeStream", &pb.GetPriorityFeeRequest{
+		Percentile: &percentile,
+	}, func() *pb.GetPriorityFeeResponse {
+		return &pb.GetPriorityFeeResponse{}
+	})
+}
+
 // V2 Openbook
 
 // GetMarketsV2 returns the list of all available named markets
