@@ -50,16 +50,6 @@ func run() bool {
 	}
 
 	var failed bool
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-	}
-
 	// informational methods
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
@@ -70,6 +60,7 @@ func run() bool {
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
+	failed = failed || logCall("callGetRateLimitGRPC", func() bool { return callGetRateLimitGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
@@ -127,6 +118,14 @@ func run() bool {
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
 	}
 
+	if cfg.RunSlowStream {
+		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
+		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
+		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+	}
 	return failed
 }
 
@@ -259,6 +258,19 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRateLimitGRPC(g *provider.GRPCClient) bool {
+	tx, err := g.GetRateLimit(context.Background(), &pb.GetRateLimitRequest{})
+	if err != nil {
+		log.Errorf("error with GetRateLimit request: %v", err)
+		return true
+	} else {
+		log.Info(tx)
 	}
 
 	fmt.Println()

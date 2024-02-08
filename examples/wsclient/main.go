@@ -82,6 +82,7 @@ func run() bool {
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
 	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
+	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
 	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
@@ -248,6 +249,21 @@ func callPoolsWS(w *provider.WSClient) bool {
 		return true
 	} else {
 		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRateLimitWS(w *provider.WSClient) bool {
+	log.Info("calling callGetRateLimit...")
+
+	tx, err := w.GetRateLimit(context.Background(), &pb.GetRateLimitRequest{})
+	if err != nil {
+		log.Errorf("error with GetTransaction request: %v", err)
+		return true
+	} else {
+		log.Info(tx)
 	}
 
 	fmt.Println()

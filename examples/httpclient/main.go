@@ -83,6 +83,7 @@ func run() bool {
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
+	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
 	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
@@ -322,6 +323,23 @@ func callRaydiumPools() bool {
 		return true
 	} else {
 		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRateLimit() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	tx, err := h.GetRateLimit(ctx, &pb.GetRateLimitRequest{})
+	if err != nil {
+		log.Errorf("error with GetTransaction request: %v", err)
+		return true
+	} else {
+		log.Info(tx)
 	}
 
 	fmt.Println()
