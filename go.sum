@@ -57,6 +57,10 @@ github.com/blendle/zapdriver v1.3.1 h1:C3dydBOWYRiOk+B8X9IVZ5IOe+7cl+tGOexN4QqHf
 github.com/blendle/zapdriver v1.3.1/go.mod h1:mdXfREi6u5MArG4j9fewC+FGnXaBR+T4Ox4J2u4eHCc=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240124153410-6dee35c0a2bf h1:Bthdojj04oqhw3i4mwls8+s1evglM4cJdPSFo7o9j0Y=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240124153410-6dee35c0a2bf/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240208155424-74138881c798 h1:O1Y9gPNMutD4JYnbhT3wPS0qqyHEXCouPMhPI5bSznU=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240208155424-74138881c798/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240208231015-1acdce254082 h1:Z1yvokU8JMOjfcaz7h1CBToyF6NdDvNaTVb8BfBn/ng=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240208231015-1acdce254082/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -207,6 +211,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
+github.com/joho/godotenv v1.4.0 h1:3l4+N6zfMWnkbPEXKng2o2/MR5mSwTrBih4ZEkkz1lg=
+github.com/joho/godotenv v1.4.0/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=

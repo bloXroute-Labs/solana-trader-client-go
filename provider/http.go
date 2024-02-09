@@ -72,6 +72,17 @@ func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransact
 	return response, nil
 }
 
+// GetRateLimit returns details of an account rate-limits
+func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/account/rate-limit", h.baseURL)
+	response := new(pb.GetRateLimitResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRateLimitResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)

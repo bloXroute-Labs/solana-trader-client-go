@@ -83,6 +83,16 @@ func (w *WSClient) GetTransaction(ctx context.Context, request *pb.GetTransactio
 	return &response, nil
 }
 
+// GetRateLimit returns details of an account rate-limits
+func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+	var response pb.GetRateLimitResponse
+	err := w.conn.Request(ctx, "GetRateLimit", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	var response pb.GetRaydiumPoolsResponse
