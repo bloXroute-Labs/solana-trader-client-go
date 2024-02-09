@@ -50,6 +50,7 @@ func run() bool {
 	}
 
 	var failed bool
+
 	// informational methods
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
@@ -273,7 +274,6 @@ func callGetRateLimitGRPC(g *provider.GRPCClient) bool {
 		log.Info(tx)
 	}
 
-	fmt.Println()
 	return false
 }
 
@@ -1300,7 +1300,7 @@ func callPricesGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"So11111111111111111111111111111111111111112"})
+	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
 
 	if err != nil {
 		log.Errorf("error with GetPrices stream request: %v", err)
