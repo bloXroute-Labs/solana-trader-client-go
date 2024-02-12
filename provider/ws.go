@@ -462,11 +462,11 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -479,7 +479,7 @@ func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitTradeSwapWithPriorityFee builds a TradeSwap transaction then signs it, and submits to the network.
@@ -490,7 +490,7 @@ func (w *WSClient) SubmitTradeSwapWithPriorityFee(ctx context.Context, owner, in
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
@@ -499,7 +499,7 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -508,7 +508,7 @@ func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -517,7 +517,7 @@ func (w *WSClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostR
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
@@ -526,7 +526,7 @@ func (w *WSClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupite
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
@@ -535,7 +535,7 @@ func (w *WSClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJ
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -636,7 +636,7 @@ func (w *WSClient) SubmitCancelAll(ctx context.Context, market, owner string, op
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, orders.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, orders.Transactions, false, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -965,7 +965,7 @@ func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCanc
 		return nil, err
 	}
 
-	return w.signAndSubmitBatch(ctx, order.Transactions, SubmitOpts{
+	return w.SignAndSubmitBatch(ctx, order.Transactions, false, SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  skipPreFlight,
 	})

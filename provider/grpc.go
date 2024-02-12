@@ -242,11 +242,11 @@ func (g *GRPCClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +324,7 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
@@ -333,7 +333,7 @@ func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -342,7 +342,7 @@ func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -351,7 +351,7 @@ func (g *GRPCClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
@@ -360,7 +360,7 @@ func (g *GRPCClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupi
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
@@ -369,7 +369,7 @@ func (g *GRPCClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -472,7 +472,7 @@ func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, orders.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, orders.Transactions, false, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -813,7 +813,7 @@ func (g *GRPCClient) SubmitCancelOrderV2(
 		return nil, err
 	}
 
-	return g.signAndSubmitBatch(ctx, order.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, order.Transactions, false, opts)
 }
 
 // PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.

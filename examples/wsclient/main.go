@@ -60,38 +60,38 @@ func run() bool {
 	var failed bool
 
 	// informational requests
-	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
-	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
-	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
-	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
-	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
-	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
-	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
-	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
-	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
-	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
-	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
-
-	// streaming methods
-	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
-	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
-	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
-	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
-		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
-		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
-		failed = failed || logCall("callGetBundleResultsStream", func() bool { return callGetBundleResultsStream(w) })
-	}
+	//failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
+	//failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
+	//failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
+	//failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
+	//failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
+	//failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
+	//failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
+	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
+	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
+	//failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
+	//failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
+	//failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
+	//failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
+	//failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
+	//failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
+	//
+	//// streaming methods
+	//failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
+	//failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
+	//failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
+	//failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
+	//failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
+	//
+	//if cfg.RunSlowStream {
+	//	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
+	//	failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
+	//	failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
+	//	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
+	//	failed = failed || logCall("callGetBundleResultsStream", func() bool { return callGetBundleResultsStream(w) })
+	//}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -114,6 +114,10 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
+
+	failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(0)) })
+
+	os.Exit(1)
 
 	if cfg.RunTrades {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
@@ -582,7 +586,7 @@ func callGetBundleResultsStream(w *provider.WSClient) bool {
 
 	stream, err := w.GetBundleResultsStream(ctx)
 	if err != nil {
-		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
+		log.Errorf("error with GetBundleResultsStream request : %v", err)
 		return true
 	}
 
@@ -594,6 +598,7 @@ func callGetBundleResultsStream(w *provider.WSClient) bool {
 		}
 		log.Infof("response %v received", i)
 	}
+
 	return false
 }
 
@@ -745,7 +750,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 }
 
 func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount uint64) bool {
-	log.Info("trying to place an order with jito bundling")
+	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
 	ctx, cancel := context.WithCancel(context.Background())
@@ -777,7 +782,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount 
 }
 
 func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoTipAmount uint64) bool {
-	log.Info("trying to place an order with jito bundling")
+	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
 	ctx, cancel := context.WithCancel(context.Background())
@@ -787,7 +792,7 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoT
 		OwnerAddress: ownerAddr,
 		InToken:      "USDC",
 		OutToken:     "SOL",
-		Slippage:     0.2,
+		Slippage:     0.4,
 		InAmount:     0.01,
 		Tip:          &jitoTipAmount})
 
@@ -796,9 +801,12 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoT
 		return true
 	}
 
-	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
-		true,
-		true)
+	signature, err := w.SignAndSubmitBatch(ctx, []*pb.TransactionMessage{{Content: resp.Transactions[0].Content}},
+		true, provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_UKNOWN,
+			SkipPreFlight:  false,
+		})
+
 	if err != nil {
 		log.Errorf("failed to sign and submit tx: %s", err.Error())
 		return true

@@ -115,7 +115,7 @@ func ProjectFromString(project string) (pb.Project, error) {
 	return pb.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
@@ -128,6 +128,8 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 		batchRequest.Entries = append(batchRequest.Entries, request)
 
 	}
+
+	batchRequest.UseBundle = &useBundle
 
 	return &batchRequest, nil
 }

@@ -389,11 +389,11 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 // SignAndSubmitBatch signs the given transactions and submits them.
-func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -426,7 +426,7 @@ func (h *HTTPClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outTok
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
@@ -447,7 +447,7 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -456,7 +456,7 @@ func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -465,7 +465,7 @@ func (h *HTTPClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
@@ -474,7 +474,7 @@ func (h *HTTPClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupi
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
@@ -483,7 +483,7 @@ func (h *HTTPClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
@@ -637,7 +637,7 @@ func (h *HTTPClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, orders.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, orders.Transactions, false, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -937,7 +937,7 @@ func (h *HTTPClient) SubmitCancelOrderV2(
 		return nil, err
 	}
 
-	return h.SignAndSubmitBatch(ctx, order.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, order.Transactions, false, opts)
 }
 
 // PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
