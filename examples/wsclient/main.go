@@ -815,7 +815,7 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoT
 	signature, err := w.SignAndSubmitBatch(ctx, []*pb.TransactionMessage{{Content: resp.Transactions[0].Content}},
 		true, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_UKNOWN,
-			SkipPreFlight:  false,
+			SkipPreFlight:  config.BoolPtr(true),
 		})
 
 	if err != nil {

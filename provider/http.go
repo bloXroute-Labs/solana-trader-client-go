@@ -532,7 +532,7 @@ func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 	if err != nil {
 		return "", err
 	}
@@ -720,7 +720,7 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -756,7 +756,7 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.
@@ -902,7 +902,7 @@ func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 	return sig, err
 }
 
@@ -918,7 +918,7 @@ func (h *HTTPClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 	return sig, err
 }
 
@@ -1031,7 +1031,7 @@ func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 type stringable interface {

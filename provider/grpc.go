@@ -387,7 +387,7 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -529,7 +529,7 @@ func (g *GRPCClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (g *GRPCClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -557,7 +557,7 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
@@ -781,7 +781,7 @@ func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network with specified computeLimit and computePrice
@@ -796,7 +796,7 @@ func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -883,5 +883,5 @@ func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }

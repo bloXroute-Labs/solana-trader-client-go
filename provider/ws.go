@@ -558,10 +558,9 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 	skipPreFlight := true
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
-	}	
+	}
 
-
-	return w.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -712,7 +711,7 @@ func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, paye
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -746,7 +745,7 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (w *WSClient) Close() error {
@@ -970,7 +969,7 @@ func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -1052,5 +1051,5 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }

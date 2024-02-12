@@ -784,7 +784,7 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 
 	opts := provider.PostOrderOpts{
 		ClientOrderID: clientOrderID,
-		SkipPreFlight: true,
+		SkipPreFlight: config.BoolPtr(true),
 	}
 
 	// create order without actually submitting
@@ -818,9 +818,8 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 	clientOrderID := rand.Uint64()
 
 	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
+		ClientOrderID: clientOrderID,
+		SkipPreFlight: config.BoolPtr(true),
 	}
 
 	// create order without actually submitting
@@ -875,10 +874,7 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 	clientOrderID := rand.Uint64()
 
 	opts := provider.PostOrderOpts{
-		ClientOrderID: clientOrderID,
-		//OpenOrdersAddress: ooAddr,
-		SkipPreFlight: true,
-	}
+		ClientOrderID: clientOrderID}
 
 	// sign/submit transaction after creation
 	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
