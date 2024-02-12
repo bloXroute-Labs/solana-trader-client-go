@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"os"
 	"strings"
 )
@@ -10,6 +11,10 @@ type Example struct {
 	Env           Env
 	RunSlowStream bool
 	RunTrades     bool
+}
+
+func BoolPtr(val bool) *bool {
+	return &val
 }
 
 func Load() (Example, error) {
@@ -46,6 +51,11 @@ const (
 )
 
 func loadEnv() (Env, error) {
+	err := godotenv.Load(".env")
+	if err != nil {
+		fmt.Println("Error loading .env file")
+		panic(err)
+	}
 	v, ok := os.LookupEnv("API_ENV")
 	if !ok {
 		return EnvMainnet, nil

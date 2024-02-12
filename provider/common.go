@@ -69,12 +69,12 @@ var ErrPrivateKeyNotFound = errors.New("private key not provided for signing tra
 type PostOrderOpts struct {
 	OpenOrdersAddress string
 	ClientOrderID     uint64
-	SkipPreFlight     bool
+	SkipPreFlight     *bool
 }
 
 type SubmitOpts struct {
 	SubmitStrategy pb.SubmitStrategy
-	SkipPreFlight  bool
+	SkipPreFlight  *bool
 }
 
 type RPCOpts struct {
@@ -136,7 +136,12 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 
 func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana.PrivateKey) (*pb.PostSubmitRequestEntry, error) {
 	oneRequest := pb.PostSubmitRequestEntry{}
-	oneRequest.SkipPreFlight = opts.SkipPreFlight
+	if opts.SkipPreFlight == nil {
+		oneRequest.SkipPreFlight = true
+	} else {
+		oneRequest.SkipPreFlight = *opts.SkipPreFlight
+	}
+
 	signedTxBase64, err := transaction.SignTxWithPrivateKey(txBase64, privateKey)
 	if err != nil {
 		return nil, err

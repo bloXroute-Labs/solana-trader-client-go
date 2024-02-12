@@ -110,6 +110,11 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+// GetRateLimit returns details of an account rate-limits
+func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+	return g.apiClient.GetRateLimit(ctx, request)
+}
+
 // GetTransaction returns details of a recent transaction
 func (g *GRPCClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
 	return g.apiClient.GetTransaction(ctx, request)
@@ -378,8 +383,11 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if err != nil {
 		return "", err
 	}
-
-	return g.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -517,8 +525,11 @@ func (g *GRPCClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if err != nil {
 		return "", err
 	}
-
-	return g.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (g *GRPCClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -542,8 +553,11 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if err != nil {
 		return "", err
 	}
-
-	return g.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
@@ -763,7 +777,11 @@ func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 		return "", err
 	}
 
-	return g.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network with specified computeLimit and computePrice
@@ -774,7 +792,11 @@ func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 		return "", err
 	}
 
-	return g.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -857,6 +879,9 @@ func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if err != nil {
 		return "", err
 	}
-
-	return g.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }

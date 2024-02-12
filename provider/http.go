@@ -72,6 +72,17 @@ func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransact
 	return response, nil
 }
 
+// GetRateLimit returns details of an account rate-limits
+func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/account/rate-limit", h.baseURL)
+	response := new(pb.GetRateLimitResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRateLimitResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
@@ -517,7 +528,14 @@ func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 		return "", err
 	}
 
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	if err != nil {
+		return "", err
+	}
 	return sig, err
 }
 
@@ -698,8 +716,11 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if err != nil {
 		return "", err
 	}
-
-	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -731,8 +752,11 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if err != nil {
 		return "", err
 	}
-
-	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.
@@ -874,8 +898,11 @@ func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if err != nil {
 		return "", err
 	}
-
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 	return sig, err
 }
 
@@ -887,8 +914,11 @@ func (h *HTTPClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if err != nil {
 		return "", err
 	}
-
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 	return sig, err
 }
 
@@ -997,8 +1027,11 @@ func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if err != nil {
 		return "", err
 	}
-
-	return h.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 type stringable interface {

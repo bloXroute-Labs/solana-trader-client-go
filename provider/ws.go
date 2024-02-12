@@ -82,6 +82,16 @@ func (w *WSClient) GetTransaction(ctx context.Context, request *pb.GetTransactio
 	return &response, nil
 }
 
+// GetRateLimit returns details of an account rate-limits
+func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+	var response pb.GetRateLimitResponse
+	err := w.conn.Request(ctx, "GetRateLimit", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	var response pb.GetRaydiumPoolsResponse
@@ -545,6 +555,12 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 		return "", err
 	}
 
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}	
+
+
 	return w.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
 }
 
@@ -692,8 +708,11 @@ func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, paye
 	if err != nil {
 		return "", err
 	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -723,8 +742,11 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	if err != nil {
 		return "", err
 	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 func (w *WSClient) Close() error {
@@ -944,8 +966,11 @@ func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market strin
 	if err != nil {
 		return "", err
 	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -967,7 +992,7 @@ func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCanc
 
 	return w.SignAndSubmitBatch(ctx, order.Transactions, false, SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  skipPreFlight,
+		SkipPreFlight:  &skipPreFlight,
 	})
 }
 
@@ -1023,6 +1048,9 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	if err != nil {
 		return "", err
 	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, opts.SkipPreFlight, false)
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
 }
