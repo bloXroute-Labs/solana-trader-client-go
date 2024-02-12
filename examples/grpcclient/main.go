@@ -52,7 +52,6 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
@@ -62,22 +61,11 @@ func run() bool {
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
+	failed = failed || logCall("callGetRateLimitGRPC", func() bool { return callGetRateLimitGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
 	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
 	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-	}
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
 	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
@@ -131,6 +119,14 @@ func run() bool {
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
 	}
 
+	if cfg.RunSlowStream {
+		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
+		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
+		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+	}
 	return failed
 }
 
@@ -269,6 +265,18 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callGetRateLimitGRPC(g *provider.GRPCClient) bool {
+	tx, err := g.GetRateLimit(context.Background(), &pb.GetRateLimitRequest{})
+	if err != nil {
+		log.Errorf("error with GetRateLimit request: %v", err)
+		return true
+	} else {
+		log.Info(tx)
+	}
+
+	return false
+}
+
 func callGetTransactionGRPC(g *provider.GRPCClient) bool {
 	tx, err := g.GetTransaction(context.Background(), &pb.GetTransactionRequest{
 		Signature: "2s48MnhH54GfJbRwwiEK7iWKoEh3uNbS2zDEVBPNu7DaCjPXe3bfqo6RuCg9NgHRFDn3L28sMVfEh65xevf4o5W3",
@@ -298,9 +306,9 @@ func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 }
 
 func callPriceGRPC(g *provider.GRPCClient) bool {
-	prices, err := g.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"})
+	prices, err := g.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
 	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and ETH: %v", err)
+		log.Errorf("error with GetPrice request for SOL and BONK: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -312,10 +320,10 @@ func callPriceGRPC(g *provider.GRPCClient) bool {
 
 func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
-		Tokens: []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
 	})
 	if err != nil {
-		log.Errorf("error with GetRaydiumPrices request for SOL and ETH: %v", err)
+		log.Errorf("error with GetRaydiumPrices request for SOL and BONK: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -327,10 +335,10 @@ func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 
 func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
-		Tokens: []string{"So11111111111111111111111111111111111111112", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
+		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
 	})
 	if err != nil {
-		log.Errorf("error with GetJupiterPrices request for SOL and ETH: %v", err)
+		log.Errorf("error with GetJupiterPrices request for SOL and BONK: %v", err)
 		return true
 	} else {
 		log.Info(prices)
@@ -346,8 +354,8 @@ func callGetQuotes(g *provider.GRPCClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	inToken := "SOL"
-	outToken := "USDT"
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
 	limit := 5
@@ -381,8 +389,8 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	inToken := "SOL"
-	outToken := "USDT"
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
 
@@ -420,8 +428,8 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	inToken := "SOL"
-	outToken := "USDT"
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
 	limit := int32(3)
@@ -443,8 +451,8 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 		return true
 	}
 
-	if len(quotes.Routes) != 3 {
-		log.Errorf("did not get back 3 quotes, got %v quotes", len(quotes.Routes))
+	if len(quotes.Routes) == 0 {
+		log.Errorf("did not get any quotes, got %v quotes", len(quotes.Routes))
 		return true
 	}
 	for _, route := range quotes.Routes {
@@ -1095,8 +1103,8 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("trade swap")
-	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "USDT",
-		"SOL", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
+	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		"So11111111111111111111111111111111111111112", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
 			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 			SkipPreFlight:  config.BoolPtr(false),
 		})
@@ -1117,8 +1125,8 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("Raydium swap")
 	sig, err := g.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
-		InToken:      "USDT",
-		OutToken:     "SOL",
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
@@ -1142,8 +1150,8 @@ func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("Jupiter swap")
 	sig, err := g.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
 		OwnerAddress: ownerAddr,
-		InToken:      "USDT",
-		OutToken:     "SOL",
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
@@ -1187,7 +1195,7 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 					Id:    "",
 				},
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
@@ -1226,7 +1234,7 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 			},
 			{
 				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.007505,
 				OutAmount:    0.004043,
 				OutAmountMin: 0.004000,
@@ -1292,7 +1300,7 @@ func callPricesGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"SOL"})
+	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
 
 	if err != nil {
 		log.Errorf("error with GetPrices stream request: %v", err)

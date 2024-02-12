@@ -110,8 +110,14 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+// GetPriorityFee returns a priority fee estimate for a given percentile
 func (g *GRPCClient) GetPriorityFee(ctx context.Context, request *pb.GetPriorityFeeRequest) (*pb.GetPriorityFeeResponse, error) {
 	return g.apiClient.GetPriorityFee(ctx, request)
+}
+
+// GetRateLimit returns details of an account rate-limits
+func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+	return g.apiClient.GetRateLimit(ctx, request)
 }
 
 // GetTransaction returns details of a recent transaction
