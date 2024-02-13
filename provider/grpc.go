@@ -110,6 +110,11 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+// GetPriorityFee returns a priority fee estimate for a given percentile
+func (g *GRPCClient) GetPriorityFee(ctx context.Context, request *pb.GetPriorityFeeRequest) (*pb.GetPriorityFeeResponse, error) {
+	return g.apiClient.GetPriorityFee(ctx, request)
+}
+
 // GetRateLimit returns details of an account rate-limits
 func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	return g.apiClient.GetRateLimit(ctx, request)
@@ -701,6 +706,20 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 	}
 
 	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
+}
+
+// GetPriorityFeeStream subscribes to a stream of priority fees for a given percentile
+func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{}
+	if percentile != nil {
+		request.Percentile = percentile
+	}
+	stream, err := g.apiClient.GetPriorityFeeStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
 // V2 Openbook

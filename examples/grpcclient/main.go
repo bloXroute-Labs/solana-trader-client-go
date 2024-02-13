@@ -91,6 +91,10 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
+
+	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
+	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
@@ -1523,5 +1527,46 @@ func callBlockGRPCStream(g *provider.GRPCClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetPriorityFeeGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting priority fee stream")
+
+	ch := make(chan *pb.GetPriorityFeeResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPriorityFeeStream(ctx, nil)
+	if err != nil {
+		log.Errorf("error with GetPriorityFee stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetPriorityFeeGRPC(g *provider.GRPCClient) bool {
+	log.Info("starting priority fee test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	response, err := g.GetPriorityFee(ctx, &pb.GetPriorityFeeRequest{})
+	if err != nil {
+		log.Errorf("error with GetPriorityFee request: %v", err)
+		return true
+	}
+	log.Infof("response received: %v", response)
 	return false
 }
