@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -56,6 +57,8 @@ type blxrCredentials struct {
 func (bc blxrCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	return map[string]string{
 		"authorization": bc.authorization,
+		"x-sdk":         package_info.Name,
+		"x-sdk-version": package_info.Version,
 	}, nil
 }
 
