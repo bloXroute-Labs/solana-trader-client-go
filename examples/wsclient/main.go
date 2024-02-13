@@ -78,6 +78,7 @@ func run() bool {
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
+	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -85,6 +86,7 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
+	failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
@@ -1338,5 +1340,42 @@ func callBlockWSStream(w *provider.WSClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
+	log.Info("starting get priority fee stream")
+
+	ch := make(chan *pb.GetPriorityFeeResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetPriorityFeeStream(ctx, nil)
+	if err != nil {
+		log.Errorf("error with GetPriorityFee stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetPriorityFeeWS(w *provider.WSClient) bool {
+	log.Info("fetching priority fee...")
+
+	priorityFee, err := w.GetPriorityFee(context.Background(), nil)
+	if err != nil {
+		log.Errorf("error with GetPriorityFee request: %v", err)
+		return true
+	}
+
+	log.Infof("priority fee: %v", priorityFee)
 	return false
 }
