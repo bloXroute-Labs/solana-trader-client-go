@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"errors"
-
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -402,12 +401,17 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
+	if w.privateKey == nil {
+		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
+	}
+
 	request := &pb.PostSubmitRequest{
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
 		},
-		SkipPreFlight: skipPreFlight,
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: &frontRunningProtection,
 	}
 	var response pb.PostSubmitResponse
 	err := w.conn.Request(ctx, "PostSubmit", request, &response)
@@ -428,7 +432,16 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool, useBundle bool) (*pb.PostSubmitResponse, error) {
+	if w.privateKey == nil {
+		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(txBase64, *w.privateKey)
+	if err != nil {
+		return &pb.PostSubmitResponse{}, err
+	}
+
 	request := &pb.PostSubmitRequest{
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
@@ -436,7 +449,7 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFli
 		SkipPreFlight: skipPreFlight,
 	}
 	var response pb.PostSubmitResponse
-	err := w.conn.Request(ctx, "PostSubmitV2", request, &response)
+	err = w.conn.Request(ctx, "PostSubmitV2", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -453,8 +466,8 @@ func (w *WSClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmit
 	return &response, nil
 }
 
-// signAndSubmit signs the given transaction and submits it.
-func (w *WSClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
+// SignAndSubmit signs the given transaction and submits it.
+func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (string, error) {
 	if w.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -464,7 +477,7 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		return "", err
 	}
 
-	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight)
+	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection)
 	if err != nil {
 		return "", err
 	}
@@ -473,11 +486,11 @@ func (w *WSClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (w *WSClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -490,7 +503,7 @@ func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitTradeSwapWithPriorityFee builds a TradeSwap transaction then signs it, and submits to the network.
@@ -501,7 +514,7 @@ func (w *WSClient) SubmitTradeSwapWithPriorityFee(ctx context.Context, owner, in
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
@@ -510,7 +523,7 @@ func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTr
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -519,7 +532,7 @@ func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -528,7 +541,7 @@ func (w *WSClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.PostR
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
@@ -537,7 +550,7 @@ func (w *WSClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupite
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
@@ -546,7 +559,7 @@ func (w *WSClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJ
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -555,11 +568,13 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 	if err != nil {
 		return "", err
 	}
+
 	skipPreFlight := true
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -579,7 +594,7 @@ func (w *WSClient) SubmitCancelOrder(ctx context.Context, request *pb.PostCancel
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -621,7 +636,7 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (w *WSClient) PostCancelAll(
@@ -650,7 +665,7 @@ func (w *WSClient) SubmitCancelAll(ctx context.Context, market, owner string, op
 	if err != nil {
 		return nil, err
 	}
-	return w.signAndSubmitBatch(ctx, orders.Transactions, opts)
+	return w.SignAndSubmitBatch(ctx, orders.Transactions, false, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -677,7 +692,7 @@ func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWal
 	if err != nil {
 		return "", err
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
 }
 
 func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -710,7 +725,7 @@ func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, paye
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -744,7 +759,7 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (w *WSClient) Close() error {
@@ -791,6 +806,14 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream", &pb.GetNewRaydiumPoolsRequest{}, func() *pb.GetNewRaydiumPoolsResponse {
 		var v pb.GetNewRaydiumPoolsResponse
+		return &v
+	})
+}
+
+// GetBundleResultsStream subscribes to a stream for getting a user's submitted bundles
+func (w *WSClient) GetBundleResultsStream(ctx context.Context) (connections.Streamer[*pb.GetBundleResultsStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream", &pb.GetBundleResultsStreamRequest{}, func() *pb.GetBundleResultsStreamResponse {
+		var v pb.GetBundleResultsStreamResponse
 		return &v
 	})
 }
@@ -971,7 +994,7 @@ func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -991,7 +1014,7 @@ func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCanc
 		return nil, err
 	}
 
-	return w.signAndSubmitBatch(ctx, order.Transactions, SubmitOpts{
+	return w.SignAndSubmitBatch(ctx, order.Transactions, false, SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  &skipPreFlight,
 	})
@@ -1020,7 +1043,7 @@ func (w *WSClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenW
 	if err != nil {
 		return "", err
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreflight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
 }
 
 func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -1053,5 +1076,5 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }

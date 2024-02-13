@@ -121,6 +121,8 @@ func run() bool {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
+		//failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })
+		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(1030)) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
@@ -587,6 +589,32 @@ func callGetNewRaydiumPoolsStream(w *provider.WSClient) bool {
 	return false
 }
 
+func callGetBundleResultsStream(w *provider.WSClient) bool {
+	log.Info("starting get bundle results pools stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	poolsChan := make(chan *pb.GetBundleResultsStreamResponse)
+
+	stream, err := w.GetBundleResultsStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetBundleResultsStream request : %v", err)
+		return true
+	}
+
+	stream.Into(poolsChan)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-poolsChan
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+
+	return false
+}
+
 // Stream response
 func callRecentBlockHashWSStream(w *provider.WSClient) bool {
 	log.Info("starting recent block hash stream")
@@ -732,6 +760,73 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 
 	return clientOrderID, false
+}
+
+func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
+	log.Info("trying to place an order with bundling")
+
+	// generate a random clientOrderId for this order
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	resp, err := w.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDC",
+		OutToken:     "SOL",
+		Slippage:     0.2,
+		InAmount:     0.01,
+		Tip:          &tipAmount})
+
+	if err != nil {
+		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
+		return true
+	}
+
+	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
+		true,
+		true)
+	if err != nil {
+		log.Errorf("failed to sign and submit tx: %s", err)
+		return true
+	}
+
+	log.Infof("submitted bundle with signature: %s", signature)
+	return false
+}
+
+func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
+	log.Info("trying to place an order with bundling")
+
+	// generate a random clientOrderId for this order
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	resp, err := w.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDC",
+		OutToken:     "SOL",
+		Slippage:     0.4,
+		InAmount:     0.01,
+		Tip:          &tipAmount})
+
+	if err != nil {
+		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
+		return true
+	}
+
+	signature, err := w.SignAndSubmitBatch(ctx, []*pb.TransactionMessage{{Content: resp.Transactions[0].Content}},
+		true, provider.SubmitOpts{
+			SubmitStrategy: pb.SubmitStrategy_P_UKNOWN,
+			SkipPreFlight:  config.BoolPtr(true),
+		})
+
+	if err != nil {
+		log.Errorf("failed to sign and submit tx: %s", err.Error())
+		return true
+	}
+
+	log.Infof("submitted bundle with signature: %s", signature)
+	return false
 }
 
 func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64, orderSide string) bool {
@@ -1111,6 +1206,7 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),
 	})
+
 	if err != nil {
 		log.Error(err)
 		return true
