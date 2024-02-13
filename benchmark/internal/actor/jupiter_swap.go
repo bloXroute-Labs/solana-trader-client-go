@@ -113,7 +113,7 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) ([]SwapEvent, er
 				// technically this can be a race condition, but shouldn't be a concern with the ticker times
 				lastOutAmount = postResponse.OutAmount
 
-				submitResponse, err := j.client.SignAndSubmitBatch(ctx, postResponse.Transactions, submitOpts)
+				submitResponse, err := j.client.SignAndSubmitBatch(ctx, postResponse.Transactions, false, submitOpts)
 				if err != nil {
 					errCh <- fmt.Errorf("error submitting swap %v: %w", i, err)
 					resultCh <- err
