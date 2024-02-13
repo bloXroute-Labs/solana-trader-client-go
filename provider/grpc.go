@@ -225,8 +225,8 @@ func (g *GRPCClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 	return g.apiClient.GetQuotes(ctx, &pb.GetQuotesRequest{InToken: inToken, OutToken: outToken, InAmount: inAmount, Slippage: slippage, Limit: limit, Projects: projects})
 }
 
-// signAndSubmit signs the given transaction and submits it.
-func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
+// SignAndSubmit signs the given transaction and submits it.
+func (g *GRPCClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (string, error) {
 	if g.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -238,7 +238,7 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
 		Content:   txBase64,
 		IsCleanup: tx.IsCleanup,
-	}, skipPreFlight)
+	}, skipPreFlight, frontRunningProtection)
 	if err != nil {
 		return "", err
 	}
@@ -247,11 +247,11 @@ func (g *GRPCClient) signAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 // signAndSubmitBatch signs the given transactions and submits them.
-func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -293,9 +293,10 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
-		SkipPreFlight: skipPreFlight})
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: &frontRunningProtection})
 }
 
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
@@ -304,9 +305,10 @@ func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmitV2(ctx, &pb.PostSubmitRequest{Transaction: tx,
-		SkipPreFlight: skipPreFlight})
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: &frontRunningProtection})
 }
 
 // PostSubmitBatchV2 posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
@@ -327,7 +329,7 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
@@ -336,7 +338,7 @@ func (g *GRPCClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -345,7 +347,7 @@ func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -354,7 +356,7 @@ func (g *GRPCClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
@@ -363,7 +365,7 @@ func (g *GRPCClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupi
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
@@ -372,7 +374,7 @@ func (g *GRPCClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, resp.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
@@ -385,7 +387,7 @@ func (g *GRPCClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -424,7 +426,7 @@ func (g *GRPCClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -461,7 +463,7 @@ func (g *GRPCClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (g *GRPCClient) PostCancelAll(ctx context.Context, market, owner string, openOrders []string, project pb.Project) (*pb.PostCancelAllResponse, error) {
@@ -478,7 +480,7 @@ func (g *GRPCClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 	if err != nil {
 		return nil, err
 	}
-	return g.signAndSubmitBatch(ctx, orders.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, orders.Transactions, false, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -500,7 +502,7 @@ func (g *GRPCClient) SubmitSettle(ctx context.Context, owner, market, baseTokenW
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, skipPreflight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
 }
 
 func (g *GRPCClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -527,7 +529,7 @@ func (g *GRPCClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (g *GRPCClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -555,7 +557,7 @@ func (g *GRPCClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // GetOrderbookStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
@@ -679,6 +681,18 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
+// GetBundleResultsStream subscribes to a stream for getting a user's submitted bundles
+func (g *GRPCClient) GetBundleResultsStream(
+	ctx context.Context,
+) (connections.Streamer[*pb.GetBundleResultsStreamResponse], error) {
+	stream, err := g.apiClient.GetBundleResultsStream(ctx, &pb.GetBundleResultsStreamRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetBundleResultsStreamResponse](stream, ""), nil
+}
+
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
@@ -722,7 +736,7 @@ func (g *GRPCClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponseV2
 }
 
 // PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, bundleTip *uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -731,6 +745,7 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 		Type:              orderType,
 		Amount:            amount,
 		Price:             price,
+		Tip:               bundleTip,
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ClientOrderID:     opts.ClientOrderID,
 	})
@@ -738,7 +753,7 @@ func (g *GRPCClient) PostOrderV2(ctx context.Context, owner, payer, market strin
 
 // PostOrderV2WithPriorityFee returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
-	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, bundleTip *uint64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
 	return g.apiClient.PostOrderV2(ctx, &pb.PostOrderRequestV2{
 		OwnerAddress:      owner,
 		PayerAddress:      payer,
@@ -750,13 +765,14 @@ func (g *GRPCClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, paye
 		OpenOrdersAddress: opts.OpenOrdersAddress,
 		ComputeLimit:      computeLimit,
 		ComputePrice:      computePrice,
+		Tip:               bundleTip,
 		ClientOrderID:     opts.ClientOrderID,
 	})
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
-func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
+func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, bundleTip *uint64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, bundleTip, opts)
 	if err != nil {
 		return "", err
 	}
@@ -765,13 +781,13 @@ func (g *GRPCClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // SubmitOrderV2WithPriorityFee builds a Serum market order, signs it, and submits to the network with specified computeLimit and computePrice
 func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, payer, market string, side string,
-	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, opts PostOrderOpts) (string, error) {
-	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, opts)
+	orderType string, amount, price float64, computeLimit uint32, computePrice uint64, bundleTip *uint64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostOrderV2WithPriorityFee(ctx, owner, payer, market, side, orderType, amount, price, computeLimit, computePrice, bundleTip, opts)
 	if err != nil {
 		return "", err
 	}
@@ -780,7 +796,7 @@ func (g *GRPCClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -819,7 +835,7 @@ func (g *GRPCClient) SubmitCancelOrderV2(
 		return nil, err
 	}
 
-	return g.signAndSubmitBatch(ctx, order.Transactions, opts)
+	return g.signAndSubmitBatch(ctx, order.Transactions, false, opts)
 }
 
 // PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -840,7 +856,7 @@ func (g *GRPCClient) SubmitSettleV2(ctx context.Context, owner, market, baseToke
 		return "", err
 	}
 
-	return g.signAndSubmit(ctx, order.Transaction, skipPreflight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
 }
 
 func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -867,5 +883,5 @@ func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return g.signAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }

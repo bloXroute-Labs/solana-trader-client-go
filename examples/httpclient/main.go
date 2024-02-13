@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"math/rand"
 	"net/http"
 	"os"
@@ -123,12 +124,26 @@ func run() bool {
 	}
 
 	if cfg.RunTrades {
-		// Order lifecycle
-		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
-		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-		failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
-			return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+		// Order Lifecycle
+		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
+		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
+		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
+		//failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+		//failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
+		//	return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+		//})
+
+		for i := 1; i < 3; i++ {
+			time.Sleep(1 * time.Second)
+
+			failed = failed || logCall("callPlaceOrderBundle", func() bool {
+				return callPlaceOrderBundle(ownerAddr, 3000) // this is using raydium swap
+			})
+		}
+
+		os.Exit(1)
+		failed = failed || logCall("callPlaceOrderBundleWithBatch", func() bool {
+			return callPlaceOrderBundleUsingBatch(ownerAddr, 1030) // this is using raydium swap
 		})
 		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
@@ -232,9 +247,9 @@ func callOpenOrdersHTTP() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	orders, err := h.GetOpenOrdersV2(ctx, "SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", "", 0)
+	orders, err := h.GetOpenOrdersV2(ctx, "SOL/USDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", "", 0)
 	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDT: %v", err)
+		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 		return true
 	} else {
 		log.Info(orders)
@@ -619,10 +634,93 @@ func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide strin
 		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
-		return true
 	}
 
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+
+	return false
+}
+
+func callPlaceOrderBundleUsingBatch(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing order with bundle, using a raydium swap")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	request := &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "SOL",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.2,
+		InAmount:     0.01,
+		Tip:          &bundleTip,
+	}
+
+	resp, err := h.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to post raydium swap: %w", err))
+		return true
+	}
+
+	signedTx, err := transaction.SignTx(resp.Transactions[0].Content)
+	if err != nil {
+		panic(err)
+	}
+
+	useBundle := true
+
+	batchEntry := pb.PostSubmitRequestEntry{
+		Transaction:   &pb.TransactionMessage{Content: signedTx},
+		SkipPreFlight: true,
+	}
+
+	batchRequest := pb.PostSubmitBatchRequest{
+		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry},
+		SubmitStrategy: 1,
+		UseBundle:      &useBundle,
+	}
+
+	batchResp, err := h.PostSubmitBatchV2(ctx, &batchRequest)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Infof("successfully placed bundle batch order with signature : %s", batchResp.Transactions[0].Signature)
+
+	return false
+}
+
+func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing order with bundle, using a raydium swap")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	request := &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "SOL",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.2,
+		InAmount:     0.01,
+		Tip:          &bundleTip,
+	}
+
+	resp, err := h.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to post raydium swap: %w", err))
+		return true
+	}
+
+	tx, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content, IsCleanup: false},
+		true,
+		true)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Infof("successfully placed bundle batch order with signature : %s", tx)
 
 	return false
 }
