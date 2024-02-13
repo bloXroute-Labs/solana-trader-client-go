@@ -116,6 +116,7 @@ func run() bool {
 		if !ok {
 			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 		}
+
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
@@ -773,7 +774,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 }
 
 func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
-	orderSide string, computeLimit uint32, computePrice uint64, orderType string, jitoTipAmount uint64) bool {
+	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
 	log.Info("starting place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -789,7 +790,7 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 
 	// create order without actually submitting
 	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
-		orderAmount, orderPrice, computeLimit, computePrice, &jitoTipAmount, opts)
+		orderAmount, orderPrice, computeLimit, computePrice, &tipAmount, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return true
@@ -808,8 +809,8 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 }
 
 func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
-	orderSide string, computeLimit uint32, computePrice uint64, orderType string, jitoTipAmount uint64) bool {
-	log.Info("starting place order jito bundle")
+	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
+	log.Info("starting to place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -824,7 +825,7 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 
 	// create order without actually submitting
 	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
-		orderAmount, orderPrice, computeLimit, computePrice, &jitoTipAmount, opts)
+		orderAmount, orderPrice, computeLimit, computePrice, &tipAmount, opts)
 	if err != nil {
 		log.Errorf("failed to create order (%v)", err)
 		return true

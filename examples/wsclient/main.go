@@ -119,7 +119,7 @@ func run() bool {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
-		failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })
+		//failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })
 		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(1030)) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
@@ -760,7 +760,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	return clientOrderID, false
 }
 
-func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount uint64) bool {
+func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
 	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
@@ -773,7 +773,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount 
 		OutToken:     "SOL",
 		Slippage:     0.2,
 		InAmount:     0.01,
-		Tip:          &jitoTipAmount})
+		Tip:          &tipAmount})
 
 	if err != nil {
 		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
@@ -792,7 +792,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, jitoTipAmount 
 	return false
 }
 
-func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoTipAmount uint64) bool {
+func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
 	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
@@ -805,7 +805,7 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, jitoT
 		OutToken:     "SOL",
 		Slippage:     0.4,
 		InAmount:     0.01,
-		Tip:          &jitoTipAmount})
+		Tip:          &tipAmount})
 
 	if err != nil {
 		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
