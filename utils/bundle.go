@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	BloxrouteTipAddress = "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ"
+	// BloxrouteTipAddress is from here and may fall out of date from time to time. Check our docs:
+	// https://docs.bloxroute.com/solana/trader-api-v2/front-running-protection-and-transaction-bundle
+	BloxrouteTipAddress = "HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY"
 )
 
 // CreateBloxrouteTipTransactionToUseBundles creates a transaction you can use to when using PostSubmitBundle endpoints.
