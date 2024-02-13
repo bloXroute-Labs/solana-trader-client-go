@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/gorilla/websocket"
 	"github.com/sourcegraph/jsonrpc2"
@@ -79,6 +80,8 @@ func connect(endpoint string, auth string) (*websocket.Conn, error) {
 	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
 	header := http.Header{}
 	header.Set("Authorization", auth)
+	header.Set("x-sdk", package_info.Name)
+	header.Set("x-sdk-version", package_info.Version)
 
 	conn, _, err := dialer.Dial(endpoint, header)
 	if err != nil {
