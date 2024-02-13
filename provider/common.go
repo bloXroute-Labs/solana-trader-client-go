@@ -13,23 +13,19 @@ import (
 )
 
 const (
-	mainnetNY        = "ny.solana.dex.blxrbdn.com"
-	mainnetFrankfurt = "frankfurt.solana.dex.blxrbdn.com"
-	mainnetUK        = "uk.solana.dex.blxrbdn.com"
-	testnet          = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
-	devnet           = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
+	mainnetNY = "ny.solana.dex.blxrbdn.com"
+	mainnetUK = "uk.solana.dex.blxrbdn.com"
+	testnet   = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
+	devnet    = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
 
 var (
-	MainnetNYHTTP        = httpEndpoint(mainnetNY, true)
-	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, true)
-	MainnetUKHTTP        = httpEndpoint(mainnetUK, true)
-	MainnetNYWS          = wsEndpoint(mainnetNY, true)
-	MainnetFrankfurtWS   = wsEndpoint(mainnetFrankfurt, true)
-	MainnetUKWS          = wsEndpoint(mainnetUK, true)
-	MainnetNYGRPC        = grpcEndpoint(mainnetNY, true)
-	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, true)
-	MainnetUKGRPC        = grpcEndpoint(mainnetUK, true)
+	MainnetNYHTTP = httpEndpoint(mainnetNY, true)
+	MainnetUKHTTP = httpEndpoint(mainnetUK, true)
+	MainnetNYWS   = wsEndpoint(mainnetNY, true)
+	MainnetUKWS   = wsEndpoint(mainnetUK, true)
+	MainnetNYGRPC = grpcEndpoint(mainnetNY, true)
+	MainnetUKGRPC = grpcEndpoint(mainnetUK, true)
 
 	TestnetHTTP = httpEndpoint(testnet, false)
 	TestnetWS   = wsEndpoint(testnet, false)
@@ -119,7 +115,7 @@ func ProjectFromString(project string) (pb.Project, error) {
 	return pb.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
 	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
@@ -130,7 +126,10 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 		}
 
 		batchRequest.Entries = append(batchRequest.Entries, request)
+
 	}
+
+	batchRequest.UseBundle = &useBundle
 
 	return &batchRequest, nil
 }

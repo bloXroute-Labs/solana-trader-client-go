@@ -328,9 +328,11 @@ func (h *HTTPClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
+	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: &frontRunningProtection}
 
 	var response pb.PostSubmitResponse
 	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -353,9 +355,11 @@ func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64}, SkipPreFlight: skipPreFlight}
+	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: &frontRunningProtection}
 
 	var response pb.PostSubmitResponse
 	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -378,7 +382,7 @@ func (h *HTTPClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubm
 }
 
 // SignAndSubmit signs the given transaction and submits it.
-func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool) (string, error) {
+func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (string, error) {
 	if h.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -387,7 +391,7 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 		return "", err
 	}
 
-	response, err := h.PostSubmit(ctx, txBase64, skipPreFlight)
+	response, err := h.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection)
 	if err != nil {
 		return "", err
 	}
@@ -396,11 +400,11 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 // SignAndSubmitBatch signs the given transactions and submits them.
-func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
-	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, opts)
+	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +437,7 @@ func (h *HTTPClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outTok
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // PostRouteTradeSwap returns a partially signed transaction(s) for submitting a route swap request
@@ -454,7 +458,7 @@ func (h *HTTPClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.Route
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
@@ -463,7 +467,7 @@ func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -472,7 +476,7 @@ func (h *HTTPClient) SubmitRaydiumRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterSwap builds a Jupiter Swap transaction then signs it, and submits to the network.
@@ -481,7 +485,7 @@ func (h *HTTPClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupi
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.
@@ -490,7 +494,7 @@ func (h *HTTPClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.Pos
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
@@ -528,7 +532,7 @@ func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 	if err != nil {
 		return "", err
 	}
@@ -580,7 +584,7 @@ func (h *HTTPClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -625,7 +629,7 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (h *HTTPClient) PostCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, project pb.Project) (*pb.PostCancelAllResponse, error) {
@@ -651,7 +655,7 @@ func (h *HTTPClient) SubmitCancelAll(ctx context.Context, market, owner string, 
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, orders.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, orders.Transactions, false, opts)
 }
 
 // PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -681,7 +685,7 @@ func (h *HTTPClient) SubmitSettle(ctx context.Context, owner, market, baseTokenW
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
 }
 
 func (h *HTTPClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -716,7 +720,7 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -752,7 +756,7 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.
@@ -760,6 +764,19 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	url := fmt.Sprintf("%s/api/v1/system/blockhash", h.baseURL)
 	response := new(pb.GetRecentBlockHashResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (h *HTTPClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/system/priority-fee", h.baseURL)
+	if percentile != nil {
+		url = fmt.Sprintf("%s/api/v2/system/priority-fee?percentile=%v", h.baseURL, *percentile)
+	}
+	response := new(pb.GetPriorityFeeResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPriorityFeeResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -898,7 +915,7 @@ func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 	return sig, err
 }
 
@@ -914,7 +931,7 @@ func (h *HTTPClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 	return sig, err
 }
 
@@ -963,7 +980,7 @@ func (h *HTTPClient) SubmitCancelOrderV2(
 		return nil, err
 	}
 
-	return h.SignAndSubmitBatch(ctx, order.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, order.Transactions, false, opts)
 }
 
 // PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
@@ -992,7 +1009,7 @@ func (h *HTTPClient) SubmitSettleV2(ctx context.Context, owner, market, baseToke
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
 }
 
 func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -1027,7 +1044,7 @@ func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
 }
 
 type stringable interface {
