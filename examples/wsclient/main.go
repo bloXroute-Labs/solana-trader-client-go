@@ -589,32 +589,6 @@ func callGetNewRaydiumPoolsStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetBundleResultsStream(w *provider.WSClient) bool {
-	log.Info("starting get bundle results pools stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	poolsChan := make(chan *pb.GetBundleResultsStreamResponse)
-
-	stream, err := w.GetBundleResultsStream(ctx)
-	if err != nil {
-		log.Errorf("error with GetBundleResultsStream request : %v", err)
-		return true
-	}
-
-	stream.Into(poolsChan)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-poolsChan
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-
-	return false
-}
-
 // Stream response
 func callRecentBlockHashWSStream(w *provider.WSClient) bool {
 	log.Info("starting recent block hash stream")
