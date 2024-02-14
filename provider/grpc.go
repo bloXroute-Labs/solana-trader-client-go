@@ -681,18 +681,6 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
-// GetBundleResultsStream subscribes to a stream for getting a user's submitted bundles
-func (g *GRPCClient) GetBundleResultsStream(
-	ctx context.Context,
-) (connections.Streamer[*pb.GetBundleResultsStreamResponse], error) {
-	stream, err := g.apiClient.GetBundleResultsStream(ctx, &pb.GetBundleResultsStreamRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	return connections.GRPCStream[pb.GetBundleResultsStreamResponse](stream, ""), nil
-}
-
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
