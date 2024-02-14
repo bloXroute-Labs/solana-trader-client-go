@@ -78,7 +78,6 @@ func run() bool {
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-		failed = failed || logCall("callBundleResultsStream", func() bool { return callGetBundleResultsStream(g) })
 
 	}
 
@@ -1463,32 +1462,6 @@ func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
 	stream, err := g.GetNewRaydiumPoolsStream(ctx)
 	if err != nil {
 		log.Errorf("error with GetNewRaydiumPools stream request: %v", err)
-		return true
-	}
-	stream.Into(ch)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-ch
-		if !ok {
-			// channel closed
-			return true
-		}
-
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-func callGetBundleResultsStream(g *provider.GRPCClient) bool {
-	log.Info("starting get new raydium pools stream")
-
-	ch := make(chan *pb.GetBundleResultsStreamResponse)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Stream response
-	stream, err := g.GetBundleResultsStream(ctx)
-	if err != nil {
-		log.Errorf("error with GetBundleResults stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
