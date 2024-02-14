@@ -89,6 +89,10 @@ func run() bool {
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
+
+	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
+	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
@@ -118,19 +122,14 @@ func run() bool {
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
-		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1030))
-		})
-
-		failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
-			return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1030))
-		})
-
+==== BASE ====
 		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
-			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
+			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 2000, typeLimit)
+==== BASE ====
 		})
+
+==== BASE ====
+==== BASE ====
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
@@ -771,44 +770,14 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	return clientOrderID, false
 }
 
-func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
-	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
-	log.Info("starting place order with bundle")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+==== BASE ====
+func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string,
+	computeLimit uint32, computePrice uint64, orderType string) bool {
+	log.Info("starting place order")
+==== BASE ====
 
-	// generate a random clientOrderID for this order
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID := rand.Uint64()
-
-	opts := provider.PostOrderOpts{
-		ClientOrderID: clientOrderID,
-		SkipPreFlight: config.BoolPtr(true),
-	}
-
-	// create order without actually submitting
-	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
-		orderAmount, orderPrice, computeLimit, computePrice, &tipAmount, opts)
-	if err != nil {
-		log.Errorf("failed to create order (%v)", err)
-		return true
-	}
-	log.Infof("created unsigned place order transaction: %v", response.Transaction)
-
-	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{Content: response.Transaction.Content}, true, true)
-	if err != nil {
-		log.Errorf("failed to sign and submit order (%v)", err)
-		return true
-	}
-
-	log.Infof("submitted bundle order to trader api %v", resp)
-
-	return false
-}
-
-func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
-	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
-	log.Info("starting to place order with bundle")
+==== BASE ====
+==== BASE ====
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -1472,6 +1441,32 @@ func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callGetBundleResultsStream(g *provider.GRPCClient) bool {
+	log.Info("starting get new raydium pools stream")
+
+	ch := make(chan *pb.GetBundleResultsStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetBundleResultsStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetBundleResults stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
 func callBlockGRPCStream(g *provider.GRPCClient) bool {
 	log.Info("starting get block stream")
 
@@ -1495,5 +1490,46 @@ func callBlockGRPCStream(g *provider.GRPCClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetPriorityFeeGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting priority fee stream")
+
+	ch := make(chan *pb.GetPriorityFeeResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPriorityFeeStream(ctx, nil)
+	if err != nil {
+		log.Errorf("error with GetPriorityFee stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetPriorityFeeGRPC(g *provider.GRPCClient) bool {
+	log.Info("starting priority fee test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	response, err := g.GetPriorityFee(ctx, &pb.GetPriorityFeeRequest{})
+	if err != nil {
+		log.Errorf("error with GetPriorityFee request: %v", err)
+		return true
+	}
+	log.Infof("response received: %v", response)
 	return false
 }

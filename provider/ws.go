@@ -305,6 +305,20 @@ func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAm
 	return &response, nil
 }
 
+// GetPriorityFee returns an suggested priority fee based on a given percentile
+func (w *WSClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	request := &pb.GetPriorityFeeRequest{}
+	if percentile != nil {
+		request.Percentile = percentile
+	}
+	var response pb.GetPriorityFeeResponse
+	err := w.conn.Request(ctx, "GetPriorityFee", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)
@@ -796,6 +810,14 @@ func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context) (connections.St
 	})
 }
 
+// GetBundleResultsStream subscribes to a stream for getting a user's submitted bundles
+func (w *WSClient) GetBundleResultsStream(ctx context.Context) (connections.Streamer[*pb.GetBundleResultsStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream", &pb.GetBundleResultsStreamRequest{}, func() *pb.GetBundleResultsStreamResponse {
+		var v pb.GetBundleResultsStreamResponse
+		return &v
+	})
+}
+
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
 func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, project pb.Project) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
@@ -866,6 +888,17 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 		return &pb.GetBlockStreamResponse{}
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetBlockStream", &pb.GetBlockStreamRequest{}, newResponse)
+}
+
+// GetPriorityFeeStream subscribes to a stream for getting a recent priority fee estimate based on a percentile.
+func (w *WSClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{}
+	if percentile != nil {
+		request.Percentile = percentile
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetPriorityFeeStream", request, func() *pb.GetPriorityFeeResponse {
+		return &pb.GetPriorityFeeResponse{}
+	})
 }
 
 // V2 Openbook

@@ -770,6 +770,19 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return response, nil
 }
 
+func (h *HTTPClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/system/priority-fee", h.baseURL)
+	if percentile != nil {
+		url = fmt.Sprintf("%s/api/v2/system/priority-fee?percentile=%v", h.baseURL, *percentile)
+	}
+	response := new(pb.GetPriorityFeeResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPriorityFeeResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 //V2 Openbook
 
 // GetMarketsV2 returns the list of all available named markets

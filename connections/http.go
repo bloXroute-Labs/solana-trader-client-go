@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"io/ioutil"
 	"net/http"
+
+	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const contentType = "application/json"
@@ -29,6 +31,8 @@ func (h HTTPError) Error() string {
 func HTTPGetWithClient[T protoreflect.ProtoMessage](ctx context.Context, url string, client *http.Client, val T, authHeader string) error {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	req.Header.Set("Authorization", authHeader)
+	req.Header.Set("x-sdk", package_info.Name)
+	req.Header.Set("x-sdk-version", package_info.Version)
 	httpResp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -54,6 +58,8 @@ func HTTPPostWithClient[T protoreflect.ProtoMessage](ctx context.Context, url st
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(b))
 	req.Header.Set("Authorization", authHeader)
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("x-sdk", package_info.Name)
+	req.Header.Set("x-sdk-version", package_info.Version)
 	httpResp, err := client.Do(req)
 	if err != nil {
 		return err

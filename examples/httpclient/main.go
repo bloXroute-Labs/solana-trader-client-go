@@ -95,6 +95,7 @@ func run() bool {
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -1255,4 +1256,19 @@ func callRouteTradeSwap(ownerAddr string) bool {
 	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
 
+}
+
+func callGetPriorityFee() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pf, err := h.GetPriorityFee(ctx, nil)
+	if err != nil {
+		log.Errorf("error with GetPriorityFee request: %v", err)
+		return true
+	}
+
+	log.Infof("priority fee: %v", pf)
+	return false
 }

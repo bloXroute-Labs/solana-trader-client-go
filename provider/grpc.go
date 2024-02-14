@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -56,6 +57,8 @@ type blxrCredentials struct {
 func (bc blxrCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
 	return map[string]string{
 		"authorization": bc.authorization,
+		"x-sdk":         package_info.Name,
+		"x-sdk-version": package_info.Version,
 	}, nil
 }
 
@@ -108,6 +111,11 @@ func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHas
 
 func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+}
+
+// GetPriorityFee returns a priority fee estimate for a given percentile
+func (g *GRPCClient) GetPriorityFee(ctx context.Context, request *pb.GetPriorityFeeRequest) (*pb.GetPriorityFeeResponse, error) {
+	return g.apiClient.GetPriorityFee(ctx, request)
 }
 
 // GetRateLimit returns details of an account rate-limits
@@ -681,6 +689,18 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
+// GetBundleResultsStream subscribes to a stream for getting a user's submitted bundles
+func (g *GRPCClient) GetBundleResultsStream(
+	ctx context.Context,
+) (connections.Streamer[*pb.GetBundleResultsStreamResponse], error) {
+	stream, err := g.apiClient.GetBundleResultsStream(ctx, &pb.GetBundleResultsStreamRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetBundleResultsStreamResponse](stream, ""), nil
+}
+
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
@@ -689,6 +709,20 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 	}
 
 	return connections.GRPCStream[pb.GetBlockStreamResponse](stream, ""), nil
+}
+
+// GetPriorityFeeStream subscribes to a stream of priority fees for a given percentile
+func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{}
+	if percentile != nil {
+		request.Percentile = percentile
+	}
+	stream, err := g.apiClient.GetPriorityFeeStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
 // V2 Openbook
