@@ -96,6 +96,7 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	failed = failed || logCall("callGetBundleResult", func() bool { return callGetBundleResult("") })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -142,7 +143,6 @@ func run() bool {
 			})
 		}
 
-		os.Exit(1)
 		failed = failed || logCall("callPlaceOrderBundleWithBatch", func() bool {
 			return callPlaceOrderBundleUsingBatch(ownerAddr, 1030) // this is using raydium swap
 		})
@@ -1270,5 +1270,22 @@ func callGetPriorityFee() bool {
 	}
 
 	log.Infof("priority fee: %v", pf)
+	return false
+}
+
+func callGetBundleResult(uuid string) bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := h.GetBundleResult(ctx, uuid)
+	if err != nil {
+		log.Errorf("error with GetBundleResult request: %v", err)
+		return true
+	} else {
+		log.Info(result)
+	}
+
+	fmt.Println()
 	return false
 }

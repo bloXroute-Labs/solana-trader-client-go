@@ -78,7 +78,6 @@ func run() bool {
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-
 	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
@@ -93,6 +92,7 @@ func run() bool {
 
 	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+	failed = failed || logCall("callGetBundleResult", func() bool { return callGetBundleResult(g, "") })
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -175,6 +175,19 @@ func callMarketsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(markets)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetBundleResult(g *provider.GRPCClient, uuid string) bool {
+	result, err := g.GetBundleResult(context.Background(), uuid)
+	if err != nil {
+		log.Errorf("error with GetBundleResult request: %v", err)
+		return true
+	} else {
+		log.Info(result.BundleResult)
 	}
 
 	fmt.Println()

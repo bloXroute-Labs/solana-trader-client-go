@@ -79,6 +79,7 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
+	failed = failed || logCall("callGetBundleResult", func() bool { return callBundleResultWS(w, "") })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -150,6 +151,21 @@ func logCall(name string, call func() bool) bool {
 
 func callMarketsWS(w *provider.WSClient) bool {
 	log.Info("fetching markets...")
+
+	markets, err := w.GetMarketsV2(context.Background())
+	if err != nil {
+		log.Errorf("error with GetMarkets request: %v", err)
+		return true
+	} else {
+		log.Info(markets)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callBundleResultWS(w *provider.WSClient, uuid string) bool {
+	log.Info("getting bundle result...")
 
 	markets, err := w.GetMarketsV2(context.Background())
 	if err != nil {
