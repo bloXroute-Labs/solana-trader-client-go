@@ -905,6 +905,16 @@ func (w *WSClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponse, er
 	return &response, nil
 }
 
+// GetBundleResults returns the status of a bundle based on uuid
+func (w *WSClient) GetBundleResults(ctx context.Context, uuid string) (*pb.GetBundleResultsResponse, error) {
+	var response pb.GetBundleResultsResponse
+	err := w.conn.Request(ctx, "GetBundleResults", &pb.GetBundleResultsRequest{Uuid: uuid}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
 func (w *WSClient) GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error) {
 	var response pb.GetOrderbookResponseV2
