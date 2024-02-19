@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"math/rand"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -1263,7 +1264,7 @@ func callGetPriorityFee() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pf, err := h.GetPriorityFee(ctx, nil)
+	pf, err := h.GetPriorityFee(ctx, pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee request: %v", err)
 		return true

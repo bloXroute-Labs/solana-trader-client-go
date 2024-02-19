@@ -770,10 +770,10 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return response, nil
 }
 
-func (h *HTTPClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/system/priority-fee", h.baseURL)
+func (h *HTTPClient) GetPriorityFee(ctx context.Context, project pb.Project, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/system/priority-fee?project=%v", h.baseURL, project)
 	if percentile != nil {
-		url = fmt.Sprintf("%s/api/v2/system/priority-fee?percentile=%v", h.baseURL, *percentile)
+		url = fmt.Sprintf("%s/api/v2/system/priority-fee?project=%v&percentile=%v", h.baseURL, project, *percentile)
 	}
 	response := new(pb.GetPriorityFeeResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPriorityFeeResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {

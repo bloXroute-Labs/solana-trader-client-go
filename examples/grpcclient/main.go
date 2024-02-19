@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -1511,7 +1512,7 @@ func callGetPriorityFeeGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetPriorityFeeStream(ctx, nil)
+	stream, err := g.GetPriorityFeeStream(ctx, pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee stream request: %v", err)
 		return true

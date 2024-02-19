@@ -2,6 +2,8 @@ module github.com/bloXroute-Labs/solana-trader-client-go
 
 go 1.18
 
+replace github.com/bloXroute-Labs/solana-trader-proto => ../solana-trader-proto
+
 require (
 	github.com/bloXroute-Labs/solana-trader-proto v1.9.1-0.20240214205758-d599dcba8bc1
 	github.com/gagliardetto/binary v0.7.7

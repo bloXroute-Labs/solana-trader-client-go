@@ -689,7 +689,6 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
-
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
@@ -701,8 +700,10 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 }
 
 // GetPriorityFeeStream subscribes to a stream of priority fees for a given percentile
-func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
-	request := &pb.GetPriorityFeeRequest{}
+func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Project, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{
+		Project: project,
+	}
 	if percentile != nil {
 		request.Percentile = percentile
 	}
