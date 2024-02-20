@@ -188,7 +188,7 @@ func callGetBundleResult(g *provider.GRPCClient, uuid string) bool {
 		log.Errorf("error with GetBundleResult request: %v", err)
 		return true
 	} else {
-		log.Info(result.BundleResult)
+		log.Info(result.GetBundleResult())
 	}
 
 	fmt.Println()

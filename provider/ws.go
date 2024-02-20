@@ -906,9 +906,9 @@ func (w *WSClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponse, er
 }
 
 // GetBundleResults returns the status of a bundle based on uuid
-func (w *WSClient) GetBundleResults(ctx context.Context, uuid string) (*pb.GetBundleResultsResponse, error) {
-	var response pb.GetBundleResultsResponse
-	err := w.conn.Request(ctx, "GetBundleResults", &pb.GetBundleResultsRequest{Uuid: uuid}, &response)
+func (w *WSClient) GetBundleResults(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
+	var response pb.GetBundleResultResponse
+	err := w.conn.Request(ctx, "GetBundleResults", &pb.GetBundleResultRequest{Uuid: uuid}, &response)
 	if err != nil {
 		return nil, err
 	}

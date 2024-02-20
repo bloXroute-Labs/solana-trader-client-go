@@ -854,11 +854,11 @@ func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner st
 }
 
 // GetBundleResult subscribes to a stream for getting recent block hash.
-func (h *HTTPClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultsResponse, error) {
+func (h *HTTPClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/trade/bundle-result/%s", h.baseURL, uuid)
 
-	response := new(pb.GetBundleResultsResponse)
-	if err := connections.HTTPGetWithClient[*pb.GetBundleResultsResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+	response := new(pb.GetBundleResultResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetBundleResultResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 
