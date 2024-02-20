@@ -167,7 +167,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callBundleResultWS(w *provider.WSClient, uuid string) bool {
 	log.Info("getting bundle result...")
 
-	markets, err := w.GetMarketsV2(context.Background())
+	markets, err := w.GetBundleResultV2(context.Background(), &pb.GetBundleResultsRequest{Uuid: uuid})
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
