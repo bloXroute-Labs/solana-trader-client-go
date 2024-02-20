@@ -689,7 +689,6 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
-
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
