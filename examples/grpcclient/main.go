@@ -121,6 +121,11 @@ func run() bool {
 			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 		}
 
+		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
+			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
+				typeLimit, uint64(1030))
+		})
+
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
@@ -145,6 +150,8 @@ func run() bool {
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
+		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
+
 	}
 
 	if cfg.RunSlowStream {
@@ -1283,6 +1290,33 @@ func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Jupiter swap transaction signature : %s", sig)
+	return false
+}
+
+func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
+	log.Info("starting Jupiter swap instructions test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("Jupiter swap")
+	sig, err := g.SubmitJupiterSwapInstructions(ctx, &pb.PostJupiterSwapInstructionsRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
+		Slippage:     0.4,
+		InAmount:     0.001,
+		Tip:          &tipAmount,
+	}, useBundle, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  config.BoolPtr(false),
+	})
+
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Jupiter swap transaction with instructions signature : %s", sig)
 	return false
 }
 

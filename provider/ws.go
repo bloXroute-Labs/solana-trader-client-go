@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
@@ -167,6 +169,16 @@ func (w *WSClient) GetJupiterPrices(ctx context.Context, request *pb.GetJupiterP
 func (w *WSClient) PostJupiterSwap(ctx context.Context, request *pb.PostJupiterSwapRequest) (*pb.PostJupiterSwapResponse, error) {
 	var response pb.PostJupiterSwapResponse
 	err := w.conn.Request(ctx, "PostJupiterSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostJupiterSwapInstructions returns instructions to build a transaction and submit it on jupiter
+func (w *WSClient) PostJupiterSwapInstructions(ctx context.Context, request *pb.PostJupiterSwapInstructionsRequest) (*pb.PostJupiterSwapInstructionsResponse, error) {
+	var response pb.PostJupiterSwapInstructionsResponse
+	err := w.conn.Request(ctx, "PostJupiterSwapInstructions", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -554,6 +566,69 @@ func (w *WSClient) SubmitJupiterSwap(ctx context.Context, request *pb.PostJupite
 		return nil, err
 	}
 	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitJupiterSwapInstructions builds a Jupiter Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitJupiterSwapInstructions(ctx context.Context, request *pb.PostJupiterSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	swapInstructions, err := w.PostJupiterSwapInstructions(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder := solana.NewTransactionBuilder()
+
+	addressLookupTable, err := utils.ConvertProtoAddressLookupTable(swapInstructions.AddressLookupTableAddresses)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder.WithOpt(solana.TransactionAddressTables(addressLookupTable))
+
+	instructions, err := utils.ConvertProtoInstructionsToSolanaInstructions(swapInstructions.Instructions)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, inst := range instructions {
+		txBuilder.AddInstruction(inst)
+	}
+
+	txBuilder.SetFeePayer(w.privateKey.PublicKey())
+	blockHash, err := w.RecentBlockHash(ctx)
+
+	if err != nil {
+		panic(fmt.Errorf("server error: could not retrieve block hash: %w", err))
+	}
+
+	hash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetRecentBlockHash(hash)
+	tx, err := txBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	err = transaction.PartialSign(tx, w.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	if err != nil {
+		return nil, err
+	}
+
+	var txToBeSigned []*pb.TransactionMessage
+
+	txBase64, err := tx.ToBase64()
+	if err != nil {
+		return nil, err
+	}
+
+	txToBeSigned = append(txToBeSigned, &pb.TransactionMessage{
+		Content:   txBase64,
+		IsCleanup: false,
+	})
+
+	return w.SignAndSubmitBatch(ctx, txToBeSigned, useBundle, opts)
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.

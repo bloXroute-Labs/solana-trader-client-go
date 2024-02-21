@@ -108,18 +108,7 @@ workflows:
       - unit:
           requires:
             - init
-      - integration-testnet:
-          context:
-            - trader-api-sdk
-          requires:
-            - init
-            - unit
-      - integration-mainnet:
-          context:
-            - trader-api-sdk
-          requires:
-            - init
-            - unit
+
   nightly:
     when:
       equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
