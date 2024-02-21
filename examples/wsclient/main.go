@@ -1460,7 +1460,7 @@ func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetPriorityFeeStream(ctx, nil)
+	stream, err := w.GetPriorityFeeStream(ctx, pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee stream request: %v", err)
 		return true
@@ -1480,7 +1480,7 @@ func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
 func callGetPriorityFeeWS(w *provider.WSClient) bool {
 	log.Info("fetching priority fee...")
 
-	priorityFee, err := w.GetPriorityFee(context.Background(), nil)
+	priorityFee, err := w.GetPriorityFee(context.Background(), pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee request: %v", err)
 		return true

@@ -1291,7 +1291,7 @@ func callGetPriorityFee() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	pf, err := h.GetPriorityFee(ctx, nil)
+	pf, err := h.GetPriorityFee(ctx, pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee request: %v", err)
 		return true

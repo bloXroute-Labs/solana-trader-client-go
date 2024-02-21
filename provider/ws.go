@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
@@ -318,8 +319,10 @@ func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAm
 }
 
 // GetPriorityFee returns an suggested priority fee based on a given percentile
-func (w *WSClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
-	request := &pb.GetPriorityFeeRequest{}
+func (w *WSClient) GetPriorityFee(ctx context.Context, project pb.Project, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	request := &pb.GetPriorityFeeRequest{
+		Project: project,
+	}
 	if percentile != nil {
 		request.Percentile = percentile
 	}
@@ -958,8 +961,10 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 }
 
 // GetPriorityFeeStream subscribes to a stream for getting a recent priority fee estimate based on a percentile.
-func (w *WSClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
-	request := &pb.GetPriorityFeeRequest{}
+func (w *WSClient) GetPriorityFeeStream(ctx context.Context, project pb.Project, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{
+		Project: project,
+	}
 	if percentile != nil {
 		request.Percentile = percentile
 	}
