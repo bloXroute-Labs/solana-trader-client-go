@@ -104,3 +104,40 @@ func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) 
 	tx.Signatures[zeroSigIndex] = signedMessageContent
 	return nil
 }
+
+// PartialSign heavily derived from `solana-go/transaction.go`. Signs the transaction with all available private keys, except
+// the main Solana address's
+func PartialSign(tx *solana.Transaction, ownerPk solana.PublicKey, privateKeys map[solana.PublicKey]solana.PrivateKey) error {
+	requiredSignatures := tx.Message.Header.NumRequiredSignatures
+	if uint8(len(privateKeys)) != requiredSignatures-1 {
+		// one signature is reserved for the end user to sign the transaction
+		return fmt.Errorf("unexpected error: could not generate enough signatures : # of privateKeys : %d vs requiredSignatures: %d", len(privateKeys), requiredSignatures)
+	}
+
+	messageBytes, err := tx.Message.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	signatures := make([]solana.Signature, 0, requiredSignatures)
+	for _, key := range tx.Message.AccountKeys[0:requiredSignatures] {
+		if key == ownerPk {
+			// if belongs to owner: add empty signature
+			signatures = append(signatures, solana.Signature{})
+		} else {
+			// otherwise, sign
+			privateKey, ok := privateKeys[key]
+			if !ok {
+				return errors.New("private key not found")
+			}
+			s, err := privateKey.Sign(messageBytes)
+			if err != nil {
+				return err // TODO: wrap error
+			}
+			signatures = append(signatures, s)
+		}
+	}
+
+	tx.Signatures = signatures
+	return nil
+}
