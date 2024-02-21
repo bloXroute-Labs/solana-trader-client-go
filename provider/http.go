@@ -853,6 +853,18 @@ func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner st
 	return result, nil
 }
 
+// GetBundleResult subscribes to a stream for getting recent block hash.
+func (h *HTTPClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/trade/bundle-result/%s", h.baseURL, uuid)
+
+	response := new(pb.GetBundleResultResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetBundleResultResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
 func (h *HTTPClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount,
 	price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
