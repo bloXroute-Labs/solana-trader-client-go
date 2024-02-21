@@ -466,14 +466,12 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(3)
 
 	quotes, err := w.GetJupiterQuotes(context.Background(), &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		Limit:    limit,
 	})
 	if err != nil {
 		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)

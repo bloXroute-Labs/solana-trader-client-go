@@ -535,15 +535,14 @@ func callGetJupiterQuotes() bool {
 	outToken := "So11111111111111111111111111111111111111112"
 	amount := 0.01
 	slippage := float64(5)
-	limit := int32(3)
 
 	quotes, err := h.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		Limit:    limit,
 	})
+
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
