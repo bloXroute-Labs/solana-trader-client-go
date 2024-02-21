@@ -78,25 +78,26 @@ func run() bool {
 	var failed bool
 
 	// informational methods
-	//failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	//failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	//failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	//failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
-	//failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	//failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	//failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
-	//failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
-	//failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
-	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	//failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	//failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	//failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	//failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	//failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	//failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
+	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
+	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
+	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
+	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
+	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
+	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	failed = failed || logCall("callGetBundleResult", func() bool { return callGetBundleResult("") })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -1297,5 +1298,22 @@ func callGetPriorityFee() bool {
 	}
 
 	log.Infof("priority fee: %v", pf)
+	return false
+}
+
+func callGetBundleResult(uuid string) bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, err := h.GetBundleResult(ctx, uuid)
+	if err != nil {
+		log.Errorf("error with GetBundleResult request: %v", err)
+		return true
+	} else {
+		log.Info(result)
+	}
+
+	fmt.Println()
 	return false
 }
