@@ -20,11 +20,8 @@ import (
 )
 
 const (
-	sideBid      = "bid"
-	sideAsk      = "ask"
-	typeLimit    = "limit"
-	typeIOC      = "ioc"
-	typePostOnly = "postonly"
+	sideAsk   = "ask"
+	typeLimit = "limit"
 )
 
 func httpClient() *provider.HTTPClient {
