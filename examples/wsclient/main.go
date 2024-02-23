@@ -1217,27 +1217,15 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		Slippage:     0.1,
 		Steps: []*pb.RouteStep{
 			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
+				InToken:      "So11111111111111111111111111111111111111112",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
-			},
-			{
 				Project: &pb.StepProject{
 					Label: "Raydium",
-					Id:    "",
+					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
 				},
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
 			},
 		},
 	}, provider.SubmitOpts{
@@ -1263,19 +1251,15 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{
 			{
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
+				InToken:      "So11111111111111111111111111111111111111112",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
-			},
-			{
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+				},
 			},
 		},
 	}, provider.SubmitOpts{
