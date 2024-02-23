@@ -54,7 +54,6 @@ func loadEnv() (Env, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
 		fmt.Println("Error loading .env file")
-		panic(err)
 	}
 	v, ok := os.LookupEnv("API_ENV")
 	if !ok {
