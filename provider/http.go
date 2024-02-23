@@ -74,7 +74,7 @@ func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransact
 
 // GetRateLimit returns details of an account rate-limits
 func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/account/rate-limit", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/rate-limit", h.baseURL)
 	response := new(pb.GetRateLimitResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRateLimitResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
