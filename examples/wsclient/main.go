@@ -79,7 +79,6 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-	failed = failed || logCall("callGetBundleResult", func() bool { return callBundleResultWS(w, "") })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -634,7 +633,10 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetPoolReservesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM})
+	stream, err := w.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
+		Projects:      []pb.Project{pb.Project_P_RAYDIUM},
+		PairOrAddress: "GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ",
+	})
 	if err != nil {
 		log.Errorf("error with GetPoolReserves stream request: %v", err)
 		return true

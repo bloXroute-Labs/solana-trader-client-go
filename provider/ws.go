@@ -918,10 +918,8 @@ func (w *WSClient) GetQuotesStream(ctx context.Context, projects []pb.Project, t
 }
 
 // GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
-func (w *WSClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetPoolReservesStream", &pb.GetPoolReservesStreamRequest{
-		Projects: projects,
-	}, func() *pb.GetPoolReservesStreamResponse {
+func (w *WSClient) GetPoolReservesStream(ctx context.Context, request *pb.GetPoolReservesStreamRequest) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPoolReservesStream", request, func() *pb.GetPoolReservesStreamResponse {
 		return &pb.GetPoolReservesStreamResponse{}
 	})
 }

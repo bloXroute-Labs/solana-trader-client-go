@@ -708,10 +708,8 @@ func (g *GRPCClient) GetQuotesStream(ctx context.Context, projects []pb.Project,
 }
 
 // GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
-func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
-	stream, err := g.apiClient.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
-		Projects: projects,
-	})
+func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, request *pb.GetPoolReservesStreamRequest) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
+	stream, err := g.apiClient.GetPoolReservesStream(ctx, request)
 	if err != nil {
 		return nil, err
 	}

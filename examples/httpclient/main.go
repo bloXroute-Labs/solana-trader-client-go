@@ -78,7 +78,6 @@ func run() bool {
 	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
 	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	failed = failed || logCall("callOpenOrdersHTTP", func() bool { return callOpenOrdersHTTP() })
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
@@ -94,7 +93,6 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
-	failed = failed || logCall("callGetBundleResult", func() bool { return callGetBundleResult("") })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -239,23 +237,6 @@ func callMarketDepthHTTP() bool {
 		log.Info(mdData)
 	}
 
-	return false
-}
-
-func callOpenOrdersHTTP() bool {
-	h := httpClient()
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	orders, err := h.GetOpenOrdersV2(ctx, "SOL/USDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc", "", "", 0)
-	if err != nil {
-		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
-		return true
-	} else {
-		log.Info(orders)
-	}
-
-	fmt.Println()
 	return false
 }
 
@@ -1281,22 +1262,5 @@ func callGetPriorityFee() bool {
 	}
 
 	log.Infof("priority fee: %v", pf)
-	return false
-}
-
-func callGetBundleResult(uuid string) bool {
-	h := httpClient()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	result, err := h.GetBundleResult(ctx, uuid)
-	if err != nil {
-		log.Errorf("error with GetBundleResult request: %v", err)
-		return true
-	} else {
-		log.Info(result)
-	}
-
-	fmt.Println()
 	return false
 }
