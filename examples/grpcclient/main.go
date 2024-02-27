@@ -93,7 +93,6 @@ func run() bool {
 
 	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
-	failed = failed || logCall("callGetBundleResult", func() bool { return callGetBundleResult(g, "") })
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -183,19 +182,6 @@ func callMarketsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(markets)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetBundleResult(g *provider.GRPCClient, uuid string) bool {
-	result, err := g.GetBundleResult(context.Background(), uuid)
-	if err != nil {
-		log.Errorf("error with GetBundleResult request: %v", err)
-		return true
-	} else {
-		log.Info(result.GetBundleResult())
 	}
 
 	fmt.Println()
@@ -666,7 +652,10 @@ func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetPoolReservesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM})
+	stream, err := g.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
+		Projects:      []pb.Project{pb.Project_P_RAYDIUM},
+		PairOrAddress: "GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ",
+	})
 
 	if err != nil {
 		log.Errorf("error with GetPoolReserves stream request: %v", err)
