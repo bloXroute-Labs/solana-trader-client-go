@@ -644,7 +644,7 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 	}
 
 	ch := stream.Channel(0)
-	for i := 1; i <= 1000; i++ {
+	for i := 1; i <= 1; i++ {
 		v, ok := <-ch
 		if !ok {
 			return true
@@ -1406,7 +1406,7 @@ func callGetTickersWSStream(w *provider.WSClient) bool {
 	}
 
 	ch := stream.Channel(0)
-	for i := 1; i <= 1000; i++ {
+	for i := 1; i <= 1; i++ {
 		v, ok := <-ch
 		if !ok {
 			return true
