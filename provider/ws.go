@@ -934,6 +934,13 @@ func (w *WSClient) GetPricesStream(ctx context.Context, projects []pb.Project, t
 	})
 }
 
+// GetTickersStream subscribes to a stream for getting recent tickers of specified markets.
+func (w *WSClient) GetTickersStream(ctx context.Context, request *pb.GetTickersStreamRequest) (connections.Streamer[*pb.GetTickersStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetTickersStream", request, func() *pb.GetTickersStreamResponse {
+		return &pb.GetTickersStreamResponse{}
+	})
+}
+
 // GetSwapsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
 func (w *WSClient) GetSwapsStream(
 	ctx context.Context,
