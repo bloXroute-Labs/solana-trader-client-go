@@ -635,8 +635,8 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 	defer cancel()
 
 	stream, err := w.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
-		Projects:      []pb.Project{pb.Project_P_RAYDIUM},
-		PairOrAddress: []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
+		Projects: []pb.Project{pb.Project_P_RAYDIUM},
+		Pools:    []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
 	})
 	if err != nil {
 		log.Errorf("error with GetPoolReserves stream request: %v", err)
