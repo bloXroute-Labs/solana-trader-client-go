@@ -730,6 +730,16 @@ func (g *GRPCClient) GetPricesStream(ctx context.Context, projects []pb.Project,
 	return connections.GRPCStream[pb.GetPricesStreamResponse](stream, ""), nil
 }
 
+// GetTickersStream subscribes to a stream for getting recent tickers of specified markets.
+func (g *GRPCClient) GetTickersStream(ctx context.Context, request *pb.GetTickersStreamRequest) (connections.Streamer[*pb.GetTickersStreamResponse], error) {
+	stream, err := g.apiClient.GetTickersStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetTickersStreamResponse](stream, ""), nil
+}
+
 // GetSwapsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
 func (g *GRPCClient) GetSwapsStream(
 	ctx context.Context,
