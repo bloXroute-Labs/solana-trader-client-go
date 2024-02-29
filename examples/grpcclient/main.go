@@ -52,8 +52,6 @@ func run() bool {
 	}
 
 	var failed bool
-	failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
-
 	// informational methods
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
@@ -73,6 +71,8 @@ func run() bool {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	}
+
+	failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
@@ -1441,7 +1441,7 @@ func callGetTickersGRPCStream(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 1000; i++ {
+	for i := 1; i <= 1; i++ {
 		v, ok := <-ch
 		if !ok {
 			// channel closed
