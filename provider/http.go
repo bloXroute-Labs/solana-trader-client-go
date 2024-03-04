@@ -85,7 +85,7 @@ func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitR
 
 // GetRaydiumPools returns pools on Raydium
 func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
+	url := fmt.Sprintf("%s/api/v2/raydium/pools/", h.baseURL)
 	pools := new(pb.GetRaydiumPoolsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolsResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
 		return nil, err
