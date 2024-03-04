@@ -88,6 +88,7 @@ func run() bool {
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
 
+	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
@@ -634,8 +635,8 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 	defer cancel()
 
 	stream, err := w.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
-		Projects:      []pb.Project{pb.Project_P_RAYDIUM},
-		PairOrAddress: "GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ",
+		Projects: []pb.Project{pb.Project_P_RAYDIUM},
+		Pools:    []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
 	})
 	if err != nil {
 		log.Errorf("error with GetPoolReserves stream request: %v", err)
@@ -644,11 +645,11 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 
 	ch := stream.Channel(0)
 	for i := 1; i <= 1; i++ {
-		_, ok := <-ch
+		v, ok := <-ch
 		if !ok {
 			return true
 		}
-		log.Infof("response %v received", i)
+		log.Infof("response %v received", v)
 	}
 	return false
 }
@@ -1383,6 +1384,34 @@ func callPricesWSStream(w *provider.WSClient) bool {
 			return true
 		}
 		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetTickersWSStream(w *provider.WSClient) bool {
+	log.Info("starting ticker stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetTickersStream(ctx, &pb.GetTickersStreamRequest{
+		Project: pb.Project_P_OPENBOOK,
+		Markets: []string{"BONK/SOL", "wSOL/RAY", "BONK/RAY", "RAY/USDC",
+			"SOL/USDC", "SOL/USDC",
+			"RAY/USDC", "USDT/USDC"},
+	})
+	if err != nil {
+		log.Errorf("error with GetTickers stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
 	}
 	return false
 }

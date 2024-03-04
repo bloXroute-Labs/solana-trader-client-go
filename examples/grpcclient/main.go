@@ -52,14 +52,12 @@ func run() bool {
 	}
 
 	var failed bool
-
 	// informational methods
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
 	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
-
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
 	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
@@ -73,6 +71,8 @@ func run() bool {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 	}
+
+	failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
 
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
@@ -653,8 +653,8 @@ func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
 
 	// Stream response
 	stream, err := g.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
-		Projects:      []pb.Project{pb.Project_P_RAYDIUM},
-		PairOrAddress: "GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ",
+		Projects: []pb.Project{pb.Project_P_RAYDIUM},
+		Pools:    []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
 	})
 
 	if err != nil {
@@ -1417,6 +1417,37 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Jupiter route swap transaction signature : %s", sig)
+	return false
+}
+
+func callGetTickersGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get ticker stream")
+
+	ch := make(chan *pb.GetTickersStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetTickersStream(ctx, &pb.GetTickersStreamRequest{
+		Project: pb.Project_P_OPENBOOK,
+		Markets: []string{"BONK/SOL", "wSOL/RAY", "BONK/RAY", "RAY/USDC",
+			"SOL/USDC", "SOL/USDC",
+			"RAY/USDC", "USDT/USDC"},
+	})
+
+	if err != nil {
+		log.Errorf("error with GetPrices stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", v)
+	}
 	return false
 }
 
