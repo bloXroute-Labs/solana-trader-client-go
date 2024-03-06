@@ -85,6 +85,16 @@ func (w *WSClient) GetTransaction(ctx context.Context, request *pb.GetTransactio
 	return &response, nil
 }
 
+// GetBundleResult returns the bundle result
+func (w *WSClient) GetBundleResult(ctx context.Context, request *pb.GetBundleResultRequest) (*pb.GetBundleResultResponse, error) {
+	var response pb.GetBundleResultResponse
+	err := w.conn.Request(ctx, "GetBundleResultV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRateLimit returns details of an account rate-limits
 func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	var response pb.GetRateLimitResponse

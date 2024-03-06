@@ -60,13 +60,17 @@ func run() bool {
 	var failed bool
 
 	// informational requests
+	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+	// this is just for example/test purposes
+	// failed = failed || logCall("callBundleResultWS", func() bool { return callBundleResultWS(w, "uuid") })
+
 	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
 	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+
 	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
@@ -168,7 +172,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callBundleResultWS(w *provider.WSClient, uuid string) bool {
 	log.Info("getting bundle result...")
 
-	markets, err := w.GetBundleResultV2(context.Background(), &pb.GetBundleResultRequest{Uuid: uuid})
+	markets, err := w.GetBundleResult(context.Background(), &pb.GetBundleResultRequest{Uuid: uuid})
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true

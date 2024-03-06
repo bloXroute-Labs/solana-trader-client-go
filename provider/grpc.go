@@ -224,7 +224,7 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
-// GetBundleResult returns the list of all available named markets
+// GetBundleResult returns the bundle result
 func (g *GRPCClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
 	return g.apiClient.GetBundleResultV2(ctx, &pb.GetBundleResultRequest{Uuid: uuid})
 }
