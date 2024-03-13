@@ -321,7 +321,7 @@ func callRaydiumPoolReserve() bool {
 			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
 	})
 	if err != nil {
-		log.Errorf("error with GetPools request for Raydium: %v", err)
+		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
 		return true
 	} else {
 		log.Info(pools)
@@ -338,7 +338,7 @@ func callRaydiumPools() bool {
 
 	pools, err := h.GetRaydiumPools(ctx, &pb.GetRaydiumPoolsRequest{})
 	if err != nil {
-		log.Errorf("error with GetPools request for Raydium: %v", err)
+		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
 		return true
 	} else {
 		// prints too much info

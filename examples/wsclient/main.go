@@ -58,7 +58,6 @@ func run() bool {
 	}(w)
 
 	var failed bool
-
 	// informational requests
 	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
