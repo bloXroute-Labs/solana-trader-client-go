@@ -95,6 +95,16 @@ func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitReq
 	return &response, nil
 }
 
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (w *WSClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	var response pb.GetRaydiumPoolReserveResponse
+	err := w.conn.Request(ctx, "GetRaydiumPoolReserve", req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	var response pb.GetRaydiumPoolsResponse
