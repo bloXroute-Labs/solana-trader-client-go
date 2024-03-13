@@ -83,9 +83,21 @@ func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitR
 	return response, nil
 }
 
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (h *HTTPClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	pairsOrAddressesArg := convertStrSliceArgument("pairsOrAddresses", true, req.GetPairsOrAddresses())
+	url := fmt.Sprintf("%s/api/v2/raydium/pools%s", h.baseURL, pairsOrAddressesArg)
+	pools := new(pb.GetRaydiumPoolReserveResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolReserveResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
-func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
+func (h *HTTPClient) GetRaydiumPools(ctx context.Context, _ *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/pools", h.baseURL)
 	pools := new(pb.GetRaydiumPoolsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolsResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
 		return nil, err

@@ -82,7 +82,9 @@ func run() bool {
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
 	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
-	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
+
+	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
+	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
@@ -301,6 +303,27 @@ func callPoolsHTTP() bool {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
+		// prints too much info
+		log.Traceln(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callRaydiumPoolReserve() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pools, err := h.GetRaydiumPoolReserve(ctx, &pb.GetRaydiumPoolReserveRequest{
+		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+	})
+	if err != nil {
+		log.Errorf("error with GetPools request for Raydium: %v", err)
+		return true
+	} else {
 		log.Info(pools)
 	}
 
@@ -318,7 +341,8 @@ func callRaydiumPools() bool {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()
