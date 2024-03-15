@@ -117,7 +117,7 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-
+	failed = failed || logCall("callGetTokenAccountsWS", func() bool { return callGetTokenAccountsWS(w, ownerAddr) })
 	if cfg.RunTrades {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
@@ -409,6 +409,21 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("fetching token accounts...")
+
+	response, err := w.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{OwnerAddress: ownerAddr})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request %v", err)
 		return true
 	} else {
 		log.Info(response)

@@ -325,6 +325,16 @@ func (h *HTTPClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	return result, nil
 }
 
+func (h *HTTPClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/account/token-accounts?ownerAddress=%s", h.baseURL, req.OwnerAddress)
+	result := new(pb.GetTokenAccountsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetTokenAccountsResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // GetPrice returns the USDC price of requested tokens
 func (h *HTTPClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
 	tokensArg := convertStrSliceArgument("tokens", true, tokens)

@@ -240,6 +240,11 @@ func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
+// GetTokenAccounts returns all tokens associated with the owner address
+func (g *GRPCClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	return g.apiClient.GetTokenAccounts(ctx, req)
+}
+
 // GetPrice returns the USDC price of requested tokens
 func (g *GRPCClient) GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error) {
 	return g.apiClient.GetPrice(ctx, &pb.GetPriceRequest{Tokens: tokens})
