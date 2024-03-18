@@ -950,7 +950,7 @@ func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner st
 	return result, nil
 }
 
-// GetBundleResult subscribes to a stream for getting recent block hash.
+// GetBundleResult returns the bundle result
 func (h *HTTPClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/bundle-result/%s", h.baseURL, uuid)
 
