@@ -53,6 +53,8 @@ func run() bool {
 
 	var failed bool
 	// informational methods
+	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	// this is just for example/test purposes
 	// failed = failed || logCall("callBundleResultGRPC", func() bool { return callBundleResultGRPC(g) })
@@ -61,8 +63,7 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
 	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
 	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
-	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
-	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
+
 	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
 	failed = failed || logCall("callGetRateLimitGRPC", func() bool { return callGetRateLimitGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
@@ -122,7 +123,7 @@ func run() bool {
 		if !ok {
 			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 		}
-
+		failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g, ownerAddr) })
 		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
 			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
 				typeLimit, uint64(1030))
@@ -289,6 +290,21 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callGetTokenAccountsGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+	response, err := g.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{
+		OwnerAddress: ownerAddr,
+	})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callTickersGRPC(g *provider.GRPCClient) bool {
 	orders, err := g.GetTickersV2(context.Background(), "SOLUSDC")
 	if err != nil {
@@ -308,7 +324,8 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()
@@ -342,13 +359,30 @@ func callGetTransactionGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callRaydiumPoolReserveGRPC(g *provider.GRPCClient) bool {
+	pools, err := g.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
+		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 	pools, err := g.GetRaydiumPools(context.Background(), &pb.GetRaydiumPoolsRequest{})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()

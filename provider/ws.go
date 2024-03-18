@@ -105,6 +105,16 @@ func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitReq
 	return &response, nil
 }
 
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (w *WSClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	var response pb.GetRaydiumPoolReserveResponse
+	err := w.conn.Request(ctx, "GetRaydiumPoolReserve", req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
 func (w *WSClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	var response pb.GetRaydiumPoolsResponse
@@ -289,6 +299,16 @@ func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress
 func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	var response pb.GetAccountBalanceResponse
 	err := w.conn.Request(ctx, "GetAccountBalance", &pb.GetAccountBalanceRequest{OwnerAddress: owner}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetTokenAccounts returns all tokens associated with the owner address
+func (w *WSClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	var response pb.GetTokenAccountsResponse
+	err := w.conn.Request(ctx, "GetTokenAccounts", req, &response)
 	if err != nil {
 		return nil, err
 	}

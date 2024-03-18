@@ -73,7 +73,6 @@ func main() {
 
 func run() bool {
 	var failed bool
-
 	// informational methods
 	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
@@ -84,7 +83,9 @@ func run() bool {
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
 	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
 	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
-	failed = failed || logCall("callRaydiumPools ", func() bool { return callRaydiumPools() })
+
+	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
+	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
@@ -122,7 +123,7 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-
+	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
 	if cfg.RunTrades {
 		// Order Lifecycle
 		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
@@ -293,6 +294,25 @@ func callGetAccountBalanceHTTP() bool {
 	return false
 }
 
+func callGetTokenAccountsHTTP(ownerAddr string) bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	response, err := h.GetTokenAccounts(ctx, &pb.GetTokenAccountsRequest{
+		OwnerAddress: ownerAddr,
+	})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request for : %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callTradesHTTP() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -320,6 +340,27 @@ func callPoolsHTTP() bool {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
+		// prints too much info
+		log.Traceln(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callRaydiumPoolReserve() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pools, err := h.GetRaydiumPoolReserve(ctx, &pb.GetRaydiumPoolReserveRequest{
+		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
+		return true
+	} else {
 		log.Info(pools)
 	}
 
@@ -334,10 +375,11 @@ func callRaydiumPools() bool {
 
 	pools, err := h.GetRaydiumPools(ctx, &pb.GetRaydiumPoolsRequest{})
 	if err != nil {
-		log.Errorf("error with GetPools request for Raydium: %v", err)
+		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()

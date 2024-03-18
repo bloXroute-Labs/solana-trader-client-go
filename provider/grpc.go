@@ -84,7 +84,7 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 	if !opts.DisableAuth {
 		grpcOpts = append(grpcOpts, grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader}))
 	}
-
+	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(&grpc.MaxRecvMsgSizeCallOption{MaxRecvMsgSize: 1024 * 1024 * 16}))
 	grpcOpts = append(grpcOpts, dialOpts...)
 	conn, err = grpc.Dial(opts.Endpoint, grpcOpts...)
 	if err != nil {
@@ -95,6 +95,7 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
 	}
+
 	client.recentBlockHashStore = newRecentBlockHashStore(
 		client.GetRecentBlockHash,
 		client.GetRecentBlockHashStream,
@@ -127,6 +128,11 @@ func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitR
 // GetTransaction returns details of a recent transaction
 func (g *GRPCClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
 	return g.apiClient.GetTransaction(ctx, request)
+}
+
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (g *GRPCClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	return g.apiClient.GetRaydiumPoolReserve(ctx, req)
 }
 
 // GetRaydiumPools returns pools on Raydium
@@ -232,6 +238,11 @@ func (g *GRPCClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetB
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
+}
+
+// GetTokenAccounts returns all tokens associated with the owner address
+func (g *GRPCClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	return g.apiClient.GetTokenAccounts(ctx, req)
 }
 
 // GetPrice returns the USDC price of requested tokens

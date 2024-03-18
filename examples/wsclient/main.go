@@ -58,7 +58,6 @@ func run() bool {
 	}(w)
 
 	var failed bool
-
 	// informational requests
 	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
 	// this is just for example/test purposes
@@ -69,8 +68,9 @@ func run() bool {
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
-
+	failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
+	failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
+	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
 	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
@@ -121,7 +121,7 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-
+	failed = failed || logCall("callGetTokenAccountsWS", func() bool { return callGetTokenAccountsWS(w, ownerAddr) })
 	if cfg.RunTrades {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
@@ -257,7 +257,8 @@ func callPoolsWS(w *provider.WSClient) bool {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()
@@ -296,6 +297,24 @@ func callGetTransactionWS(w *provider.WSClient) bool {
 	return false
 }
 
+func callRaydiumPoolReserveWS(w *provider.WSClient) bool {
+	log.Info("fetching raydium pool reserve...")
+
+	pools, err := w.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
+		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callRaydiumPoolsWS(w *provider.WSClient) bool {
 	log.Info("fetching Raydium pools...")
 
@@ -304,7 +323,8 @@ func callRaydiumPoolsWS(w *provider.WSClient) bool {
 		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()
@@ -393,6 +413,21 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("fetching token accounts...")
+
+	response, err := w.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{OwnerAddress: ownerAddr})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request %v", err)
 		return true
 	} else {
 		log.Info(response)
