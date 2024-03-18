@@ -295,6 +295,16 @@ func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.Get
 	return &response, nil
 }
 
+// GetTokenAccounts returns all tokens associated with the owner address
+func (w *WSClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	var response pb.GetTokenAccountsResponse
+	err := w.conn.Request(ctx, "GetTokenAccounts", req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetMarkets returns the list of all available named markets
 func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	var response pb.GetMarketsResponse

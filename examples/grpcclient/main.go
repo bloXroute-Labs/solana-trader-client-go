@@ -120,7 +120,7 @@ func run() bool {
 		if !ok {
 			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
 		}
-
+		failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g, ownerAddr) })
 		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
 			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
 				typeLimit, uint64(1030))
@@ -265,6 +265,21 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 	response, err := g.GetAccountBalance(context.Background(), "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+	response, err := g.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{
+		OwnerAddress: ownerAddr,
+	})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request %v", err)
 		return true
 	} else {
 		log.Info(response)

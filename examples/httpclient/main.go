@@ -73,7 +73,6 @@ func main() {
 
 func run() bool {
 	var failed bool
-
 	// informational methods
 	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
@@ -122,7 +121,7 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-
+	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
 	if cfg.RunTrades {
 		// Order Lifecycle
 		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
@@ -267,6 +266,25 @@ func callGetAccountBalanceHTTP() bool {
 	response, err := h.GetAccountBalance(ctx, "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsHTTP(ownerAddr string) bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	response, err := h.GetTokenAccounts(ctx, &pb.GetTokenAccountsRequest{
+		OwnerAddress: ownerAddr,
+	})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request for : %v", err)
 		return true
 	} else {
 		log.Info(response)
