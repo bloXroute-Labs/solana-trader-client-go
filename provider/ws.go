@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
@@ -277,7 +278,7 @@ func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress
 // GetAccountBalance returns all OpenOrders accounts for a given market with the amounts of unsettled funds
 func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	var response pb.GetAccountBalanceResponse
-	err := w.conn.Request(ctx, "GetAccountBalance", &pb.GetAccountBalanceRequest{OwnerAddress: owner}, &response)
+	err := w.conn.Request(ctx, "GetAccountBalanceV2", &pb.GetAccountBalanceRequest{OwnerAddress: owner}, &response)
 	if err != nil {
 		return nil, err
 	}

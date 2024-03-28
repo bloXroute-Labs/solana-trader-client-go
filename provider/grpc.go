@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
@@ -231,7 +232,7 @@ func (g *GRPCClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetB
 
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
-	return g.apiClient.GetAccountBalance(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
+	return g.apiClient.GetAccountBalanceV2(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
 }
 
 // GetPrice returns the USDC price of requested tokens

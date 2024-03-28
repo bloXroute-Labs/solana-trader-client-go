@@ -85,7 +85,7 @@ func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitR
 
 // GetRaydiumPools returns pools on Raydium
 func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
+	url := fmt.Sprintf("%s/api/v2/raydium/pools", h.baseURL)
 	pools := new(pb.GetRaydiumPoolsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolsResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func (h *HTTPClient) GetUnsettled(ctx context.Context, market string, owner stri
 
 // GetAccountBalance returns all OpenOrders accounts for a given market with the amountsctx context.Context,  of unsettled funds
 func (h *HTTPClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/account/balance?ownerAddress=%s", h.baseURL, owner)
+	url := fmt.Sprintf("%s/api/v2/balance?ownerAddress=%s", h.baseURL, owner)
 	result := new(pb.GetAccountBalanceResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
 		return nil, err
