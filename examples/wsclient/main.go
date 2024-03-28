@@ -58,14 +58,18 @@ func run() bool {
 	}(w)
 
 	var failed bool
-
 	// informational requests
+	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+	// this is just for example/test purposes
+	// failed = failed || logCall("callBundleResultWS", func() bool { return callBundleResultWS(w, "uuid") })
+
 	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
 	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
 	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPoolsWS(w) })
+	failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
+	failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
 	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
 	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
@@ -79,7 +83,6 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-	failed = failed || logCall("callGetBundleResult", func() bool { return callBundleResultWS(w, "") })
 
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -89,6 +92,7 @@ func run() bool {
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
 
+	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
@@ -117,7 +121,7 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-
+	failed = failed || logCall("callGetTokenAccountsWS", func() bool { return callGetTokenAccountsWS(w, ownerAddr) })
 	if cfg.RunTrades {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
@@ -168,7 +172,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 func callBundleResultWS(w *provider.WSClient, uuid string) bool {
 	log.Info("getting bundle result...")
 
-	markets, err := w.GetBundleResultV2(context.Background(), &pb.GetBundleResultRequest{Uuid: uuid})
+	markets, err := w.GetBundleResult(context.Background(), &pb.GetBundleResultRequest{Uuid: uuid})
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true
@@ -253,7 +257,8 @@ func callPoolsWS(w *provider.WSClient) bool {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()
@@ -292,6 +297,24 @@ func callGetTransactionWS(w *provider.WSClient) bool {
 	return false
 }
 
+func callRaydiumPoolReserveWS(w *provider.WSClient) bool {
+	log.Info("fetching raydium pool reserve...")
+
+	pools, err := w.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
+		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callRaydiumPoolsWS(w *provider.WSClient) bool {
 	log.Info("fetching Raydium pools...")
 
@@ -300,7 +323,8 @@ func callRaydiumPoolsWS(w *provider.WSClient) bool {
 		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
 		return true
 	} else {
-		log.Info(pools)
+		// prints too much info
+		log.Traceln(pools)
 	}
 
 	fmt.Println()
@@ -389,6 +413,21 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
+		return true
+	} else {
+		log.Info(response)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("fetching token accounts...")
+
+	response, err := w.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{OwnerAddress: ownerAddr})
+	if err != nil {
+		log.Errorf("error with GetTokenAccounts request %v", err)
 		return true
 	} else {
 		log.Info(response)
@@ -634,7 +673,10 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetPoolReservesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM})
+	stream, err := w.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
+		Projects: []pb.Project{pb.Project_P_RAYDIUM},
+		Pools:    []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
+	})
 	if err != nil {
 		log.Errorf("error with GetPoolReserves stream request: %v", err)
 		return true
@@ -642,11 +684,11 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 
 	ch := stream.Channel(0)
 	for i := 1; i <= 1; i++ {
-		_, ok := <-ch
+		v, ok := <-ch
 		if !ok {
 			return true
 		}
-		log.Infof("response %v received", i)
+		log.Infof("response %v received", v)
 	}
 	return false
 }
@@ -1217,27 +1259,15 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 		Slippage:     0.1,
 		Steps: []*pb.RouteStep{
 			{
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "",
-				},
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
+				InToken:      "So11111111111111111111111111111111111111112",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
-			},
-			{
 				Project: &pb.StepProject{
 					Label: "Raydium",
-					Id:    "",
+					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
 				},
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
 			},
 		},
 	}, provider.SubmitOpts{
@@ -1263,19 +1293,15 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{
 			{
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
+				InToken:      "So11111111111111111111111111111111111111112",
+				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				InAmount:     0.01,
 				OutAmountMin: 0.007505,
 				OutAmount:    0.0074,
-			},
-			{
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
+				Project: &pb.StepProject{
+					Label: "Raydium",
+					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+				},
 			},
 		},
 	}, provider.SubmitOpts{
@@ -1401,6 +1427,34 @@ func callPricesWSStream(w *provider.WSClient) bool {
 	return false
 }
 
+func callGetTickersWSStream(w *provider.WSClient) bool {
+	log.Info("starting ticker stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetTickersStream(ctx, &pb.GetTickersStreamRequest{
+		Project: pb.Project_P_OPENBOOK,
+		Markets: []string{"BONK/SOL", "wSOL/RAY", "BONK/RAY", "RAY/USDC",
+			"SOL/USDC", "SOL/USDC",
+			"RAY/USDC", "USDT/USDC"},
+	})
+	if err != nil {
+		log.Errorf("error with GetTickers stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+	}
+	return false
+}
+
 func callSwapsWSStream(w *provider.WSClient) bool {
 	log.Info("starting get swaps stream")
 
@@ -1460,7 +1514,7 @@ func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetPriorityFeeStream(ctx, nil)
+	stream, err := w.GetPriorityFeeStream(ctx, pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee stream request: %v", err)
 		return true
@@ -1480,7 +1534,7 @@ func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
 func callGetPriorityFeeWS(w *provider.WSClient) bool {
 	log.Info("fetching priority fee...")
 
-	priorityFee, err := w.GetPriorityFee(context.Background(), nil)
+	priorityFee, err := w.GetPriorityFee(context.Background(), pb.Project_P_RAYDIUM, nil)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee request: %v", err)
 		return true

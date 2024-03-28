@@ -74,7 +74,7 @@ func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransact
 
 // GetRateLimit returns details of an account rate-limits
 func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/account/rate-limit", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/rate-limit", h.baseURL)
 	response := new(pb.GetRateLimitResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRateLimitResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
@@ -83,8 +83,20 @@ func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitR
 	return response, nil
 }
 
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (h *HTTPClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	pairsOrAddressesArg := convertStrSliceArgument("pairsOrAddresses", true, req.GetPairsOrAddresses())
+	url := fmt.Sprintf("%s/api/v2/raydium/pool-reserves%s", h.baseURL, pairsOrAddressesArg)
+	pools := new(pb.GetRaydiumPoolReserveResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolReserveResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
 // GetRaydiumPools returns pools on Raydium
-func (h *HTTPClient) GetRaydiumPools(ctx context.Context, request *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
+func (h *HTTPClient) GetRaydiumPools(ctx context.Context, _ *pb.GetRaydiumPoolsRequest) (*pb.GetRaydiumPoolsResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/pools", h.baseURL)
 	pools := new(pb.GetRaydiumPoolsResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRaydiumPoolsResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
@@ -307,6 +319,16 @@ func (h *HTTPClient) GetAccountBalance(ctx context.Context, owner string) (*pb.G
 	url := fmt.Sprintf("%s/api/v2/balance?ownerAddress=%s", h.baseURL, owner)
 	result := new(pb.GetAccountBalanceResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetAccountBalanceResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (h *HTTPClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	url := fmt.Sprintf("%s/api/v1/account/token-accounts?ownerAddress=%s", h.baseURL, req.OwnerAddress)
+	result := new(pb.GetTokenAccountsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetTokenAccountsResponse](ctx, url, h.httpClient, result, h.authHeader); err != nil {
 		return nil, err
 	}
 
@@ -845,10 +867,10 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return response, nil
 }
 
-func (h *HTTPClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/system/priority-fee", h.baseURL)
+func (h *HTTPClient) GetPriorityFee(ctx context.Context, project pb.Project, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/system/priority-fee?project=%v", h.baseURL, project)
 	if percentile != nil {
-		url = fmt.Sprintf("%s/api/v2/system/priority-fee?percentile=%v", h.baseURL, *percentile)
+		url = fmt.Sprintf("%s/api/v2/system/priority-fee?project=%v&percentile=%v", h.baseURL, project, *percentile)
 	}
 	response := new(pb.GetPriorityFeeResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPriorityFeeResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
@@ -928,9 +950,9 @@ func (h *HTTPClient) GetUnsettledV2(ctx context.Context, market string, owner st
 	return result, nil
 }
 
-// GetBundleResult subscribes to a stream for getting recent block hash.
+// GetBundleResult returns the bundle result
 func (h *HTTPClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/trade/bundle-result/%s", h.baseURL, uuid)
+	url := fmt.Sprintf("%s/api/v2/bundle-result/%s", h.baseURL, uuid)
 
 	response := new(pb.GetBundleResultResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetBundleResultResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {

@@ -85,10 +85,30 @@ func (w *WSClient) GetTransaction(ctx context.Context, request *pb.GetTransactio
 	return &response, nil
 }
 
+// GetBundleResult returns the bundle result
+func (w *WSClient) GetBundleResult(ctx context.Context, request *pb.GetBundleResultRequest) (*pb.GetBundleResultResponse, error) {
+	var response pb.GetBundleResultResponse
+	err := w.conn.Request(ctx, "GetBundleResultV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRateLimit returns details of an account rate-limits
 func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	var response pb.GetRateLimitResponse
 	err := w.conn.Request(ctx, "GetRateLimit", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (w *WSClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	var response pb.GetRaydiumPoolReserveResponse
+	err := w.conn.Request(ctx, "GetRaydiumPoolReserve", req, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -285,6 +305,16 @@ func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.Get
 	return &response, nil
 }
 
+// GetTokenAccounts returns all tokens associated with the owner address
+func (w *WSClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	var response pb.GetTokenAccountsResponse
+	err := w.conn.Request(ctx, "GetTokenAccounts", req, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetMarkets returns the list of all available named markets
 func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	var response pb.GetMarketsResponse
@@ -319,8 +349,10 @@ func (w *WSClient) GetQuotes(ctx context.Context, inToken, outToken string, inAm
 }
 
 // GetPriorityFee returns an suggested priority fee based on a given percentile
-func (w *WSClient) GetPriorityFee(ctx context.Context, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
-	request := &pb.GetPriorityFeeRequest{}
+func (w *WSClient) GetPriorityFee(ctx context.Context, project pb.Project, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
+	request := &pb.GetPriorityFeeRequest{
+		Project: project,
+	}
 	if percentile != nil {
 		request.Percentile = percentile
 	}
@@ -916,10 +948,8 @@ func (w *WSClient) GetQuotesStream(ctx context.Context, projects []pb.Project, t
 }
 
 // GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
-func (w *WSClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetPoolReservesStream", &pb.GetPoolReservesStreamRequest{
-		Projects: projects,
-	}, func() *pb.GetPoolReservesStreamResponse {
+func (w *WSClient) GetPoolReservesStream(ctx context.Context, request *pb.GetPoolReservesStreamRequest) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPoolReservesStream", request, func() *pb.GetPoolReservesStreamResponse {
 		return &pb.GetPoolReservesStreamResponse{}
 	})
 }
@@ -931,6 +961,13 @@ func (w *WSClient) GetPricesStream(ctx context.Context, projects []pb.Project, t
 		Tokens:   tokens,
 	}, func() *pb.GetPricesStreamResponse {
 		return &pb.GetPricesStreamResponse{}
+	})
+}
+
+// GetTickersStream subscribes to a stream for getting recent tickers of specified markets.
+func (w *WSClient) GetTickersStream(ctx context.Context, request *pb.GetTickersStreamRequest) (connections.Streamer[*pb.GetTickersStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetTickersStream", request, func() *pb.GetTickersStreamResponse {
+		return &pb.GetTickersStreamResponse{}
 	})
 }
 
@@ -959,8 +996,10 @@ func (w *WSClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb
 }
 
 // GetPriorityFeeStream subscribes to a stream for getting a recent priority fee estimate based on a percentile.
-func (w *WSClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
-	request := &pb.GetPriorityFeeRequest{}
+func (w *WSClient) GetPriorityFeeStream(ctx context.Context, project pb.Project, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{
+		Project: project,
+	}
 	if percentile != nil {
 		request.Percentile = percentile
 	}

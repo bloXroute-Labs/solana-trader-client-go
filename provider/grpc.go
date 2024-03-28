@@ -85,7 +85,7 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 	if !opts.DisableAuth {
 		grpcOpts = append(grpcOpts, grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader}))
 	}
-
+	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(&grpc.MaxRecvMsgSizeCallOption{MaxRecvMsgSize: 1024 * 1024 * 16}))
 	grpcOpts = append(grpcOpts, dialOpts...)
 	conn, err = grpc.Dial(opts.Endpoint, grpcOpts...)
 	if err != nil {
@@ -96,6 +96,7 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 		apiClient:  pb.NewApiClient(conn),
 		privateKey: opts.PrivateKey,
 	}
+
 	client.recentBlockHashStore = newRecentBlockHashStore(
 		client.GetRecentBlockHash,
 		client.GetRecentBlockHashStream,
@@ -128,6 +129,11 @@ func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitR
 // GetTransaction returns details of a recent transaction
 func (g *GRPCClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
 	return g.apiClient.GetTransaction(ctx, request)
+}
+
+// GetRaydiumPoolReserve returns pools details for a given set of pairs or addresses on Raydium
+func (g *GRPCClient) GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error) {
+	return g.apiClient.GetRaydiumPoolReserve(ctx, req)
 }
 
 // GetRaydiumPools returns pools on Raydium
@@ -225,7 +231,7 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
-// GetBundleResult returns the list of all available named markets
+// GetBundleResult returns the bundle result
 func (g *GRPCClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
 	return g.apiClient.GetBundleResultV2(ctx, &pb.GetBundleResultRequest{Uuid: uuid})
 }
@@ -233,6 +239,11 @@ func (g *GRPCClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetB
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	return g.apiClient.GetAccountBalanceV2(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})
+}
+
+// GetTokenAccounts returns all tokens associated with the owner address
+func (g *GRPCClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
+	return g.apiClient.GetTokenAccounts(ctx, req)
 }
 
 // GetPrice returns the USDC price of requested tokens
@@ -709,10 +720,8 @@ func (g *GRPCClient) GetQuotesStream(ctx context.Context, projects []pb.Project,
 }
 
 // GetPoolReservesStream subscribes to a stream for getting recent quotes of tokens of interest.
-func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, projects []pb.Project) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
-	stream, err := g.apiClient.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
-		Projects: projects,
-	})
+func (g *GRPCClient) GetPoolReservesStream(ctx context.Context, request *pb.GetPoolReservesStreamRequest) (connections.Streamer[*pb.GetPoolReservesStreamResponse], error) {
+	stream, err := g.apiClient.GetPoolReservesStream(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -731,6 +740,16 @@ func (g *GRPCClient) GetPricesStream(ctx context.Context, projects []pb.Project,
 	}
 
 	return connections.GRPCStream[pb.GetPricesStreamResponse](stream, ""), nil
+}
+
+// GetTickersStream subscribes to a stream for getting recent tickers of specified markets.
+func (g *GRPCClient) GetTickersStream(ctx context.Context, request *pb.GetTickersStreamRequest) (connections.Streamer[*pb.GetTickersStreamResponse], error) {
+	stream, err := g.apiClient.GetTickersStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetTickersStreamResponse](stream, ""), nil
 }
 
 // GetSwapsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
@@ -775,8 +794,10 @@ func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*
 }
 
 // GetPriorityFeeStream subscribes to a stream of priority fees for a given percentile
-func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
-	request := &pb.GetPriorityFeeRequest{}
+func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Project, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error) {
+	request := &pb.GetPriorityFeeRequest{
+		Project: project,
+	}
 	if percentile != nil {
 		request.Percentile = percentile
 	}
