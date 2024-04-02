@@ -1509,7 +1509,7 @@ func callGetTickersGRPCStream(g *provider.GRPCClient) bool {
 			// channel closed
 			return true
 		}
-		log.Infof("response %v received", v)
+		log.Infof("response %v received ", v)
 	}
 	return false
 }
