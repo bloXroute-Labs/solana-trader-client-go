@@ -62,7 +62,6 @@ func run() bool {
 	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
 	// this is just for example/test purposes
 	// failed = failed || logCall("callBundleResultWS", func() bool { return callBundleResultWS(w, "uuid") })
-
 	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
@@ -301,8 +300,13 @@ func callRaydiumPoolReserveWS(w *provider.WSClient) bool {
 	log.Info("fetching raydium pool reserve...")
 
 	pools, err := w.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
-		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
-			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+		PairsOrAddresses: []string{
+			"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT",
+			"DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt",
+			"AVs9TA4nWDzfPJE9gGVNJMVhcQy3V9PGazuz33BfG2RA",
+			"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+		},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
@@ -672,10 +676,16 @@ func callPoolReservesWSStream(w *provider.WSClient) bool {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
 	stream, err := w.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
 		Projects: []pb.Project{pb.Project_P_RAYDIUM},
-		Pools:    []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
+		Pools: []string{
+			"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT",
+			"DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt",
+			"AVs9TA4nWDzfPJE9gGVNJMVhcQy3V9PGazuz33BfG2RA",
+			"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+			"7XawhbbxtsRcQA8KTkHT9f9nc6d69UwqCDh6U5EEbEmX",
+		},
 	})
 	if err != nil {
 		log.Errorf("error with GetPoolReserves stream request: %v", err)
