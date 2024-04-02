@@ -361,8 +361,14 @@ func callGetTransactionGRPC(g *provider.GRPCClient) bool {
 
 func callRaydiumPoolReserveGRPC(g *provider.GRPCClient) bool {
 	pools, err := g.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
-		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
-			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+		PairsOrAddresses: []string{
+			"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT",
+			"DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt",
+			"AVs9TA4nWDzfPJE9gGVNJMVhcQy3V9PGazuz33BfG2RA",
+			"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+			"7XawhbbxtsRcQA8KTkHT9f9nc6d69UwqCDh6U5EEbEmX",
+		},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
@@ -704,7 +710,14 @@ func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
 	// Stream response
 	stream, err := g.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
 		Projects: []pb.Project{pb.Project_P_RAYDIUM},
-		Pools:    []string{"GHGxSHVHsUNcGuf94rqFDsnhzGg3qbN1dD1z6DHZDfeQ"},
+		Pools: []string{
+			"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
+			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT",
+			"DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt",
+			"AVs9TA4nWDzfPJE9gGVNJMVhcQy3V9PGazuz33BfG2RA",
+			"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+			"7XawhbbxtsRcQA8KTkHT9f9nc6d69UwqCDh6U5EEbEmX",
+		},
 	})
 
 	if err != nil {
@@ -1496,7 +1509,7 @@ func callGetTickersGRPCStream(g *provider.GRPCClient) bool {
 			// channel closed
 			return true
 		}
-		log.Infof("response %v received", v)
+		log.Infof("response %v received ", v)
 	}
 	return false
 }
