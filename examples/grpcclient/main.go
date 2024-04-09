@@ -524,10 +524,11 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 	slippage := float64(5)
 
 	quotes, err := g.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: amount,
-		Slippage: slippage,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     amount,
+		Slippage:     slippage,
+		ExcludeDexes: []string{"Raydium"},
 	})
 
 	if err != nil {

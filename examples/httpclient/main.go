@@ -577,10 +577,11 @@ func callGetJupiterQuotes() bool {
 	slippage := float64(5)
 
 	quotes, err := h.GetJupiterQuotes(ctx, &pb.GetJupiterQuotesRequest{
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: amount,
-		Slippage: slippage,
+		InToken:      inToken,
+		OutToken:     outToken,
+		InAmount:     amount,
+		Slippage:     slippage,
+		ExcludeDexes: []string{"Raydium"},
 	})
 
 	if err != nil {
