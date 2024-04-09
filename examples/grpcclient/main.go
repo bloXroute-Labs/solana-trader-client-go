@@ -53,6 +53,8 @@ func run() bool {
 
 	var failed bool
 	// informational methods
+
+	failed = failed || logCall("callGetZetaTransactionStream", func() bool { return callGetZetaTransactionStream(g) })
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
@@ -1551,6 +1553,36 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 		log.Infof("response %v received", i)
 	}
 	return false
+}
+
+func callGetZetaTransactionStream(g *provider.GRPCClient) bool {
+	log.Info("starting get zeta transaction stream")
+
+	ch := make(chan *pb.GetZetaTransactionStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetZetaTransactionStream(ctx, []string{"CrankEventQueue"}) // sample zeta instruction sample
+	if err != nil {
+		log.Errorf("error with GetZetaTransactionStream request: %v", err)
+		return true
+	}
+
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		resp, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		fmt.Println(resp.GetTransaction())
+
+		log.Infof("response %v received", i)
+	}
+	return false
+
 }
 
 func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {

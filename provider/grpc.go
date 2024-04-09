@@ -808,6 +808,20 @@ func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Projec
 	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
+// GetZetaTransactionStream subscribes to zeta transactions on solana, allowing user to filter by instruction names
+func (g *GRPCClient) GetZetaTransactionStream(ctx context.Context, instructions []string) (connections.Streamer[*pb.GetZetaTransactionStreamResponse], error) {
+	request := &pb.GetZetaTransactionStreamRequest{
+		Instructions: instructions,
+	}
+
+	stream, err := g.apiClient.GetZetaTransactionStream(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetZetaTransactionStreamResponse](stream, ""), nil
+}
+
 // V2 Openbook
 
 // GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.

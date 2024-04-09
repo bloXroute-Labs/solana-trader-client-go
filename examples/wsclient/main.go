@@ -58,47 +58,47 @@ func run() bool {
 	}(w)
 
 	var failed bool
-	// informational requests
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
-	// this is just for example/test purposes
-	// failed = failed || logCall("callBundleResultWS", func() bool { return callBundleResultWS(w, "uuid") })
-
-	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
-	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
-	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
-	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
-	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
-	failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
-	failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
-	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
-	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
-	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
-	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
-	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
-	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
-	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-
-	// streaming methods
-	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
-	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
-	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
-	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
-	failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
-
-	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
-		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
-		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
-	}
+	//// informational requests
+	//failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+	//// this is just for example/test purposes
+	//// failed = failed || logCall("callBundleResultWS", func() bool { return callBundleResultWS(w, "uuid") })
+	//
+	//failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
+	//failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
+	//failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
+	//failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
+	//failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
+	//failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
+	//failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
+	//failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+	//failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
+	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
+	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
+	//failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
+	//failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
+	//failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
+	//failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
+	//failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
+	//failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
+	//failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
+	//
+	//// streaming methods
+	//failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
+	//failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
+	//failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
+	//failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
+	//failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
+	//failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
+	//
+	//failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
+	//if cfg.RunSlowStream {
+	//	failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
+	//	failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
+	//	failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
+	//	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
+	//}
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -123,11 +123,16 @@ func run() bool {
 	}
 	failed = failed || logCall("callGetTokenAccountsWS", func() bool { return callGetTokenAccountsWS(w, ownerAddr) })
 	if cfg.RunTrades {
+
+		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(830000)) })
+
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
 		//failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })
-		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(1030)) })
+		//failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(1500)) })
+
+		os.Exit(1)
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
@@ -847,7 +852,7 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAm
 
 	signature, err := w.SignAndSubmitBatch(ctx, []*pb.TransactionMessage{{Content: resp.Transactions[0].Content}},
 		true, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_UKNOWN,
+			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 			SkipPreFlight:  config.BoolPtr(true),
 		})
 
