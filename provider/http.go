@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	urlpkg "net/url"
+	"strings"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -156,8 +158,13 @@ func (h *HTTPClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostR
 
 // GetJupiterQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Jupiter
 func (h *HTTPClient) GetJupiterQuotes(ctx context.Context, request *pb.GetJupiterQuotesRequest) (*pb.GetJupiterQuotesResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/jupiter/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v",
-		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
+	url := fmt.Sprintf("%s/api/v2/jupiter/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v", h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
+
+	if len(request.ExcludeDexes) > 0 {
+		excludeDexesParam := strings.Join(request.ExcludeDexes, ",")
+		url += fmt.Sprintf("&excludeDexes=%s", urlpkg.QueryEscape(excludeDexesParam))
+	}
+
 	response := new(pb.GetJupiterQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetJupiterQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
