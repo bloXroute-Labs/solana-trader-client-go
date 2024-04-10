@@ -82,7 +82,7 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-
+	failed = failed || logCall("callGetJitoTipWSStream", func() bool { return callGetJitoTipWSStream(w) })
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
@@ -1551,5 +1551,30 @@ func callGetPriorityFeeWS(w *provider.WSClient) bool {
 	}
 
 	log.Infof("priority fee: %v", priorityFee)
+	return false
+}
+
+func callGetJitoTipWSStream(w *provider.WSClient) bool {
+	log.Info("starting get jito tip stream")
+
+	ch := make(chan *pb.GetJitoTipResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetJitoTipStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetJitoTip stream request: %v", err)
+		return true
+	}
+
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
 	return false
 }

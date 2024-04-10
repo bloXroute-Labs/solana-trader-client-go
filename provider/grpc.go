@@ -809,6 +809,16 @@ func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Projec
 	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
+// GetJitoTipStream subscribes to a stream of Jito tip percentiles
+func (g *GRPCClient) GetJitoTipStream(ctx context.Context) (connections.Streamer[*pb.GetJitoTipResponse], error) {
+	stream, err := g.apiClient.GetJitoTipStream(ctx, &pb.GetJitoTipRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetJitoTipResponse](stream, ""), nil
+}
+
 // V2 Openbook
 
 // GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
