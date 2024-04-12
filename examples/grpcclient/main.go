@@ -97,6 +97,7 @@ func run() bool {
 
 	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+	failed = failed || logCall("callGetJitoTipGRPCStream", func() bool { return callGetJitoTipGRPCStream(g) })
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
@@ -1656,5 +1657,30 @@ func callGetPriorityFeeGRPC(g *provider.GRPCClient) bool {
 		return true
 	}
 	log.Infof("response received: %v", response)
+	return false
+}
+
+func callGetJitoTipGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get jito tip stream")
+
+	ch := make(chan *pb.GetJitoTipResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetJitoTipStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetJitoTip stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
 	return false
 }

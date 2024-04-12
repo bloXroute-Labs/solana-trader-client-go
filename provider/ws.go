@@ -1008,6 +1008,14 @@ func (w *WSClient) GetPriorityFeeStream(ctx context.Context, project pb.Project,
 	})
 }
 
+// GetJitoTipStream subscribes to a stream of recent Jito tip percentiles
+func (w *WSClient) GetJitoTipStream(ctx context.Context) (connections.Streamer[*pb.GetJitoTipResponse], error) {
+	newResponse := func() *pb.GetJitoTipResponse {
+		return &pb.GetJitoTipResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetJitoTipStream", &pb.GetJitoTipRequest{}, newResponse)
+}
+
 // V2 Openbook
 
 // GetMarketsV2 returns the list of all available named markets
