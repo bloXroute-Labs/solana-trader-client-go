@@ -809,14 +809,14 @@ func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Projec
 	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
-// GetJitoTipStream subscribes to a stream of Jito tip percentiles
-func (g *GRPCClient) GetJitoTipStream(ctx context.Context) (connections.Streamer[*pb.GetJitoTipResponse], error) {
-	stream, err := g.apiClient.GetJitoTipStream(ctx, &pb.GetJitoTipRequest{})
+// GetBundleTipStream subscribes to a stream of Jito tip percentiles
+func (g *GRPCClient) GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error) {
+	stream, err := g.apiClient.GetBundleTipStream(ctx, &pb.GetBundleTipRequest{})
 	if err != nil {
 		return nil, err
 	}
 
-	return connections.GRPCStream[pb.GetJitoTipResponse](stream, ""), nil
+	return connections.GRPCStream[pb.GetBundleTipResponse](stream, ""), nil
 }
 
 // V2 Openbook
