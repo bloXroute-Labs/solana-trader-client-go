@@ -547,11 +547,66 @@ func (h *HTTPClient) SubmitJupiterSwapInstructions(ctx context.Context, request 
 
 	txBuilder.WithOpt(solana.TransactionAddressTables(addressLookupTable))
 
-	instructions, err := utils.ConvertProtoInstructionsToSolanaInstructions(swapInstructions.Instructions)
+	instructions, err := utils.ConvertJupiterInstructions(swapInstructions.Instructions)
 	if err != nil {
 		return nil, err
 	}
 
+	for _, inst := range instructions {
+		txBuilder.AddInstruction(inst)
+	}
+
+	txBuilder.SetFeePayer(h.privateKey.PublicKey())
+	blockHash, err := h.GetRecentBlockHash(ctx)
+
+	if err != nil {
+		panic(fmt.Errorf("server error: could not retrieve block hash: %w", err))
+	}
+
+	hash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetRecentBlockHash(hash)
+	tx, err := txBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	err = transaction.PartialSign(tx, h.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	if err != nil {
+		return nil, err
+	}
+
+	var txToBeSigned []*pb.TransactionMessage
+
+	txBase64, err := tx.ToBase64()
+	if err != nil {
+		return nil, err
+	}
+
+	txToBeSigned = append(txToBeSigned, &pb.TransactionMessage{
+		Content:   txBase64,
+		IsCleanup: false,
+	})
+
+	return h.SignAndSubmitBatch(ctx, txToBeSigned, useBundle, opts)
+}
+
+// SubmitRaydiumSwapInstructions builds a Raydium Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	swapInstructions, err := h.PostRaydiumSwapInstructions(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	instructions, err := utils.ConvertRaydiumInstructions(swapInstructions.Instructions)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder := solana.NewTransactionBuilder()
 	for _, inst := range instructions {
 		txBuilder.AddInstruction(inst)
 	}

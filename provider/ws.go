@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gagliardetto/solana-go"
-
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
+	"github.com/gagliardetto/solana-go"
 )
 
 type WSClient struct {
@@ -620,10 +619,65 @@ func (w *WSClient) SubmitJupiterSwapInstructions(ctx context.Context, request *p
 
 	txBuilder.WithOpt(solana.TransactionAddressTables(addressLookupTable))
 
-	instructions, err := utils.ConvertProtoInstructionsToSolanaInstructions(swapInstructions.Instructions)
+	instructions, err := utils.ConvertJupiterInstructions(swapInstructions.Instructions)
 	if err != nil {
 		return nil, err
 	}
+
+	for _, inst := range instructions {
+		txBuilder.AddInstruction(inst)
+	}
+
+	txBuilder.SetFeePayer(w.privateKey.PublicKey())
+	blockHash, err := w.RecentBlockHash(ctx)
+
+	if err != nil {
+		panic(fmt.Errorf("server error: could not retrieve block hash: %w", err))
+	}
+
+	hash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetRecentBlockHash(hash)
+	tx, err := txBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	err = transaction.PartialSign(tx, w.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	if err != nil {
+		return nil, err
+	}
+
+	var txToBeSigned []*pb.TransactionMessage
+
+	txBase64, err := tx.ToBase64()
+	if err != nil {
+		return nil, err
+	}
+
+	txToBeSigned = append(txToBeSigned, &pb.TransactionMessage{
+		Content:   txBase64,
+		IsCleanup: false,
+	})
+
+	return w.SignAndSubmitBatch(ctx, txToBeSigned, useBundle, opts)
+}
+
+// SubmitRaydiumSwapInstructions builds a Raydium Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	swapInstructions, err := w.PostRaydiumSwapInstructions(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	instructions, err := utils.ConvertRaydiumInstructions(swapInstructions.Instructions)
+	if err != nil {
+		return nil, err
+	}
+	txBuilder := solana.NewTransactionBuilder()
 
 	for _, inst := range instructions {
 		txBuilder.AddInstruction(inst)
