@@ -204,6 +204,16 @@ func (w *WSClient) PostJupiterSwapInstructions(ctx context.Context, request *pb.
 	return &response, nil
 }
 
+// PostRaydiumSwapInstructions returns instructions to build a transaction and submit it on raydium
+func (w *WSClient) PostRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest) (*pb.PostRaydiumSwapInstructionsResponse, error) {
+	var response pb.PostRaydiumSwapInstructionsResponse
+	err := w.conn.Request(ctx, "PostRaydiumSwapInstructions", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
 func (w *WSClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
 	var response pb.PostJupiterRouteSwapResponse

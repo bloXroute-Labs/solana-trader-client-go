@@ -180,6 +180,11 @@ func (g *GRPCClient) PostJupiterSwapInstructions(ctx context.Context, request *p
 	return g.apiClient.PostJupiterSwapInstructions(ctx, request)
 }
 
+// PostRaydiumSwapInstructions returns instructions to build a transaction and submit it on raydium
+func (g *GRPCClient) PostRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest) (*pb.PostRaydiumSwapInstructionsResponse, error) {
+	return g.apiClient.PostRaydiumSwapInstructions(ctx, request)
+}
+
 // PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
 func (g *GRPCClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
 	return g.apiClient.PostJupiterRouteSwap(ctx, request)

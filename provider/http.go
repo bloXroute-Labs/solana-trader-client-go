@@ -204,6 +204,18 @@ func (h *HTTPClient) PostJupiterSwapInstructions(ctx context.Context, request *p
 	return &response, nil
 }
 
+// PostRaydiumSwapInstructions returns a list of instructions that can be used to construct a custom transaction for a raydium swap
+func (h *HTTPClient) PostRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest) (*pb.PostRaydiumSwapInstructionsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/swap-instructions", h.baseURL)
+	var response pb.PostRaydiumSwapInstructionsResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumSwapInstructionsResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
 func (h *HTTPClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJupiterRouteSwapRequest) (*pb.PostJupiterRouteSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/jupiter/route-swap", h.baseURL)
