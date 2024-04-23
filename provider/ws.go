@@ -1008,12 +1008,12 @@ func (w *WSClient) GetPriorityFeeStream(ctx context.Context, project pb.Project,
 	})
 }
 
-// GetJitoTipStream subscribes to a stream of recent Jito tip percentiles
+// GetBundleTipStream subscribes to a stream of recent bundle tip percentiles
 func (w *WSClient) GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error) {
 	newResponse := func() *pb.GetBundleTipResponse {
 		return &pb.GetBundleTipResponse{}
 	}
-	return connections.WSStreamProto(w.conn, ctx, "GetJitoTipStream", &pb.GetBundleTipRequest{}, newResponse)
+	return connections.WSStreamProto(w.conn, ctx, "GetBundleTipStream", &pb.GetBundleTipRequest{}, newResponse)
 }
 
 // V2 Openbook
