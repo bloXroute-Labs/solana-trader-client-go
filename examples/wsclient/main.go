@@ -82,7 +82,7 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-	failed = failed || logCall("callGetJitoTipWSStream", func() bool { return callGetJitoTipWSStream(w) })
+	failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
@@ -1554,16 +1554,16 @@ func callGetPriorityFeeWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetJitoTipWSStream(w *provider.WSClient) bool {
-	log.Info("starting get jito tip stream")
+func callGetBundleTipWSStream(w *provider.WSClient) bool {
+	log.Info("starting get bundle tip stream")
 
-	ch := make(chan *pb.GetJitoTipResponse)
+	ch := make(chan *pb.GetBundleTipResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetJitoTipStream(ctx)
+	stream, err := w.GetBundleTipStream(ctx)
 	if err != nil {
-		log.Errorf("error with GetJitoTip stream request: %v", err)
+		log.Errorf("error with GetBundleTip stream request: %v", err)
 		return true
 	}
 
