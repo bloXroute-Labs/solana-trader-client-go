@@ -526,12 +526,14 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
+	fastMode := true
 
 	quotes, err := w.GetJupiterQuotes(context.Background(), &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
+		FastMode: &fastMode,
 	})
 	if err != nil {
 		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
@@ -1332,12 +1334,14 @@ func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	fastMode := true
 	sig, err := w.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
+		FastMode:     &fastMode,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),
@@ -1356,6 +1360,7 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	fastMode := true
 	sig, err := w.SubmitJupiterSwapInstructions(ctx, &pb.PostJupiterSwapInstructionsRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -1363,6 +1368,7 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 		Slippage:     0.4,
 		InAmount:     0.01,
 		Tip:          tipAmount,
+		FastMode:     &fastMode,
 	}, useBundle, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),
