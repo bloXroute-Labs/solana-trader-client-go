@@ -73,7 +73,7 @@ func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransact
 }
 
 // GetRateLimit returns details of an account rate-limits
-func (h *HTTPClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
+func (h *HTTPClient) GetRateLimit(ctx context.Context, _ *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/rate-limit", h.baseURL)
 	response := new(pb.GetRateLimitResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRateLimitResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
@@ -364,11 +364,14 @@ func (h *HTTPClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool,
+	frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
 	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
 		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection}
+		FrontRunningProtection: &frontRunningProtection,
+		Tpu:                    &tpu,
+	}
 
 	var response pb.PostSubmitResponse
 	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -391,11 +394,14 @@ func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool,
+	frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
 	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
 		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection}
+		FrontRunningProtection: &frontRunningProtection,
+		Tpu:                    &tpu,
+	}
 
 	var response pb.PostSubmitResponse
 	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
@@ -418,7 +424,8 @@ func (h *HTTPClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubm
 }
 
 // SignAndSubmit signs the given transaction and submits it.
-func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (string, error) {
+func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
+	skipPreFlight bool, frontRunningProtection bool, tpu uint32) (string, error) {
 	if h.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -427,7 +434,7 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 		return "", err
 	}
 
-	response, err := h.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection)
+	response, err := h.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, tpu)
 	if err != nil {
 		return "", err
 	}
@@ -631,7 +638,7 @@ func (h *HTTPClient) SubmitOrder(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 	if err != nil {
 		return "", err
 	}
@@ -683,7 +690,7 @@ func (h *HTTPClient) SubmitCancelOrder(
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -728,7 +735,7 @@ func (h *HTTPClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 }
 
 func (h *HTTPClient) PostCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, project pb.Project) (*pb.PostCancelAllResponse, error) {
@@ -784,7 +791,7 @@ func (h *HTTPClient) SubmitSettle(ctx context.Context, owner, market, baseTokenW
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, 0)
 }
 
 func (h *HTTPClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -819,7 +826,7 @@ func (h *HTTPClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 }
 
 func (h *HTTPClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -855,7 +862,7 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 }
 
 // GetRecentBlockHash subscribes to a stream for getting recent block hash.
@@ -1026,7 +1033,7 @@ func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market str
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 	return sig, err
 }
 
@@ -1042,7 +1049,7 @@ func (h *HTTPClient) SubmitOrderV2WithPriorityFee(ctx context.Context, owner, pa
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	sig, err := h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 	return sig, err
 }
 
@@ -1120,7 +1127,7 @@ func (h *HTTPClient) SubmitSettleV2(ctx context.Context, owner, market, baseToke
 		return "", err
 	}
 
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, 0)
 }
 
 func (h *HTTPClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -1155,7 +1162,7 @@ func (h *HTTPClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
 }
 
 type stringable interface {

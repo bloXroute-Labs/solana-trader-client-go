@@ -827,7 +827,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint
 
 	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
 		true,
-		true)
+		true, 0)
 	if err != nil {
 		log.Errorf("failed to sign and submit tx: %s", err)
 		return true

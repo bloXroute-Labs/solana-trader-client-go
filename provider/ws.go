@@ -10,7 +10,6 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
-	"github.com/gagliardetto/solana-go"
 )
 
 type WSClient struct {
@@ -24,7 +23,7 @@ type WSClient struct {
 
 // NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetNYWS)
+	opts := DefaultRPCOpts(MainnetUKWS)
 	return NewWSClientWithOpts(opts)
 }
 
@@ -446,7 +445,8 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool, frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool,
+	frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -457,6 +457,7 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 		},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
+		Tpu:                    &tpu,
 	}
 	var response pb.PostSubmitResponse
 	err := w.conn.Request(ctx, "PostSubmit", request, &response)
@@ -477,7 +478,8 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool, useBundle bool) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool,
+	useBundle bool, tpu uint32) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -491,7 +493,9 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFli
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
 		},
-		SkipPreFlight: skipPreFlight,
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: &useBundle,
+		Tpu:                    &tpu,
 	}
 	var response pb.PostSubmitResponse
 	err = w.conn.Request(ctx, "PostSubmitV2", request, &response)
@@ -512,7 +516,8 @@ func (w *WSClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmit
 }
 
 // SignAndSubmit signs the given transaction and submits it.
-func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool) (string, error) {
+func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
+	skipPreFlight bool, frontRunningProtection bool, tpu uint32) (string, error) {
 	if w.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -522,7 +527,7 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		return "", err
 	}
 
-	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection)
+	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, tpu)
 	if err != nil {
 		return "", err
 	}
@@ -671,7 +676,8 @@ func (w *WSClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJ
 }
 
 // SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
+func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side,
+	types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
 	order, err := w.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
 	if err != nil {
 		return "", err
@@ -682,7 +688,7 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 		skipPreFlight = *opts.SkipPreFlight
 	}
 
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, opts)
 }
 
 // PostCancelOrder builds a Serum cancel order.
