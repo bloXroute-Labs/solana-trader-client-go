@@ -2,7 +2,7 @@ version: 2.1
 executors:
   bxgo:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.21
     environment:
       GOPATH: /home/circleci/go
       WORKSPACE: /home/circleci/go/src/github.com/bloXroute-Labs/solana-trader-client-go
