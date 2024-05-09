@@ -31,7 +31,33 @@ func ConvertProtoAddressLookupTable(addressLookupTableProto map[string]*pb.Publi
 	return addressLookupTable, nil
 }
 
-func ConvertProtoInstructionsToSolanaInstructions(instructions []*pb.InstructionJupiter) ([]solana.Instruction, error) {
+func ConvertJupiterInstructions(instructions []*pb.InstructionJupiter) ([]solana.Instruction, error) {
+	var solanaInstructions []solana.Instruction
+
+	for _, inst := range instructions {
+		programID, err := solana.PublicKeyFromBase58(inst.ProgramID)
+		if err != nil {
+			return nil, err
+		}
+
+		var accountMetaSlice solana.AccountMetaSlice
+
+		for _, acc := range inst.Accounts {
+			programID, err := solana.PublicKeyFromBase58(acc.ProgramID)
+			if err != nil {
+				return nil, err
+			}
+			accountMetaSlice = append(accountMetaSlice, solana.NewAccountMeta(
+				programID, acc.IsWritable, acc.IsSigner))
+		}
+
+		solanaInstructions = append(solanaInstructions, solana.NewInstruction(programID, accountMetaSlice, inst.Data))
+	}
+
+	return solanaInstructions, nil
+}
+
+func ConvertRaydiumInstructions(instructions []*pb.InstructionRaydium) ([]solana.Instruction, error) {
 	var solanaInstructions []solana.Instruction
 
 	for _, inst := range instructions {

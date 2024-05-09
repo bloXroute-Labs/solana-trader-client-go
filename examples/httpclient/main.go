@@ -155,6 +155,7 @@ func run() bool {
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwapInstructions", func() bool { return callJupiterSwapInstructions(ownerAddr, nil, false) })
+		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
 	}
@@ -1270,6 +1271,33 @@ func callJupiterSwapInstructions(ownerAddr string, tipAmount *uint64, useBundle 
 		return true
 	}
 	log.Infof("Jupiter swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumSwapInstructions(ownerAddr string, tipAmount *uint64, useBundle bool) bool {
+	log.Info("starting Raydium swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium swap")
+	sig, err := h.SubmitRaydiumSwapInstructions(ctx, &pb.PostRaydiumSwapInstructionsRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
+		Slippage:     0.4,
+		InAmount:     0.01,
+		Tip:          tipAmount,
+	}, useBundle, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  config.BoolPtr(false),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
 }
 

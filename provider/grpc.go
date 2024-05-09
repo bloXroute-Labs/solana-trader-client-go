@@ -5,11 +5,10 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
-
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
@@ -179,6 +178,11 @@ func (g *GRPCClient) PostJupiterSwap(ctx context.Context, request *pb.PostJupite
 // PostJupiterSwapInstructions returns instructions to build a transaction and submit it on jupiter
 func (g *GRPCClient) PostJupiterSwapInstructions(ctx context.Context, request *pb.PostJupiterSwapInstructionsRequest) (*pb.PostJupiterSwapInstructionsResponse, error) {
 	return g.apiClient.PostJupiterSwapInstructions(ctx, request)
+}
+
+// PostRaydiumSwapInstructions returns instructions to build a transaction and submit it on raydium
+func (g *GRPCClient) PostRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest) (*pb.PostRaydiumSwapInstructionsResponse, error) {
+	return g.apiClient.PostRaydiumSwapInstructions(ctx, request)
 }
 
 // PostJupiterRouteSwap returns a partially signed transaction(s) for submitting a swap request on Jupiter
@@ -422,10 +426,65 @@ func (g *GRPCClient) SubmitJupiterSwapInstructions(ctx context.Context, request 
 
 	txBuilder.WithOpt(solana.TransactionAddressTables(addressLookupTable))
 
-	instructions, err := utils.ConvertProtoInstructionsToSolanaInstructions(swapInstructions.Instructions)
+	instructions, err := utils.ConvertJupiterInstructions(swapInstructions.Instructions)
 	if err != nil {
 		return nil, err
 	}
+
+	for _, inst := range instructions {
+		txBuilder.AddInstruction(inst)
+	}
+
+	txBuilder.SetFeePayer(g.privateKey.PublicKey())
+	blockHash, err := g.RecentBlockHash(ctx)
+
+	if err != nil {
+		panic(fmt.Errorf("server error: could not retrieve block hash: %w", err))
+	}
+
+	hash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetRecentBlockHash(hash)
+	tx, err := txBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	err = transaction.PartialSign(tx, g.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	if err != nil {
+		return nil, err
+	}
+
+	var txToBeSigned []*pb.TransactionMessage
+
+	txBase64, err := tx.ToBase64()
+	if err != nil {
+		return nil, err
+	}
+
+	txToBeSigned = append(txToBeSigned, &pb.TransactionMessage{
+		Content:   txBase64,
+		IsCleanup: false,
+	})
+
+	return g.signAndSubmitBatch(ctx, txToBeSigned, useBundle, opts)
+}
+
+// SubmitRaydiumSwapInstructions builds a Raydium Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	swapInstructions, err := g.PostRaydiumSwapInstructions(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	instructions, err := utils.ConvertRaydiumInstructions(swapInstructions.Instructions)
+	if err != nil {
+		return nil, err
+	}
+	txBuilder := solana.NewTransactionBuilder()
 
 	for _, inst := range instructions {
 		txBuilder.AddInstruction(inst)
@@ -816,7 +875,7 @@ func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Projec
 	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
-// GetBundleTipStream subscribes to a stream of Jito tip percentiles
+// GetBundleTipStream subscribes to a stream of bundle tip percentiles
 func (g *GRPCClient) GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error) {
 	stream, err := g.apiClient.GetBundleTipStream(ctx, &pb.GetBundleTipRequest{})
 	if err != nil {
