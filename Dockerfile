@@ -12,7 +12,7 @@ RUN go mod download
 RUN rm -rf bin
 RUN go build -o bin/ ./benchmark/traderapi
 
-FROM golang:1.18
+FROM golang:1.21-bullseye
 
 RUN apt-get update
 RUN apt-get install -y net-tools
