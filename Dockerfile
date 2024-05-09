@@ -1,4 +1,4 @@
-FROM golang:1.18 as builder
+FROM golang:1.21-bullseye as gobuilder
 
 # setup environment
 RUN mkdir -p /app/solana-trader-client-go
