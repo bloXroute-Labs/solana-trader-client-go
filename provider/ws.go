@@ -467,7 +467,6 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 		},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
-		Tpu:                    &tpu,
 	}
 	var response pb.PostSubmitResponse
 	err := w.conn.Request(ctx, "PostSubmit", request, &response)
@@ -505,7 +504,6 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFli
 		},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &useBundle,
-		Tpu:                    &tpu,
 	}
 	var response pb.PostSubmitResponse
 	err = w.conn.Request(ctx, "PostSubmitV2", request, &response)

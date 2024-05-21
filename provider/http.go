@@ -382,7 +382,6 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
-		Tpu:                    &tpu,
 	}
 
 	var response pb.PostSubmitResponse
@@ -412,7 +411,6 @@ func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreF
 	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
-		Tpu:                    &tpu,
 	}
 
 	var response pb.PostSubmitResponse

@@ -334,7 +334,6 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, 
 	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
-		Tpu:                    &tpu,
 	})
 }
 
@@ -349,7 +348,6 @@ func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage
 	return g.apiClient.PostSubmitV2(ctx, &pb.PostSubmitRequest{Transaction: tx,
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
-		Tpu:                    &tpu,
 	})
 }
 
