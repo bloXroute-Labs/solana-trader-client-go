@@ -58,7 +58,9 @@ func run(c *cli.Context) error {
 	}
 	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(*opts.PrivateKey, recentBlockHashFn))
 
-	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
+	ctx = context.WithValue(ctx, "Endpoint1", endpoints[0])
+	ctx = context.WithValue(ctx, "Endpoint2", endpoints[1])
+	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations, opts.AuthHeader)
 	if err != nil {
 		return err
 	}

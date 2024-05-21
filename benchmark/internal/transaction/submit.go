@@ -1,15 +1,26 @@
 package transaction
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	traderclientutils "github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/gagliardetto/solana-go"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
+	"github.com/gagliardetto/solana-go/programs/system"
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
+	"io"
+	"math/rand"
+	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -43,7 +54,13 @@ func NewSubmitter(endpoints []string, txBuilder Builder) *Submitter {
 
 func NewSubmitterWithOpts(endpoints []string, txBuilder Builder, opts SubmitterOpts) *Submitter {
 	clients := make([]*solanarpc.Client, 0, len(endpoints))
-	for _, endpoint := range endpoints {
+	for index, endpoint := range endpoints {
+		if index == 0 && !strings.Contains(endpoint, "solana.dex.blxrbdn.com") {
+			panic("wrong order of endpoints provided at 0")
+		}
+		//if index != 0 && strings.Contains(endpoint, "solana.dex.blxrbdn.com") {
+		//	panic("wrong order of endpoints provided at non-0")
+		//}
 		clients = append(clients, solanarpc.New(endpoint))
 	}
 
@@ -56,11 +73,11 @@ func NewSubmitterWithOpts(endpoints []string, txBuilder Builder, opts SubmitterO
 }
 
 // SubmitIterations submits n iterations of transactions created by the builder to each of the endpoints and returns all signatures and creation times
-func (ts Submitter) SubmitIterations(ctx context.Context, iterations int) ([][]solana.Signature, []time.Time, error) {
+func (ts Submitter) SubmitIterations(ctx context.Context, iterations int, authHeader string) ([][]solana.Signature, []time.Time, error) {
 	signatures := make([][]solana.Signature, 0, iterations)
 	creationTimes := make([]time.Time, 0, iterations)
 	for i := 0; i < iterations; i++ {
-		iterationSignatures, creationTime, err := ts.SubmitIteration(ctx)
+		iterationSignatures, creationTime, err := ts.SubmitIteration(ctx, authHeader)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -76,7 +93,7 @@ func (ts Submitter) SubmitIterations(ctx context.Context, iterations int) ([][]s
 }
 
 // SubmitIteration uses the builder function to construct transactions for each endpoint, then sends all transactions concurrently (to be as fair as possible)
-func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, time.Time, error) {
+func (ts Submitter) SubmitIteration(ctx context.Context, authHeader string) ([]solana.Signature, time.Time, error) {
 	// assume that in order transaction building is ok
 	txs := make([]string, 0, len(ts.clients))
 	for range ts.clients {
@@ -86,10 +103,14 @@ func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, ti
 		}
 		txs = append(txs, tx)
 	}
+
+	HttpClientForBlxr := &http.Client{}
+	ctx = context.WithValue(ctx, "HttpClientForBlxr", HttpClientForBlxr)
+
 	creationTime := time.Now()
 
 	results, err := utils.AsyncGather(ctx, txs, func(i int, ctx context.Context, tx string) (solana.Signature, error) {
-		return ts.submit(ctx, tx, i)
+		return ts.submit(ctx, tx, i, authHeader)
 	})
 	if err != nil {
 		return nil, creationTime, err
@@ -101,7 +122,7 @@ func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, ti
 	return results, creationTime, nil
 }
 
-func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (solana.Signature, error) {
+func (ts Submitter) submit(ctx context.Context, txBase64 string, index int, authHeader string) (solana.Signature, error) {
 	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(txBase64)
 	if err != nil {
 		return solana.Signature{}, err
@@ -118,6 +139,81 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (sol
 		SkipPreflight:       ts.opts.SkipPreflight,
 		PreflightCommitment: "",
 	}
+	txData, err := tx.MarshalBinary()
+	shaBytes := sha256.Sum256([]byte(base64.StdEncoding.EncodeToString(txData)))
+	fmt.Println(fmt.Sprintf("signature %v, shaBytes %x, txData %v, err %v", tx.Signatures[0], shaBytes,
+		base64.StdEncoding.EncodeToString(txData), err))
+	//transaction.AddMemoAndSign(tx.MustToBase64(), privateKey)
+
+	time.Sleep(time.Duration(1 + rand.Intn(10)))
+
+	curEndpointURL := ""
+	if index == 0 {
+		curEndpointURL = ctx.Value("Endpoint1").(string)
+	} else {
+		curEndpointURL = ctx.Value("Endpoint2").(string)
+	}
+
+	shouldSendToRegularRPCNode := !strings.Contains(curEndpointURL, "solana.dex.blxrbdn.com")
+
+	fmt.Println("index", index, ctx.Value("Endpoint1"), ctx.Value("Endpoint2"), curEndpointURL, shouldSendToRegularRPCNode)
+
+	if !shouldSendToRegularRPCNode { //index == 0 {
+		HttpClientForBlxr := ctx.Value("HttpClientForBlxr").(*http.Client)
+
+		url1 := "https://ny.solana.dex.blxrbdn.com/api/v1/trade/submit"
+		url2 := "https://uk.solana.dex.blxrbdn.com/api/v1/trade/submit"
+		//var jsonStr = []byte(fmt.Sprintf(`{"transaction": {"content": "%v"}}`, base64.StdEncoding.EncodeToString(txData)))
+		//var jsonStr = []byte(fmt.Sprintf(`{"transaction": {"content": "%v"}, "frontRunningProtection": false}`, base64.StdEncoding.EncodeToString(txData)))
+
+		//frontRunningProtectionParam := strings.Contains(curEndpointURL, "frontRunningProtection-true")
+		var jsonStr = []byte(fmt.Sprintf(`{"transaction": {"content": "%v"}, "frontRunningProtection": %v}, "useStakedRPCs": %v}, "fastBestEffort": %v}`,
+			base64.StdEncoding.EncodeToString(txData), true, true, true))
+
+		fmt.Println(string(jsonStr))
+
+		go func() {
+			req, err := http.NewRequest("POST", url1, bytes.NewBuffer(jsonStr))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", authHeader)
+
+			//client := &http.Client{}
+			resp, err := HttpClientForBlxr.Do(req)
+			if err != nil {
+				panic(err)
+			}
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+			logger.Log().Debug("response Body:", string(body))
+		}()
+
+		go func() {
+			req, err := http.NewRequest("POST", url2, bytes.NewBuffer(jsonStr))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", authHeader)
+
+			//client := &http.Client{}
+			resp, err := HttpClientForBlxr.Do(req)
+			if err != nil {
+				panic(err)
+			}
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+			logger.Log().Debug("response Body:", string(body))
+		}()
+
+		hasTipAccount, err := tx.HasAccount(solana.MustPublicKeyFromBase58(traderclientutils.BloxrouteTipAddress))
+		fmt.Println(fmt.Sprintf("tx.Signatures[0] %v, hasTipAccount %v, err %v", tx.Signatures[0], hasTipAccount, err))
+		if strings.Contains(curEndpointURL, "no-tip") && hasTipAccount {
+			panic("no tip instruction mismatch")
+		}
+		if strings.Contains(curEndpointURL, "yes-tip") && !hasTipAccount {
+			panic("yes tip instruction mismatch")
+		}
+
+		return tx.Signatures[0], nil //solana.Signature{}, err
+	}
+
 	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, opts)
 	if err != nil {
 		return solana.Signature{}, err
@@ -183,9 +279,38 @@ func MemoBuilder(privateKey solana.PrivateKey, recentBlockHashFn func() (solana.
 		}
 
 		builder.AddInstruction(instruction)
+		builder.AddInstruction(transaction.CreateTraderAPIMemoInstruction(""))
+
+		// TODO: customize based on isFirstEndpoint
+		isFirstEndpoint := memoID%2 == 1
+		if !isFirstEndpoint && false {
+			compLimit := computebudget.NewSetComputeUnitLimitInstructionBuilder()
+			compLimit.SetUnits(30000)
+			computeLimitIx, _ := compLimit.ValidateAndBuild()
+			//fmt.Println(err)
+			builder.AddInstruction(computeLimitIx)
+			priceLimitIx, _ := computebudget.NewSetComputeUnitPriceInstruction(100000).ValidateAndBuild() // 100000
+			builder.AddInstruction(priceLimitIx)
+		} else {
+			compLimit := computebudget.NewSetComputeUnitLimitInstructionBuilder()
+			compLimit.SetUnits(30000)
+			computeLimitIx, _ := compLimit.ValidateAndBuild()
+			//fmt.Println(err)
+			builder.AddInstruction(computeLimitIx)
+			priceLimitIx, _ := computebudget.NewSetComputeUnitPriceInstruction(50000).ValidateAndBuild() // 50000
+			builder.AddInstruction(priceLimitIx)
+		}
+
+		if isFirstEndpoint {
+			transferToBloxWalletIx := system.NewTransferInstruction(1500, publicKey, solana.MustPublicKeyFromBase58(traderclientutils.BloxrouteTipAddress)).Build()
+			// HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY
+			builder.AddInstruction(transferToBloxWalletIx)
+		}
+
 		builder.SetFeePayer(publicKey)
 
 		recentBlockHash, err := recentBlockHashFn()
+		//fmt.Println("block hash", recentBlockHash)
 		if err != nil {
 			return "", err
 		}
@@ -206,6 +331,9 @@ func MemoBuilder(privateKey solana.PrivateKey, recentBlockHashFn func() (solana.
 		if err != nil {
 			return "", nil
 		}
+
+		hasTipAccount, err := tx.HasAccount(solana.MustPublicKeyFromBase58(traderclientutils.BloxrouteTipAddress))
+		fmt.Println(fmt.Sprintf("memoID %v, tx.Signatures[0] %v, hasTipAccount %v, err %v", memoID, tx.Signatures[0], hasTipAccount, err))
 
 		return tx.ToBase64()
 	}

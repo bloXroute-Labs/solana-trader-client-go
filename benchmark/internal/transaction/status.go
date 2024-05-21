@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultFetchAttempts = 10
+	defaultFetchAttempts = 5
 	defaultFetchInterval = 10 * time.Second
 )
 
