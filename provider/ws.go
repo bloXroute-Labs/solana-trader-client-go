@@ -456,7 +456,7 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool,
-	frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
+	frontRunningProtection bool) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -535,7 +535,7 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		return "", err
 	}
 
-	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, tpu)
+	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection)
 	if err != nil {
 		return "", err
 	}
@@ -543,7 +543,7 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 	return response.Signature, nil
 }
 
-// signAndSubmitBatch signs the given transactions and submits them.
+// SignAndSubmitBatch signs the given transactions and submits them.
 func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
