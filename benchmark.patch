@@ -1,0 +1,210 @@
+diff --git a/benchmark/internal/transaction/submit.go b/benchmark/internal/transaction/submit.go
+index 7ad3dd5..34f3a7c 100644
+--- a/benchmark/internal/transaction/submit.go
++++ b/benchmark/internal/transaction/submit.go
+@@ -1,15 +1,23 @@
+ package transaction
+
+ import (
++	"bytes"
+ 	"context"
++	"crypto/sha256"
++	"encoding/base64"
++	"fmt"
+ 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+ 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
+ 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+ 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+ 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+ 	"github.com/gagliardetto/solana-go"
++	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
+ 	solanarpc "github.com/gagliardetto/solana-go/rpc"
++	"io"
++	"net/http"
+ 	"strconv"
++	"strings"
+ 	"sync"
+ 	"time"
+ )
+@@ -43,7 +51,13 @@ func NewSubmitter(endpoints []string, txBuilder Builder) *Submitter {
+
+ func NewSubmitterWithOpts(endpoints []string, txBuilder Builder, opts SubmitterOpts) *Submitter {
+ 	clients := make([]*solanarpc.Client, 0, len(endpoints))
+-	for _, endpoint := range endpoints {
++	for index, endpoint := range endpoints {
++		if index == 0 && !strings.Contains(endpoint, "solana.dex.blxrbdn.com") {
++			panic("wrong order of endpoints provided at 0")
++		}
++		if index != 0 && strings.Contains(endpoint, "solana.dex.blxrbdn.com") {
++			panic("wrong order of endpoints provided at non-0")
++		}
+ 		clients = append(clients, solanarpc.New(endpoint))
+ 	}
+
+@@ -56,11 +70,11 @@ func NewSubmitterWithOpts(endpoints []string, txBuilder Builder, opts SubmitterO
+ }
+
+ // SubmitIterations submits n iterations of transactions created by the builder to each of the endpoints and returns all signatures and creation times
+-func (ts Submitter) SubmitIterations(ctx context.Context, iterations int) ([][]solana.Signature, []time.Time, error) {
++func (ts Submitter) SubmitIterations(ctx context.Context, iterations int, authHeader string) ([][]solana.Signature, []time.Time, error) {
+ 	signatures := make([][]solana.Signature, 0, iterations)
+ 	creationTimes := make([]time.Time, 0, iterations)
+ 	for i := 0; i < iterations; i++ {
+-		iterationSignatures, creationTime, err := ts.SubmitIteration(ctx)
++		iterationSignatures, creationTime, err := ts.SubmitIteration(ctx, authHeader)
+ 		if err != nil {
+ 			return nil, nil, err
+ 		}
+@@ -76,7 +90,7 @@ func (ts Submitter) SubmitIterations(ctx context.Context, iterations int) ([][]s
+ }
+
+ // SubmitIteration uses the builder function to construct transactions for each endpoint, then sends all transactions concurrently (to be as fair as possible)
+-func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, time.Time, error) {
++func (ts Submitter) SubmitIteration(ctx context.Context, authHeader string) ([]solana.Signature, time.Time, error) {
+ 	// assume that in order transaction building is ok
+ 	txs := make([]string, 0, len(ts.clients))
+ 	for range ts.clients {
+@@ -86,10 +100,14 @@ func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, ti
+ 		}
+ 		txs = append(txs, tx)
+ 	}
++
++	HttpClientForBlxr := &http.Client{}
++	ctx = context.WithValue(ctx, "HttpClientForBlxr", HttpClientForBlxr)
++
+ 	creationTime := time.Now()
+
+ 	results, err := utils.AsyncGather(ctx, txs, func(i int, ctx context.Context, tx string) (solana.Signature, error) {
+-		return ts.submit(ctx, tx, i)
++		return ts.submit(ctx, tx, i, authHeader)
+ 	})
+ 	if err != nil {
+ 		return nil, creationTime, err
+@@ -101,7 +119,7 @@ func (ts Submitter) SubmitIteration(ctx context.Context) ([]solana.Signature, ti
+ 	return results, creationTime, nil
+ }
+
+-func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (solana.Signature, error) {
++func (ts Submitter) submit(ctx context.Context, txBase64 string, index int, authHeader string) (solana.Signature, error) {
+ 	txBytes, err := solanarpc.DataBytesOrJSONFromBase64(txBase64)
+ 	if err != nil {
+ 		return solana.Signature{}, err
+@@ -118,6 +136,81 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int) (sol
+ 		SkipPreflight:       ts.opts.SkipPreflight,
+ 		PreflightCommitment: "",
+ 	}
++	txData, err := tx.MarshalBinary()
++	shaBytes := sha256.Sum256([]byte(base64.StdEncoding.EncodeToString(txData)))
++	fmt.Println(fmt.Sprintf("signature %v, shaBytes %x, txData %v, err %v", tx.Signatures[0], shaBytes, base64.StdEncoding.EncodeToString(txData), err))
++	//transaction.AddMemoAndSign(tx.MustToBase64(), privateKey)
++
++	//time.Sleep(time.Duration(1 + rand.Intn(10)))
++
++	if index == 0 {
++		HttpClientForBlxr := ctx.Value("HttpClientForBlxr").(*http.Client)
++
++		url1 := "https://ny.solana.dex.blxrbdn.com/api/v1/trade/submit"
++		url2 := "https://uk.solana.dex.blxrbdn.com/api/v1/trade/submit"
++		var jsonStr = []byte(fmt.Sprintf(`{"transaction": {"content": "%v"}}`, base64.StdEncoding.EncodeToString(txData)))
++		//var jsonStr = []byte(fmt.Sprintf(`{"transaction": {"content": "%v"}, "frontRunningProtection": true}`, base64.StdEncoding.EncodeToString(txData)))
++
++		fmt.Println(string(jsonStr))
++
++		go func() {
++			req, err := http.NewRequest("POST", url1, bytes.NewBuffer(jsonStr))
++			req.Header.Set("Content-Type", "application/json")
++			req.Header.Set("Authorization", authHeader)
++
++			//client := &http.Client{}
++			resp, err := HttpClientForBlxr.Do(req)
++			if err != nil {
++				panic(err)
++			}
++			defer resp.Body.Close()
++			body, _ := io.ReadAll(resp.Body)
++			logger.Log().Debug("response Body:", string(body))
++		}()
++
++		go func() {
++			req, err := http.NewRequest("POST", url2, bytes.NewBuffer(jsonStr))
++			req.Header.Set("Content-Type", "application/json")
++			req.Header.Set("Authorization", authHeader)
++
++			//client := &http.Client{}
++			resp, err := HttpClientForBlxr.Do(req)
++			if err != nil {
++				panic(err)
++			}
++			defer resp.Body.Close()
++			body, _ := io.ReadAll(resp.Body)
++			logger.Log().Debug("response Body:", string(body))
++		}()
++
++		//req, err := http.NewRequest("POST", url1, bytes.NewBuffer(jsonStr))
++		//req.Header.Set("Content-Type", "application/json")
++		//req.Header.Set("Authorization", authHeader)
++		//
++		////client := &http.Client{}
++		//resp, err := HttpClientForBlxr.Do(req)
++		//if err != nil {
++		//	panic(err)
++		//}
++		//defer resp.Body.Close()
++		//body, _ := io.ReadAll(resp.Body)
++		//fmt.Println("response Body:", string(body))
++		//
++		//req, err = http.NewRequest("POST", url2, bytes.NewBuffer(jsonStr))
++		//req.Header.Set("Content-Type", "application/json")
++		//req.Header.Set("Authorization", authHeader)
++		//
++		//resp, err = HttpClientForBlxr.Do(req)
++		//if err != nil {
++		//	panic(err)
++		//}
++		//defer resp.Body.Close()
++		//body, _ = io.ReadAll(resp.Body)
++		//fmt.Println("response Body:", string(body))
++
++		return tx.Signatures[0], nil //solana.Signature{}, err
++	}
++
+ 	signature, err := ts.clients[index].SendTransactionWithOpts(ctx, tx, opts)
+ 	if err != nil {
+ 		return solana.Signature{}, err
+@@ -183,9 +276,23 @@ func MemoBuilder(privateKey solana.PrivateKey, recentBlockHashFn func() (solana.
+ 		}
+
+ 		builder.AddInstruction(instruction)
++		builder.AddInstruction(transaction.CreateTraderAPIMemoInstruction(""))
++
++		compLimit := computebudget.NewSetComputeUnitLimitInstructionBuilder()
++		compLimit.SetUnits(50000)
++		computeLimitIx, err := compLimit.ValidateAndBuild()
++		fmt.Println(err)
++		builder.AddInstruction(computeLimitIx)
++		priceLimitIx, err := computebudget.NewSetComputeUnitPriceInstruction(50000).ValidateAndBuild()
++		builder.AddInstruction(priceLimitIx)
++
++		//transferToBloxWalletIx := system.NewTransferInstruction(150000, publicKey, solana.MustPublicKeyFromBase58("AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")).Build()
++		//builder.AddInstruction(transferToBloxWalletIx)
++
+ 		builder.SetFeePayer(publicKey)
+
+ 		recentBlockHash, err := recentBlockHashFn()
++		//fmt.Println("block hash", recentBlockHash)
+ 		if err != nil {
+ 			return "", err
+ 		}
+diff --git a/benchmark/txcompare/main.go b/benchmark/txcompare/main.go
+index 0967171..acc6e78 100644
+--- a/benchmark/txcompare/main.go
++++ b/benchmark/txcompare/main.go
+@@ -58,7 +58,7 @@ func run(c *cli.Context) error {
+ 	}
+ 	submitter := transaction.NewSubmitter(endpoints, transaction.MemoBuilder(*opts.PrivateKey, recentBlockHashFn))
+
+-	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations)
++	signatures, creationTimes, err := submitter.SubmitIterations(ctx, iterations, opts.AuthHeader)
+ 	if err != nil {
+ 		return err
+ 	}
