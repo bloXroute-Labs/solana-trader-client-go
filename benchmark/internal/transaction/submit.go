@@ -168,7 +168,7 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int, auth
 
 		//frontRunningProtectionParam := strings.Contains(curEndpointURL, "frontRunningProtection-true")
 		var jsonStr = []byte(fmt.Sprintf(`{"transaction": {"content": "%v"}, "frontRunningProtection": %v}, "useStakedRPCs": %v}, "fastBestEffort": %v}`,
-			base64.StdEncoding.EncodeToString(txData), true, true, true))
+			base64.StdEncoding.EncodeToString(txData), true, false, true))
 
 		fmt.Println(string(jsonStr))
 
@@ -184,7 +184,11 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int, auth
 			}
 			defer resp.Body.Close()
 			body, _ := io.ReadAll(resp.Body)
+
+			fmt.Println(string(body))
+
 			logger.Log().Debug("response Body:", string(body))
+
 		}()
 
 		go func() {
@@ -199,6 +203,9 @@ func (ts Submitter) submit(ctx context.Context, txBase64 string, index int, auth
 			}
 			defer resp.Body.Close()
 			body, _ := io.ReadAll(resp.Body)
+
+			fmt.Println(string(body))
+
 			logger.Log().Debug("response Body:", string(body))
 		}()
 
@@ -282,30 +289,17 @@ func MemoBuilder(privateKey solana.PrivateKey, recentBlockHashFn func() (solana.
 		builder.AddInstruction(transaction.CreateTraderAPIMemoInstruction(""))
 
 		// TODO: customize based on isFirstEndpoint
-		isFirstEndpoint := memoID%2 == 1
-		if !isFirstEndpoint && false {
-			compLimit := computebudget.NewSetComputeUnitLimitInstructionBuilder()
-			compLimit.SetUnits(30000)
-			computeLimitIx, _ := compLimit.ValidateAndBuild()
-			//fmt.Println(err)
-			builder.AddInstruction(computeLimitIx)
-			priceLimitIx, _ := computebudget.NewSetComputeUnitPriceInstruction(100000).ValidateAndBuild() // 100000
-			builder.AddInstruction(priceLimitIx)
-		} else {
-			compLimit := computebudget.NewSetComputeUnitLimitInstructionBuilder()
-			compLimit.SetUnits(30000)
-			computeLimitIx, _ := compLimit.ValidateAndBuild()
-			//fmt.Println(err)
-			builder.AddInstruction(computeLimitIx)
-			priceLimitIx, _ := computebudget.NewSetComputeUnitPriceInstruction(50000).ValidateAndBuild() // 50000
-			builder.AddInstruction(priceLimitIx)
-		}
+		compLimit := computebudget.NewSetComputeUnitLimitInstructionBuilder()
+		compLimit.SetUnits(30000)
+		computeLimitIx, _ := compLimit.ValidateAndBuild()
+		//fmt.Println(err)
+		builder.AddInstruction(computeLimitIx)
+		priceLimitIx, _ := computebudget.NewSetComputeUnitPriceInstruction(100000).ValidateAndBuild() // 100000
+		builder.AddInstruction(priceLimitIx)
 
-		if isFirstEndpoint {
-			transferToBloxWalletIx := system.NewTransferInstruction(1500, publicKey, solana.MustPublicKeyFromBase58(traderclientutils.BloxrouteTipAddress)).Build()
-			// HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY
-			builder.AddInstruction(transferToBloxWalletIx)
-		}
+		transferToBloxWalletIx := system.NewTransferInstruction(1000000, publicKey, solana.MustPublicKeyFromBase58(traderclientutils.BloxrouteTipAddress)).Build()
+		// HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY
+		builder.AddInstruction(transferToBloxWalletIx)
 
 		builder.SetFeePayer(publicKey)
 
