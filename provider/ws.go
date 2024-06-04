@@ -456,7 +456,7 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 
 // PostSubmit posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool,
-	frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
+	frontRunningProtection bool, useStakedRPCs bool, fastBestEffort bool) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -467,7 +467,8 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 		},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
-		Tpu:                    &tpu,
+		UseStakedRPCs:          &useStakedRPCs,
+		FastBestEffort:         &fastBestEffort,
 	}
 	var response pb.PostSubmitResponse
 	err := w.conn.Request(ctx, "PostSubmit", request, &response)
@@ -489,7 +490,7 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 
 // PostSubmitV2 posts the transaction string to the Solana network.
 func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool,
-	useBundle bool, tpu uint32) (*pb.PostSubmitResponse, error) {
+	useBundle bool, useStakedRPCs bool, fastBestEffort bool) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -505,7 +506,8 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFli
 		},
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &useBundle,
-		Tpu:                    &tpu,
+		UseStakedRPCs:          &useStakedRPCs,
+		FastBestEffort:         &fastBestEffort,
 	}
 	var response pb.PostSubmitResponse
 	err = w.conn.Request(ctx, "PostSubmitV2", request, &response)
@@ -527,7 +529,7 @@ func (w *WSClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmit
 
 // SignAndSubmit signs the given transaction and submits it.
 func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
-	skipPreFlight bool, frontRunningProtection bool, tpu uint32) (string, error) {
+	skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool, fastBestEffort bool) (string, error) {
 	if w.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -537,7 +539,7 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		return "", err
 	}
 
-	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, tpu)
+	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, useStakedRPCs, fastBestEffort)
 	if err != nil {
 		return "", err
 	}
@@ -545,7 +547,7 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 	return response.Signature, nil
 }
 
-// signAndSubmitBatch signs the given transactions and submits them.
+// SignAndSubmitBatch signs the given transactions and submits them.
 func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
@@ -753,7 +755,7 @@ func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string,
 		skipPreFlight = *opts.SkipPreFlight
 	}
 
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
 // PostCancelOrder builds a Serum cancel order.
@@ -773,7 +775,7 @@ func (w *WSClient) SubmitCancelOrder(ctx context.Context, request *pb.PostCancel
 		return "", err
 	}
 
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
 // PostCancelByClientOrderID builds a Serum cancel order by client ID.
@@ -815,7 +817,7 @@ func (w *WSClient) SubmitCancelByClientOrderID(
 		return "", err
 	}
 
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
 func (w *WSClient) PostCancelAll(
@@ -871,7 +873,7 @@ func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWal
 	if err != nil {
 		return "", err
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, false, false)
 }
 
 func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -904,7 +906,7 @@ func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, paye
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
 func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -938,7 +940,7 @@ func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
 func (w *WSClient) Close() error {
@@ -1190,7 +1192,7 @@ func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market strin
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
 // PostCancelOrderV2 builds a Serum cancel order.
@@ -1239,7 +1241,7 @@ func (w *WSClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenW
 	if err != nil {
 		return "", err
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, false, false)
 }
 
 func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
@@ -1272,5 +1274,5 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	if opts.SkipPreFlight != nil {
 		skipPreFlight = *opts.SkipPreFlight
 	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, 0)
+	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }

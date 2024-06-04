@@ -126,21 +126,26 @@ func run() bool {
 		}
 		failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g, ownerAddr) })
 		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1030))
+			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+				typeLimit, uint64(1000000))
 		})
 
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
 		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1030))
+			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+				typeLimit, uint64(1000000))
+		})
+
+		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
+			return callPlaceOrderWithStakedRPCs(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+				typeLimit, uint64(1100000))
 		})
 
 		failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
 			return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1030))
+				typeLimit, uint64(1000000))
 		})
 
 		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
@@ -874,13 +879,49 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
-		Content: response.Transaction.Content}, true, true, 0)
+		Content: response.Transaction.Content}, true, true, false, false)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
 	}
 
 	log.Infof("submitted bundle order to trader api %v", resp)
+
+	return false
+}
+
+func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
+	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
+	log.Info("starting place order with bundle")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// generate a random clientOrderID for this order
+	rand.Seed(time.Now().UnixNano())
+	clientOrderID := rand.Uint64()
+
+	opts := provider.PostOrderOpts{
+		ClientOrderID: clientOrderID,
+		SkipPreFlight: config.BoolPtr(true),
+	}
+
+	// create order without actually submitting
+	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
+		orderAmount, orderPrice, computeLimit, computePrice, &tipAmount, opts)
+	if err != nil {
+		log.Errorf("failed to create order (%v)", err)
+		return true
+	}
+	log.Infof("created unsigned place order transaction: %v", response.Transaction)
+
+	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: response.Transaction.Content}, true, false, true, false)
+	if err != nil {
+		log.Errorf("failed to sign and submit order (%v)", err)
+		return true
+	}
+
+	log.Infof("submitted order to trader api with staked rpcs %v", resp)
 
 	return false
 }

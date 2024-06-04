@@ -138,13 +138,18 @@ func run() bool {
 			time.Sleep(1 * time.Second)
 
 			failed = failed || logCall("callPlaceOrderBundle", func() bool {
-				return callPlaceOrderBundle(ownerAddr, 3000) // this is using raydium swap
+				return callPlaceOrderBundle(ownerAddr, 10000) // this is using raydium swap
 			})
 		}
 
-		failed = failed || logCall("callPlaceOrderBundleWithBatch", func() bool {
-			return callPlaceOrderBundleUsingBatch(ownerAddr, 1030) // this is using raydium swap
+		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
+			return callPlaceOrderWithStakedRPCs(ownerAddr, 10000) // this is using raydium swap
 		})
+
+		failed = failed || logCall("callPlaceOrderBundleWithBatch", func() bool {
+			return callPlaceOrderBundleUsingBatch(ownerAddr, 10000) // this is using raydium swap
+		})
+
 		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
@@ -757,12 +762,46 @@ func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
 
 	tx, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content, IsCleanup: false},
 		true,
-		true, 0)
+		true, false, false)
 	if err != nil {
 		panic(err)
 	}
 
 	log.Infof("successfully placed bundle batch order with signature : %s", tx)
+
+	return false
+}
+
+func callPlaceOrderWithStakedRPCs(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing raydium swap with staked rpcs")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	request := &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "SOL",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.5,
+		InAmount:     0.01,
+		Tip:          &bundleTip,
+	}
+
+	resp, err := h.PostRaydiumSwap(ctx, request)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to post raydium swap: %w", err))
+		return true
+	}
+
+	tx, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content, IsCleanup: false},
+		true,
+		false, true, false)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Infof("successfully placed raydium swap using staked rpcs with signature : %s", tx)
 
 	return false
 }
