@@ -124,9 +124,10 @@ func run() bool {
 	if cfg.RunTrades {
 		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })*/
-		//failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })
-		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(1030)) })
+		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })
+		failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })*/
+		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool { return callPlaceOrderWithStakedRPCs(w, ownerAddr, uint64(10000)) })
+		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(10000)) })
 		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
@@ -828,13 +829,45 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint
 
 	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
 		true,
-		true, 0)
+		true, false, false)
 	if err != nil {
 		log.Errorf("failed to sign and submit tx: %s", err)
 		return true
 	}
 
 	log.Infof("submitted bundle with signature: %s", signature)
+	return false
+}
+
+func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
+	log.Info("trying to place an order with bundling")
+
+	// generate a random clientOrderId for this order
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	resp, err := w.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDC",
+		OutToken:     "SOL",
+		Slippage:     0.5,
+		InAmount:     0.01,
+		Tip:          &tipAmount})
+
+	if err != nil {
+		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
+		return true
+	}
+
+	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
+		true,
+		false, true, false)
+	if err != nil {
+		log.Errorf("failed to sign and submit tx: %s", err)
+		return true
+	}
+
+	log.Infof("submitted raydium swap using staked RPCs with signature: %s", signature)
 	return false
 }
 

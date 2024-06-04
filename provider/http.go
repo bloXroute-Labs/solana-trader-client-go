@@ -457,7 +457,8 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 // SignAndSubmitBatch signs the given transactions and submits them.
-func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool,
+	opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
