@@ -838,15 +838,9 @@ func (g *GRPCClient) GetSwapsStream(
 	return connections.GRPCStream[pb.GetSwapsStreamResponse](stream, ""), nil
 }
 
-// GetNewRaydiumPoolsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
-func (g *GRPCClient) GetNewRaydiumPoolsStream(
-	ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
-	return g.GetNewRaydiumPoolsStreamV2(ctx, false)
-}
-
-// GetNewRaydiumPoolsStreamV2 subscribes to a stream for getting recent swaps on projects & markets of interest with
+// GetNewRaydiumPoolsStream subscribes to a stream for getting recent swaps on projects & markets of interest with
 // option to include Raydium cpmm amm.
-func (g *GRPCClient) GetNewRaydiumPoolsStreamV2(
+func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	ctx context.Context, includeCPMM bool,
 ) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
 	stream, err := g.apiClient.GetNewRaydiumPoolsStream(ctx, &pb.GetNewRaydiumPoolsRequest{

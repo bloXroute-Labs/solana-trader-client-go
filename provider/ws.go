@@ -983,14 +983,9 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	})
 }
 
-// GetNewRaydiumPoolsStream subscribes to a stream for new Raydium Pools when they are created.
-func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
-	return w.GetNewRaydiumPoolsStreamV2(ctx, false)
-}
-
-// GetNewRaydiumPoolsStreamV2 subscribes to a stream for new Raydium Pools when they are created with
+// GetNewRaydiumPoolsStream subscribes to a stream for new Raydium Pools when they are created with
 // option to include Raydium cpmm amm.
-func (w *WSClient) GetNewRaydiumPoolsStreamV2(ctx context.Context, includeCPMM bool) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
+func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context, includeCPMM bool) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream",
 		&pb.GetNewRaydiumPoolsRequest{
 			IncludeCPMM: &includeCPMM,
