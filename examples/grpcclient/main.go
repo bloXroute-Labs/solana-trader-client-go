@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -53,125 +52,134 @@ func run() bool {
 
 	var failed bool
 	// informational methods
-	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
-	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
-	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
-	// this is just for example/test purposes
-	// failed = failed || logCall("callBundleResultGRPC", func() bool { return callBundleResultGRPC(g) })
+	failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(g) })
 
-	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
-	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
-	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
-	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
+	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
 
-	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
-	failed = failed || logCall("callGetRateLimitGRPC", func() bool { return callGetRateLimitGRPC(g) })
-	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
-	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
-	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
-	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-	}
-
-	failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(g) })
-	}
-
-	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
-	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
-
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
-	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
-	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
-	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
-
-	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
-	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
-	failed = failed || logCall("callGetBundleTipGRPCStream", func() bool { return callGetBundleTipGRPCStream(g) })
+	//
+	//failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+	//failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
+	//failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
+	//// this is just for example/test purposes
+	//// failed = failed || logCall("callBundleResultGRPC", func() bool { return callBundleResultGRPC(g) })
+	//
+	//failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
+	//failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
+	//failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
+	//failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
+	//
+	//failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
+	//failed = failed || logCall("callGetRateLimitGRPC", func() bool { return callGetRateLimitGRPC(g) })
+	//failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
+	//failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
+	//failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
+	//failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
+	//
+	//if cfg.RunSlowStream {
+	//	failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+	//	failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+	//}
+	//
+	//failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
+	//
+	//if cfg.RunSlowStream {
+	//	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
+	//	failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+	//	failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
+	//	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+	//	failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(g) })
+	//}
+	//
+	//failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
+	//failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
+	//
+	//failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
+	//failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
+	//failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
+	//failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
+	//
+	//failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
+	//failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+	//failed = failed || logCall("callGetBundleTipGRPCStream", func() bool { return callGetBundleTipGRPCStream(g) })
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return failed
-	}
+	//ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	//if !ok {
+	//	log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
+	//	return failed
+	//}	//ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	//if !ok {
+	//	log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
+	//	return failed
+	//}
 
-	if cfg.RunTrades {
-		payerAddr, ok := os.LookupEnv("PAYER")
-		if !ok {
-			log.Infof("PAYER environment variable not set: will be set to owner address")
-			payerAddr = ownerAddr
-		}
-		if !ok {
-			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-		}
-
-		ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-		if !ok {
-			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-		}
-		failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g, ownerAddr) })
-		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1000000))
-		})
-
-		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-
-		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1000000))
-		})
-
-		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
-			return callPlaceOrderWithStakedRPCs(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1100000))
-		})
-
-		failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
-			return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1000000))
-		})
-
-		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
-			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
-		})
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
-		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(g, ownerAddr, uint64(1100), false) })
-	}
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-	}
+	//if cfg.RunTrades {
+	//	payerAddr, ok := os.LookupEnv("PAYER")
+	//	if !ok {
+	//		log.Infof("PAYER environment variable not set: will be set to owner address")
+	//		payerAddr = ownerAddr
+	//	}
+	//	if !ok {
+	//		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+	//	}
+	//
+	//	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	//	if !ok {
+	//		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+	//	}
+	//	failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g, ownerAddr) })
+	//	failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
+	//		return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+	//			typeLimit, uint64(1000000))
+	//	})
+	//
+	//	failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
+	//	failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	//
+	//	failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
+	//		return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+	//			typeLimit, uint64(1000000))
+	//	})
+	//
+	//	failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
+	//		return callPlaceOrderWithStakedRPCs(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+	//			typeLimit, uint64(1100000))
+	//	})
+	//
+	//	failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
+	//		return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
+	//			typeLimit, uint64(1000000))
+	//	})
+	//
+	//	failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
+	//		return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
+	//	})
+	//	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	//	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	//	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
+	//	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
+	//	failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
+	//	failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
+	//	failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
+	//	failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
+	//	failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
+	//	failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(g, ownerAddr, uint64(1100), false) })
+	//}
+	//
+	//if cfg.RunSlowStream {
+	//	failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
+	//	failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
+	//	failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
+	//	failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
+	//	failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
+	//	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+	//}
 	return failed
 }
 
@@ -1677,14 +1685,15 @@ func callGetNewRaydiumPoolsStreamWithCPMM(g *provider.GRPCClient) bool {
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-ch
+	for i := 1; i <= 100000; i++ {
+		resp, ok := <-ch
 		if !ok {
 			// channel closed
 			return true
 		}
 
 		log.Infof("response %v received", i)
+		log.Infof("response: %s", resp.String())
 	}
 	return false
 }
