@@ -36,6 +36,7 @@ func NewGRPCClient() (*GRPCClient, error) {
 // NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)
+	opts.UseTLS = true
 	return NewGRPCClientWithOpts(opts)
 }
 

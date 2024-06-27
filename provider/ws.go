@@ -30,6 +30,7 @@ func NewWSClient() (*WSClient, error) {
 // NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (*WSClient, error) {
 	opts := DefaultRPCOpts(TestnetWS)
+	opts.UseTLS = true
 	return NewWSClientWithOpts(opts)
 }
 
