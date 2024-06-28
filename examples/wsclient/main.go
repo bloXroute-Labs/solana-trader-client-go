@@ -97,6 +97,7 @@ func run() bool {
 		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
 		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
+		failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(w) })
 	}
 
 	// calls below this place an order and immediately cancel it
@@ -627,16 +628,41 @@ func callTradesWSStream(w *provider.WSClient) bool {
 }
 
 func callGetNewRaydiumPoolsStream(w *provider.WSClient) bool {
-	log.Info("starting get new raydium pools stream")
+	log.Info("starting get new raydium pools stream without cpmm")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	poolsChan := make(chan *pb.GetNewRaydiumPoolsResponse)
 
-	stream, err := w.GetNewRaydiumPoolsStream(ctx)
+	stream, err := w.GetNewRaydiumPoolsStream(ctx, false)
 	if err != nil {
-		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
+		log.Errorf("error with GetNewRaydiumPoolsStream: %v", err)
+		return true
+	}
+
+	stream.Into(poolsChan)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-poolsChan
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetNewRaydiumPoolsStreamWithCPMM(w *provider.WSClient) bool {
+	log.Info("starting get new raydium pools stream with cpmm")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	poolsChan := make(chan *pb.GetNewRaydiumPoolsResponse)
+
+	stream, err := w.GetNewRaydiumPoolsStream(ctx, true)
+	if err != nil {
+		log.Errorf("error with GetNewRaydiumPoolsStream with cpmm: %v", err)
 		return true
 	}
 

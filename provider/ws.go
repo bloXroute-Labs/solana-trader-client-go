@@ -30,6 +30,7 @@ func NewWSClient() (*WSClient, error) {
 // NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (*WSClient, error) {
 	opts := DefaultRPCOpts(TestnetWS)
+	opts.UseTLS = true
 	return NewWSClientWithOpts(opts)
 }
 
@@ -983,12 +984,17 @@ func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uin
 	})
 }
 
-// GetNewRaydiumPoolsStream subscribes to a stream for new Raydium Pools when they are created.
-func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream", &pb.GetNewRaydiumPoolsRequest{}, func() *pb.GetNewRaydiumPoolsResponse {
-		var v pb.GetNewRaydiumPoolsResponse
-		return &v
-	})
+// GetNewRaydiumPoolsStream subscribes to a stream for new Raydium Pools when they are created with
+// option to include Raydium cpmm amm.
+func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context, includeCPMM bool) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsStream",
+		&pb.GetNewRaydiumPoolsRequest{
+			IncludeCPMM: &includeCPMM,
+		},
+		func() *pb.GetNewRaydiumPoolsResponse {
+			var v pb.GetNewRaydiumPoolsResponse
+			return &v
+		})
 }
 
 // GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders

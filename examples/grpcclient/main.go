@@ -83,6 +83,7 @@ func run() bool {
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
+		failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(g) })
 	}
 
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
@@ -1637,14 +1638,40 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 }
 
 func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
-	log.Info("starting get new raydium pools stream")
+	log.Info("starting get new raydium pools stream without cpmm")
 
 	ch := make(chan *pb.GetNewRaydiumPoolsResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Stream response
-	stream, err := g.GetNewRaydiumPoolsStream(ctx)
+	stream, err := g.GetNewRaydiumPoolsStream(ctx, false)
+	if err != nil {
+		log.Errorf("error with GetNewRaydiumPools stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetNewRaydiumPoolsStreamWithCPMM(g *provider.GRPCClient) bool {
+	log.Info("starting get new raydium pools stream with cpmm")
+
+	ch := make(chan *pb.GetNewRaydiumPoolsResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetNewRaydiumPoolsStream(ctx, true)
 	if err != nil {
 		log.Errorf("error with GetNewRaydiumPools stream request: %v", err)
 		return true

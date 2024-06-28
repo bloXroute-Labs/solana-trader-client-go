@@ -36,6 +36,7 @@ func NewGRPCClient() (*GRPCClient, error) {
 // NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)
+	opts.UseTLS = true
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -838,11 +839,14 @@ func (g *GRPCClient) GetSwapsStream(
 	return connections.GRPCStream[pb.GetSwapsStreamResponse](stream, ""), nil
 }
 
-// GetNewRaydiumPoolsStream subscribes to a stream for getting recent swaps on projects & markets of interest.
+// GetNewRaydiumPoolsStream subscribes to a stream for getting recent swaps on projects & markets of interest with
+// option to include Raydium cpmm amm.
 func (g *GRPCClient) GetNewRaydiumPoolsStream(
-	ctx context.Context,
+	ctx context.Context, includeCPMM bool,
 ) (connections.Streamer[*pb.GetNewRaydiumPoolsResponse], error) {
-	stream, err := g.apiClient.GetNewRaydiumPoolsStream(ctx, &pb.GetNewRaydiumPoolsRequest{})
+	stream, err := g.apiClient.GetNewRaydiumPoolsStream(ctx, &pb.GetNewRaydiumPoolsRequest{
+		IncludeCPMM: &includeCPMM,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ import (
 const (
 	mainnetNY = "ny.solana.dex.blxrbdn.com"
 	mainnetUK = "uk.solana.dex.blxrbdn.com"
-	testnet   = "serum-nlb-5a2c3912804344a3.elb.us-east-1.amazonaws.com"
+	testnet   = "solana.dex.bxrtest.com"
 	devnet    = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
 
@@ -27,9 +27,9 @@ var (
 	MainnetNYGRPC = grpcEndpoint(mainnetNY, true)
 	MainnetUKGRPC = grpcEndpoint(mainnetUK, true)
 
-	TestnetHTTP = httpEndpoint(testnet, false)
-	TestnetWS   = wsEndpoint(testnet, false)
-	TestnetGRPC = grpcEndpoint(testnet, false)
+	TestnetHTTP = httpEndpoint(testnet, true)
+	TestnetWS   = wsEndpoint(testnet, true)
+	TestnetGRPC = grpcEndpoint(testnet, true)
 
 	DevnetHTTP = httpEndpoint(devnet, false)
 	DevnetWS   = wsEndpoint(devnet, false)

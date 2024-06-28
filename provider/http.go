@@ -32,6 +32,7 @@ func NewHTTPClient() *HTTPClient {
 // NewHTTPTestnet connects to Testnet Trader API
 func NewHTTPTestnet() *HTTPClient {
 	opts := DefaultRPCOpts(TestnetHTTP)
+	opts.UseTLS = true
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
