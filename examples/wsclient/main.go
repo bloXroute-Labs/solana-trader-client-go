@@ -61,7 +61,6 @@ func run() bool {
 	// informational requests
 	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
 	// this is just for example/test purposes
-	// failed = failed || logCall("callBundleResultWS", func() bool { return callBundleResultWS(w, "uuid") })
 	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
 	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
 	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
@@ -160,21 +159,6 @@ func callMarketsWS(w *provider.WSClient) bool {
 	log.Info("fetching markets...")
 
 	markets, err := w.GetMarketsV2(context.Background())
-	if err != nil {
-		log.Errorf("error with GetMarkets request: %v", err)
-		return true
-	} else {
-		log.Info(markets)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callBundleResultWS(w *provider.WSClient, uuid string) bool {
-	log.Info("getting bundle result...")
-
-	markets, err := w.GetBundleResult(context.Background(), &pb.GetBundleResultRequest{Uuid: uuid})
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true

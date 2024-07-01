@@ -57,7 +57,6 @@ func run() bool {
 	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	// this is just for example/test purposes
-	// failed = failed || logCall("callBundleResultGRPC", func() bool { return callBundleResultGRPC(g) })
 
 	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
 	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
@@ -193,19 +192,6 @@ func callMarketsGRPC(g *provider.GRPCClient) bool {
 		return true
 	} else {
 		log.Info(markets)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callBundleResultGRPC(g *provider.GRPCClient) bool {
-	bundleresult, err := g.GetBundleResult(context.Background(), "uuid")
-	if err != nil {
-		log.Errorf("error with GetBundleResult request: %v", err)
-		return true
-	} else {
-		log.Info(bundleresult)
 	}
 
 	fmt.Println()
