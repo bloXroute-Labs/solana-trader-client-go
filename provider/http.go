@@ -1081,6 +1081,25 @@ func (h *HTTPClient) PostOrderV2WithPriorityFee(ctx context.Context, owner, paye
 	return &response, nil
 }
 
+// PostZetaCrossMarginAccountOwner returns a partially signed transaction for creating a zeta cross margin account with a bloXroute referral
+func (h *HTTPClient) PostZetaCrossMarginAccountOwner(ctx context.Context, ownerAddress string, computeLimit uint32,
+	computePrice uint64) (*pb.PostZetaCrossMarginAccountResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/zeta/cross-margin-account", h.baseURL)
+	request := &pb.PostZetaCrossMarginAccountRequest{
+		OwnerAddress: ownerAddress,
+		ComputeLimit: computeLimit,
+		ComputePrice: computePrice,
+	}
+
+	var response pb.PostZetaCrossMarginAccountResponse
+	err := connections.HTTPPostWithClient[*pb.PostZetaCrossMarginAccountResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
 func (h *HTTPClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string,
 	amount, price float64, opts PostOrderOpts) (string, error) {

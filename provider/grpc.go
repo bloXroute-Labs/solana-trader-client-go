@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -875,6 +874,16 @@ func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Projec
 	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
+// GetZetaTransactionsStream subscribes to a stream for getting zeta transactions in real time
+func (g *GRPCClient) GetZetaTransactionsStream(ctx context.Context, instructions []string) (connections.Streamer[*pb.GetZetaTransactionStreamResponse], error) {
+	stream, err := g.apiClient.GetZetaTransactionStream(ctx, &pb.GetZetaTransactionStreamRequest{Instructions: instructions})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetZetaTransactionStreamResponse](stream, ""), nil
+}
+
 // GetBundleTipStream subscribes to a stream of bundle tip percentiles
 func (g *GRPCClient) GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error) {
 	stream, err := g.apiClient.GetBundleTipStream(ctx, &pb.GetBundleTipRequest{})
@@ -1032,7 +1041,8 @@ func (g *GRPCClient) PostSettleV2(ctx context.Context, owner, market, baseTokenW
 }
 
 // SubmitSettleV2 builds a market SubmitSettle transaction, signs it, and submits to the network.
-func (g *GRPCClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
+func (g *GRPCClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet,
+	openOrdersAccount string, skipPreflight bool) (string, error) {
 	order, err := g.PostSettleV2(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
 	if err != nil {
 		return "", err
@@ -1057,6 +1067,40 @@ func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, pay
 }
 
 func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
+	order, err := g.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
+	if err != nil {
+		return "", err
+	}
+	skipPreFlight := true
+	if opts.SkipPreFlight != nil {
+		skipPreFlight = *opts.SkipPreFlight
+	}
+	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
+}
+
+func (g *GRPCClient) PostZetaCrossMarginAccount(ctx context.Context, ownerAddress string, computeLimit uint32, computePrice uint64) (*pb.PostZetaCrossMarginAccountResponse, error) {
+	return g.apiClient.PostZetaCrossMarginAccount(ctx,
+		&pb.PostZetaCrossMarginAccountRequest{
+			OwnerAddress: ownerAddress,
+			ComputeLimit: computeLimit,
+			ComputePrice: computePrice})
+}
+
+func (g *GRPCClient) SubmitZetaCrossMarginAccount(ctx context.Context, ownerAddress string,
+	computeLimit uint32,
+	computePrice uint64,
+	skipPreflight bool) (string, error) {
+
+	postCrossMarginAccount, err := g.PostZetaCrossMarginAccount(ctx, ownerAddress, computeLimit, computePrice)
+	if err != nil {
+		return "", err
+	}
+
+	return g.SignAndSubmit(ctx, postCrossMarginAccount.GetTransaction(), skipPreflight,
+		false, false, false)
+}
+
+func (g *GRPCClient) Post(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
 	order, err := g.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
 	if err != nil {
 		return "", err
