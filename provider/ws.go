@@ -85,16 +85,6 @@ func (w *WSClient) GetTransaction(ctx context.Context, request *pb.GetTransactio
 	return &response, nil
 }
 
-// GetBundleResult returns the bundle result
-func (w *WSClient) GetBundleResult(ctx context.Context, request *pb.GetBundleResultRequest) (*pb.GetBundleResultResponse, error) {
-	var response pb.GetBundleResultResponse
-	err := w.conn.Request(ctx, "GetBundleResultV2", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
 // GetRateLimit returns details of an account rate-limits
 func (w *WSClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	var response pb.GetRateLimitResponse
@@ -1101,16 +1091,6 @@ func (w *WSClient) GetBundleTipStream(ctx context.Context) (connections.Streamer
 func (w *WSClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponse, error) {
 	var response pb.GetMarketsResponse
 	err := w.conn.Request(ctx, "GetMarketsV2", &pb.GetMarketsRequestV2{}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetBundleResults returns the status of a bundle based on uuid
-func (w *WSClient) GetBundleResults(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
-	var response pb.GetBundleResultResponse
-	err := w.conn.Request(ctx, "GetBundleResults", &pb.GetBundleResultRequest{Uuid: uuid}, &response)
 	if err != nil {
 		return nil, err
 	}

@@ -77,7 +77,6 @@ func run() bool {
 	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
 	// this is just for example/test purposes
-	//failed = failed || logCall("callBundleResultHTTP", func() bool { return callBundleResultHTTP() })
 	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
 	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
 	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
@@ -185,23 +184,6 @@ func callMarketsHTTP() bool {
 	defer cancel()
 
 	markets, err := h.GetMarketsV2(ctx)
-	if err != nil {
-		log.Errorf("error with GetMarkets request: %v", err)
-		return true
-	} else {
-		log.Info(markets)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callBundleResultHTTP() bool {
-	h := httpClient()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	markets, err := h.GetBundleResult(ctx, "uuid")
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
 		return true

@@ -236,11 +236,6 @@ func (g *GRPCClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, er
 	return g.apiClient.GetMarkets(ctx, &pb.GetMarketsRequest{})
 }
 
-// GetBundleResult returns the bundle result
-func (g *GRPCClient) GetBundleResult(ctx context.Context, uuid string) (*pb.GetBundleResultResponse, error) {
-	return g.apiClient.GetBundleResultV2(ctx, &pb.GetBundleResultRequest{Uuid: uuid})
-}
-
 // GetAccountBalance returns all tokens associated with the owner address including Serum unsettled amounts
 func (g *GRPCClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
 	return g.apiClient.GetAccountBalanceV2(ctx, &pb.GetAccountBalanceRequest{OwnerAddress: owner})

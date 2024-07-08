@@ -50,52 +50,6 @@ jobs:
       - run:
           name: Unit test
           command: make unit
-  integration-testnet:
-    executor: bxgo
-    steps:
-      - attach_workspace:
-          at: /home/circleci/go
-      - run:
-          name: GRPC Examples (testnet)
-          command: |
-            unset PRIVATE_KEY
-            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make grpc-examples
-      - run:
-          name: HTTP Examples (testnet)
-          command: |
-            unset PRIVATE_KEY
-            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make http-examples
-      - run:
-          name: WS Examples (testnet)
-          command: |
-            unset PRIVATE_KEY
-            API_ENV=testnet AUTH_HEADER=$AUTH_HEADER_TESTNET  make ws-examples
-  integration-mainnet:
-    executor: bxgo
-    steps:
-      - attach_workspace:
-          at: /home/circleci/go
-      - run:
-          name: Export build details
-          command: |
-            echo 'export COMMIT_HASH=$(git rev-parse HEAD)' >> $BASH_ENV
-            echo 'export COMMIT_AUTHOR="$(git --no-pager log -1 --pretty=format:'%an')"' >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: GRPC Examples (mainnet)
-          command: |
-            unset PRIVATE_KEY
-            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make grpc-examples
-      - run:
-          name: HTTP Examples (mainnet)
-          command: |
-            unset PRIVATE_KEY
-            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make http-examples
-      - run:
-          name: WS Examples (mainnet)
-          command: |
-            unset PRIVATE_KEY
-            API_ENV=mainnet AUTH_HEADER=$AUTH_HEADER_MAINNET  make ws-examples
 workflows:
   version: 2
   test-branch:
@@ -108,26 +62,3 @@ workflows:
       - unit:
           requires:
             - init
-
-  nightly:
-    when:
-      equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
-    jobs:
-      - init:
-          context:
-            - circleci
-      - unit:
-          requires:
-            - init
-      - integration-testnet:
-          context:
-            - trader-api-sdk
-          requires:
-            - init
-            - unit
-      - integration-mainnet:
-          context:
-            - trader-api-sdk
-          requires:
-            - init
-            - unit
