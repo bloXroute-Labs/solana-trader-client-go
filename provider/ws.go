@@ -1086,11 +1086,11 @@ func (w *WSClient) GetBundleTipStream(ctx context.Context) (connections.Streamer
 }
 
 // GetZetaTransactionStream subscribes to a stream of zeta stream transactions based on passed in string list of instructions
-func (w *WSClient) GetZetaTransactionStream(ctx context.Context) (connections.Streamer[*pb.GetZetaTransactionStreamResponse], error) {
+func (w *WSClient) GetZetaTransactionStream(ctx context.Context, request *pb.GetZetaTransactionStreamRequest) (connections.Streamer[*pb.GetZetaTransactionStreamResponse], error) {
 	newResponse := func() *pb.GetZetaTransactionStreamResponse {
 		return &pb.GetZetaTransactionStreamResponse{}
 	}
-	return connections.WSStreamProto(w.conn, ctx, "GetZetaTransactionStream", &pb.GetBundleTipRequest{}, newResponse)
+	return connections.WSStreamProto(w.conn, ctx, "GetZetaTransactionStream", request, newResponse)
 }
 
 // V2 Openbook

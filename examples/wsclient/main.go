@@ -59,30 +59,33 @@ func run() bool {
 
 	var failed bool
 	// informational requests
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
-	// this is just for example/test purposes
-	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
-	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
-	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
-	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
-	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
-	failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
-	failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
-	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
-	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
-	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
-	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
-	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
-	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
-	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-	failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
+	//failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+	//// this is just for example/test purposes
+	//failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
+	//failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
+	//failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
+	//failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
+	//failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
+	//failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
+	//failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
+	//failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
+	//failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
+	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
+	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
+	//failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
+	//failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
+	//failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
+	//failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
+	//failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
+	//failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
+	//failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
+	//failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
 	// streaming methods
+	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
+
+	failed = failed || logCall("callZetaTransactionsWSStream", func() bool { return callZetaTransactionStream(w) })
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
 	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
@@ -555,6 +558,29 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 	orderbookCh := stream.Channel(0)
 	for i := 1; i <= 1; i++ {
 		_, ok := <-orderbookCh
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callZetaTransactionStream(w *provider.WSClient) bool {
+	log.Info("starting zeta transaction stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetZetaTransactionStream(ctx, &pb.GetZetaTransactionStreamRequest{Instructions: []string{"PlacePerpOrderV4"}})
+	if err != nil {
+		log.Errorf("error with GetZetaTransactions request %v", err)
+		return true
+	}
+
+	zetaTransactionCh := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		_, ok := <-zetaTransactionCh
 		if !ok {
 			return true
 		}

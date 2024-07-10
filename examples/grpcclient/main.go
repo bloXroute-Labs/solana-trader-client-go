@@ -53,6 +53,8 @@ func run() bool {
 
 	var failed bool
 	// informational methods
+	failed = failed || logCall("callZetaTransactionStream", func() bool { return callZetaTransactionsGRPCStream(g) })
+
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
@@ -583,6 +585,55 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	orderbookCh := stream.Channel(0)
 	for i := 1; i <= 1; i++ {
 		data, ok := <-orderbookCh
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received, data %v ", i, data)
+	}
+
+	return false
+}
+
+func callZetaTransactionsGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting zeta transaction stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream error response
+	stream, err := g.GetZetaTransactionsStream(ctx, []string{"PlacePERP"})
+	if err != nil {
+		log.Errorf("connection could not be established. error: %v", err)
+		return true
+	}
+
+	_, err = stream()
+	if err != nil {
+		// demonstration purposes only. will swallow
+		log.Infof("subscription error: %v", err)
+	} else {
+		log.Error("subscription should have returned an error")
+		return true
+	}
+
+	// Stream ok response
+	stream, err = g.GetZetaTransactionsStream(ctx, []string{"PlacePerpOrderV4"})
+	if err != nil {
+		log.Errorf("connection could not be established. error: %v", err)
+		return true
+	}
+
+	_, err = stream()
+	if err != nil {
+		log.Errorf("subscription error: %v", err)
+		return true
+	}
+
+	txCh := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		data, ok := <-txCh
 		if !ok {
 			// channel closed
 			return true
