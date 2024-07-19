@@ -53,6 +53,14 @@ func run() bool {
 
 	var failed bool
 	// informational methods
+	failed = failed || logCall("callPostZetaCrossMarginAccount", func() bool {
+		return callPostZetaCrossMarginAccount(g)
+	})
+
+	failed = failed || logCall("callPostZetaCrossMarginAccount", func() bool {
+		return callPostZetaCrossMarginAccount(g)
+	})
+
 	failed = failed || logCall("callZetaTransactionStream", func() bool { return callZetaTransactionsGRPCStream(g) })
 
 	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
@@ -854,6 +862,25 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 
 	fmt.Println()
 	return callPostSettleGRPC(g, ownerAddr, ooAddr)
+}
+
+func callPostZetaCrossMarginAccount(g *provider.GRPCClient) bool {
+	log.Info("starting create zeta cross margin account")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// create order without actually submitting
+	response, err := g.PostZetaCrossMarginAccount(ctx, "5qSoS4zNBm5a5cx4FLxTLWuqNuq58YnQ1uJGEMZAerks",
+		100000, 2000, 1000000)
+
+	if err != nil {
+		log.Errorf("failed to create zeta cross margin account (%v)", err)
+		return true
+	}
+
+	log.Infof("created unsigned create zeta cross margin account: %v", response.Transaction)
+	return false
 }
 
 func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {

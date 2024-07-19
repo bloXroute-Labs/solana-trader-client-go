@@ -1078,20 +1078,26 @@ func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
 
-func (g *GRPCClient) PostZetaCrossMarginAccount(ctx context.Context, ownerAddress string, computeLimit uint32, computePrice uint64) (*pb.PostZetaCrossMarginAccountResponse, error) {
+func (g *GRPCClient) PostZetaCrossMarginAccount(ctx context.Context,
+	ownerAddress string,
+	computeLimit uint32,
+	computePrice uint64,
+	tip uint64) (*pb.PostZetaCrossMarginAccountResponse, error) {
 	return g.apiClient.PostZetaCrossMarginAccount(ctx,
 		&pb.PostZetaCrossMarginAccountRequest{
 			OwnerAddress: ownerAddress,
 			ComputeLimit: computeLimit,
-			ComputePrice: computePrice})
+			ComputePrice: computePrice,
+			Tip:          &tip})
 }
 
 func (g *GRPCClient) SubmitZetaCrossMarginAccount(ctx context.Context, ownerAddress string,
 	computeLimit uint32,
 	computePrice uint64,
+	tip uint64,
 	skipPreflight bool) (string, error) {
 
-	postCrossMarginAccount, err := g.PostZetaCrossMarginAccount(ctx, ownerAddress, computeLimit, computePrice)
+	postCrossMarginAccount, err := g.PostZetaCrossMarginAccount(ctx, ownerAddress, computeLimit, computePrice, tip)
 	if err != nil {
 		return "", err
 	}

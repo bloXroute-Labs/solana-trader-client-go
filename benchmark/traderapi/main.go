@@ -27,7 +27,6 @@ func main() {
 			utils.SolanaWSRPCEndpointFlag,
 			utils.APIWSEndpoint,
 			MarketAddrFlag,
-			DurationFlag,
 			utils.OutputFileFlag,
 			RemoveUnmatchedFlag,
 			RemoveDuplicatesFlag,
@@ -75,7 +74,7 @@ func run(c *cli.Context) error {
 	}
 
 	startTime := time.Now()
-	duration := c.Duration(DurationFlag.Name)
+	duration := c.Duration("30")
 	runCtx, runCancel := context.WithTimeout(ctx, duration)
 	defer runCancel()
 
@@ -181,11 +180,7 @@ var (
 		Usage: "market to run analysis for",
 		Value: "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6", // SOL/USDC market
 	}
-	DurationFlag = &cli.DurationFlag{
-		Name:     "run-time",
-		Usage:    "amount of time to run script for (seconds)",
-		Required: true,
-	}
+
 	RemoveUnmatchedFlag = &cli.BoolFlag{
 		Name:  "remove-unmatched",
 		Usage: "skip events without a match from other source",

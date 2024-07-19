@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"fmt"
+	traderapi "github.com/bloXroute-Labs/solana-trader-api/solana"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	bin "github.com/gagliardetto/binary"
@@ -67,15 +68,17 @@ func NewSolanaOrderbookStream(ctx context.Context, rpcAddress string, wsAddress,
 		marketPk:  marketPk,
 	}
 
-	s.market, err = s.fetchMarket(ctx, marketPk)
+	s.market, err = s.fetchMarket(context.Background(), marketPk)
 	if err != nil {
 		return nil, err
 	}
 
+	traderapi.NewStreamClient(context.Background(), rpcAddress)
+
 	s.askPk = s.market.Asks
 	s.bidPk = s.market.Bids
 
-	s.wsClient, err = solanaws.Connect(ctx, s.wsAddress)
+	s.wsClient, err = solanaws.Connect(context.Background(), s.wsAddress)
 	if err != nil {
 		return nil, err
 	}
