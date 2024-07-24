@@ -83,6 +83,7 @@ func run(c *cli.Context) error {
 		tradeUpdates  []stream.RawUpdate[[]byte]
 		solanaUpdates []stream.RawUpdate[stream.SolanaRawUpdate]
 	)
+
 	errCh := make(chan error, 2)
 
 	go func() {

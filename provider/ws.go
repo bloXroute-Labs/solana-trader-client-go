@@ -1085,6 +1085,14 @@ func (w *WSClient) GetBundleTipStream(ctx context.Context) (connections.Streamer
 	return connections.WSStreamProto(w.conn, ctx, "GetBundleTipStream", &pb.GetBundleTipRequest{}, newResponse)
 }
 
+// GetZetaTransactionStream subscribes to a stream of zeta stream transactions based on passed in string list of instructions
+func (w *WSClient) GetZetaTransactionStream(ctx context.Context, request *pb.GetZetaTransactionStreamRequest) (connections.Streamer[*pb.GetZetaTransactionStreamResponse], error) {
+	newResponse := func() *pb.GetZetaTransactionStreamResponse {
+		return &pb.GetZetaTransactionStreamResponse{}
+	}
+	return connections.WSStreamProto(w.conn, ctx, "GetZetaTransactionStream", request, newResponse)
+}
+
 // V2 Openbook
 
 // GetMarketsV2 returns the list of all available named markets
@@ -1166,6 +1174,26 @@ func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string,
 		return nil, err
 	}
 	return &response, nil
+}
+
+// PostZetaCrossMarginAccount returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
+func (w *WSClient) PostZetaCrossMarginAccount(ctx context.Context, request *pb.PostZetaCrossMarginAccountRequest) (*pb.PostZetaCrossMarginAccountResponse, error) {
+	var response pb.PostZetaCrossMarginAccountResponse
+	err := w.conn.Request(ctx, "PostZetaCrossMarginAccount", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// SubmitZetaCrossMarginAccount builds a zeta cross margin account transaction and submits it to the network
+func (w *WSClient) SubmitZetaCrossMarginAccount(ctx context.Context, request *pb.PostZetaCrossMarginAccountRequest, skipPreFlight bool) (string, error) {
+	zetaTx, err := w.PostZetaCrossMarginAccount(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	return w.SignAndSubmit(ctx, zetaTx.GetTransaction(), skipPreFlight, false, false, false)
 }
 
 // SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
