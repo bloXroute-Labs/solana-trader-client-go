@@ -7,7 +7,7 @@ toolchain go1.22.1
 require (
 	github.com/bloXroute-Labs/bxproto-private/go v0.0.0-20240304102027-c7f78819ae7f
 	github.com/bloXroute-Labs/bxprovider v0.0.0-20240314153637-9a2697e37255
-	github.com/bloXroute-Labs/solana-trader-proto v1.9.1
+	github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240701182849-47644387b812
 	github.com/gagliardetto/binary v0.7.7
 	github.com/gagliardetto/solana-go v1.8.4
 	github.com/gorilla/websocket v1.4.2
@@ -45,7 +45,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.11 // indirect
