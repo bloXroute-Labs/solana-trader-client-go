@@ -83,7 +83,6 @@ func run() bool {
 	//failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
 	//failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
 	// streaming methods
-	failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
 
 	failed = failed || logCall("callZetaTransactionsWSStream", func() bool { return callZetaTransactionStream(w) })
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
