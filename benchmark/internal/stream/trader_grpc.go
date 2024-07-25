@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"time"
@@ -49,13 +50,30 @@ func (s *TraderAPIGRPCStream) Run(ctx context.Context, updatesChan chan<- RawUpd
 		Pools:    pools,
 	}
 
-	stream, err := s.client.GetPoolReservesStream(ctx, request)
+	const maxRetries = 3
+	var stream connections.Streamer[*pb.GetPoolReservesStreamResponse]
+	var err error
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		stream, err = s.client.GetPoolReservesStream(ctx, request)
+		if err == nil {
+			logger.Log().Infow("Established connection with trader api gRPC server", "stream", stream)
+			break
+		}
+
+		logger.Log().Infow("Error connecting to trader api gRPC, retrying", "error", err, "attempt", attempt+1)
+
+		if attempt < maxRetries-1 {
+			time.Sleep(time.Second * time.Duration(attempt+1)) // Simple linear backoff
+		}
+	}
+
 	if err != nil {
-		logger.Log().Infow("Error connecting to trader api gRPC ", "error: ", err, "stream: ", stream)
+		logger.Log().Infow("Failed to connect to trader api gRPC after retries", "error", err)
 		return err
 	}
 
-	logger.Log().Infow("Established connection with trader api gRPC server", "stream", stream)
+	stream, err = s.client.GetPoolReservesStream(ctx, request)
 
 	ch := make(chan *pb.GetPoolReservesStreamResponse)
 	stream.Into(ch)

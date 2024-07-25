@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/csv"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/output"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -32,7 +30,6 @@ func main() {
 		Usage: "Compares Solana Trader API pool reserves stream with a direct Geyser connection to determine the efficacy of using the Solana Trader API stream",
 		Flags: []cli.Flag{
 			DurationFlag,
-			utils.OutputFileFlag,
 			RemoveUnmatchedFlag,
 			RemoveDuplicatesFlag,
 			APIGRPCEndpointFlag,
@@ -150,23 +147,23 @@ ProcessResults:
 	logger.Log().Infow("completed merging: outputting data...")
 
 	// dump results to stdout
-	removeUnmatched := c.Bool(RemoveUnmatchedFlag.Name)
+	//removeUnmatched := c.Bool(RemoveUnmatchedFlag.Name)
 	PrintSummary(duration, apiGRPCEndpoint, geyserGRPCEndpoint, datapoints)
 
-	// write results to csv
-	outputFile := c.String(utils.OutputFileFlag.Name)
-	header := []string{"slot", "diff", "trader-api-time", "geyser-time"}
-	err = csv.Write(outputFile, header, datapoints, func(line []string) bool {
-		if removeUnmatched {
-			for _, col := range line {
-				return col == "n/a"
-			}
-		}
-		return false
-	})
-	if err != nil {
-		return err
-	}
+	//// write results to csv
+	//outputFile := c.String(utils.OutputFileFlag.Name)
+	//header := []string{"slot", "diff", "trader-api-time", "geyser-time"}
+	//err = csv.Write(outputFile, header, datapoints, func(line []string) bool {
+	//	if removeUnmatched {
+	//		for _, col := range line {
+	//			return col == "n/a"
+	//		}
+	//	}
+	//	return false
+	//})
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
