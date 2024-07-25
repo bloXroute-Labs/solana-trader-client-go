@@ -31,6 +31,7 @@ func NewTraderAPIGRPCStream(grpcAddress, authHeader string, pools []string) (*Tr
 	opts := provider.RPCOpts{
 		Endpoint:   grpcAddress,
 		AuthHeader: authHeader,
+		UseTLS:     true,
 	}
 
 	client, err := provider.NewGRPCClientWithOpts(opts)
@@ -64,7 +65,7 @@ func (s *TraderAPIGRPCStream) Run(ctx context.Context, updatesChan chan<- RawUpd
 		logger.Log().Infow("Error connecting to trader api gRPC, retrying", "error", err, "attempt", attempt+1)
 
 		if attempt < maxRetries-1 {
-			time.Sleep(time.Second * time.Duration(attempt+1)) // Simple linear backoff
+			time.Sleep(3 * time.Second * time.Duration(attempt+1)) // Simple linear backoff
 		}
 	}
 
