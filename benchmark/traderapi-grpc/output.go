@@ -23,13 +23,6 @@ func (d Datapoint) OrderedTimestamps() [][]time.Time {
 	}
 }
 
-func (d Datapoint) FormatPrint() []string {
-	diff := formatDiff(d.TraderTimestamp, d.GeyserTimestamp)
-	line := fmt.Sprintf("slot %v: trader API %v, geyser %v, diff %v",
-		d.Slot, formatTS(d.TraderTimestamp), formatTS(d.GeyserTimestamp), diff)
-	return []string{line}
-}
-
 func (d Datapoint) FormatCSV() [][]string {
 	diff := formatDiff(d.TraderTimestamp, d.GeyserTimestamp)
 	line := []string{
@@ -90,23 +83,33 @@ func Merge(slots []int,
 			return nil, nil, nil, fmt.Errorf("(slot %v) improper slot set provided", slot)
 		}
 
-		var traderUpdate stream.ProcessedUpdate[stream.TraderAPIUpdateGRPC]
-		var geyserUpdate stream.ProcessedUpdate[stream.GeyserUpdateGRPC]
+		var latestTraderUpdate stream.ProcessedUpdate[stream.TraderAPIUpdateGRPC]
+		var latestGeyserUpdate stream.ProcessedUpdate[stream.GeyserUpdateGRPC]
 
 		if traderOK && len(traderUpdates) > 0 {
-			traderUpdate = traderUpdates[len(traderUpdates)-1]
+			latestTraderUpdate = traderUpdates[0]
+			for _, update := range traderUpdates {
+				if update.Timestamp.After(latestTraderUpdate.Timestamp) {
+					latestTraderUpdate = update
+				}
+			}
 		}
 
 		if geyserOK && len(geyserUpdates) > 0 {
-			geyserUpdate = geyserUpdates[len(geyserUpdates)-1]
+			latestGeyserUpdate = geyserUpdates[0]
+			for _, update := range geyserUpdates {
+				if update.Timestamp.After(latestGeyserUpdate.Timestamp) {
+					latestGeyserUpdate = update
+				}
+			}
 		}
 
 		// Create a datapoint if we have updates from both sources
 		if traderOK && geyserOK {
 			dp := Datapoint{
 				Slot:            slot,
-				TraderTimestamp: traderUpdate.Timestamp,
-				GeyserTimestamp: geyserUpdate.Timestamp,
+				TraderTimestamp: latestTraderUpdate.Timestamp,
+				GeyserTimestamp: latestGeyserUpdate.Timestamp,
 			}
 			datapoints = append(datapoints, dp)
 		} else if traderOK {
@@ -122,10 +125,16 @@ func Merge(slots []int,
 func PrintSummary(runtime time.Duration, traderEndpoint string, geyserEndpoint string, datapoints []Datapoint) {
 	traderFaster := 0
 	geyserFaster := 0
+	equalTimes := 0
 	totalTraderLead := 0
 	totalGeyserLead := 0
+	totalDiff := 0
+	minDiff := int(^uint(0) >> 1) // Max int value
+	maxDiff := 0
 	traderUnmatched := 0
 	geyserUnmatched := 0
+	totalTraderUpdates := 0
+	totalGeyserUpdates := 0
 	total := 0
 
 	for _, dp := range datapoints {
@@ -137,20 +146,38 @@ func PrintSummary(runtime time.Duration, traderEndpoint string, geyserEndpoint s
 
 		if dp.TraderTimestamp.IsZero() {
 			geyserUnmatched++
+			totalGeyserUpdates++
 			continue
 		}
 
 		if dp.GeyserTimestamp.IsZero() {
 			traderUnmatched++
+			totalTraderUpdates++
 			continue
 		}
 
-		if dp.TraderTimestamp.Before(dp.GeyserTimestamp) {
+		totalTraderUpdates++
+		totalGeyserUpdates++
+
+		diff := int(dp.TraderTimestamp.Sub(dp.GeyserTimestamp).Milliseconds())
+		absDiff := abs(diff)
+		totalDiff += absDiff
+
+		if absDiff < minDiff {
+			minDiff = absDiff
+		}
+		if absDiff > maxDiff {
+			maxDiff = absDiff
+		}
+
+		if diff < 0 {
 			traderFaster++
-			totalTraderLead += int(dp.GeyserTimestamp.Sub(dp.TraderTimestamp).Milliseconds())
-		} else if dp.GeyserTimestamp.Before(dp.TraderTimestamp) {
+			totalTraderLead += -diff
+		} else if diff > 0 {
 			geyserFaster++
-			totalGeyserLead += int(dp.TraderTimestamp.Sub(dp.GeyserTimestamp).Milliseconds())
+			totalGeyserLead += diff
+		} else {
+			equalTimes++
 		}
 	}
 
@@ -162,6 +189,10 @@ func PrintSummary(runtime time.Duration, traderEndpoint string, geyserEndpoint s
 	if geyserFaster > 0 {
 		averageGeyserLead = totalGeyserLead / geyserFaster
 	}
+	averageDiff := 0
+	if total > 0 {
+		averageDiff = totalDiff / total
+	}
 
 	fmt.Println("Run time: ", runtime)
 	fmt.Println("Endpoints:")
@@ -170,20 +201,42 @@ func PrintSummary(runtime time.Duration, traderEndpoint string, geyserEndpoint s
 	fmt.Println()
 
 	fmt.Println("Total updates: ", total)
+	fmt.Printf("Trader updates: %d\n", totalTraderUpdates)
+	fmt.Printf("Geyser updates: %d\n", totalGeyserUpdates)
 	fmt.Println()
 
 	fmt.Println("Faster counts: ")
-	fmt.Println(fmt.Sprintf("    %-6d  %v", traderFaster, traderEndpoint))
-	fmt.Println(fmt.Sprintf("    %-6d  %v", geyserFaster, geyserEndpoint))
+	fmt.Printf("    %-6d  %v\n", traderFaster, traderEndpoint)
+	fmt.Printf("    %-6d  %v\n", geyserFaster, geyserEndpoint)
+	fmt.Printf("    %-6d  Equal\n", equalTimes)
 
-	fmt.Println("Average difference (ms): ")
-	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageTraderLead), traderEndpoint))
-	fmt.Println(fmt.Sprintf("    %-6s  %v", fmt.Sprintf("%vms", averageGeyserLead), geyserEndpoint))
+	fmt.Println("Average difference when faster (ms): ")
+	fmt.Printf("    %-6d  %v\n", averageTraderLead, traderEndpoint)
+	fmt.Printf("    %-6d  %v\n", averageGeyserLead, geyserEndpoint)
+
+	fmt.Printf("Overall average difference: %d ms\n", averageDiff)
+	fmt.Printf("Minimum difference: %d ms\n", minDiff)
+	fmt.Printf("Maximum difference: %d ms\n", maxDiff)
+	fmt.Println()
 
 	fmt.Println("Unmatched updates: ")
 	fmt.Println("(updates from each stream without a corresponding result on the other)")
-	fmt.Println(fmt.Sprintf("    %-6d  %v", traderUnmatched, traderEndpoint))
-	fmt.Println(fmt.Sprintf("    %-6d  %v", geyserUnmatched, geyserEndpoint))
+	fmt.Printf("    %-6d  %v\n", traderUnmatched, traderEndpoint)
+	fmt.Printf("    %-6d  %v\n", geyserUnmatched, geyserEndpoint)
+
+	traderAvgSpeed := float64(runtime.Milliseconds()) / float64(totalTraderUpdates)
+	geyserAvgSpeed := float64(runtime.Milliseconds()) / float64(totalGeyserUpdates)
+
+	fmt.Println("\nAverage speed (ms per update):")
+	fmt.Printf("    %-6.2f  %v\n", traderAvgSpeed, traderEndpoint)
+	fmt.Printf("    %-6.2f  %v\n", geyserAvgSpeed, geyserEndpoint)
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 func SortRange[T any](updates map[int][]stream.ProcessedUpdate[T]) []int {

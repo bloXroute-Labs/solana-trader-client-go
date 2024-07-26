@@ -27,11 +27,12 @@ func (s *TraderAPIGRPCStream) Name() string {
 	return "TraderAPIGRPCStream"
 }
 
-func NewTraderAPIGRPCStream(grpcAddress, authHeader string, pools []string) (*TraderAPIGRPCStream, error) {
+func NewTraderAPIGRPCStream(grpcAddress, authHeader string, pools []string, useTLS bool) (*TraderAPIGRPCStream, error) {
+	logger.Log().Infow("UseTLS: ", "TLS: ", useTLS)
 	opts := provider.RPCOpts{
 		Endpoint:   grpcAddress,
 		AuthHeader: authHeader,
-		UseTLS:     true,
+		UseTLS:     useTLS,
 	}
 
 	client, err := provider.NewGRPCClientWithOpts(opts)

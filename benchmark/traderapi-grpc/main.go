@@ -19,9 +19,7 @@ const GeyserGRPCEndpoint = "185.209.178.215:6677"
 // SOL-USDC
 var pools = []string{
 	"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
-	"DQyrAcCrDXQ7NeoqGgDCZwBvWDcYmFCjSb9JtteuvPpz",
 	"HLmqeL62xR1QoZ1HKKbXRrdN1p3phKpxRMb2VVopvBBz",
-	"HmiHHzq4Fym9e1D4qzLS6LDDM3tNsCTBPDWHTLZ763jY",
 }
 
 func main() {
@@ -34,6 +32,8 @@ func main() {
 			RemoveDuplicatesFlag,
 			APIGRPCEndpointFlag,
 			GeyserGRPCEndpointFlag,
+			UseTLSFlag,
+			PoolKeysFlag,
 		},
 		Action: run,
 	}
@@ -64,6 +64,13 @@ func run(c *cli.Context) error {
 		geyserGRPCEndpoint = GeyserGRPCEndpoint
 	}
 
+	overridePools := c.StringSlice(PoolKeysFlag.Name)
+	if len(overridePools) > 0 {
+		pools = overridePools
+	}
+
+	logger.Log().Infow("Requested pool keys: ", "keys", pools)
+
 	authHeader, ok := os.LookupEnv("AUTH_HEADER")
 	if !ok {
 		return errors.New("AUTH_HEADER not set in environment")
@@ -72,7 +79,7 @@ func run(c *cli.Context) error {
 	logger.Log().Infow("Attempting connections with endpoints: ", "api endpoint", apiGRPCEndpoint, "geyser endpoint", geyserGRPCEndpoint)
 	logger.Log().Infow("Requested pool keys: ", "keys", pools)
 
-	traderOS, err := stream.NewTraderAPIGRPCStream(apiGRPCEndpoint, authHeader, pools)
+	traderOS, err := stream.NewTraderAPIGRPCStream(apiGRPCEndpoint, authHeader, pools, c.Bool(UseTLSFlag.Name))
 	if err != nil {
 		return err
 	}
@@ -182,6 +189,10 @@ var (
 		Name:  "remove-duplicates",
 		Usage: "skip events that are identical to the previous",
 	}
+	UseTLSFlag = &cli.BoolFlag{
+		Name:  "tls",
+		Usage: "enable TLS",
+	}
 	APIGRPCEndpointFlag = &cli.StringFlag{
 		Name:  "api-endpoint",
 		Usage: "Override the default API GRPC endpoint",
@@ -189,5 +200,9 @@ var (
 	GeyserGRPCEndpointFlag = &cli.StringFlag{
 		Name:  "geyser-endpoint",
 		Usage: "Override the default Geyser GRPC endpoint",
+	}
+	PoolKeysFlag = &cli.StringSliceFlag{
+		Name:  "pool-keys",
+		Usage: "Override the default pool keys (comma-separated)",
 	}
 )
