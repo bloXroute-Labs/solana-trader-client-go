@@ -27,6 +27,13 @@ jobs:
             sudo apt update
             sudo apt install awscli
       - run:
+          name: Configure Git for private repos
+          command: |
+            git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+      - run:
+          name: Set GOPRIVATE
+          command: go env -w GOPRIVATE=github.com/bloXroute-Labs
+      - run:
           name: Download golint
           command: go get -u golang.org/x/lint/golint
       - run:
