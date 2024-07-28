@@ -27,26 +27,10 @@ jobs:
             sudo apt update
             sudo apt install awscli
       - run:
-          name: Configure Git for SSH
-          command: |
-            git config --global url."git@github.com:".insteadOf "https://github.com/"
-      - run:
           name: Set GOPRIVATE
           command: go env -w GOPRIVATE=github.com/bloXroute-Labs
       - run:
-          name: Clone private dependencies
-          command: |
-            git clone git@github.com:bloXroute-Labs/bxproto-private.git /tmp/bxproto-private
-            git clone git@github.com:bloXroute-Labs/bxprovider.git /tmp/bxprovider
-            git clone git@github.com:bloXroute-Labs/solana-trader-proto.git /tmp/solana-trader-proto
-      - run:
-          name: Update go.mod with local paths
-          command: |
-            go mod edit -replace github.com/bloXroute-Labs/bxproto-private/go=/tmp/bxproto-private/go
-            go mod edit -replace github.com/bloXroute-Labs/bxprovider=/tmp/bxprovider
-            go mod edit -replace github.com/bloXroute-Labs/solana-trader-proto=/tmp/solana-trader-proto
-      - run:
-          name: Update and download dependencies
+          name: Download dependencies
           command: |
             go mod download -x
             go mod tidy -v
