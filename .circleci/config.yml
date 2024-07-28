@@ -29,16 +29,26 @@ jobs:
       - run:
           name: Configure Git for private repos
           command: |
+            git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/bloXroute-Labs/".insteadOf "https://github.com/bloXroute-Labs/"
             git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
       - run:
           name: Set GOPRIVATE
           command: go env -w GOPRIVATE=github.com/bloXroute-Labs
       - run:
-          name: Download golint
-          command: go get -u golang.org/x/lint/golint
+          name: Fetch private dependencies
+          command: |
+            go get -v github.com/bloXroute-Labs/bxproto-private/go@v0.0.0-20240304102027-c7f78819ae7f
+            go get -v github.com/bloXroute-Labs/bxprovider@v0.0.0-20240314153637-9a2697e37255
+            go get -v github.com/bloXroute-Labs/solana-trader-proto@v1.9.2-0.20240712143550-d6c2b9a45bea
       - run:
-          name: Download dependencies
-          command: go mod tidy
+          name: Update and download dependencies
+          command: |
+            go env
+            go mod download -x
+            go mod tidy -v
+      - run:
+          name: Install golint
+          command: go install golang.org/x/lint/golint@latest
       - save_cache:
           key: v1-go-mod-{{checksum "go.sum"}}
           paths:
