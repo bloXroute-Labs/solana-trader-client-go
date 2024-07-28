@@ -943,7 +943,7 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 		panic(err)
 	}
 
-	log.Infof("signed tx", signedTx)
+	log.Infof("signed tx: %v", signedTx)
 
 	useBundle := true
 
