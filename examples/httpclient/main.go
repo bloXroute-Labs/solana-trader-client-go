@@ -744,7 +744,7 @@ func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
 
 	tx, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content, IsCleanup: false},
 		true,
-		true, false, false)
+		true, false)
 	if err != nil {
 		panic(err)
 	}
@@ -778,7 +778,7 @@ func callPlaceOrderWithStakedRPCs(ownerAddr string, bundleTip uint64) bool {
 
 	tx, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content, IsCleanup: false},
 		true,
-		false, true, false)
+		false, true)
 	if err != nil {
 		panic(err)
 	}
