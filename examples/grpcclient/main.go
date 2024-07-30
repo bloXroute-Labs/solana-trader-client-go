@@ -866,7 +866,7 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
-		Content: response.Transaction.Content}, true, true, false, false)
+		Content: response.Transaction.Content}, true, true, false)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
@@ -902,7 +902,7 @@ func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, 
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
 	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
-		Content: response.Transaction.Content}, true, false, true, false)
+		Content: response.Transaction.Content}, true, false, true)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
