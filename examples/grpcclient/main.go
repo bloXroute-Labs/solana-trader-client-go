@@ -1766,3 +1766,28 @@ func callGetBundleTipGRPCStream(g *provider.GRPCClient) bool {
 	}
 	return false
 }
+
+func callPumpFunSwapsGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get PumpFun swaps stream")
+
+	ch := make(chan *pb.GetPumpFunSwapsStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPumpFunSwapsStream(ctx, []string{"HuwR6Bm2Z4kAvR9YhYihtYC3fpENzTyCxChJvTfW6fsy"})
+	if err != nil {
+		log.Errorf("error with GetPumpFunSwapsStream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 30; i++ {
+		response, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response received: %+v", response)
+	}
+	return false
+}

@@ -1067,3 +1067,16 @@ func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, p
 	}
 	return g.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false, false)
 }
+
+// GetPumpFunSwapsStream subscribes to a stream for getting recent PumpFun swaps on tokens of interest.
+func (g *GRPCClient) GetPumpFunSwapsStream(
+	ctx context.Context,
+	tokens []string,
+) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunSwapsStream(ctx, &pb.GetPumpFunSwapsStreamRequest{Tokens: tokens})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
+}
