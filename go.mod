@@ -7,8 +7,8 @@ toolchain go1.22.1
 require (
 	github.com/bloXroute-Labs/bxproto-private/go v0.0.0-20240304102027-c7f78819ae7f
 	github.com/bloXroute-Labs/bxprovider v0.0.0-20240314153637-9a2697e37255
-	github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240712143550-d6c2b9a45bea
-	github.com/gagliardetto/binary v0.8.0
+  github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240729211326-e729568a1c8d
+  github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.11.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1

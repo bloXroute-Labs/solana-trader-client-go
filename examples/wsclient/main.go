@@ -839,7 +839,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint
 
 	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
 		true,
-		true, false, false)
+		true, false)
 	if err != nil {
 		log.Errorf("failed to sign and submit tx: %s", err)
 		return true
@@ -871,7 +871,7 @@ func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmo
 
 	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
 		true,
-		false, true, false)
+		false, true)
 	if err != nil {
 		log.Errorf("failed to sign and submit tx: %s", err)
 		return true

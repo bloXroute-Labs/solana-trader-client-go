@@ -69,8 +69,8 @@ github.com/bloXroute-Labs/bxprovider v0.0.0-20240314153637-9a2697e37255 h1:PsBZe
 github.com/bloXroute-Labs/bxprovider v0.0.0-20240314153637-9a2697e37255/go.mod h1:R8E7y8dSyrJ+Tiyvm3W76l/cv0E0K5Sy033RMhoWZzQ=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240701182849-47644387b812 h1:iD3E4lH2a74U0Y3X87fDu9FvQKMajLep1a0y1Qu1oa8=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240701182849-47644387b812/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240712143550-d6c2b9a45bea h1:1sZ/DMoye1PNRaQLCttO3jNheZ9EfmFbyjC5FyljTGE=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240712143550-d6c2b9a45bea/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240729211326-e729568a1c8d h1:YqYunxpt2cQY/W5i8mmDTYdTISJetSrpLG76Pss0z1w=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240729211326-e729568a1c8d/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/btcsuite/btcutil v1.0.2 h1:9iZ1Terx9fMIOtq1VrwdqfsATL9MC2l8ZrUY6YZ2uts=
 github.com/btcsuite/btcutil v1.0.2/go.mod h1:j9HUFwoQRsZL3V4n+qG+CUnEGHOarIxfC3Le2Yhbcts=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
