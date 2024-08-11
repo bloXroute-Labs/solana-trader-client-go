@@ -171,6 +171,11 @@ func run() bool {
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
 	}
+
+	if cfg.RunPumpFun {
+		failed = failed || logCall("callPumpFunSwapsGRPCStream", func() bool { return callPumpFunSwapsGRPCStream(g) })
+	}
+
 	return failed
 }
 
@@ -1763,6 +1768,33 @@ func callGetBundleTipGRPCStream(g *provider.GRPCClient) bool {
 			return true
 		}
 		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callPumpFunSwapsGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get PumpFun swaps stream")
+
+	ch := make(chan *pb.GetPumpFunSwapsStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	pumpTokenAddresses := []string{"2hzkT1vsFMAZY8TAPS66L8GXdGiNhkMCXoUbjWDUkjYe"}
+	// Stream response
+	stream, err := g.GetPumpFunSwapsStream(ctx, pumpTokenAddresses)
+	if err != nil {
+		log.Errorf("error with GetPumpFunSwapsStream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	log.Info("Waiting on channel")
+	for i := 1; i <= 15; i++ {
+		response, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response received: %+v", response)
 	}
 	return false
 }

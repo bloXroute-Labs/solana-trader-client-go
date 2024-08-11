@@ -2,15 +2,17 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type Example struct {
 	Env           Env
 	RunSlowStream bool
 	RunTrades     bool
+	RunPumpFun    bool
 }
 
 func BoolPtr(val bool) *bool {
@@ -35,10 +37,17 @@ func Load() (Example, error) {
 		runTrades = false
 	}
 
+	runPumpFun := true
+	runPumpValue := os.Getenv("RUN_PUMP_FUN")
+	if runPumpValue == "false" {
+		runPumpFun = false
+	}
+
 	return Example{
 		Env:           env,
 		RunTrades:     runTrades,
 		RunSlowStream: runSlowStream,
+		RunPumpFun:    runPumpFun,
 	}, nil
 }
 
