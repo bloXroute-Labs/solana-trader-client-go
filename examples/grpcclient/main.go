@@ -174,6 +174,7 @@ func run() bool {
 
 	if cfg.RunPumpFun {
 		failed = failed || logCall("callPumpFunSwapsGRPCStream", func() bool { return callPumpFunSwapsGRPCStream(g) })
+		failed = failed || logCall("callPumpFunNewTokensGRPCStream", func() bool { return callPumpFunNewTokensGRPCStream(g) })
 	}
 
 	return failed
@@ -1784,6 +1785,32 @@ func callPumpFunSwapsGRPCStream(g *provider.GRPCClient) bool {
 	stream, err := g.GetPumpFunSwapsStream(ctx, pumpTokenAddresses)
 	if err != nil {
 		log.Errorf("error with GetPumpFunSwapsStream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	log.Info("Waiting on channel")
+	for i := 1; i <= 15; i++ {
+		response, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+		log.Infof("response received: %+v", response)
+	}
+	return false
+}
+
+func callPumpFunNewTokensGRPCStream(g *provider.GRPCClient) bool {
+	log.Info("starting get PumpFun new tokens stream")
+
+	ch := make(chan *pb.GetPumpFunNewTokensStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPumpFunNewTokensStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewTokensStream request: %v", err)
 		return true
 	}
 	stream.Into(ch)

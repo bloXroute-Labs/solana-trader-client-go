@@ -1080,3 +1080,15 @@ func (g *GRPCClient) GetPumpFunSwapsStream(
 
 	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
 }
+
+// GetPumpFunNewTokensStream subscribes to a stream for getting newly created PumpFun tokens. (Bodning Curves)
+func (g *GRPCClient) GetPumpFunNewTokensStream(
+	ctx context.Context,
+) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunNewTokensStreamResponse](stream, ""), nil
+}
