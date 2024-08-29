@@ -173,7 +173,9 @@ func run() bool {
 	}
 
 	if cfg.RunPumpFun {
-		failed = failed || logCall("callPumpFunSwapsGRPCStream", func() bool { return callPumpFunSwapsGRPCStream(g) })
+		failed = failed || logCall("callPumpFunSwapsGRPCStream", func() bool {
+			return callPumpFunSwapsGRPCStream(g, []string{"aoPJsy58a8y9bDBLqeeS1MsN429W4gzpmFoB5eioWwX"})
+		})
 		failed = failed || logCall("callPumpFunNewTokensGRPCStream", func() bool { return callPumpFunNewTokensGRPCStream(g) })
 	}
 
@@ -1773,14 +1775,13 @@ func callGetBundleTipGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callPumpFunSwapsGRPCStream(g *provider.GRPCClient) bool {
+func callPumpFunSwapsGRPCStream(g *provider.GRPCClient, pumpTokenAddresses []string) bool {
 	log.Info("starting get PumpFun swaps stream")
 
 	ch := make(chan *pb.GetPumpFunSwapsStreamResponse)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	pumpTokenAddresses := []string{"2hzkT1vsFMAZY8TAPS66L8GXdGiNhkMCXoUbjWDUkjYe"}
 	// Stream response
 	stream, err := g.GetPumpFunSwapsStream(ctx, pumpTokenAddresses)
 	if err != nil {
@@ -1824,4 +1825,31 @@ func callPumpFunNewTokensGRPCStream(g *provider.GRPCClient) bool {
 		log.Infof("response received: %+v", response)
 	}
 	return false
+}
+
+func callPumpFunNewCurveTrackGRPCStream(g *provider.GRPCClient) bool {
+	/* This function will wait for new token creation and immediately for it's swaps stream. */
+	log.Info("starting get PumpFun new curve track")
+
+	ch := make(chan *pb.GetPumpFunNewTokensStreamResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetPumpFunNewTokensStream(ctx)
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewTokensStream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	log.Info("Waiting on channel")
+
+	response, ok := <-ch
+	if !ok {
+		// channel closed
+		return true
+	}
+	log.Infof("New Token response received: %+v", response)
+
+	return callPumpFunSwapsGRPCStream(g, []string{response.GetMint()})
 }
