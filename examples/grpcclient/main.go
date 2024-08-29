@@ -177,6 +177,7 @@ func run() bool {
 			return callPumpFunSwapsGRPCStream(g, []string{"aoPJsy58a8y9bDBLqeeS1MsN429W4gzpmFoB5eioWwX"})
 		})
 		failed = failed || logCall("callPumpFunNewTokensGRPCStream", func() bool { return callPumpFunNewTokensGRPCStream(g) })
+		failed = failed || logCall("callPumpFunNewCurveTrackGRPCStream", func() bool { return callPumpFunNewCurveTrackGRPCStream(g) })
 	}
 
 	return failed
