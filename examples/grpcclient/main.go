@@ -178,6 +178,7 @@ func run() bool {
 		})
 		failed = failed || logCall("callPumpFunNewTokensGRPCStream", func() bool { return callPumpFunNewTokensGRPCStream(g) })
 		failed = failed || logCall("callPumpFunNewCurveTrackGRPCStream", func() bool { return callPumpFunNewCurveTrackGRPCStream(g) })
+		failed = failed || logCall("callPumpFunSwap", func() bool { return callPumpFunSwap(g, ownerAddr) })
 	}
 
 	return failed
@@ -1853,4 +1854,36 @@ func callPumpFunNewCurveTrackGRPCStream(g *provider.GRPCClient) bool {
 	log.Infof("New Token response received: %+v", response)
 
 	return callPumpFunSwapsGRPCStream(g, []string{response.GetMint()})
+}
+
+func callPumpFunSwap(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting PumpFun swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("PumpFun swap")
+	response, err := g.PostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+		UserAddress:         ownerAddr,
+		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
+		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		TokenAmount:         2,
+		SolThreshold:        0.000001,
+		IsBuy:               true,
+		ComputeLimit:        0,
+		ComputePrice:        0,
+		Tip:                 nil,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	sig, err := g.SignAndSubmit(ctx, response.Transaction, false, false, false, false)
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("PumpFun swap transaction signature : %s", sig)
+	return false
 }

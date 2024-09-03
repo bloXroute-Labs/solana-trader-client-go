@@ -1092,3 +1092,8 @@ func (g *GRPCClient) GetPumpFunNewTokensStream(
 
 	return connections.GRPCStream[pb.GetPumpFunNewTokensStreamResponse](stream, ""), nil
 }
+
+// PostPumpFunSwap returns a partially signed transaction for submitting a swap request on PumpFun
+func (g *GRPCClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	return g.apiClient.PostPumpFunSwap(ctx, request)
+}
