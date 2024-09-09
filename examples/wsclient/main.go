@@ -81,6 +81,13 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
+
+	failed = failed || logCall("callGetPumpFunNewTokensWSStream", func() bool {
+		mint, res := callGetPumpFunNewTokensWSStream(w)
+		res = callGetPumpFunSwapsWSStream(w, mint)
+		return res
+	})
+
 	failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
@@ -90,6 +97,7 @@ func run() bool {
 	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
 	failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
 
+	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
 	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
 	if cfg.RunSlowStream {
 		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
@@ -1536,6 +1544,57 @@ func callGetTickersWSStream(w *provider.WSClient) bool {
 			return true
 		}
 		log.Infof("response %v received", v)
+	}
+	return false
+}
+
+func callGetPumpFunNewTokensWSStream(w *provider.WSClient) (string, bool) {
+	log.Info("starting GetPumpFunNewTokens stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewTokens stream request: %v", err)
+		return "", true
+	}
+
+	ch := stream.Channel(0)
+	mint := ""
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return "", true
+		}
+		log.Infof("response %v received", v)
+		mint = v.Mint
+	}
+	return mint, false
+}
+
+func callGetPumpFunSwapsWSStream(w *provider.WSClient, mint string) bool {
+	log.Info("starting GetPumpFunSwaps stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := w.GetPumpFunSwapsStream(ctx, &pb.GetPumpFunSwapsStreamRequest{
+		Tokens: []string{mint},
+	})
+	if err != nil {
+		log.Errorf("error with GetPumpFunSwaps stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+
 	}
 	return false
 }

@@ -744,6 +744,26 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, l
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
 }
 
+// GetPumpFunSwapsStream subscribes to a stream for swap events related to a set of pumpdotfun tokens
+func (g *GRPCClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFunSwapsStreamRequest) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunSwapsStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
+}
+
+// GetPumpFunNewTokensStream subscribes to a stream for pumpdotfun's new pool events
+func (g *GRPCClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunNewTokensStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunNewTokensStreamResponse](stream, ""), nil
+}
+
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
 func (g *GRPCClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
 	stream, err := g.apiClient.GetMarketDepthsStream(ctx, &pb.GetMarketDepthsRequest{Markets: markets, Limit: limit, Project: project})

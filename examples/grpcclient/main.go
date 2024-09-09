@@ -97,6 +97,13 @@ func run() bool {
 
 	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+
+	failed = failed || logCall("callGetPumpFunNewTokensGRPCStream", func() bool {
+		mint, res := callGetPumpFunNewTokensGRPCStream(g)
+		res = callGetPumpFunSwapsGRPCStream(g, mint)
+		return res
+	})
+
 	failed = failed || logCall("callGetBundleTipGRPCStream", func() bool { return callGetBundleTipGRPCStream(g) })
 
 	// calls below this place an order and immediately cancel it
@@ -1537,6 +1544,57 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Jupiter route swap transaction signature : %s", sig)
+	return false
+}
+
+func callGetPumpFunNewTokensGRPCStream(g *provider.GRPCClient) (string, bool) {
+	log.Info("starting GetPumpFunNewTokens stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := g.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewTokens stream request: %v", err)
+		return "", true
+	}
+
+	ch := stream.Channel(0)
+	mint := ""
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return "", true
+		}
+		log.Infof("response %v received", v)
+		mint = v.Mint
+	}
+	return mint, false
+}
+
+func callGetPumpFunSwapsGRPCStream(g *provider.GRPCClient, mint string) bool {
+	log.Info("starting GetPumpFunSwaps stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := g.GetPumpFunSwapsStream(ctx, &pb.GetPumpFunSwapsStreamRequest{
+		Tokens: []string{mint},
+	})
+	if err != nil {
+		log.Errorf("error with GetPumpFunSwaps stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+
+	}
 	return false
 }
 
