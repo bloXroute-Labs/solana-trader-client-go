@@ -463,19 +463,14 @@ func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.
 	}
 
 	if len(transactions) == 1 {
-		txBase64, err := transaction.SignTxWithPrivateKey(transactions[0].Content, *h.privateKey)
-		if err != nil {
-			return nil, err
-		}
-
-		res, err := h.PostSubmit(ctx, txBase64, *opts.SkipPreFlight, false, false)
+		signature, err := h.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
 		if err != nil {
 			return nil, err
 		}
 		return &pb.PostSubmitBatchResponse{
 			Transactions: []*pb.PostSubmitBatchResponseEntry{
 				{
-					Signature: res.Signature,
+					Signature: signature,
 					Error:     "",
 					Submitted: true,
 				},

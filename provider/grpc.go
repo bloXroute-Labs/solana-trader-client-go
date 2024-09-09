@@ -285,22 +285,14 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.
 	}
 
 	if len(transactions) == 1 {
-		txBase64, err := transaction.SignTxWithPrivateKey(transactions[0].Content, *g.privateKey)
-		if err != nil {
-			return nil, err
-		}
-
-		res, err := g.PostSubmit(ctx, &pb.TransactionMessage{
-			Content:   txBase64,
-			IsCleanup: false,
-		}, *opts.SkipPreFlight, false, false)
+		signature, err := g.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
 		if err != nil {
 			return nil, err
 		}
 		return &pb.PostSubmitBatchResponse{
 			Transactions: []*pb.PostSubmitBatchResponseEntry{
 				{
-					Signature: res.Signature,
+					Signature: signature,
 					Error:     "",
 					Submitted: true,
 				},
