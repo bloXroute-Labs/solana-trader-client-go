@@ -600,6 +600,23 @@ func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
+
+	if len(transactions) == 1 {
+		signature, err := w.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.PostSubmitBatchResponse{
+			Transactions: []*pb.PostSubmitBatchResponseEntry{
+				{
+					Signature: signature,
+					Error:     "",
+					Submitted: true,
+				},
+			},
+		}, nil
+	}
+
 	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
