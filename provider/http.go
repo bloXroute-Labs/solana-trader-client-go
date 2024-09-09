@@ -461,6 +461,28 @@ func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.
 	if h.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
+
+	if len(transactions) == 1 {
+		txBase64, err := transaction.SignTxWithPrivateKey(transactions[0].Content, *h.privateKey)
+		if err != nil {
+			return nil, err
+		}
+
+		res, err := h.PostSubmit(ctx, txBase64, *opts.SkipPreFlight, false, false)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.PostSubmitBatchResponse{
+			Transactions: []*pb.PostSubmitBatchResponseEntry{
+				{
+					Signature: res.Signature,
+					Error:     "",
+					Submitted: true,
+				},
+			},
+		}, nil
+	}
+
 	batchRequest, err := buildBatchRequest(transactions, *h.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err

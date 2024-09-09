@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
@@ -541,6 +542,28 @@ func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
+
+	if len(transactions) == 1 {
+		txBase64, err := transaction.SignTxWithPrivateKey(transactions[0].Content, *w.privateKey)
+		if err != nil {
+			return nil, err
+		}
+
+		res, err := w.PostSubmit(ctx, txBase64, *opts.SkipPreFlight, false, false)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.PostSubmitBatchResponse{
+			Transactions: []*pb.PostSubmitBatchResponseEntry{
+				{
+					Signature: res.Signature,
+					Error:     "",
+					Submitted: true,
+				},
+			},
+		}, nil
+	}
+
 	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err

@@ -283,6 +283,31 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
+
+	if len(transactions) == 1 {
+		txBase64, err := transaction.SignTxWithPrivateKey(transactions[0].Content, *g.privateKey)
+		if err != nil {
+			return nil, err
+		}
+
+		res, err := g.PostSubmit(ctx, &pb.TransactionMessage{
+			Content:   txBase64,
+			IsCleanup: false,
+		}, *opts.SkipPreFlight, false, false)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.PostSubmitBatchResponse{
+			Transactions: []*pb.PostSubmitBatchResponseEntry{
+				{
+					Signature: res.Signature,
+					Error:     "",
+					Submitted: true,
+				},
+			},
+		}, nil
+	}
+
 	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
