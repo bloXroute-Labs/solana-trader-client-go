@@ -544,19 +544,14 @@ func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 	}
 
 	if len(transactions) == 1 {
-		txBase64, err := transaction.SignTxWithPrivateKey(transactions[0].Content, *w.privateKey)
-		if err != nil {
-			return nil, err
-		}
-
-		res, err := w.PostSubmit(ctx, txBase64, *opts.SkipPreFlight, false, false)
+		signature, err := w.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
 		if err != nil {
 			return nil, err
 		}
 		return &pb.PostSubmitBatchResponse{
 			Transactions: []*pb.PostSubmitBatchResponseEntry{
 				{
-					Signature: res.Signature,
+					Signature: signature,
 					Error:     "",
 					Submitted: true,
 				},
