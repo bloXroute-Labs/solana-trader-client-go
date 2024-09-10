@@ -27,11 +27,16 @@ jobs:
             sudo apt update
             sudo apt install awscli
       - run:
-          name: Download golint
-          command: go get -u golang.org/x/lint/golint
+          name: Set GOPRIVATE
+          command: go env -w GOPRIVATE=github.com/bloXroute-Labs
       - run:
           name: Download dependencies
-          command: go mod tidy
+          command: |
+            go mod download -x
+            go mod tidy -v
+      - run:
+          name: Install golint
+          command: go install golang.org/x/lint/golint@latest
       - save_cache:
           key: v1-go-mod-{{checksum "go.sum"}}
           paths:
