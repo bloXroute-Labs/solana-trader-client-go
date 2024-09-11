@@ -147,6 +147,7 @@ func run() bool {
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(w, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(w, ownerAddr) })
+		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(w, ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(w, ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(w, ownerAddr) })
@@ -1311,6 +1312,36 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+func callPostPumpFunSwap(ownerAddr string) bool {
+	log.Info("starting PostPumpFunSwap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	w, err := provider.NewWSClientPumpNY()
+	if err != nil {
+		panic(err)
+	}
+	
+	log.Info("PumpFun swap")
+	sig, err := w.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+		UserAddress:         ownerAddr,
+		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
+		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		TokenAmount:         10,
+		SolThreshold:        0.0001,
+		IsBuy:               false,
+		ComputeLimit:        0,
+		ComputePrice:        0,
+		Tip:                 nil,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("PumpFun swap transaction signature : %s", sig)
 	return false
 }
 

@@ -152,6 +152,16 @@ func (w *WSClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumS
 	return &response, nil
 }
 
+// PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
+func (w *WSClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	var response pb.PostPumpFunSwapResponse
+	err := w.conn.Request(ctx, "PostPumpFunSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (w *WSClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
 	var response pb.PostRaydiumRouteSwapResponse
@@ -608,6 +618,17 @@ func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 		return nil, err
 	}
 	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (string, error) {
+	resp, err := w.PostPumpFunSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return w.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction.Content,
+	}, false, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.

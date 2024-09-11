@@ -168,6 +168,7 @@ func run() bool {
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
+		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
@@ -1358,6 +1359,36 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+func callPostPumpFunSwap(ownerAddr string) bool {
+	log.Info("starting PostPumpFunSwap test")
+	g, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("PumpFun swap")
+	sig, err := g.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+		UserAddress:         ownerAddr,
+		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
+		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		TokenAmount:         10,
+		SolThreshold:        0.0001,
+		IsBuy:               false,
+		ComputeLimit:        0,
+		ComputePrice:        0,
+		Tip:                 nil,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("PumpFun swap transaction signature : %s", sig)
 	return false
 }
 

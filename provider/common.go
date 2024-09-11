@@ -22,6 +22,7 @@ const (
 
 var (
 	MainnetNYHTTP     = httpEndpoint(mainnetNY, true)
+	MainnetPumpNYHTTP = httpEndpoint(mainnetPumpNY, true)
 	MainnetUKHTTP     = httpEndpoint(mainnetUK, true)
 	MainnetNYWS       = wsEndpoint(mainnetNY, true)
 	MainnetPumpNYWS   = wsEndpoint(mainnetPumpNY, true)
