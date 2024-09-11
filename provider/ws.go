@@ -28,6 +28,12 @@ func NewWSClient() (*WSClient, error) {
 	return NewWSClientWithOpts(opts)
 }
 
+// NewWSClientPumpNY connects to Mainnet NY Pump Trader API
+func NewWSClientPumpNY() (*WSClient, error) {
+	opts := DefaultRPCOpts(MainnetPumpNYWS)
+	return NewWSClientWithOpts(opts)
+}
+
 // NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (*WSClient, error) {
 	opts := DefaultRPCOpts(TestnetWS)
@@ -962,6 +968,22 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 		Project: project,
 	}, func() *pb.GetOrderbooksStreamResponse {
 		var v pb.GetOrderbooksStreamResponse
+		return &v
+	})
+}
+
+// GetPumpFunSwapsStream subscribes to a stream for swap events related to a set of pumpdotfun tokens
+func (w *WSClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFunSwapsStreamRequest) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunSwapsStream", req, func() *pb.GetPumpFunSwapsStreamResponse {
+		var v pb.GetPumpFunSwapsStreamResponse
+		return &v
+	})
+}
+
+// GetPumpFunNewTokensStream subscribes to a stream for pumpdotfun's new pool events
+func (w *WSClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunNewTokensStream", req, func() *pb.GetPumpFunNewTokensStreamResponse {
+		var v pb.GetPumpFunNewTokensStreamResponse
 		return &v
 	})
 }
