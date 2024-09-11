@@ -99,8 +99,12 @@ func run() bool {
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
 
 	failed = failed || logCall("callGetPumpFunNewTokensGRPCStream", func() bool {
-		mint, res := callGetPumpFunNewTokensGRPCStream(g)
-		res = callGetPumpFunSwapsGRPCStream(g, mint)
+		gg, err := provider.NewGRPCClientPumpNY()
+		if err != nil {
+			panic(err)
+		}
+		mint, res := callGetPumpFunNewTokensGRPCStream(gg)
+		res = callGetPumpFunSwapsGRPCStream(gg, mint)
 		return res
 	})
 

@@ -33,6 +33,13 @@ func NewGRPCClient() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+// NewGRPCClientPumpNY connects to Mainnet NY Pump Trader API
+func NewGRPCClientPumpNY() (*GRPCClient, error) {
+	opts := DefaultRPCOpts(MainnetPumpNYGRPC)
+	opts.UseTLS = true
+	return NewGRPCClientWithOpts(opts)
+}
+
 // NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)

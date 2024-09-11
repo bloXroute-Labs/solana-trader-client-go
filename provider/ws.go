@@ -28,6 +28,12 @@ func NewWSClient() (*WSClient, error) {
 	return NewWSClientWithOpts(opts)
 }
 
+// NewWSClientPumpNY connects to Mainnet NY Pump Trader API
+func NewWSClientPumpNY() (*WSClient, error) {
+	opts := DefaultRPCOpts(MainnetPumpNYWS)
+	return NewWSClientWithOpts(opts)
+}
+
 // NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (*WSClient, error) {
 	opts := DefaultRPCOpts(TestnetWS)

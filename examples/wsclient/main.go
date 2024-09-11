@@ -83,8 +83,12 @@ func run() bool {
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
 
 	failed = failed || logCall("callGetPumpFunNewTokensWSStream", func() bool {
-		mint, res := callGetPumpFunNewTokensWSStream(w)
-		res = callGetPumpFunSwapsWSStream(w, mint)
+		ww, err := provider.NewWSClientPumpNY()
+		if err != nil {
+			panic(err)
+		}
+		mint, res := callGetPumpFunNewTokensWSStream(ww)
+		res = callGetPumpFunSwapsWSStream(ww, mint)
 		return res
 	})
 
