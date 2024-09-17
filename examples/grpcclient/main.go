@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -53,7 +52,7 @@ func run() bool {
 
 	var failed bool
 	// informational methods
-	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
+	/*failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
 	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
 	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
 	// this is just for example/test purposes
@@ -84,13 +83,13 @@ func run() bool {
 		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
 		failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(g) })
 	}
-
+	*/
 	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
 	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
 
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
+	/*failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })*/
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
+	/*failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
@@ -98,13 +97,14 @@ func run() bool {
 	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
 	failed = failed || logCall("callGetBundleTipGRPCStream", func() bool { return callGetBundleTipGRPCStream(g) })
+	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })*/
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	/*ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return failed
@@ -133,44 +133,48 @@ func run() bool {
 		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
 		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
 
+
 		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
 			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
 				typeLimit, uint64(1000000))
-		})
+		})*/
 
-		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
-			return callPlaceOrderWithStakedRPCs(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1100000))
-		})
+	/*failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
+		return callPlaceOrderWithStakedRPCs(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
+			typeLimit, uint64(1100000))
+	})
 
-		failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
-			return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1000000))
-		})
+	failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
+		return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
+			typeLimit, uint64(2500000))
+	})
 
-		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
-			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
-		})
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
-		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(g, ownerAddr, uint64(1100), false) })
-	}
+	failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
+		return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
+	})
+	failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
+	failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
+	failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
+	failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
+	failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })*/
+	//failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
+	//failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
+	//failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
 
-	if cfg.RunSlowStream {
+	//failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
+	//failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(g, ownerAddr, uint64(1100), false) })
+	//}
+
+	/*if cfg.RunSlowStream {
 		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
 		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
 		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
 		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
 		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-	}
+
+	}*/
+	//failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
 	return failed
 }
 
@@ -477,28 +481,31 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 	amount := 0.01
 	slippage := float64(5)
 
-	quotes, err := g.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: amount,
-		Slippage: slippage,
-	})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
+	for {
 
-	if err != nil {
-		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
+		quotes, err := g.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
+			InToken:  inToken,
+			OutToken: outToken,
+			InAmount: amount,
+			Slippage: slippage,
+		})
+		if err != nil {
+			log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+			return true
+		}
 
-	if len(quotes.Routes) != 1 {
-		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
-		return true
-	}
-	for _, route := range quotes.Routes {
-		log.Infof("best route for Raydium is %v", route)
+		if err != nil {
+			log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+			return true
+		}
+
+		if len(quotes.Routes) != 1 {
+			log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+			return true
+		}
+		for _, route := range quotes.Routes {
+			log.Infof("best route for Raydium is %v", route)
+		}
 	}
 
 	fmt.Println()
@@ -852,8 +859,9 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 	clientOrderID := rand.Uint64()
 
 	opts := provider.PostOrderOpts{
-		ClientOrderID: clientOrderID,
-		SkipPreFlight: config.BoolPtr(true),
+		ClientOrderID:     clientOrderID,
+		SkipPreFlight:     config.BoolPtr(true),
+		OpenOrdersAddress: "DwoXdF8kjt9RS6yPfpzp1yHBKtFMDpHQPCRgy1JhKgFt",
 	}
 
 	// create order without actually submitting
@@ -864,9 +872,9 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 		return true
 	}
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
-
+	//var tip uint64 = 1000000
 	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
-		Content: response.Transaction.Content}, true, true, false, false)
+		Content: response.Transaction.Content}, true, false, true, false, nil)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
@@ -901,8 +909,9 @@ func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, 
 	}
 	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
+	var tip uint64 = 1000000
 	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
-		Content: response.Transaction.Content}, true, false, true, false)
+		Content: response.Transaction.Content}, true, false, true, false, &tip)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
@@ -924,8 +933,9 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 	clientOrderID := rand.Uint64()
 
 	opts := provider.PostOrderOpts{
-		ClientOrderID: clientOrderID,
-		SkipPreFlight: config.BoolPtr(true),
+		ClientOrderID:     clientOrderID,
+		SkipPreFlight:     config.BoolPtr(true),
+		OpenOrdersAddress: "DwoXdF8kjt9RS6yPfpzp1yHBKtFMDpHQPCRgy1JhKgFt",
 	}
 
 	// create order without actually submitting
@@ -942,7 +952,7 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 		panic(err)
 	}
 
-	useBundle := true
+	useBundle := false
 
 	batchEntry := pb.PostSubmitRequestEntry{
 		Transaction:   &pb.TransactionMessage{Content: signedTx},
@@ -950,8 +960,8 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 	}
 
 	batchRequest := pb.PostSubmitBatchRequest{
-		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry},
-		SubmitStrategy: 1,
+		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry, &batchEntry},
+		SubmitStrategy: 4,
 		UseBundle:      &useBundle,
 	}
 
@@ -1340,7 +1350,7 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1477,11 +1487,11 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{
 			{
-				InToken:      "So11111111111111111111111111111111111111112",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
+				InToken:      "EfrUj6MxYvfFuPHySWkdrazQXiPsTRYDHKbmPHjgVrRc",
+				OutToken:     "So11111111111111111111111111111111111111112",
+				InAmount:     2391133.467406917,
+				OutAmountMin: 2.204085035,
+				OutAmount:    2.217166316,
 				Project: &pb.StepProject{
 					Label: "Raydium",
 					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
@@ -1662,16 +1672,71 @@ func callGetNewRaydiumPoolsStreamWithCPMM(g *provider.GRPCClient) bool {
 		log.Errorf("error with GetNewRaydiumPools stream request: %v", err)
 		return true
 	}
+	var receivedAt time.Time
+	var pool *pb.GetNewRaydiumPoolsResponse
 	stream.Into(ch)
 	for i := 1; i <= 1; i++ {
-		_, ok := <-ch
+		item, ok := <-ch
 		if !ok {
 			// channel closed
 			return true
 		}
 
-		log.Infof("response %v received", i)
+		log.Infof("pool received %v", item)
+		log.Printf("pool slot : %v", uint64(item.Slot))
+		receivedAt = time.Now()
+		log.Printf("pool received at: %v", receivedAt.Format(time.RFC3339Nano))
+		pool = item
 	}
+
+	ch2 := make(chan *pb.GetSwapsStreamResponse)
+	// Stream response
+	stream2, err := g.GetSwapsStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, []string{pool.Pool.PoolAddress}, true)
+	if err != nil {
+		log.Errorf("error with GetSwapsStream stream request: %v", err)
+		return true
+	}
+	stream2.Into(ch2)
+	for {
+		item, ok := <-ch2
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("swap received %v", item)
+		log.Printf("swap slot : %v", uint64(item.Slot))
+		receivedAt = time.Now()
+		log.Printf("swap received at: %v", receivedAt.Format(time.RFC3339Nano))
+
+	}
+	/*for i := 0; i < 3; i++ {
+
+		// give time to the rpc
+		log.Print("giving rpc time")
+		time.Sleep(3 * time.Second)
+
+		solanaRpc := rpc.New("https://twilight-still-moon.solana-mainnet.discover.quiknode.pro/a6408d8f5441bd0e44c6165e6ca1a3b4a54d8d62/")
+		mstv := uint64(0)
+		slotInfo, err := solanaRpc.GetBlockWithOpts(
+			context.Background(),
+			uint64(pool.Slot),
+			&rpc.GetBlockOpts{
+				TransactionDetails:             rpc.TransactionDetailsNone,
+				Commitment:                     rpc.CommitmentConfirmed,
+				MaxSupportedTransactionVersion: &mstv,
+			},
+		)
+
+		if err != nil {
+			continue
+		}
+
+		log.Printf("pool received at: %v", receivedAt.Format(time.RFC3339Nano))
+		log.Printf("block time: %v ", slotInfo.BlockTime.Time().Format(time.RFC3339Nano))
+		log.Printf("difference: %v", receivedAt.Sub(slotInfo.BlockTime.Time()))
+		return false
+	}*/
 	return false
 }
 

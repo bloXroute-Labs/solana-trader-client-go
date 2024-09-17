@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -74,7 +73,7 @@ func main() {
 func run() bool {
 	var failed bool
 	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	/*failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
 	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
 	// this is just for example/test purposes
 	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
@@ -91,22 +90,22 @@ func run() bool {
 	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
 	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })*/
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	/*failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })*/
 
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
+	/*	cfg, err := config.Load()
+		if err != nil {
+			log.Fatal(err)
+		}*/
 
 	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	/*ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
 		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
 		return failed
@@ -162,7 +161,7 @@ func run() bool {
 		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
-	}
+	}*/
 
 	return failed
 }
@@ -433,7 +432,7 @@ func callRaydiumPrices() bool {
 	defer cancel()
 
 	prices, err := h.GetRaydiumPrices(ctx, &pb.GetRaydiumPricesRequest{
-		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
+		Tokens: []string{"So11111111111111111111111111111111111111112"},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPrices request for SOL and BONK: %v", err)
@@ -518,38 +517,40 @@ func callGetQuotesHTTP() bool {
 
 func callGetRaydiumQuotes() bool {
 	h := httpClientWithTimeout(time.Second * 60)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//defer cancel()
 
 	inToken := "So11111111111111111111111111111111111111112"
 	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-	amount := 0.01
+	amount := 1.0
 	slippage := float64(5)
 
-	quotes, err := h.GetRaydiumQuotes(ctx, &pb.GetRaydiumQuotesRequest{
-		InToken:  inToken,
-		OutToken: outToken,
-		InAmount: amount,
-		Slippage: slippage,
-	})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
+	for {
+		quotes, err := h.GetRaydiumQuotes(context.Background(), &pb.GetRaydiumQuotesRequest{
+			InToken:  inToken,
+			OutToken: outToken,
+			InAmount: amount,
+			Slippage: slippage,
+		})
+		if err != nil {
+			log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+			return true
+		}
 
-	if err != nil {
-		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
+		if err != nil {
+			log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
 
-	if len(quotes.Routes) != 1 {
-		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
-		return true
-	}
-	for _, route := range quotes.Routes {
-		log.Infof("best route for Raydium is %v", route)
-	}
+			return true
+		}
 
+		if len(quotes.Routes) != 1 {
+			log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+			return true
+		}
+		for _, route := range quotes.Routes {
+			log.Infof("best route for Raydium is %v", route)
+		}
+	}
 	fmt.Println()
 	return false
 }
