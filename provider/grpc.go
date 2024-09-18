@@ -404,7 +404,7 @@ func (g *GRPCClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.Post
 		return "", err
 	}
 
-	sig, err := g.SignAndSubmit(ctx, resp.Transactions[0], true, false, false)
+	sig, err := g.SignAndSubmit(ctx, resp.Transaction, true, false, false)
 	if err != nil {
 		return "", err
 	}

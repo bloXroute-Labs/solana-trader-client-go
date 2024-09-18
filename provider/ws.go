@@ -613,7 +613,7 @@ func (w *WSClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.PostRa
 		return "", err
 	}
 
-	sig, err := w.SignAndSubmit(ctx, resp.Transactions[0], true, false, false)
+	sig, err := w.SignAndSubmit(ctx, resp.Transaction, true, false, false)
 	if err != nil {
 		return "", err
 	}
