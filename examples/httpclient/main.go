@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	sideAsk   = "ask"
-	typeLimit = "limit"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	computeLimit = 100000
+	computePrice = 20000
 )
 
 func httpClient() *provider.HTTPClient {
@@ -74,27 +76,29 @@ func main() {
 func run() bool {
 	var failed bool
 	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	// this is just for example/test purposes
-	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
-	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
+	//failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	//failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	//// this is just for example/test purposes
+	//failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
+	//failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	//failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	//failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
+	//failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
+	//
+	//failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
+	//failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
+	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
+	//failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	//failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	//failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	//failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	//failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	//failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })
 
-	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	//failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -122,7 +126,7 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
+	//failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
 	if cfg.RunTrades {
 		// Order Lifecycle
 		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
@@ -132,6 +136,10 @@ func run() bool {
 		//failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
 		//	return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
 		//})
+
+		failed = failed || logCall("callRaydiumSwapCPMM", func() bool {
+			return callRaydiumSwapCPMM(ownerAddr) // this is using raydium swap cpmm
+		})
 
 		for i := 1; i < 3; i++ {
 			time.Sleep(1 * time.Second)
@@ -342,8 +350,7 @@ func callRaydiumPoolReserve() bool {
 	defer cancel()
 
 	pools, err := h.GetRaydiumPoolReserve(ctx, &pb.GetRaydiumPoolReserveRequest{
-		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
-			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+		PairsOrAddresses: []string{"66cxXqzCpFttLCdMBXYykjfCEVQKag8Cv1oB5KEacd5b"},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
@@ -539,6 +546,44 @@ func callGetRaydiumQuotes() bool {
 
 	if err != nil {
 		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumQuotesCPMM() bool {
+	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetRaydiumQuotesCPMM(ctx, &pb.GetRaydiumCPMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
@@ -1156,6 +1201,34 @@ func callRaydiumSwap(ownerAddr string) bool {
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 		SkipPreFlight:  config.BoolPtr(false),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumSwapCPMM(ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	tip := uint64(2000000)
+
+	log.Info("Raydium swap")
+	sig, err := h.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "So11111111111111111111111111111111111111112",
+		OutToken:     "7atgF8KQo4wJrD5ATGX7t1V2zVvykPJbFfNeVf1icFv1",
+		Slippage:     0.5,
+		InAmount:     0.01,
+		ComputePrice: computePrice,
+		ComputeLimit: computeLimit,
+		Tip:          &tip,
 	})
 	if err != nil {
 		log.Error(err)

@@ -125,6 +125,16 @@ func (w *WSClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQ
 	return &response, nil
 }
 
+// GetRaydiumQuotesCPMM returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium CPMM pool
+func (w *WSClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
+	var response pb.GetRaydiumCPMMQuotesResponse
+	err := w.conn.Request(ctx, "GetRaydiumQuotesCPMM", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (w *WSClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	var response pb.GetRaydiumPricesResponse
@@ -139,6 +149,16 @@ func (w *WSClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumP
 func (w *WSClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
 	var response pb.PostRaydiumSwapResponse
 	err := w.conn.Request(ctx, "PostRaydiumSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// PostRaydiumSwapCPMM returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (w *WSClient) PostRaydiumSwapCPMM(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (*pb.PostRaydiumCPMMSwapResponse, error) {
+	var response pb.PostRaydiumCPMMSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumCPMMSwap", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -584,6 +604,22 @@ func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 		return nil, err
 	}
 	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitRaydiumSwapCPMM builds a Raydium Swap CPMM transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (string, error) {
+	resp, err := w.PostRaydiumSwapCPMM(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := w.SignAndSubmit(ctx, resp.Transactions[0], true, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return sig, nil
+
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.

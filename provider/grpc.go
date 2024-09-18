@@ -146,6 +146,11 @@ func (g *GRPCClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiu
 	return g.apiClient.GetRaydiumQuotes(ctx, request)
 }
 
+// GetRaydiumQuotesCPMM returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium CPMM pool
+func (g *GRPCClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
+	return g.apiClient.GetRaydiumCPMMQuotes(ctx, request)
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	return g.apiClient.GetRaydiumPrices(ctx, request)
@@ -154,6 +159,11 @@ func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiu
 // PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (g *GRPCClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
 	return g.apiClient.PostRaydiumSwap(ctx, request)
+}
+
+// PostRaydiumSwapCPMM returns a partially signed transaction(s) for submitting a swap request on Raydium CPMM Pool
+func (g *GRPCClient) PostRaydiumSwapCPMM(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (*pb.PostRaydiumCPMMSwapResponse, error) {
+	return g.apiClient.PostRaydiumCPMMSwap(ctx, request)
 }
 
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
@@ -385,6 +395,21 @@ func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitRaydiumSwapCPMM builds a Raydium Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (string, error) {
+	resp, err := g.PostRaydiumSwapCPMM(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := g.SignAndSubmit(ctx, resp.Transactions[0], true, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return sig, nil
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.

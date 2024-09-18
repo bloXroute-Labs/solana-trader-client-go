@@ -119,6 +119,18 @@ func (h *HTTPClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiu
 	return response, nil
 }
 
+// GetRaydiumQuotesCPMM returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium CPMM Pools
+func (h *HTTPClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v",
+		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
+	response := new(pb.GetRaydiumCPMMQuotesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumCPMMQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (h *HTTPClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	tokensArg := convertStrSliceArgument("tokens", true, request.Tokens)
@@ -136,6 +148,18 @@ func (h *HTTPClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 	url := fmt.Sprintf("%s/api/v2/raydium/swap", h.baseURL)
 	var response pb.PostRaydiumSwapResponse
 	err := connections.HTTPPostWithClient[*pb.PostRaydiumSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// PostRaydiumSwapCPMM returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (h *HTTPClient) PostRaydiumCPMMSwap(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (*pb.PostRaydiumCPMMSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-swap", h.baseURL)
+	var response pb.PostRaydiumCPMMSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumCPMMSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -525,6 +549,21 @@ func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitRaydiumSwapCPMM builds a Raydium Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (string, error) {
+	resp, err := h.PostRaydiumCPMMSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	sig, err := h.SignAndSubmit(ctx, resp.Transactions[0], true, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return sig, nil
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
