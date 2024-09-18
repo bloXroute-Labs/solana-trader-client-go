@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
@@ -24,6 +25,12 @@ type WSClient struct {
 // NewWSClient connects to Mainnet Trader API
 func NewWSClient() (*WSClient, error) {
 	opts := DefaultRPCOpts(MainnetNYWS)
+	return NewWSClientWithOpts(opts)
+}
+
+// NewWSClientPumpNY connects to Mainnet NY Pump Trader API
+func NewWSClientPumpNY() (*WSClient, error) {
+	opts := DefaultRPCOpts(MainnetPumpNYWS)
 	return NewWSClientWithOpts(opts)
 }
 
@@ -561,6 +568,23 @@ func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 	if w.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
+
+	if len(transactions) == 1 {
+		signature, err := w.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.PostSubmitBatchResponse{
+			Transactions: []*pb.PostSubmitBatchResponseEntry{
+				{
+					Signature: signature,
+					Error:     "",
+					Submitted: true,
+				},
+			},
+		}, nil
+	}
+
 	batchRequest, err := buildBatchRequest(transactions, *w.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
@@ -980,6 +1004,22 @@ func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, li
 		Project: project,
 	}, func() *pb.GetOrderbooksStreamResponse {
 		var v pb.GetOrderbooksStreamResponse
+		return &v
+	})
+}
+
+// GetPumpFunSwapsStream subscribes to a stream for swap events related to a set of pumpdotfun tokens
+func (w *WSClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFunSwapsStreamRequest) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunSwapsStream", req, func() *pb.GetPumpFunSwapsStreamResponse {
+		var v pb.GetPumpFunSwapsStreamResponse
+		return &v
+	})
+}
+
+// GetPumpFunNewTokensStream subscribes to a stream for pumpdotfun's new pool events
+func (w *WSClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunNewTokensStream", req, func() *pb.GetPumpFunNewTokensStreamResponse {
+		var v pb.GetPumpFunNewTokensStreamResponse
 		return &v
 	})
 }

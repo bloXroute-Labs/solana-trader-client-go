@@ -33,6 +33,13 @@ func NewGRPCClient() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+// NewGRPCClientPumpNY connects to Mainnet NY Pump Trader API
+func NewGRPCClientPumpNY() (*GRPCClient, error) {
+	opts := DefaultRPCOpts(MainnetPumpNYGRPC)
+	opts.UseTLS = true
+	return NewGRPCClientWithOpts(opts)
+}
+
 // NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)
@@ -293,6 +300,23 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.
 	if g.privateKey == nil {
 		return nil, ErrPrivateKeyNotFound
 	}
+
+	if len(transactions) == 1 {
+		signature, err := g.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
+		if err != nil {
+			return nil, err
+		}
+		return &pb.PostSubmitBatchResponse{
+			Transactions: []*pb.PostSubmitBatchResponseEntry{
+				{
+					Signature: signature,
+					Error:     "",
+					Submitted: true,
+				},
+			},
+		}, nil
+	}
+
 	batchRequest, err := buildBatchRequest(transactions, *g.privateKey, useBundle, opts)
 	if err != nil {
 		return nil, err
@@ -750,6 +774,26 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, l
 	}
 
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+}
+
+// GetPumpFunSwapsStream subscribes to a stream for swap events related to a set of pumpdotfun tokens
+func (g *GRPCClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFunSwapsStreamRequest) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunSwapsStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
+}
+
+// GetPumpFunNewTokensStream subscribes to a stream for pumpdotfun's new pool events
+func (g *GRPCClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunNewTokensStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunNewTokensStreamResponse](stream, ""), nil
 }
 
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
