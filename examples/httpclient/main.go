@@ -1223,8 +1223,8 @@ func callRaydiumSwapCPMM(ownerAddr string) bool {
 	sig, err := h.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "So11111111111111111111111111111111111111112",
-		OutToken:     "7atgF8KQo4wJrD5ATGX7t1V2zVvykPJbFfNeVf1icFv1",
-		Slippage:     0.5,
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.1,
 		InAmount:     0.01,
 		ComputePrice: computePrice,
 		ComputeLimit: computeLimit,
