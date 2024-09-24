@@ -29,6 +29,12 @@ func NewHTTPClient() *HTTPClient {
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
+// NewHTTPClientPumpNY connects to Mainnet Trader API
+func NewHTTPClientPumpNY() *HTTPClient {
+	opts := DefaultRPCOpts(MainnetPumpNYHTTP)
+	return NewHTTPClientWithOpts(nil, opts)
+}
+
 // NewHTTPTestnet connects to Testnet Trader API
 func NewHTTPTestnet() *HTTPClient {
 	opts := DefaultRPCOpts(TestnetHTTP)
@@ -136,6 +142,18 @@ func (h *HTTPClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 	url := fmt.Sprintf("%s/api/v2/raydium/swap", h.baseURL)
 	var response pb.PostRaydiumSwapResponse
 	err := connections.HTTPPostWithClient[*pb.PostRaydiumSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
+func (h *HTTPClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/pumpfun/swap", h.baseURL)
+	var response pb.PostPumpFunSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostPumpFunSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -542,6 +560,17 @@ func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (string, error) {
+	resp, err := h.PostPumpFunSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return h.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction.Content,
+	}, false, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.

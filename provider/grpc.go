@@ -163,6 +163,11 @@ func (g *GRPCClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 	return g.apiClient.PostRaydiumSwap(ctx, request)
 }
 
+// PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
+func (g *GRPCClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	return g.apiClient.PostPumpFunSwap(ctx, request)
+}
+
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (g *GRPCClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
 	return g.apiClient.PostRaydiumRouteSwap(ctx, request)
@@ -409,6 +414,17 @@ func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (string, error) {
+	resp, err := g.PostPumpFunSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction.Content,
+	}, false, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
