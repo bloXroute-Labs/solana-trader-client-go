@@ -20,13 +20,16 @@ type traderWSPPumpFunNewToken struct {
 	messageChan chan *benchmark.NewTokenResult
 	authHeader  string
 	address     string
+	rpcHost     string
 }
 
-func NewTraderWSPPumpFunNewToken(messageChan chan *benchmark.NewTokenResult, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], address, authHeader string) (Source[*benchmark.NewTokenResult, benchmark.NewTokenResult], error) {
+func NewTraderWSPPumpFunNewToken(messageChan chan *benchmark.NewTokenResult, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo],
+	address, authHeader, rpcHost string) (Source[*benchmark.NewTokenResult, benchmark.NewTokenResult], error) {
 
 	s := &traderWSPPumpFunNewToken{
 		pumpTxMap:   pumpTxMap,
 		messageChan: messageChan,
+		rpcHost:     rpcHost,
 	}
 
 	if s.w == nil {
@@ -53,7 +56,8 @@ func (s traderWSPPumpFunNewToken) Name() string {
 func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benchmark.NewTokenResult], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
-	solanaRpc := rpc.New("https://twilight-still-moon.solana-mainnet.discover.quiknode.pro/a6408d8f5441bd0e44c6165e6ca1a3b4a54d8d62/")
+
+	solanaRpc := rpc.New(fmt.Sprintf("https://%s", s.rpcHost))
 
 	stream, err := s.w.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
 	if err != nil {

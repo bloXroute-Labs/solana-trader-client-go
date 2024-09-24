@@ -6,7 +6,7 @@ Compares Solana Trader API pumpfun new token stream to another thirdparty blocks
 
 Go:
 ```
-$ AUTH_HEADER=... go run ./benchmark/pumpfun_newtoken_compare
+$ RPC_HOST=... AUTH_HEADER=... go run ./benchmark/pumpfun_newtoken_compare
 ```
 
 ## Result

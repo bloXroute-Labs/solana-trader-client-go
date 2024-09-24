@@ -10,6 +10,7 @@ import (
 	utils2 "github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"net/http"
 	"os"
@@ -100,15 +101,17 @@ func run(c *cli.Context) error {
 			}
 		}
 	}()
+	rpcHost, ok := os.LookupEnv("RPC_HOST")
+	if !ok {
+		log.Infof("RPC_HOST environment variable not set: requests will be slower")
+	}
 
 	go func() {
 		err := block.StartBenchmarking(
 			runCtx,
 			pumpTxMap,
 			http.Header{},
-			//"twilight-still-moon.solana-mainnet.discover.quiknode.pro/a6408d8f5441bd0e44c6165e6ca1a3b4a54d8d62",
-			"atlas-mainnet.helius-rpc.com/?api-key=826d0fb7-ba44-4f30-ac45-32c5766911f2",
-			//"bloxrout-maind97-f073.mainnet.rpcpool.com/ae7c6823-191f-484e-9087-42d2ce1f67fc",
+			rpcHost,
 		)
 		if err != nil {
 			logger.Log().Errorw("startDetecting", "error", err)
@@ -122,7 +125,7 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 	messageChan := make(chan *benchmark.NewTokenResult, 100)
-	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader)
+	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, rpcHost)
 	if err != nil {
 		return err
 	}
