@@ -991,6 +991,17 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return response, nil
 }
 
+// GetRecentBlockHash subscribes to a stream for getting recent block hash.
+func (h *HTTPClient) GetRecentBlockHashWithOffset(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/system/blockhash?offset=%d", h.baseURL, offset)
+	response := new(pb.GetRecentBlockHashResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponseV2](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 func (h *HTTPClient) GetPriorityFee(ctx context.Context, project pb.Project, percentile *float64) (*pb.GetPriorityFeeResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/system/priority-fee?project=%v", h.baseURL, project)
 	if percentile != nil {

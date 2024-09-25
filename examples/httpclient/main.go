@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	"github.com/gagliardetto/solana-go"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -160,6 +161,9 @@ func run() bool {
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
 		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwapInstructions", func() bool { return callJupiterSwapInstructions(ownerAddr, nil, false) })
+		failed = failed || logCallWithError("buildAndSubmitTx", func() error {
+			return buildAndPostTxWithDelays(70, []int{5, 5, 5, 5, 5})
+		})
 		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
@@ -177,6 +181,59 @@ func logCall(name string, call func() bool) bool {
 	}
 
 	return result
+}
+
+func logCallWithError(name string, call func() error) bool {
+	log.Infof("Executing `%s'...", name)
+
+	result := call()
+	if result != nil {
+		log.Errorf("`%s' failed with error: %s", name, result)
+		return true
+	}
+
+	return false
+}
+
+func buildAndPostTxWithDelays(offset uint64, delaysInSeconds []int) error {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	if err != nil {
+		return err
+	}
+	blockHash, err := h.GetRecentBlockHashWithOffset(ctx, offset)
+	if err != nil {
+		return err
+	}
+	log.Infof("Got blockhash: %v", blockHash)
+
+	hash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		return err
+	}
+	for i, delay := range delaysInSeconds {
+
+		tx, err := transaction.CreateSampleTx(privateKey, hash, uint64(i))
+		if err != nil {
+			return err
+		}
+		txB64, err := tx.ToBase64()
+		if err != nil {
+			return err
+		}
+		time.Sleep(time.Second * time.Duration(delay))
+		sig, err := h.PostSubmit(ctx, txB64, true, false, false)
+		if err != nil {
+			return err
+		} else {
+			log.Infof("All Good(%d): %s", i, sig.Signature)
+		}
+	}
+
+	return nil
 }
 
 func callMarketsHTTP() bool {
