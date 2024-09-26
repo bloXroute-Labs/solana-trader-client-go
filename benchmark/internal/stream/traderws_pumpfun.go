@@ -40,6 +40,7 @@ func NewTraderWSPPumpFunNewToken(messageChan chan *benchmark.NewTokenResult, pum
 		s.address = address
 		s.authHeader = authHeader
 		if err != nil {
+			logger.Log().Errorw("failed to connect to trader api", "address", address, "err", err)
 			return nil, err
 		}
 		s.w = w

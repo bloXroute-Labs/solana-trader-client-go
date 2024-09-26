@@ -101,9 +101,9 @@ func run(c *cli.Context) error {
 			}
 		}
 	}()
-	rpcHost, ok := os.LookupEnv("RPC_HOST")
+	rpcHost, ok := os.LookupEnv("RPC_ENDPOINT")
 	if !ok {
-		log.Infof("RPC_HOST environment variable not set: requests will be slower")
+		log.Infof("RPC_ENDPOINT environment variable not set: requests will be slower")
 	}
 
 	go func() {
@@ -125,7 +125,8 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 	messageChan := make(chan *benchmark.NewTokenResult, 100)
-	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, rpcHost)
+	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader,
+		os.Getenv("GET_BLOCK_ENDPOINT"))
 	if err != nil {
 		return err
 	}
