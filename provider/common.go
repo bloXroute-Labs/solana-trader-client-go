@@ -13,19 +13,23 @@ import (
 )
 
 const (
-	mainnetNY = "ny.solana.dex.blxrbdn.com"
-	mainnetUK = "uk.solana.dex.blxrbdn.com"
-	testnet   = "solana.dex.bxrtest.com"
-	devnet    = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
+	mainnetNY     = "ny.solana.dex.blxrbdn.com"
+	mainnetPumpNY = "pump-ny.solana.dex.blxrbdn.com"
+	mainnetUK     = "uk.solana.dex.blxrbdn.com"
+	testnet       = "solana.dex.bxrtest.com"
+	devnet        = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
 
 var (
-	MainnetNYHTTP = httpEndpoint(mainnetNY, true)
-	MainnetUKHTTP = httpEndpoint(mainnetUK, true)
-	MainnetNYWS   = wsEndpoint(mainnetNY, true)
-	MainnetUKWS   = wsEndpoint(mainnetUK, true)
-	MainnetNYGRPC = grpcEndpoint(mainnetNY, true)
-	MainnetUKGRPC = grpcEndpoint(mainnetUK, true)
+	MainnetNYHTTP     = httpEndpoint(mainnetNY, true)
+	MainnetPumpNYHTTP = httpEndpoint(mainnetPumpNY, true)
+	MainnetUKHTTP     = httpEndpoint(mainnetUK, true)
+	MainnetNYWS       = wsEndpoint(mainnetNY, true)
+	MainnetPumpNYWS   = wsEndpoint(mainnetPumpNY, true)
+	MainnetUKWS       = wsEndpoint(mainnetUK, true)
+	MainnetNYGRPC     = grpcEndpoint(mainnetNY, true)
+	MainnetPumpNYGRPC = grpcEndpoint(mainnetPumpNY, true)
+	MainnetUKGRPC     = grpcEndpoint(mainnetUK, true)
 
 	TestnetHTTP = httpEndpoint(testnet, true)
 	TestnetWS   = wsEndpoint(testnet, true)

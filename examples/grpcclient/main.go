@@ -98,6 +98,17 @@ func run() bool {
 
 	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
 	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
+
+	failed = failed || logCall("callGetPumpFunNewTokensGRPCStream", func() bool {
+		gg, err := provider.NewGRPCClientPumpNY()
+		if err != nil {
+			panic(err)
+		}
+		mint, res := callGetPumpFunNewTokensGRPCStream(gg)
+		res = callGetPumpFunSwapsGRPCStream(gg, mint)
+		return res
+	})
+
 	failed = failed || logCall("callGetBundleTipGRPCStream", func() bool { return callGetBundleTipGRPCStream(g) })
 
 	// calls below this place an order and immediately cancel it
@@ -159,6 +170,7 @@ func run() bool {
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumCLMMSwap", func() bool { return callRaydiumCLMMSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
+		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callRaydiumCLMMRouteSwap", func() bool { return callRaydiumCLMMRouteSwap(g, ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
@@ -1405,6 +1417,36 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
+func callPostPumpFunSwap(ownerAddr string) bool {
+	log.Info("starting PostPumpFunSwap test")
+	g, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("PumpFun swap")
+	sig, err := g.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+		UserAddress:         ownerAddr,
+		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
+		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		TokenAmount:         10,
+		SolThreshold:        0.0001,
+		IsBuy:               false,
+		ComputeLimit:        0,
+		ComputePrice:        0,
+		Tip:                 nil,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("PumpFun swap transaction signature : %s", sig)
+	return false
+}
+
 func callRaydiumCLMMSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting Raydium CLMM swap test")
 
@@ -1652,6 +1694,57 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Jupiter route swap transaction signature : %s", sig)
+	return false
+}
+
+func callGetPumpFunNewTokensGRPCStream(g *provider.GRPCClient) (string, bool) {
+	log.Info("starting GetPumpFunNewTokens stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := g.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewTokens stream request: %v", err)
+		return "", true
+	}
+
+	ch := stream.Channel(0)
+	mint := ""
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return "", true
+		}
+		log.Infof("response %v received", v)
+		mint = v.Mint
+	}
+	return mint, false
+}
+
+func callGetPumpFunSwapsGRPCStream(g *provider.GRPCClient, mint string) bool {
+	log.Info("starting GetPumpFunSwaps stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := g.GetPumpFunSwapsStream(ctx, &pb.GetPumpFunSwapsStreamRequest{
+		Tokens: []string{mint},
+	})
+	if err != nil {
+		log.Errorf("error with GetPumpFunSwaps stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+
+	}
 	return false
 }
 

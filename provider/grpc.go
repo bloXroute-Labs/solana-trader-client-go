@@ -33,6 +33,13 @@ func NewGRPCClient() (*GRPCClient, error) {
 	return NewGRPCClientWithOpts(opts)
 }
 
+// NewGRPCClientPumpNY connects to Mainnet NY Pump Trader API
+func NewGRPCClientPumpNY() (*GRPCClient, error) {
+	opts := DefaultRPCOpts(MainnetPumpNYGRPC)
+	opts.UseTLS = true
+	return NewGRPCClientWithOpts(opts)
+}
+
 // NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (*GRPCClient, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)
@@ -192,6 +199,11 @@ func (g *GRPCClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb
 // PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (g *GRPCClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
 	return g.apiClient.PostRaydiumSwap(ctx, request)
+}
+
+// PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
+func (g *GRPCClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	return g.apiClient.PostPumpFunSwap(ctx, request)
 }
 
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
@@ -441,6 +453,17 @@ func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (string, error) {
+	resp, err := g.PostPumpFunSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction.Content,
+	}, false, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -781,6 +804,26 @@ func (g *GRPCClient) GetOrderbookStream(ctx context.Context, markets []string, l
 	}
 
 	return connections.GRPCStream[pb.GetOrderbooksStreamResponse](stream, fmt.Sprint(markets)), nil
+}
+
+// GetPumpFunSwapsStream subscribes to a stream for swap events related to a set of pumpdotfun tokens
+func (g *GRPCClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFunSwapsStreamRequest) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunSwapsStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
+}
+
+// GetPumpFunNewTokensStream subscribes to a stream for pumpdotfun's new pool events
+func (g *GRPCClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunNewTokensStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunNewTokensStreamResponse](stream, ""), nil
 }
 
 // GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
