@@ -130,7 +130,7 @@ func run(c *cli.Context) error {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
 	messageChan := make(chan *benchmark.NewTokenResult, 100)
-	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, getBlockEndpointff)
+	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, getBlockEndpoint)
 	if err != nil {
 		return err
 	}
