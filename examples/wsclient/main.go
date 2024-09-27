@@ -1358,7 +1358,7 @@ func callRaydiumCLMMSwap(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sig, err := w.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumCLMMSwapRequest{
+	sig, err := w.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "USDT",
 		OutToken:     "SOL",
@@ -1366,7 +1366,7 @@ func callRaydiumCLMMSwap(w *provider.WSClient, ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1452,7 +1452,7 @@ func callRaydiumCLMMRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sig, err := w.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumCLMMRouteSwapRequest{
+	sig, err := w.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
 		OwnerAddress: ownerAddr,
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{
@@ -1474,7 +1474,7 @@ func callRaydiumCLMMRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)

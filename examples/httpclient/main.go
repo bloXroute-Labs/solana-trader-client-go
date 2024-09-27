@@ -1232,7 +1232,7 @@ func callRaydiumCLMMSwap(ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("Raydium CLMM swap")
-	sig, err := h.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumCLMMSwapRequest{
+	sig, err := h.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "USDT",
 		OutToken:     "SOL",
@@ -1240,7 +1240,7 @@ func callRaydiumCLMMSwap(ownerAddr string) bool {
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1294,7 +1294,7 @@ func callRaydiumCLMMRouteSwap(ownerAddr string) bool {
 	defer cancel()
 
 	log.Info("Raydium route swap")
-	sig, err := h.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumCLMMRouteSwapRequest{
+	sig, err := h.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
 		OwnerAddress: ownerAddr,
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{
@@ -1315,7 +1315,7 @@ func callRaydiumCLMMRouteSwap(ownerAddr string) bool {
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)

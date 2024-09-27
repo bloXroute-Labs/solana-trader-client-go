@@ -86,10 +86,10 @@ func (h *HTTPClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRay
 }
 
 // PostRaydiumCLMMSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
-func (h *HTTPClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumCLMMSwapRequest) (*pb.PostRaydiumCLMMSwapResponse, error) {
+func (h *HTTPClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/clmm-swap", h.baseURL)
-	var response pb.PostRaydiumCLMMSwapResponse
-	err := connections.HTTPPostWithClient[*pb.PostRaydiumCLMMSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	var response pb.PostRaydiumSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -98,10 +98,10 @@ func (h *HTTPClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRa
 }
 
 // PostRaydiumCLMMRouteSwap returns a partially signed transaction(s) for submitting a route swap request on Raydium
-func (h *HTTPClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumCLMMRouteSwapRequest) (*pb.PostRaydiumCLMMRouteSwapResponse, error) {
+func (h *HTTPClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/clmm-route-swap", h.baseURL)
-	var response pb.PostRaydiumCLMMRouteSwapResponse
-	err := connections.HTTPPostWithClient[*pb.PostRaydiumCLMMRouteSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	var response pb.PostRaydiumRouteSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumRouteSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -179,21 +179,21 @@ func (h *HTTPClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiu
 }
 
 // SubmitRaydiumCLMMSwap builds a Raydium CLMM Swap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumCLMMSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := h.PostRaydiumCLMMSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // SubmitRaydiumCLMMRouteSwap builds a Raydium CLMM RouteSwap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumCLMMRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := h.PostRaydiumCLMMRouteSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-	return h.SignAndSubmitBatch(ctx, resp.Transactions, opts)
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium

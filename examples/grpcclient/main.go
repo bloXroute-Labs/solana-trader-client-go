@@ -1411,16 +1411,20 @@ func callRaydiumCLMMSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	tip := uint64(10000)
 	log.Info("Raydium swap")
-	sig, err := g.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumCLMMSwapRequest{
+	sig, err := g.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
-		InToken:      "USDT",
-		OutToken:     "SOL",
+		InToken:      "So11111111111111111111111111111111111111112",
+		OutToken:     "HDa3zJc12ahykSsBRvgiWzr6WLEByf36yzKKbVvy4gnF",
 		Slippage:     0.1,
-		InAmount:     0.01,
+		InAmount:     0.0089,
+		Tip:          &tip,
+		ComputePrice: 10000,
+		ComputeLimit: 300000,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
@@ -1586,30 +1590,22 @@ func callRaydiumCLMMRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	log.Info("Raydium route  swap")
-	sig, err := g.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumCLMMRouteSwapRequest{
+	log.Info("Raydium route swap")
+	sig, err := g.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
 		OwnerAddress: ownerAddr,
 		Slippage:     0.1,
 		Steps: []*pb.RaydiumRouteStep{
 			{
-				InToken:  "FIDA",
-				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-			},
-			{
-				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-				OutToken:     "USDT",
-				InAmount:     0.007505,
-				OutAmount:    0.004043,
-				OutAmountMin: 0.004000,
+				InToken:      "HDa3zJc12ahykSsBRvgiWzr6WLEByf36yzKKbVvy4gnF",
+				OutToken:     "So11111111111111111111111111111111111111112",
+				InAmount:     0.000303,
+				OutAmountMin: 0.0006005,
+				OutAmount:    0.00064,
 			},
 		},
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  false,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
