@@ -90,6 +90,7 @@ func run() bool {
 
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
+	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes(g) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
@@ -512,6 +513,30 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 	for _, route := range quotes.Routes {
 		log.Infof("best route for Raydium is %v", route)
 	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetPumpFunQuotes(g *provider.GRPCClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := g.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
+		QuoteType:           "buy",
+		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
+		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		Amount:              amount,
+		Slippage:            slippage,
+	})
+	if err != nil {
+		return true
+	}
+
+	log.Infof("best quote for PumpFun is %v", quotes)
 
 	fmt.Println()
 	return false

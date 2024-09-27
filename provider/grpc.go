@@ -153,6 +153,11 @@ func (g *GRPCClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiu
 	return g.apiClient.GetRaydiumQuotes(ctx, request)
 }
 
+// GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
+func (g *GRPCClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
+	return g.apiClient.GetPumpFunQuotes(ctx, request)
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	return g.apiClient.GetRaydiumPrices(ctx, request)
