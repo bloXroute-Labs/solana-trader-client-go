@@ -102,7 +102,7 @@ type HeliusTx struct {
 					} `json:"loadedAddresses"`
 					ComputeUnitsConsumed int `json:"computeUnitsConsumed"`
 				} `json:"meta"`
-				Version int `json:"version"`
+				Version interface{} `json:"version"`
 			} `json:"transaction"`
 			Signature string `json:"signature"`
 			Slot      int    `json:"slot"`
