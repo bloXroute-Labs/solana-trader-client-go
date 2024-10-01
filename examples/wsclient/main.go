@@ -80,6 +80,7 @@ func run() bool {
 	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
 	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
+	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes(w) })
 	failed = failed || logCall("callGetRaydiumCLMMQuotes", func() bool { return callGetRaydiumCLMMQuotes(w) })
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
@@ -533,6 +534,30 @@ func callGetRaydiumQuotes(w *provider.WSClient) bool {
 	for _, route := range quotes.Routes {
 		log.Infof("best route for Raydium is %v", route)
 	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetPumpFunQuotes(w *provider.WSClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
+		QuoteType:           "buy",
+		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
+		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		Amount:              amount,
+		Slippage:            slippage,
+	})
+	if err != nil {
+		return true
+	}
+
+	log.Infof("best quote for PumpFun is %v", quotes)
 
 	fmt.Println()
 	return false
