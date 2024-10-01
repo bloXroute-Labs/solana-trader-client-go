@@ -76,29 +76,29 @@ func main() {
 func run() bool {
 	var failed bool
 	// informational methods
-	//failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	//failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	//// this is just for example/test purposes
-	//failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	//failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	//failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	//failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
-	//failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
-	//
-	//failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
-	//failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
-	//failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	//failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	//failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	//failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	//failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	//failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	//failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	//failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	//failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })
+	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	// this is just for example/test purposes
+	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
+	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
+	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
 
-	//failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	//failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
+	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
+	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
+	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })
+
+	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -129,13 +129,13 @@ func run() bool {
 	//failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
 	if cfg.RunTrades {
 		// Order Lifecycle
-		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
-		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
-		//failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-		//failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
-		//	return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
-		//})
+		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
+		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
+		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
+		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+		failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
+			return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+		})
 
 		failed = failed || logCall("callRaydiumSwapCPMM", func() bool {
 			return callRaydiumSwapCPMM(ownerAddr) // this is using raydium swap cpmm
@@ -1234,6 +1234,8 @@ func callRaydiumSwapCPMM(ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
+
+	// 		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
 }

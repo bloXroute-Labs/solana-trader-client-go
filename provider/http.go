@@ -575,6 +575,8 @@ func (h *HTTPClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.Post
 		return "", err
 	}
 
+	fmt.Println("raydium resp:", resp.String())
+
 	sig, err := h.SignAndSubmit(ctx, resp.Transaction, true, false, false)
 	if err != nil {
 		return "", err
