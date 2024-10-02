@@ -142,6 +142,17 @@ func (w *WSClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRayd
 	return &response, nil
 }
 
+
+// GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
+func (w *WSClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
+	var response pb.GetPumpFunQuotesResponse
+	err := w.conn.Request(ctx, "GetPumpFunQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (w *WSClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	var response pb.GetRaydiumPricesResponse
@@ -171,6 +182,18 @@ func (w *WSClient) PostRaydiumSwapCPMM(ctx context.Context, request *pb.PostRayd
 	}
 	return &response, nil
 }
+
+
+// PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
+func (w *WSClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	var response pb.PostPumpFunSwapResponse
+	err := w.conn.Request(ctx, "PostPumpFunSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (w *WSClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
@@ -644,6 +667,17 @@ func (w *WSClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.PostRa
 
 	return sig, nil
 
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (string, error) {
+	resp, err := w.PostPumpFunSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return w.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction.Content,
+	}, false, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.

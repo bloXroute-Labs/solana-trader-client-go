@@ -158,6 +158,11 @@ func (g *GRPCClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRa
 	return g.apiClient.GetRaydiumCPMMQuotes(ctx, request)
 }
 
+// GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
+func (g *GRPCClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
+	return g.apiClient.GetPumpFunQuotes(ctx, request)
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	return g.apiClient.GetRaydiumPrices(ctx, request)
@@ -166,6 +171,11 @@ func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiu
 // PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (g *GRPCClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
 	return g.apiClient.PostRaydiumSwap(ctx, request)
+}
+
+// PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
+func (g *GRPCClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
+	return g.apiClient.PostPumpFunSwap(ctx, request)
 }
 
 // PostRaydiumSwapCPMM returns a partially signed transaction(s) for submitting a swap request on Raydium CPMM Pool
@@ -419,6 +429,17 @@ func (g *GRPCClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (string, error) {
+	resp, err := g.PostPumpFunSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	return g.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transaction.Content,
+	}, false, false, false)
 }
 
 // SubmitRaydiumSwapCPMM builds a Raydium Swap transaction then signs it, and submits to the network.

@@ -95,8 +95,8 @@ func run() bool {
 	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })
-
+	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes() })
+	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })	
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
@@ -166,6 +166,7 @@ func run() bool {
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
+		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwapInstructions", func() bool { return callJupiterSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
@@ -561,6 +562,32 @@ func callGetRaydiumQuotes() bool {
 	return false
 }
 
+func callGetPumpFunQuotes() bool {
+	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
+		QuoteType:           "buy",
+		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
+		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		Amount:              amount,
+		Slippage:            slippage,
+	})
+	if err != nil {
+		return true
+	}
+
+	log.Infof("best quote for PumpFun is %v", quotes)
+
+	fmt.Println()
+	return false
+}
+
+
 func callGetRaydiumQuotesCPMM() bool {
 	h := httpClientWithTimeout(time.Second * 60)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -598,6 +625,7 @@ func callGetRaydiumQuotesCPMM() bool {
 	fmt.Println()
 	return false
 }
+
 
 func callGetJupiterQuotes() bool {
 	h := httpClientWithTimeout(time.Second * 60)
@@ -1210,6 +1238,34 @@ func callRaydiumSwap(ownerAddr string) bool {
 	return false
 }
 
+func callPostPumpFunSwap(ownerAddr string) bool {
+	log.Info("starting PostPumpFunSwap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	h := provider.NewHTTPClientPumpNY()
+
+	log.Info("PumpFun swap")
+	sig, err := h.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+		UserAddress:         ownerAddr,
+		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
+		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		TokenAmount:         10,
+		SolThreshold:        0.0001,
+		IsBuy:               false,
+		ComputeLimit:        0,
+		ComputePrice:        0,
+		Tip:                 nil,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("PumpFun swap transaction signature : %s", sig)
+	return false
+}
+
+
 func callRaydiumSwapCPMM(ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
@@ -1239,6 +1295,8 @@ func callRaydiumSwapCPMM(ownerAddr string) bool {
 	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
 }
+
+
 
 func callRaydiumRouteSwap(ownerAddr string) bool {
 	log.Info("starting Raydium route swap test")
