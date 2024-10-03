@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 	"math/rand"
 	"net/http"
 	"os"
@@ -74,27 +77,27 @@ func main() {
 func run() bool {
 	var failed bool
 	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	// this is just for example/test purposes
-	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
-	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
-
-	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
+	// failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
+	// failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
+	// // this is just for example/test purposes
+	// failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
+	// failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
+	// failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
+	// failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
+	// failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
+	//
+	// failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
+	// failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
+	// failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
+	// failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
+	// failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
+	// failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
+	// failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
+	// failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
+	// failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
+	// failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
+	// failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
+	// failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -122,6 +125,10 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
+
+	return callPlaceOrderUsingTip(ownerAddr, 2_100_000)
+	// return callPlaceOrderBundleUsingBatch(ownerAddr, 10000)
+
 	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
 	if cfg.RunTrades {
 		// Order Lifecycle
@@ -666,6 +673,155 @@ func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide strin
 	}
 
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+
+	return false
+}
+
+func callPlaceOrderUsingTip(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing order with bundle, using tip")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	privateKeyBase58, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
+
+		log.Error("env variable `PRIVATE_KEY` not set")
+		return true
+	}
+	privateKey, err := solana.PrivateKeyFromBase58(privateKeyBase58)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to get private key: %w", err))
+		return true
+	}
+
+	blockHash, err := h.GetRecentBlockHash(ctx)
+
+	if err != nil {
+		log.Error(fmt.Errorf("failed to get recent blockhash from server: %w", err))
+		return true
+	}
+
+	recentBlockHash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to hash recent blockhash from server: %w", err))
+		return true
+	}
+
+	// solanaTx, err := utils.CreateBloxrouteTipTransactionToUseBundles(privateKey, bundleTip, recentBlockHash)
+	recipient := solana.MustPublicKeyFromBase58(utils.BloxrouteTipAddress)
+
+	solanaTx, err := solana.NewTransaction([]solana.Instruction{
+		system.NewTransferInstruction(bundleTip, privateKey.PublicKey(), recipient).Build()}, recentBlockHash)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to create bloxroute tip transaction: %w", err))
+		return true
+	}
+
+	/*
+		signatures, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+			if key.Equals(privateKey.PublicKey()) {
+				return &privateKey
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		tx.Signatures = signatures
+		return tx, nil
+	*/
+
+	txnBytes, err := solanaTx.MarshalBinary()
+	if err != nil {
+		log.Error(fmt.Errorf("failed to marshal binary: %w", err))
+		return true
+	}
+
+	signedTx := base64.StdEncoding.EncodeToString(txnBytes)
+	signedTx, err = transaction.AddMemoAndSign(signedTx, privateKey)
+
+	resp, err := h.PostSubmitV2(ctx, signedTx, false, true, false, false)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to post submit: %w", err))
+		return true
+	}
+	log.Infof("successfully placed order with tip: %s", resp.Signature)
+
+	return false
+}
+
+func callPlaceOrderBundleUsingBatchWithTip(ownerAddr string, bundleTip uint64) bool {
+	log.Info("starting placing order with bundle, using tip")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	privateKeyBase58, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
+
+		log.Error("env variable `PRIVATE_KEY` not set")
+		return true
+	}
+	privateKey, err := solana.PrivateKeyFromBase58(privateKeyBase58)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to get private key: %w", err))
+		return true
+	}
+
+	blockHash, err := h.GetRecentBlockHash(ctx)
+
+	if err != nil {
+		log.Error(fmt.Errorf("failed to get recent blockhash from server: %w", err))
+		return true
+	}
+
+	recentBlockHash, err := solana.HashFromBase58(blockHash.BlockHash)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to hash recent blockhash from server: %w", err))
+		return true
+	}
+
+	solanaTx, err := utils.CreateBloxrouteTipTransactionToUseBundles(privateKey, bundleTip, recentBlockHash)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to create bloxroute tip transaction: %w", err))
+		return true
+	}
+	txnBytes, err := solanaTx.MarshalBinary()
+	if err != nil {
+		log.Error(fmt.Errorf("failed to marshal binary: %w", err))
+		return true
+	}
+
+	signedTx := base64.StdEncoding.EncodeToString(txnBytes)
+
+	useBundle := true
+	frontRunningProtection := true
+	batchEntry := pb.PostSubmitRequestEntry{
+		Transaction:   &pb.TransactionMessage{Content: signedTx},
+		SkipPreFlight: true,
+	}
+	batchRequest := pb.PostSubmitBatchRequest{
+		Entries:                []*pb.PostSubmitRequestEntry{&batchEntry},
+		SubmitStrategy:         1,
+		UseBundle:              &useBundle,
+		FrontRunningProtection: &frontRunningProtection,
+	}
+	batchResp, err := h.PostSubmitBatchV2(ctx, &batchRequest)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to post submit batch: %w", err))
+		return true
+	}
+	log.Infof("successfully placed bundle batch order with tip: %s", batchResp.Transactions[0].Signature)
+
+	resp, err := h.PostSubmitV2(ctx, signedTx, false, true, false, false)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to post submit: %w", err))
+		return true
+	}
+	log.Infof("successfully placed order with tip: %s", resp.Signature)
 
 	return false
 }

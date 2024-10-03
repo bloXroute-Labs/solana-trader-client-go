@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="client-go-http-default" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="solana-trader-client-go" />
+    <working_directory value="$PROJECT_DIR$" />
+    <envs>
+      <env name="API_ENV" value="local" />
+      <env name="RUN_SLOW_STREAM" value="false" />
+      <env name="RUN_TRADES" value="true" />
+      <env name="AUTH_HEADER" value="OTFmMGM5NmMtNDg4MC00YjI4LWExMGItM2Y0MmU0MjJhYTgzOjliMTQzYjZhZTI2NzJjODQ2ZmZkZjU0OTFlNjBhZDEx" />
+    </envs>
+    <kind value="FILE" />
+    <package value="github.com/bloXroute-Labs/solana-trader-client-go" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/examples/httpclient/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
