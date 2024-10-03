@@ -119,8 +119,14 @@ func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHas
 	return g.recentBlockHashStore.get(ctx)
 }
 
+// GetRecentBlockHash returns recent block hash.
 func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+}
+
+// GetRecentBlockHash returns recent block hash, supports optional offset.
+func (g *GRPCClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
+	return g.apiClient.GetRecentBlockHashV2(ctx, &pb.GetRecentBlockHashRequestV2{Offset: offset})
 }
 
 // GetPriorityFee returns a priority fee estimate for a given percentile

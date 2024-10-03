@@ -93,6 +93,9 @@ func run() bool {
 	})
 
 	failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
+	failed = failed || logCall("callGetRecentBlockHashWS", func() bool { return callGetRecentBlockHashWS(w) })
+	failed = failed || logCall("callGetRecentBlockHashV2WS", func() bool { return callGetRecentBlockHashV2WS(w, 0) })
+	failed = failed || logCall("callGetRecentBlockHashV2WS", func() bool { return callGetRecentBlockHashV2WS(w, 1) })
 	// streaming methods
 	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
 	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
@@ -1324,7 +1327,7 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	log.Info("PumpFun swap")
 	sig, err := w.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
@@ -1745,5 +1748,31 @@ func callGetBundleTipWSStream(w *provider.WSClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetRecentBlockHashWS(w *provider.WSClient) bool {
+	log.Info("starting recent block hash")
+
+	result, err := w.GetRecentBlockHash(context.Background(), &pb.GetRecentBlockHashRequest{})
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	}
+
+	log.Infof("response %v received", result)
+	return false
+}
+
+func callGetRecentBlockHashV2WS(w *provider.WSClient, offset uint64) bool {
+	log.Info("starting recent block hash V2")
+
+	result, err := w.GetRecentBlockHashV2(context.Background(), &pb.GetRecentBlockHashRequestV2{Offset: offset})
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHashV2 request: %v", err)
+		return true
+	}
+
+	log.Infof("response %v received V2", result)
 	return false
 }

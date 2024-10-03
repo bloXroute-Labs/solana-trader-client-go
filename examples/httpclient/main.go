@@ -204,7 +204,7 @@ func buildAndPostTxWithDelays(offset uint64, delaysInSeconds []int) error {
 	if err != nil {
 		return err
 	}
-	blockHash, err := h.GetRecentBlockHashWithOffset(ctx, offset)
+	blockHash, err := h.GetRecentBlockHashV2(ctx, offset)
 	if err != nil {
 		return err
 	}
