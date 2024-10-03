@@ -3,15 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -19,27 +21,131 @@ import (
 )
 
 const (
-	sideAsk   = "ask"
-	typeLimit = "limit"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	computePrice = 100000
+	computeLimit = 5000
 )
+
+type EnvironmentVariables struct {
+	privateKey        string
+	publicKey         string
+	openOrdersAddress string
+	payer             string
+}
+
+var Environment EnvironmentVariables
 
 func main() {
 	utils.InitLogger()
-	failed := run()
-	if failed {
-		log.Fatal("one or multiple examples failed")
+
+	Environment = initializeEnvironmentVariables()
+
+	listAllEndpoints()
+
+	envPrompt := promptui.Select{
+		Label: "Select environment",
+		Items: []string{"mainnet", "testnet", "local"},
+	}
+
+	_, environment, err := envPrompt.Run()
+	if err != nil {
+		panic(fmt.Errorf("prompt failed: %v", err))
+	}
+
+	for {
+		client := setupGRPCClient(config.Env(environment))
+		if err != nil {
+			log.Fatalf("failed to setup GRPC client: %v", err)
+		}
+
+		var names []string
+		for name := range ExampleEndpoints {
+			names = append(names, name)
+		}
+
+		// Choose example
+		examplePrompt := promptui.Select{
+			Label: "Select example to run",
+			Items: names,
+		}
+
+		_, exampleName, err := examplePrompt.Run()
+		if err != nil {
+			fmt.Println("signal interrupt detected")
+			os.Exit(1)
+		}
+
+		exampleStruct := ExampleEndpoints[exampleName]
+
+		if exampleName == "runAllExamples" {
+			for _, content := range ExampleEndpoints {
+				if !content.requiresAdditionalEnvironmentVars {
+					if failed := content.run(client); failed {
+						log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+						time.Sleep(1 * time.Second)
+					}
+					time.Sleep(1 * time.Second)
+					log.Printf("example '%s' completed successfully\n", exampleName)
+				}
+			}
+		}
+
+		log.Printf("running example: %s\n", exampleName)
+		if failed := exampleStruct.run(client); failed {
+			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+			time.Sleep(1 * time.Second)
+		} else {
+
+			time.Sleep(1 * time.Second)
+			log.Printf("example '%s' completed successfully\n", exampleName)
+		}
+	}
+
+}
+
+func initializeEnvironmentVariables() EnvironmentVariables {
+	if os.Getenv("AUTH_HEADER") == "" {
+		log.Fatal("must specify bloXroute authorization header!")
+	}
+
+	privateKey, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
+		log.Errorf(fmt.Sprintf("PRIVATE_KEY environment variable not set, cannot run any examples that require tx submission"))
+	}
+
+	// you must specify:
+	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
+	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	if !ok {
+		log.Warnf(fmt.Sprintf("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples"))
+	}
+
+	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Errorf("OPEN_ORDERS environment variable not set: requests will be slower")
+	}
+
+	payerAddr, ok := os.LookupEnv("PAYER")
+	if !ok {
+		log.Warnf("PAYER environment variable not set: will be set to owner address")
+		payerAddr = ownerAddr
+	}
+
+	return EnvironmentVariables{
+		privateKey:        privateKey,
+		publicKey:         ownerAddr,
+		openOrdersAddress: ooAddr,
+		payer:             payerAddr,
 	}
 }
 
-func run() bool {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func setupGRPCClient(env config.Env) *provider.GRPCClient {
 	var g *provider.GRPCClient
-
-	switch cfg.Env {
+	var err error
+	switch env {
 	case config.EnvLocal:
 		g, err = provider.NewGRPCLocal()
 	case config.EnvTestnet:
@@ -51,151 +157,288 @@ func run() bool {
 		log.Fatalf("error dialing GRPC client: %v", err)
 	}
 
-	var failed bool
-	// informational methods
-	failed = failed || logCall("callPoolsGRPC", func() bool { return callPoolsGRPC(g) })
-	failed = failed || logCall("callRaydiumPoolReserveGRPC", func() bool { return callRaydiumPoolReserveGRPC(g) })
-	failed = failed || logCall("callMarketsGRPC", func() bool { return callMarketsGRPC(g) })
-	// this is just for example/test purposes
-
-	failed = failed || logCall("callOrderbookGRPC", func() bool { return callOrderbookGRPC(g) })
-	failed = failed || logCall("callMarketDepthGRPC", func() bool { return callMarketDepthGRPC(g) })
-	failed = failed || logCall("callOpenOrdersGRPC", func() bool { return callOpenOrdersGRPC(g) })
-	failed = failed || logCall("callTickersGRPC", func() bool { return callTickersGRPC(g) })
-
-	failed = failed || logCall("callGetTransactionGRPC", func() bool { return callGetTransactionGRPC(g) })
-	failed = failed || logCall("callGetRateLimitGRPC", func() bool { return callGetRateLimitGRPC(g) })
-	failed = failed || logCall("callRaydiumPoolsGRPC", func() bool { return callRaydiumPoolsGRPC(g) })
-	failed = failed || logCall("callPriceGRPC", func() bool { return callPriceGRPC(g) })
-	failed = failed || logCall("callRaydiumPricesGRPC", func() bool { return callRaydiumPricesGRPC(g) })
-	failed = failed || logCall("callJupiterPricesGRPC", func() bool { return callJupiterPricesGRPC(g) })
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-	}
-
-	failed = failed || logCall("callGetTickersGRPCStream", func() bool { return callGetTickersGRPCStream(g) })
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(g) })
-	}
-
-	failed = failed || logCall("callUnsettledGRPC", func() bool { return callUnsettledGRPC(g) })
-	failed = failed || logCall("callGetAccountBalanceGRPC", func() bool { return callGetAccountBalanceGRPC(g) })
-
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(g) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(g) })
-	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes(g) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
-	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
-	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
-	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
-
-	failed = failed || logCall("callGetPriorityFeeGRPCStream", func() bool { return callGetPriorityFeeGRPCStream(g) })
-	failed = failed || logCall("callGetPriorityFeeGRPC", func() bool { return callGetPriorityFeeGRPC(g) })
-
-	failed = failed || logCall("callGetPumpFunNewTokensGRPCStream", func() bool {
-		gg, err := provider.NewGRPCClientPumpNY()
-		if err != nil {
-			panic(err)
-		}
-		mint, res := callGetPumpFunNewTokensGRPCStream(gg)
-		res = callGetPumpFunSwapsGRPCStream(gg, mint)
-		return res
-	})
-
-	failed = failed || logCall("callGetBundleTipGRPCStream", func() bool { return callGetBundleTipGRPCStream(g) })
-
-	// calls below this place an order and immediately cancel it
-	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewGRPCClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
-	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return failed
-	}
-
-	if cfg.RunTrades {
-		payerAddr, ok := os.LookupEnv("PAYER")
-		if !ok {
-			log.Infof("PAYER environment variable not set: will be set to owner address")
-			payerAddr = ownerAddr
-		}
-		if !ok {
-			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-		}
-
-		ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-		if !ok {
-			log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-		}
-		failed = failed || logCall("callGetTokenAccountsGRPC", func() bool { return callGetTokenAccountsGRPC(g, ownerAddr) })
-		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1000000))
-		})
-
-		failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(g, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-
-		failed = failed || logCall("callPlaceOrderGRPCWithBundle", func() bool {
-			return callPlaceOrderBundle(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1000000))
-		})
-
-		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
-			return callPlaceOrderWithStakedRPCs(g, ownerAddr, payerAddr, ooAddr, sideAsk, 10000, 10000,
-				typeLimit, uint64(1100000))
-		})
-
-		failed = failed || logCall("callPlaceOrderGRPCWithBundleBatch", func() bool {
-			return callPlaceOrderBundleWithBatch(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0,
-				typeLimit, uint64(1000000))
-		})
-
-		failed = failed || logCall("callPlaceOrderGRPCWithPriorityFee", func() bool {
-			return callPlaceOrderGRPCWithPriorityFee(g, ownerAddr, payerAddr, ooAddr, sideAsk, 0, 0, typeLimit)
-		})
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(g, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(g, ownerAddr) })
-		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(g, ownerAddr) })
-		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(g, ownerAddr) })
-		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(g, ownerAddr, uint64(1100), true) })
-		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(g, ownerAddr, uint64(1100), false) })
-	}
-
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callOrderbookGRPCStream", func() bool { return callOrderbookGRPCStream(g) })
-		failed = failed || logCall("callMarketDepthGRPCStream", func() bool { return callMarketDepthGRPCStream(g) })
-		failed = failed || logCall("callPricesGRPCStream", func() bool { return callPricesGRPCStream(g) })
-		failed = failed || logCall("callTradesGRPCStream", func() bool { return callTradesGRPCStream(g) })
-		failed = failed || logCall("callSwapsGRPCStream", func() bool { return callSwapsGRPCStream(g) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(g) })
-	}
-	return failed
+	return g
 }
 
-func logCall(name string, call func() bool) bool {
-	log.Infof("Executing `%s'...", name)
+func listAllEndpoints() {
+	fmt.Println(fmt.Sprintf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
 
-	result := call()
-	if result {
-		log.Errorf("`%s' failed", name)
+	var names []string
+	for name := range ExampleEndpoints {
+		names = append(names, name)
 	}
+	sort.Strings(names)
 
-	return result
+	for _, name := range names {
+		ex := ExampleEndpoints[name]
+		var extraStr string
+		if ex.requiresAdditionalEnvironmentVars {
+			extraStr = " (requires additional environment variables to be enabled)"
+		}
+
+		fmt.Printf("  %-40s %s%s\n", name, ex.description, extraStr)
+	}
+}
+
+type ExampleFunc func(*provider.GRPCClient) bool
+
+var ExampleEndpoints = map[string]struct {
+	run                               ExampleFunc
+	description                       string
+	requiresAdditionalEnvironmentVars bool
+}{
+	"getPools": {
+		run:         callPoolsGRPC,
+		description: "fetch all available markets",
+	},
+
+	"getRaydiumPoolReserve": {
+		run:         callRaydiumPoolReserveGRPC,
+		description: "get raydium pool reserve",
+	},
+	"getMarkets": {
+		run:         callMarketsGRPC,
+		description: "fetch all available markets",
+	},
+	"getOrderbook": {
+		run:         callOrderbookGRPC,
+		description: "fetch orderbook for specific market",
+	},
+	"getMarketDepth": {
+		run:         callMarketDepthGRPC,
+		description: "get market depth",
+	},
+	"getOpenOrders": {
+		run:         callOpenOrdersGRPC,
+		description: "get open orders",
+	},
+
+	"getTickers": {
+		run:         callTickersGRPC,
+		description: "get tickers",
+	},
+
+	"getTransaction": {
+		run:         callGetTransactionGRPC,
+		description: "get tickers",
+	},
+
+	"getRateLimit": {
+		run:         callGetRateLimitGRPC,
+		description: "get rate limit",
+	},
+	"getRaydiumPools": {
+		run:         callRaydiumPoolsGRPC,
+		description: "get raydium pools",
+	},
+	"getPrice": {
+		run:         callPriceGRPC,
+		description: "get raydium pools",
+	},
+	"getRaydiumPrices": {
+		run:         callRaydiumPricesGRPC,
+		description: "get raydium prices",
+	},
+	"getJupiterPrices": {
+		run:         callJupiterPricesGRPC,
+		description: "get jupiter prices",
+	},
+	"orderbookStream": {
+		run:         callOrderbookGRPCStream,
+		description: "stream orderbook updates (slow example)",
+	},
+	"marketDepthStream": {
+		run:         callMarketDepthGRPCStream,
+		description: "stream market depth updates (slow example)",
+	},
+	"getTickersStream": {
+		run:         callGetTickersGRPCStream,
+		description: "stream get tickers",
+	},
+	"getPricesStream": {
+		run:         callPricesGRPCStream,
+		description: "stream prices",
+	},
+	"getTradesStream": {
+		run:         callTradesGRPCStream,
+		description: "stream trades",
+	},
+	"getSwapsStream": {
+		run:         callSwapsGRPCStream,
+		description: "stream swaps",
+	},
+	"getNewRaydiumPoolStream": {
+		run:         callGetNewRaydiumPoolsStream,
+		description: "stream new raydium pools",
+	},
+	"getNewRaydiumPoolsStreamWithCPMM": {
+		run:         callGetNewRaydiumPoolsStreamWithCPMM,
+		description: "stream new raydium pools with cpmm enabled",
+	},
+	"getUnsettled": {
+		run:         callUnsettledGRPC,
+		description: "get unsettled",
+	},
+	"getAccountBalance": {
+		run:         callGetAccountBalanceGRPC,
+		description: "get account balance",
+	},
+
+	"getQuotes": {
+		run:         callGetQuotes,
+		description: "get quotes",
+	},
+
+	"getRaydiumQuotes": {
+		run:         callGetRaydiumQuotes,
+		description: "get raydium quotes",
+	},
+
+	"getPumpFunQuotes": {
+		run:         callGetPumpFunQuotes,
+		description: "get pump fun quotes",
+	},
+
+	"getJupiterQuotes": {
+		run:         callGetJupiterQuotes,
+		description: "get jupiter quotes",
+	},
+
+	"recentBlockhashStream": {
+		run:         callRecentBlockHashGRPCStream,
+		description: "recent blockhash stream",
+	},
+	"poolReservesStream": {
+		run:         callPoolReservesGRPCStream,
+		description: "recent blockhash stream",
+	},
+	"blockStream": {
+		run:         callBlockGRPCStream,
+		description: "block stream",
+	},
+	"getPriorityFee": {
+		run:         callGetPriorityFeeGRPC,
+		description: "get priority fee",
+	},
+	"getPriorityFeeStream": {
+		run:         callGetPriorityFeeGRPCStream,
+		description: "get priority fee stream",
+	},
+	"getPumpFunNewTokenStream": {
+		run:         callGetpumpFunNewTokenGRPCStreamWrap,
+		description: "get pump fun new token stream",
+	},
+
+	"getBundleTipStream": {
+		run:         callGetBundleTipGRPCStream,
+		description: "get bundle tip stream",
+	},
+
+	"getTokenAccounts": {
+		run:                               callGetTokenAccountsGRPCWrap,
+		description:                       "get token accounts",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithBundle": {
+		run:                               callPlaceOrderBundleWrap,
+		description:                       "place a new order (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithStakedRPCs": {
+		run:                               callPlaceOrderWithStakedRPCsWrap,
+		description:                       "place order (openbook) with staked rpcs and tip",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithBundleBatch": {
+		run:                               callPlaceOrderBundleWithBatchWrap,
+		description:                       "place order (openbook) with bundle with batch",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithPriorityFee": {
+		run:                               callPlaceOrderGRPCWithPriorityFeeWrap,
+		description:                       "place order (openbook) with priority fee",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"replaceByClientOrderID": {
+		run:                               callReplaceByClientOrderIDWrap,
+		description:                       "replace order by client id (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"replaceOrder": {
+		run:                               callReplaceOrderWrap,
+		description:                       "replace order (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"tradeSwap": {
+		run:                               callTradeSwapWrap,
+		description:                       "trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"routeTradeSwap": {
+		run:                               callRouteTradeSwapWrap,
+		description:                       "route trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumTradeSwap": {
+		run:                               callRaydiumSwapWrap,
+		description:                       "raydium trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"jupiterTradeSwap": {
+		run:                               callJupiterSwapWrap,
+		description:                       "jupiter trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"pumpFunSwap": {
+		run:                               callPostPumpFunSwapWrap,
+		description:                       "pump fun swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumRouteSwap": {
+		run:                               callRaydiumRouteSwapWrap,
+		description:                       "raydium route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"jupiterRouteSwap": {
+		run:                               callJupiterRouteSwapWrap,
+		description:                       "call jupiter route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumSwapWithInstructions": {
+		run:                               callRaydiumSwapInstructionsWrap,
+		description:                       "call raydium swap with instructions",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"jupiterSwapWithInstructions": {
+		run:                               callJupiterSwapInstructionsWrap,
+		description:                       "call jupiter swap with instructions",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"orderLifeCycleTest": {
+		run:                               orderLifecycleTestWrap,
+		description:                       "order lifecycle test",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"cancelAll": {
+		run:                               cancelAllWrap,
+		description:                       "cancel all test (run order lifecycle before)",
+		requiresAdditionalEnvironmentVars: true,
+	},
 }
 
 func callMarketsGRPC(g *provider.GRPCClient) bool {
@@ -258,7 +501,11 @@ func callMarketDepthGRPC(g *provider.GRPCClient) bool {
 }
 
 func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
-	orders, err := g.GetOpenOrdersV2(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", "", 0)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	orders, err := g.GetOpenOrdersV2(ctx, "SOLUSDC",
+		"FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", "", 0)
 	if err != nil {
 		log.Errorf("error with GetOrders request for SOLUSDC: %v", err)
 		return true
@@ -294,6 +541,11 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 
 	fmt.Println()
 	return false
+}
+
+func callGetTokenAccountsGRPCWrap(g *provider.GRPCClient) bool {
+	return callGetTokenAccountsGRPC(g, Environment.openOrdersAddress)
+
 }
 
 func callGetTokenAccountsGRPC(g *provider.GRPCClient, ownerAddr string) bool {
@@ -772,11 +1024,13 @@ const (
 	//marketAddr = "RAY/USDC"
 	//marketAddr = "9Lyhks5bQQxb9EyyX55NtgKQzpM4WK7JCmeaWuQ5MoXD"
 
-	orderSide   = pb.Side_S_ASK
-	orderType   = common.OrderType_OT_LIMIT
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.001)
 )
+
+func orderLifecycleTestWrap(g *provider.GRPCClient) bool {
+	return orderLifecycleTest(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress)
+}
 
 func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting order lifecycle test")
@@ -878,7 +1132,12 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	return clientOrderID, false
 }
 
-func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
+func callPlaceOrderBundleWrap(g *provider.GRPCClient) bool {
+	return callPlaceOrderBundle(g, Environment.publicKey, Environment.payer, sideAsk,
+		computeLimit, computePrice, typeLimit, 100000)
+}
+
+func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr,
 	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
 	log.Info("starting place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -912,6 +1171,11 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr, _ string
 	log.Infof("submitted bundle order to trader api %v", resp)
 
 	return false
+}
+
+func callPlaceOrderWithStakedRPCsWrap(g *provider.GRPCClient) bool {
+	return callPlaceOrderWithStakedRPCs(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk,
+		10000, 10000, typeLimit, uint64(1100000))
 }
 
 func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
@@ -948,6 +1212,11 @@ func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, 
 	log.Infof("submitted order to trader api with staked rpcs %v", resp)
 
 	return false
+}
+
+func callPlaceOrderBundleWithBatchWrap(g *provider.GRPCClient) bool {
+	return callPlaceOrderBundleWithBatch(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk,
+		computeLimit, computePrice, typeLimit, uint64(1000000))
 }
 
 func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
@@ -1004,6 +1273,11 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 	}
 
 	return false
+}
+
+func callPlaceOrderGRPCWithPriorityFeeWrap(g *provider.GRPCClient) bool {
+	return callPlaceOrderGRPCWithPriorityFee(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress,
+		sideAsk, computeLimit, computePrice, typeLimit)
 }
 
 func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string,
@@ -1066,6 +1340,10 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) bool {
 
 	log.Infof("response signature received: %v", sig)
 	return false
+}
+
+func cancelAllWrap(g *provider.GRPCClient) bool {
+	return cancelAll(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
 }
 
 func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1158,6 +1436,10 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 	return callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 
+func callReplaceByClientOrderIDWrap(g *provider.GRPCClient) bool {
+	return callReplaceByClientOrderID(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+}
+
 func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
@@ -1247,6 +1529,10 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 		log.Infof("placing cancel order(s) %s", tx.Signature)
 	}
 	return false
+}
+
+func callReplaceOrderWrap(g *provider.GRPCClient) bool {
+	return callReplaceOrder(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1362,6 +1648,10 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumSwapWrap(g *provider.GRPCClient) bool {
+	return callRaydiumSwap(g, Environment.publicKey)
+}
+
 func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
@@ -1385,6 +1675,10 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	}
 	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
+}
+
+func callPostPumpFunSwapWrap(g *provider.GRPCClient) bool {
+	return callPostPumpFunSwap(Environment.publicKey)
 }
 
 func callPostPumpFunSwap(ownerAddr string) bool {
@@ -1417,6 +1711,10 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	return false
 }
 
+func callJupiterSwapWrap(g *provider.GRPCClient) bool {
+	return callJupiterSwap(g, Environment.publicKey)
+}
+
 func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting Jupiter swap test")
 
@@ -1440,6 +1738,10 @@ func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	}
 	log.Infof("Jupiter swap transaction signature : %s", sig)
 	return false
+}
+
+func callJupiterSwapInstructionsWrap(g *provider.GRPCClient) bool {
+	return callJupiterSwapInstructions(g, Environment.publicKey, uint64(1100), false)
 }
 
 func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
@@ -1469,6 +1771,10 @@ func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAm
 	return false
 }
 
+func callRaydiumSwapInstructionsWrap(g *provider.GRPCClient) bool {
+	return callRaydiumSwapInstructions(g, Environment.publicKey, uint64(1100), true)
+}
+
 func callRaydiumSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
 	log.Info("starting Raydium swap instructions test")
 
@@ -1494,6 +1800,13 @@ func callRaydiumSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAm
 	}
 	log.Infof("Raydium swap transaction with instructions signature : %s", sig)
 	return false
+}
+
+func callTradeSwapWrap(g *provider.GRPCClient) bool {
+	return callTradeSwap(g, Environment.publicKey)
+}
+func callRouteTradeSwapWrap(g *provider.GRPCClient) bool {
+	return callRouteTradeSwap(g, Environment.publicKey)
 }
 
 func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -1532,6 +1845,10 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumRouteSwapWrap(g *provider.GRPCClient) bool {
+	return callRaydiumRouteSwap(g, Environment.publicKey)
+}
+
 func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	log.Info("starting Raydium route swap test")
 
@@ -1565,6 +1882,10 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	}
 	log.Infof("Raydium route swap transaction signature : %s", sig)
 	return false
+}
+
+func callJupiterRouteSwapWrap(g *provider.GRPCClient) bool {
+	return callJupiterRouteSwap(g, Environment.publicKey)
 }
 
 func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -1605,6 +1926,17 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	}
 	log.Infof("Jupiter route swap transaction signature : %s", sig)
 	return false
+}
+
+func callGetpumpFunNewTokenGRPCStreamWrap(g *provider.GRPCClient) bool {
+	gg, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mint, res := callGetPumpFunNewTokensGRPCStream(gg)
+	res = callGetPumpFunSwapsGRPCStream(gg, mint)
+	return res
 }
 
 func callGetPumpFunNewTokensGRPCStream(g *provider.GRPCClient) (string, bool) {

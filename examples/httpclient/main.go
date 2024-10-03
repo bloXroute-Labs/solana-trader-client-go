@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/manifoldco/promptui"
 	"math/rand"
-	"net/http"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -20,19 +21,93 @@ import (
 )
 
 const (
-	sideAsk   = "ask"
-	typeLimit = "limit"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	computePrice = 100000
+	computeLimit = 5000
 )
 
-func httpClient() *provider.HTTPClient {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
+type EnvironmentVariables struct {
+	privateKey        string
+	publicKey         string
+	openOrdersAddress string
+	payer             string
+}
+
+var Environment EnvironmentVariables
+
+func main() {
+	utils.InitLogger()
+
+	Environment = initializeEnvironmentVariables()
+
+	listAllEndpoints()
+
+	envPrompt := promptui.Select{
+		Label: "Select environment",
+		Items: []string{"mainnet", "testnet", "local"},
 	}
 
-	var h *provider.HTTPClient
+	_, environment, err := envPrompt.Run()
+	if err != nil {
+		panic(fmt.Errorf("prompt failed: %v", err))
+	}
 
-	switch cfg.Env {
+	for {
+
+		client := setupHTTPClient(config.Env(environment))
+		if err != nil {
+			log.Fatalf("failed to setup GRPC client: %v", err)
+		}
+
+		var names []string
+		for name := range ExampleEndpoints {
+			names = append(names, name)
+		}
+		// Choose example
+		examplePrompt := promptui.Select{
+			Label: "Select example to run",
+			Items: names,
+		}
+
+		_, exampleName, err := examplePrompt.Run()
+		if err != nil {
+			fmt.Println("signal interrupt detected")
+			os.Exit(1)
+		}
+
+		exampleStruct := ExampleEndpoints[exampleName]
+
+		if exampleName == "runAllExamples" {
+			for _, content := range ExampleEndpoints {
+				if !content.requiresAdditionalEnvironmentVars {
+					if failed := content.run(client); failed {
+						log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+						time.Sleep(1 * time.Second)
+					}
+					time.Sleep(1 * time.Second)
+					log.Printf("example '%s' completed successfully\n", exampleName)
+				}
+			}
+		}
+
+		log.Printf("running example: %s\n", exampleName)
+		if failed := exampleStruct.run(client); failed {
+			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+			time.Sleep(1 * time.Second)
+		} else {
+
+			time.Sleep(1 * time.Second)
+			log.Printf("example '%s' completed successfully\n", exampleName)
+		}
+	}
+}
+
+func setupHTTPClient(env config.Env) *provider.HTTPClient {
+
+	var h *provider.HTTPClient
+	var err error
+	switch env {
 	case config.EnvLocal:
 		h = provider.NewHTTPLocal()
 	case config.EnvTestnet:
@@ -40,148 +115,275 @@ func httpClient() *provider.HTTPClient {
 	case config.EnvMainnet:
 		h = provider.NewHTTPClient()
 	}
+	if err != nil {
+		log.Fatalf("error connecting to HTTP client: %v", err)
+	}
+
 	return h
 }
 
-func httpClientWithTimeout(timeout time.Duration) *provider.HTTPClient {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
+func initializeEnvironmentVariables() EnvironmentVariables {
+	if os.Getenv("AUTH_HEADER") == "" {
+		log.Fatal("must specify bloXroute authorization header!")
 	}
 
-	var h *provider.HTTPClient
-	client := &http.Client{Timeout: timeout}
-
-	switch cfg.Env {
-	case config.EnvLocal:
-		h = provider.NewHTTPLocal()
-	case config.EnvTestnet:
-		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.TestnetHTTP))
-	case config.EnvMainnet:
-		h = provider.NewHTTPClientWithOpts(client, provider.DefaultRPCOpts(provider.MainnetNYHTTP))
-	}
-	return h
-}
-
-func main() {
-	utils.InitLogger()
-	failed := run()
-	if failed {
-		log.Fatal("one or multiple examples failed")
-	}
-}
-
-func run() bool {
-	var failed bool
-	// informational methods
-	failed = failed || logCall("callMarketsHTTP", func() bool { return callMarketsHTTP() })
-	failed = failed || logCall("callOrderbookHTTP", func() bool { return callOrderbookHTTP() })
-	// this is just for example/test purposes
-	failed = failed || logCall("callMarketDepthHTTP", func() bool { return callMarketDepthHTTP() })
-	failed = failed || logCall("callTradesHTTP", func() bool { return callTradesHTTP() })
-	failed = failed || logCall("callPoolsHTTP", func() bool { return callPoolsHTTP() })
-	failed = failed || logCall("callGetTransaction ", func() bool { return callGetTransaction() })
-	failed = failed || logCall("callGetRateLimit ", func() bool { return callGetRateLimit() })
-
-	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
-	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
-	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
-	failed = failed || logCall("callTickersHTTP", func() bool { return callTickersHTTP() })
-	failed = failed || logCall("callUnsettledHTTP", func() bool { return callUnsettledHTTP() })
-	failed = failed || logCall("callGetAccountBalanceHTTP", func() bool { return callGetAccountBalanceHTTP() })
-	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
-	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes() })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
-	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
-
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
+	privateKey, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
+		log.Errorf(fmt.Sprintf("PRIVATE_KEY environment variable not set, cannot run any examples that require tx submission"))
 	}
 
-	// calls below this place an order and immediately cancel it
 	// you must specify:
 	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
 	// 	- PUBLIC_KEY to indicate which account you wish to trade from
 	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
 	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
 	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return failed
+		log.Warnf(fmt.Sprintf("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples"))
 	}
 
 	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
 	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
+		log.Errorf("OPEN_ORDERS environment variable not set: requests will be slower")
 	}
 
 	payerAddr, ok := os.LookupEnv("PAYER")
 	if !ok {
-		log.Infof("PAYER environment variable not set: will be set to owner address")
+		log.Warnf("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
-	if cfg.RunTrades {
-		// Order Lifecycle
-		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
-		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
-		//failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-		//failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
-		//	return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
-		//})
 
-		for i := 1; i < 3; i++ {
-			time.Sleep(1 * time.Second)
+	return EnvironmentVariables{
+		privateKey:        privateKey,
+		publicKey:         ownerAddr,
+		openOrdersAddress: ooAddr,
+		payer:             payerAddr,
+	}
+}
 
-			failed = failed || logCall("callPlaceOrderBundle", func() bool {
-				return callPlaceOrderBundle(ownerAddr, 10000) // this is using raydium swap
-			})
+func listAllEndpoints() {
+	fmt.Println(fmt.Sprintf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
+
+	var names []string
+	for name := range ExampleEndpoints {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		ex := ExampleEndpoints[name]
+		var extraStr string
+		if ex.requiresAdditionalEnvironmentVars {
+			extraStr = " (requires additional environment variables to be enabled)"
 		}
 
-		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool {
-			return callPlaceOrderWithStakedRPCs(ownerAddr, 10000) // this is using raydium swap
-		})
-
-		failed = failed || logCall("callPlaceOrderBundleWithBatch", func() bool {
-			return callPlaceOrderBundleUsingBatch(ownerAddr, 10000) // this is using raydium swap
-		})
-
-		failed = failed || logCall("callPostSettleHTTP", func() bool { return callPostSettleHTTP(ownerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callGetRecentBlockHash", func() bool { return callGetRecentBlockHash() })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
-		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
-		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwapInstructions", func() bool { return callJupiterSwapInstructions(ownerAddr, nil, false) })
-		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(ownerAddr, nil, false) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
-		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
+		fmt.Printf("  %-40s %s%s\n", name, ex.description, extraStr)
 	}
-
-	return failed
 }
 
-func logCall(name string, call func() bool) bool {
-	log.Infof("Executing `%s'...", name)
+type ExampleFunc func(client *provider.HTTPClient) bool
 
-	result := call()
-	if result {
-		log.Errorf("`%s' failed", name)
-	}
+var ExampleEndpoints = map[string]struct {
+	run                               ExampleFunc
+	description                       string
+	requiresAdditionalEnvironmentVars bool
+}{
+	"getPools": {
+		run:         callPoolsHTTP,
+		description: "fetch all available markets",
+	},
 
-	return result
+	"getTrades": {
+		run:         callTradesHTTP,
+		description: "get trades",
+	},
+
+	"getRaydiumPoolReserve": {
+		run:         callRaydiumPoolReserveHTTP,
+		description: "get raydium pool reserve",
+	},
+	"getMarkets": {
+		run:         callMarketsHTTP,
+		description: "fetch all available markets",
+	},
+	"getOrderbook": {
+		run:         callOrderbookHTTP,
+		description: "fetch orderbook for specific market",
+	},
+	"getMarketDepth": {
+		run:         callMarketDepthHTTP,
+		description: "get market depth",
+	},
+	"getTickers": {
+		run:         callTickersHTTP,
+		description: "get tickers",
+	},
+
+	"getTransaction": {
+		run:         callGetTransactionHTTP,
+		description: "get tickers",
+	},
+
+	"getRateLimit": {
+		run:         callGetRateLimitHTTP,
+		description: "get rate limit",
+	},
+	"getRaydiumPools": {
+		run:         callRaydiumPoolsHTTP,
+		description: "get raydium pools",
+	},
+	"getPrice": {
+		run:         callPriceHTTP,
+		description: "get raydium pools",
+	},
+	"getRecentBlockhash": {
+		run:         callGetRecentBlockHashHTTP,
+		description: "get recent blockhash",
+	},
+	"getRaydiumPrices": {
+		run:         callRaydiumPricesHTTP,
+		description: "get raydium prices",
+	},
+	"getJupiterPrices": {
+		run:         callJupiterPricesHTTP,
+		description: "get jupiter prices",
+	},
+
+	"getUnsettled": {
+		run:         callUnsettledHTTP,
+		description: "get unsettled",
+	},
+	"getAccountBalance": {
+		run:         callGetAccountBalanceHTTP,
+		description: "get account balance",
+	},
+	"getQuotes": {
+		run:         callGetQuotesHTTP,
+		description: "get quotes",
+	},
+
+	"getRaydiumQuotes": {
+		run:         callGetRaydiumQuotesHTTP,
+		description: "get raydium quotes",
+	},
+
+	"getPumpFunQuotes": {
+		run:         callGetPumpFunQuotesHTTP,
+		description: "get pump fun quotes",
+	},
+
+	"getJupiterQuotes": {
+		run:         callGetJupiterQuotesHTTP,
+		description: "get jupiter quotes",
+	},
+
+	"getPriorityFee": {
+		run:         callGetPriorityFeeHTTP,
+		description: "get priority fee",
+	},
+
+	"getTokenAccounts": {
+		run:                               callGetTokenAccountsHTTPWrap,
+		description:                       "get token accounts",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithBundle": {
+		run:                               callPlaceOrderHTTPWrap,
+		description:                       "place a new order (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithStakedRPCs": {
+		run:                               callPlaceOrderWithStakedRPCsHTTPWrap,
+		description:                       "place order (openbook) with staked rpcs and tip",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithBundleBatch": {
+		run:                               callPlaceOrderBundleUsingBatchHTTPWithWrap,
+		description:                       "place order (openbook) with bundle with batch",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithPriorityFee": {
+		run:                               callPlaceOrderHTTPWithPriorityFeeWrap,
+		description:                       "place order (openbook) with priority fee",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"replaceByClientOrderID": {
+		run:                               callReplaceByClientOrderIDWrap,
+		description:                       "replace order by client id (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"replaceOrder": {
+		run:                               callReplaceOrderWrap,
+		description:                       "replace order (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"tradeSwap": {
+		run:                               callTradeSwapWrap,
+		description:                       "trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"routeTradeSwap": {
+		run:                               callRouteTradeSwapWrap,
+		description:                       "route trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumTradeSwap": {
+		run:                               callRaydiumSwapWrap,
+		description:                       "raydium trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"jupiterTradeSwap": {
+		run:                               callJupiterSwapWrap,
+		description:                       "jupiter trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"pumpFunSwap": {
+		run:                               callPostPumpFunSwapWrap,
+		description:                       "pump fun swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumRouteSwap": {
+		run:                               callRaydiumRouteSwapWrap,
+		description:                       "raydium route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"jupiterRouteSwap": {
+		run:                               callJupiterRouteSwapWrap,
+		description:                       "call jupiter route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumSwapWithInstructions": {
+		run:                               callRaydiumSwapInstructionsWrap,
+		description:                       "call raydium swap with instructions",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"jupiterSwapWithInstructions": {
+		run:                               callJupiterSwapInstructionsWrap,
+		description:                       "call jupiter swap with instructions",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"cancelAll": {
+		run:                               cancelAllWrap,
+		description:                       "cancel all test (run order lifecycle before)",
+		requiresAdditionalEnvironmentVars: true,
+	},
 }
 
-func callMarketsHTTP() bool {
-	h := httpClient()
+func callMarketsHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -197,8 +399,7 @@ func callMarketsHTTP() bool {
 	return false
 }
 
-func callOrderbookHTTP() bool {
-	h := httpClient()
+func callOrderbookHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
@@ -233,9 +434,7 @@ func callOrderbookHTTP() bool {
 	return false
 }
 
-func callMarketDepthHTTP() bool {
-	h := httpClient()
-
+func callMarketDepthHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -250,8 +449,7 @@ func callMarketDepthHTTP() bool {
 	return false
 }
 
-func callUnsettledHTTP() bool {
-	h := httpClient()
+func callUnsettledHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -267,8 +465,7 @@ func callUnsettledHTTP() bool {
 	return false
 }
 
-func callGetAccountBalanceHTTP() bool {
-	h := httpClient()
+func callGetAccountBalanceHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -284,8 +481,11 @@ func callGetAccountBalanceHTTP() bool {
 	return false
 }
 
-func callGetTokenAccountsHTTP(ownerAddr string) bool {
-	h := httpClient()
+func callGetTokenAccountsHTTPWrap(h *provider.HTTPClient) bool {
+	return callGetTokenAccountsHTTP(h, Environment.publicKey)
+}
+
+func callGetTokenAccountsHTTP(h *provider.HTTPClient, ownerAddr string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -303,8 +503,7 @@ func callGetTokenAccountsHTTP(ownerAddr string) bool {
 	return false
 }
 
-func callTradesHTTP() bool {
-	h := httpClient()
+func callTradesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -320,8 +519,7 @@ func callTradesHTTP() bool {
 	return false
 }
 
-func callPoolsHTTP() bool {
-	h := httpClient()
+func callPoolsHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -338,8 +536,7 @@ func callPoolsHTTP() bool {
 	return false
 }
 
-func callRaydiumPoolReserve() bool {
-	h := httpClient()
+func callRaydiumPoolReserveHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -358,8 +555,7 @@ func callRaydiumPoolReserve() bool {
 	return false
 }
 
-func callRaydiumPools() bool {
-	h := httpClient()
+func callRaydiumPoolsHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -376,8 +572,7 @@ func callRaydiumPools() bool {
 	return false
 }
 
-func callGetRateLimit() bool {
-	h := httpClient()
+func callGetRateLimitHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -393,8 +588,7 @@ func callGetRateLimit() bool {
 	return false
 }
 
-func callGetTransaction() bool {
-	h := httpClient()
+func callGetTransactionHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -412,8 +606,7 @@ func callGetTransaction() bool {
 	return false
 }
 
-func callPriceHTTP() bool {
-	h := httpClient()
+func callPriceHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -429,8 +622,7 @@ func callPriceHTTP() bool {
 	return false
 }
 
-func callRaydiumPrices() bool {
-	h := httpClient()
+func callRaydiumPricesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -448,8 +640,7 @@ func callRaydiumPrices() bool {
 	return false
 }
 
-func callJupiterPrices() bool {
-	h := httpClient()
+func callJupiterPricesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -467,8 +658,7 @@ func callJupiterPrices() bool {
 	return false
 }
 
-func callTickersHTTP() bool {
-	h := httpClient()
+func callTickersHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -484,8 +674,7 @@ func callTickersHTTP() bool {
 	return false
 }
 
-func callGetQuotesHTTP() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+func callGetQuotesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -518,8 +707,7 @@ func callGetQuotesHTTP() bool {
 	return false
 }
 
-func callGetRaydiumQuotes() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+func callGetRaydiumQuotesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -556,8 +744,7 @@ func callGetRaydiumQuotes() bool {
 	return false
 }
 
-func callGetPumpFunQuotes() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+func callGetPumpFunQuotesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -581,8 +768,7 @@ func callGetPumpFunQuotes() bool {
 	return false
 }
 
-func callGetJupiterQuotes() bool {
-	h := httpClientWithTimeout(time.Second * 60)
+func callGetJupiterQuotesHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -620,13 +806,16 @@ const (
 	// SOL/USDC market
 	marketAddr = "8BnEgHoWFysVcuFFX7QztDmzuH8r5ZFvyP3sYwn1XTh6"
 
-	orderSide   = pb.Side_S_ASK
 	orderPrice  = float64(170200)
 	orderAmount = float64(0.1)
 )
 
-func callPlaceOrderHTTP(ownerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
-	h := httpClient()
+func callPlaceOrderHTTPWrap(h *provider.HTTPClient) bool {
+	_, ok := callPlaceOrderHTTP(h, Environment.publicKey, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return ok
+}
+
+func callPlaceOrderHTTP(h *provider.HTTPClient, ownerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -661,9 +850,13 @@ func callPlaceOrderHTTP(ownerAddr, ooAddr string, orderSide string, orderType st
 	return clientOrderID, false
 }
 
-func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide string, orderType string,
+func callPlaceOrderHTTPWithPriorityFeeWrap(h *provider.HTTPClient) bool {
+	return callPlaceOrderHTTPWithPriorityFee(h, Environment.publicKey, Environment.openOrdersAddress, sideAsk, typeLimit,
+		computeLimit, computePrice)
+}
+
+func callPlaceOrderHTTPWithPriorityFee(h *provider.HTTPClient, ownerAddr, ooAddr string, orderSide string, orderType string,
 	computeLimit uint32, computePrice uint64) bool {
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -697,10 +890,13 @@ func callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr string, orderSide strin
 	return false
 }
 
-func callPlaceOrderBundleUsingBatch(ownerAddr string, bundleTip uint64) bool {
+func callPlaceOrderBundleUsingBatchHTTPWithWrap(h *provider.HTTPClient) bool {
+	return callPlaceOrderBundleUsingBatchHTTP(h, Environment.publicKey, 100000)
+}
+
+func callPlaceOrderBundleUsingBatchHTTP(h *provider.HTTPClient, ownerAddr string, bundleTip uint64) bool {
 	log.Info("starting placing order with bundle, using a raydium swap")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -747,10 +943,13 @@ func callPlaceOrderBundleUsingBatch(ownerAddr string, bundleTip uint64) bool {
 	return false
 }
 
-func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
+func callPlaceOrderBundleWrap(h *provider.HTTPClient) bool {
+	return callPlaceOrderBundle(h, Environment.publicKey, 100000)
+}
+
+func callPlaceOrderBundle(h *provider.HTTPClient, ownerAddr string, bundleTip uint64) bool {
 	log.Info("starting placing order with bundle, using a raydium swap")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -781,10 +980,13 @@ func callPlaceOrderBundle(ownerAddr string, bundleTip uint64) bool {
 	return false
 }
 
-func callPlaceOrderWithStakedRPCs(ownerAddr string, bundleTip uint64) bool {
+func callPlaceOrderWithStakedRPCsHTTPWrap(h *provider.HTTPClient) bool {
+	return callPlaceOrderWithStakedRPCsHTTP(h, Environment.publicKey, 100000)
+}
+
+func callPlaceOrderWithStakedRPCsHTTP(h *provider.HTTPClient, ownerAddr string, bundleTip uint64) bool {
 	log.Info("starting placing raydium swap with staked rpcs")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -815,9 +1017,8 @@ func callPlaceOrderWithStakedRPCs(ownerAddr string, bundleTip uint64) bool {
 	return false
 }
 
-func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint64) bool {
+func callCancelByClientOrderIDHTTP(h *provider.HTTPClient, ownerAddr, ooAddr string, clientOrderID uint64) bool {
 	time.Sleep(60 * time.Second)
-	h := httpClient()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -835,9 +1036,12 @@ func callCancelByClientOrderIDHTTP(ownerAddr, ooAddr string, clientOrderID uint6
 	return false
 }
 
-func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
+func callPostSettleHTTPWrap(h *provider.HTTPClient) bool {
+	return callPostSettleHTTP(h, Environment.publicKey, Environment.openOrdersAddress)
+}
+
+func callPostSettleHTTP(h *provider.HTTPClient, ownerAddr, ooAddr string) bool {
 	time.Sleep(60 * time.Second)
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -851,11 +1055,14 @@ func callPostSettleHTTP(ownerAddr, ooAddr string) bool {
 	return false
 }
 
-func cancelAll(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func cancelAllWrap(h *provider.HTTPClient) bool {
+	return cancelAll(h, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+}
+
+func cancelAll(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
-	h := httpClient()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -939,15 +1146,18 @@ func cancelAll(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType 
 	log.Info("orders cancelled")
 
 	fmt.Println()
-	callPostSettleHTTP(ownerAddr, ooAddr)
+	callPostSettleHTTP(h, ownerAddr, ooAddr)
 	return false
 }
 
-func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func callReplaceByClientOrderIDWrap(h *provider.HTTPClient) bool {
+	return callReplaceByClientOrderID(h, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+}
+
+func callReplaceByClientOrderID(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
-	h := httpClient()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -1034,11 +1244,14 @@ func callReplaceByClientOrderID(ownerAddr, payerAddr, ooAddr string, orderSide s
 	return false
 }
 
-func callReplaceOrder(ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func callReplaceOrderWrap(h *provider.HTTPClient) bool {
+	return callReplaceOrder(h, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+}
+
+func callReplaceOrder(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
-	h := httpClient()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -1128,8 +1341,7 @@ func callReplaceOrder(ownerAddr, payerAddr, ooAddr string, orderSide string, ord
 	return false
 }
 
-func callGetRecentBlockHash() bool {
-	h := httpClient()
+func callGetRecentBlockHashHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -1145,10 +1357,13 @@ func callGetRecentBlockHash() bool {
 	return false
 }
 
-func callTradeSwap(ownerAddr string) bool {
+func callTradeSwapWrap(h *provider.HTTPClient) bool {
+	return callTradeSwap(h, Environment.publicKey)
+}
+
+func callTradeSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1166,10 +1381,13 @@ func callTradeSwap(ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumSwap(ownerAddr string) bool {
+func callRaydiumSwapWrap(h *provider.HTTPClient) bool {
+	return callRaydiumSwap(h, Environment.publicKey)
+}
+
+func callRaydiumSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1192,12 +1410,16 @@ func callRaydiumSwap(ownerAddr string) bool {
 	return false
 }
 
-func callPostPumpFunSwap(ownerAddr string) bool {
+func callPostPumpFunSwapWrap(h *provider.HTTPClient) bool {
+	return callPostPumpFunSwap(h, Environment.publicKey)
+}
+
+func callPostPumpFunSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting PostPumpFunSwap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	h := provider.NewHTTPClientPumpNY()
+	h = provider.NewHTTPClientPumpNY()
 
 	log.Info("PumpFun swap")
 	sig, err := h.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
@@ -1219,10 +1441,13 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumRouteSwap(ownerAddr string) bool {
+func callRaydiumRouteSwapWrap(h *provider.HTTPClient) bool {
+	return callRaydiumRouteSwap(h, Environment.publicKey)
+}
+
+func callRaydiumRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting Raydium route swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1255,10 +1480,13 @@ func callRaydiumRouteSwap(ownerAddr string) bool {
 	return false
 }
 
-func callJupiterRouteSwap(ownerAddr string) bool {
+func callJupiterRouteSwapWrap(h *provider.HTTPClient) bool {
+	return callJupiterRouteSwap(h, Environment.publicKey)
+}
+
+func callJupiterRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting Jupiter route swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1296,10 +1524,13 @@ func callJupiterRouteSwap(ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwap(ownerAddr string) bool {
+func callJupiterSwapWrap(h *provider.HTTPClient) bool {
+	return callJupiterSwap(h, Environment.publicKey)
+}
+
+func callJupiterSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting Jupiter swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1322,10 +1553,14 @@ func callJupiterSwap(ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwapInstructions(ownerAddr string, tipAmount *uint64, useBundle bool) bool {
+func callJupiterSwapInstructionsWrap(h *provider.HTTPClient) bool {
+	tip := uint64(100000)
+	return callJupiterSwapInstructions(h, Environment.publicKey, &tip, true)
+}
+
+func callJupiterSwapInstructions(h *provider.HTTPClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
 	log.Info("starting Jupiter swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1349,10 +1584,14 @@ func callJupiterSwapInstructions(ownerAddr string, tipAmount *uint64, useBundle 
 	return false
 }
 
-func callRaydiumSwapInstructions(ownerAddr string, tipAmount *uint64, useBundle bool) bool {
+func callRaydiumSwapInstructionsWrap(h *provider.HTTPClient) bool {
+	tip := uint64(100000)
+	return callRaydiumSwapInstructions(h, Environment.publicKey, &tip, true)
+}
+
+func callRaydiumSwapInstructions(h *provider.HTTPClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
 	log.Info("starting Raydium swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1376,10 +1615,13 @@ func callRaydiumSwapInstructions(ownerAddr string, tipAmount *uint64, useBundle 
 	return false
 }
 
-func callRouteTradeSwap(ownerAddr string) bool {
+func callRouteTradeSwapWrap(h *provider.HTTPClient) bool {
+	return callRouteTradeSwap(h, Environment.publicKey)
+}
+
+func callRouteTradeSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
-	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -1414,8 +1656,7 @@ func callRouteTradeSwap(ownerAddr string) bool {
 
 }
 
-func callGetPriorityFee() bool {
-	h := httpClient()
+func callGetPriorityFeeHTTP(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

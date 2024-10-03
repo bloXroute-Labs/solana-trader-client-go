@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
@@ -19,27 +21,128 @@ import (
 const (
 	sideAsk      = "ask"
 	typeLimit    = "limit"
-	computeLimit = 10000
-	computePrice = 2000
+	computePrice = 100000
+	computeLimit = 5000
 )
+
+type EnvironmentVariables struct {
+	privateKey        string
+	publicKey         string
+	openOrdersAddress string
+	payer             string
+}
+
+var Environment EnvironmentVariables
 
 func main() {
 	utils.InitLogger()
-	failed := run()
-	if failed {
-		log.Fatal("one or multiple examples failed")
+
+	Environment = initializeEnvironmentVariables()
+
+	listAllEndpoints()
+
+	envPrompt := promptui.Select{
+		Label: "Select environment",
+		Items: []string{"mainnet", "testnet", "local"},
+	}
+
+	_, environment, err := envPrompt.Run()
+	if err != nil {
+		panic(fmt.Errorf("prompt failed: %v", err))
+	}
+
+	for {
+		client := setupWSClient(config.Env(environment))
+		if err != nil {
+			log.Fatalf("failed to setup GRPC client: %v", err)
+		}
+
+		var names []string
+		for name := range ExampleEndpoints {
+			names = append(names, name)
+		}
+
+		// Choose example
+		examplePrompt := promptui.Select{
+			Label: "Select example to run",
+			Items: names,
+		}
+
+		_, exampleName, err := examplePrompt.Run()
+		if err != nil {
+			fmt.Println("signal interrupt detected")
+			os.Exit(1)
+		}
+
+		exampleStruct := ExampleEndpoints[exampleName]
+
+		if exampleName == "runAllExamples" {
+			for _, content := range ExampleEndpoints {
+				if !content.requiresAdditionalEnvironmentVars {
+					if failed := content.run(client); failed {
+						log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+						time.Sleep(1 * time.Second)
+					}
+					time.Sleep(1 * time.Second)
+					log.Printf("example '%s' completed successfully\n", exampleName)
+				}
+			}
+		}
+
+		log.Printf("running example: %s\n", exampleName)
+		if failed := exampleStruct.run(client); failed {
+			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+			time.Sleep(1 * time.Second)
+		} else {
+			time.Sleep(1 * time.Second)
+			log.Printf("example '%s' completed successfully\n", exampleName)
+		}
+	}
+
+}
+
+func initializeEnvironmentVariables() EnvironmentVariables {
+	if os.Getenv("AUTH_HEADER") == "" {
+		log.Fatal("must specify bloXroute authorization header!")
+	}
+
+	privateKey, ok := os.LookupEnv("PRIVATE_KEY")
+	if !ok {
+		log.Errorf(fmt.Sprintf("PRIVATE_KEY environment variable not set, cannot run any examples that require tx submission"))
+	}
+
+	// you must specify:
+	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
+	// 	- PUBLIC_KEY to indicate which account you wish to trade from
+	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
+	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
+	if !ok {
+		log.Warnf(fmt.Sprintf("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples"))
+	}
+
+	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
+	if !ok {
+		log.Errorf("OPEN_ORDERS environment variable not set: requests will be slower")
+	}
+
+	payerAddr, ok := os.LookupEnv("PAYER")
+	if !ok {
+		log.Warnf("PAYER environment variable not set: will be set to owner address")
+		payerAddr = ownerAddr
+	}
+
+	return EnvironmentVariables{
+		privateKey:        privateKey,
+		publicKey:         ownerAddr,
+		openOrdersAddress: ooAddr,
+		payer:             payerAddr,
 	}
 }
 
-func run() bool {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func setupWSClient(env config.Env) *provider.WSClient {
 	var w *provider.WSClient
-
-	switch cfg.Env {
+	var err error
+	switch env {
 	case config.EnvLocal:
 		w, err = provider.NewWSClientLocal()
 	case config.EnvTestnet:
@@ -48,125 +151,301 @@ func run() bool {
 		w, err = provider.NewWSClient()
 	}
 	if err != nil {
-		log.Fatalf("error dialing WS client: %v", err)
-	}
-	defer func(w *provider.WSClient) {
-		err := w.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(w)
-
-	var failed bool
-	// informational requests
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
-	// this is just for example/test purposes
-	failed = failed || logCall("callMarketsWS", func() bool { return callMarketsWS(w) })
-	failed = failed || logCall("callOrderbookWS", func() bool { return callOrderbookWS(w) })
-	failed = failed || logCall("callMarketDepthWS", func() bool { return callMarketDepthWS(w) })
-	failed = failed || logCall("callTradesWS", func() bool { return callTradesWS(w) })
-	failed = failed || logCall("callPoolsWS", func() bool { return callPoolsWS(w) })
-	failed = failed || logCall("callRaydiumPoolReserveWS", func() bool { return callRaydiumPoolReserveWS(w) })
-	failed = failed || logCall("callRaydiumPoolsWS", func() bool { return callRaydiumPoolsWS(w) })
-	failed = failed || logCall("callGetRateLimitWS", func() bool { return callGetRateLimitWS(w) })
-	failed = failed || logCall("callGetTransactionWS", func() bool { return callGetTransactionWS(w) })
-	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPricesWS(w) })
-	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPricesWS(w) })
-	failed = failed || logCall("callPriceWS", func() bool { return callPriceWS(w) })
-	failed = failed || logCall("callOpenOrdersWS", func() bool { return callOpenOrdersWS(w) })
-	failed = failed || logCall("callTickersWS", func() bool { return callTickersWS(w) })
-	failed = failed || logCall("callUnsettledWS", func() bool { return callUnsettledWS(w) })
-	failed = failed || logCall("callAccountBalanceWS", func() bool { return callAccountBalanceWS(w) })
-	failed = failed || logCall("callGetQuotes", func() bool { return callGetQuotes(w) })
-	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
-	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes(w) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
-	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
-
-	failed = failed || logCall("callGetPumpFunNewTokensWSStream", func() bool {
-		ww, err := provider.NewWSClientPumpNY()
-		if err != nil {
-			panic(err)
-		}
-		mint, res := callGetPumpFunNewTokensWSStream(ww)
-		res = callGetPumpFunSwapsWSStream(ww, mint)
-		return res
-	})
-
-	failed = failed || logCall("callGetBundleTipWSStream", func() bool { return callGetBundleTipWSStream(w) })
-	// streaming methods
-	failed = failed || logCall("callOrderbookWSStream", func() bool { return callOrderbookWSStream(w) })
-	failed = failed || logCall("callMarketDepthWSStream", func() bool { return callMarketDepthWSStream(w) })
-	failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-	failed = failed || logCall("callPoolReservesWSStream", func() bool { return callPoolReservesWSStream(w) })
-	failed = failed || logCall("callBlockWSStream", func() bool { return callBlockWSStream(w) })
-	failed = failed || logCall("callGetPriorityFeeWSStream", func() bool { return callGetPriorityFeeWSStream(w) })
-
-	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
-	failed = failed || logCall("callGetTickersWSStream", func() bool { return callGetTickersWSStream(w) })
-	if cfg.RunSlowStream {
-		failed = failed || logCall("callPricesWSStream", func() bool { return callPricesWSStream(w) })
-		failed = failed || logCall("callSwapsWSStream", func() bool { return callSwapsWSStream(w) })
-		failed = failed || logCall("callTradesWSStream", func() bool { return callTradesWSStream(w) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStream", func() bool { return callGetNewRaydiumPoolsStream(w) })
-		failed = failed || logCall("callGetNewRaydiumPoolsStreamWithCPMM", func() bool { return callGetNewRaydiumPoolsStreamWithCPMM(w) })
+		log.Fatalf("error connecting to ws client: %v", err)
 	}
 
-	// calls below this place an order and immediately cancel it
-	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewWSClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
-	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Infof("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples")
-		return failed
-	}
-
-	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Infof("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
-	payerAddr, ok := os.LookupEnv("PAYER")
-	if !ok {
-		log.Infof("PAYER environment variable not set: will be set to owner address")
-		payerAddr = ownerAddr
-	}
-	failed = failed || logCall("callGetTokenAccountsWS", func() bool { return callGetTokenAccountsWS(w, ownerAddr) })
-	if cfg.RunTrades {
-		/*failed = failed || logCall("orderLifecycleTest", func() bool { return orderLifecycleTest(w, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("cancelAll", func() bool { return cancelAll(w, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("callReplaceByClientOrderID", func() bool { return callReplaceByClientOrderID(w, ownerAddr, payerAddr, ooAddr) })
-		failed = failed || logCall("callPlaceOrderWithBundle", func() bool { return callPlaceOrderBundle(w, ownerAddr, uint64(1030)) })*/
-		failed = failed || logCall("callPlaceOrderWithStakedRPCs", func() bool { return callPlaceOrderWithStakedRPCs(w, ownerAddr, uint64(10000)) })
-		failed = failed || logCall("callPlaceOrderWithBundleWithBatch", func() bool { return callPlaceOrderBundleWithBatch(w, ownerAddr, uint64(10000)) })
-		failed = failed || logCall("callReplaceOrder", func() bool { return callReplaceOrder(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit) })
-		failed = failed || logCall("callRecentBlockHashWSStream", func() bool { return callRecentBlockHashWSStream(w) })
-		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(w, ownerAddr) })
-		failed = failed || logCall("callTradeSwapWithPriorityFee", func() bool { return callTradeSwapWithPriorityFee(w, ownerAddr, computeLimit, computePrice) })
-		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(w, ownerAddr) })
-		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(w, ownerAddr) })
-		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(w, ownerAddr) })
-		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
-		failed = failed || logCall("callJupiterSwapInstructions", func() bool { return callJupiterSwapInstructions(w, ownerAddr, nil, false) })
-		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(w, ownerAddr, nil, false) })
-		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(w, ownerAddr) })
-		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(w, ownerAddr) })
-	}
-
-	return failed
+	return w
 }
 
-func logCall(name string, call func() bool) bool {
-	log.Infof("Executing `%s'...", name)
+func listAllEndpoints() {
+	fmt.Println(fmt.Sprintf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
 
-	result := call()
-	if result {
-		log.Errorf("`%s' failed", name)
+	var names []string
+	for name := range ExampleEndpoints {
+		names = append(names, name)
 	}
+	sort.Strings(names)
 
-	return result
+	for _, name := range names {
+		ex := ExampleEndpoints[name]
+		var extraStr string
+		if ex.requiresAdditionalEnvironmentVars {
+			extraStr = " (requires additional environment variables to be enabled)"
+		}
+
+		fmt.Printf("  %-40s %s%s\n", name, ex.description, extraStr)
+	}
+}
+
+type ExampleFunc func(w *provider.WSClient) bool
+
+var ExampleEndpoints = map[string]struct {
+	run                               ExampleFunc
+	description                       string
+	requiresAdditionalEnvironmentVars bool
+}{
+	"getPools": {
+		run:         callPoolsWS,
+		description: "fetch all available markets",
+	},
+	"getTrades": {
+		run:         callTradesWS,
+		description: "get trades",
+	},
+
+	"getRaydiumPoolReserve": {
+		run:         callRaydiumPoolReserveWS,
+		description: "get raydium pool reserve",
+	},
+	"getMarkets": {
+		run:         callMarketsWS,
+		description: "fetch all available markets",
+	},
+	"getOrderbook": {
+		run:         callOrderbookWS,
+		description: "fetch orderbook for specific market",
+	},
+	"getMarketDepth": {
+		run:         callMarketDepthWS,
+		description: "get market depth",
+	},
+	"getOpenOrders": {
+		run:         callOpenOrdersWS,
+		description: "get open orders",
+	},
+
+	"getTickers": {
+		run:         callTickersWS,
+		description: "get tickers",
+	},
+
+	"getTransaction": {
+		run:         callGetTransactionWS,
+		description: "get tickers",
+	},
+
+	"getRateLimit": {
+		run:         callGetRateLimitWS,
+		description: "get rate limit",
+	},
+	"getRaydiumPools": {
+		run:         callRaydiumPoolsWS,
+		description: "get raydium pools",
+	},
+	"getPrice": {
+		run:         callPriceWS,
+		description: "get raydium pools",
+	},
+	"getRaydiumPrices": {
+		run:         callRaydiumPricesWS,
+		description: "get raydium prices",
+	},
+	"getJupiterPrices": {
+		run:         callJupiterPricesWS,
+		description: "get jupiter prices",
+	},
+	"orderbookStream": {
+		run:         callOrderbookWSStream,
+		description: "stream orderbook updates (slow example)",
+	},
+	"marketDepthStream": {
+		run:         callMarketDepthWSStream,
+		description: "stream market depth updates (slow example)",
+	},
+	"getTickersStream": {
+		run:         callGetTickersWSStream,
+		description: "stream get tickers",
+	},
+	"getPricesStream": {
+		run:         callPricesWSStream,
+		description: "stream prices",
+	},
+	"getTradesStream": {
+		run:         callTradesWSStream,
+		description: "stream trades",
+	},
+	"getSwapsStream": {
+		run:         callSwapsWSStream,
+		description: "stream swaps",
+	},
+	"getNewRaydiumPoolStream": {
+		run:         callGetNewRaydiumPoolsStream,
+		description: "stream new raydium pools",
+	},
+	"getNewRaydiumPoolsStreamWithCPMM": {
+		run:         callGetNewRaydiumPoolsStreamWithCPMM,
+		description: "stream new raydium pools with cpmm enabled",
+	},
+	"getUnsettled": {
+		run:         callUnsettledWS,
+		description: "get unsettled",
+	},
+	"getAccountBalance": {
+		run:         callAccountBalanceWS,
+		description: "get account balance",
+	},
+
+	"getQuotes": {
+		run:         callGetQuotesWS,
+		description: "get quotes",
+	},
+
+	"getRaydiumQuotes": {
+		run:         callGetRaydiumQuotes,
+		description: "get raydium quotes",
+	},
+
+	"getPumpFunQuotes": {
+		run:         callGetPumpFunQuotes,
+		description: "get pump fun quotes",
+	},
+
+	"getJupiterQuotes": {
+		run:         callGetJupiterQuotes,
+		description: "get jupiter quotes",
+	},
+
+	"recentBlockhashStream": {
+		run:         callRecentBlockHashWSStream,
+		description: "recent blockhash stream",
+	},
+	"poolReservesStream": {
+		run:         callPoolReservesWSStream,
+		description: "recent blockhash stream",
+	},
+	"blockStream": {
+		run:         callBlockWSStream,
+		description: "block stream",
+	},
+	"getPriorityFee": {
+		run:         callGetPriorityFeeWS,
+		description: "get priority fee",
+	},
+	"getPriorityFeeStream": {
+		run:         callGetPriorityFeeWSStream,
+		description: "get priority fee stream",
+	},
+	"getPumpFunNewTokenStream": {
+		run:         callGetPumpFunNewTokensWSStreamWrap,
+		description: "get pump fun new token stream",
+	},
+
+	"getBundleTipStream": {
+		run:         callGetBundleTipWSStream,
+		description: "get bundle tip stream",
+	},
+
+	"getTokenAccounts": {
+		run:                               callGetTokenAccountsWSWrap,
+		description:                       "get token accounts",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithBundle": {
+		run:                               callPlaceOrderBundleWrap,
+		description:                       "place a new order (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithStakedRPCs": {
+		run:                               callPlaceOrderWithStakedRPCsWrap,
+		description:                       "place order (openbook) with staked rpcs and tip",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeOrderWithBundleBatch": {
+		run:                               callPlaceOrderBundleWithBatchWrap,
+		description:                       "place order (openbook) with bundle with batch",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"placeBundleWithStakedRPCs": {
+		run:                               callPlaceOrderWithStakedRPCsWrap,
+		description:                       "place order (openbook) with priority fee",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"replaceByClientOrderID": {
+		run:                               callReplaceByClientOrderIDWrap,
+		description:                       "replace order by client id (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"replaceOrder": {
+		run:                               callReplaceOrderWrap,
+		description:                       "replace order (openbook)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"tradeSwap": {
+		run:                               callTradeSwapWrap,
+		description:                       "trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"routeTradeSwap": {
+		run:                               callRouteTradeSwapWrap,
+		description:                       "route trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"tradeSwapWithPriorityFee": {
+		run:                               callTradeSwapWithPriorityFeeWrap,
+		description:                       "route trade swap with priority fee",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"raydiumTradeSwap": {
+		run:                               callRaydiumSwapWrap,
+		description:                       "raydium trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"jupiterTradeSwap": {
+		run:                               callJupiterSwapWrap,
+		description:                       "jupiter trade swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"pumpFunSwap": {
+		run:                               callPostPumpFunSwapWrap,
+		description:                       "pump fun swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumRouteSwap": {
+		run:                               callRaydiumRouteSwapWrap,
+		description:                       "raydium route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"jupiterRouteSwap": {
+		run:                               callJupiterRouteSwapWrap,
+		description:                       "call jupiter route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumSwapWithInstructions": {
+		run:                               callRaydiumSwapInstructionsWrap,
+		description:                       "call raydium swap with instructions",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"jupiterSwapWithInstructions": {
+		run:                               callJupiterSwapInstructionsWrap,
+		description:                       "call jupiter swap with instructions",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"orderLifeCycleTest": {
+		run:                               orderLifecycleTestWrap,
+		description:                       "order lifecycle test",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"cancelAll": {
+		run:                               cancelAllWrap,
+		description:                       "cancel all test (run order lifecycle before)",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"runAllExamples": {},
 }
 
 func callMarketsWS(w *provider.WSClient) bool {
@@ -427,6 +706,10 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 	return false
 }
 
+func callGetTokenAccountsWSWrap(w *provider.WSClient) bool {
+	return callGetTokenAccountsWS(w, Environment.publicKey)
+}
+
 func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("fetching token accounts...")
 
@@ -457,7 +740,7 @@ func callTickersWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetQuotes(w *provider.WSClient) bool {
+func callGetQuotesWS(w *provider.WSClient) bool {
 	log.Info("fetching quotes...")
 
 	inToken := "So11111111111111111111111111111111111111112"
@@ -765,6 +1048,10 @@ const (
 	orderAmount = float64(0.1)
 )
 
+func orderLifecycleTestWrap(w *provider.WSClient) bool {
+	return orderLifecycleTest(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress)
+}
+
 func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting order lifecycle test")
 	fmt.Println()
@@ -830,6 +1117,12 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	return false
 }
 
+func callPlaceOrderWSWrap(w *provider.WSClient) bool {
+	_, ok := callPlaceOrderWS(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+
+	return ok
+}
+
 func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	log.Info("trying to place an order")
 
@@ -853,6 +1146,10 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
 
 	return clientOrderID, false
+}
+
+func callPlaceOrderBundleWrap(w *provider.WSClient) bool {
+	return callPlaceOrderBundle(w, Environment.publicKey, 1100000)
 }
 
 func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
@@ -887,6 +1184,10 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint
 	return false
 }
 
+func callPlaceOrderWithStakedRPCsWrap(w *provider.WSClient) bool {
+	return callPlaceOrderWithStakedRPCs(w, Environment.publicKey, 1100000)
+}
+
 func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
 	log.Info("trying to place an order with bundling")
 
@@ -917,6 +1218,10 @@ func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmo
 
 	log.Infof("submitted raydium swap using staked RPCs with signature: %s", signature)
 	return false
+}
+
+func callPlaceOrderBundleWithBatchWrap(w *provider.WSClient) bool {
+	return callPlaceOrderBundleWithBatch(w, Environment.publicKey, 1100000)
 }
 
 func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
@@ -974,6 +1279,10 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 	return false
 }
 
+func callPostSettleWSWrap(w *provider.WSClient) bool {
+	return callPostSettleWS(w, Environment.publicKey, Environment.openOrdersAddress)
+}
+
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	log.Info("starting post settle")
 
@@ -986,6 +1295,10 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 
 	log.Infof("response signature received: %v", sig)
 	return false
+}
+
+func cancelAllWrap(w *provider.WSClient) bool {
+	return callReplaceByClientOrderID(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
 }
 
 func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1083,6 +1396,10 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderS
 	return false
 }
 
+func callReplaceByClientOrderIDWrap(w *provider.WSClient) bool {
+	return callReplaceByClientOrderID(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+}
+
 func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
@@ -1176,6 +1493,10 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 		log.Infof("placing cancel order(s) %s", tx.Signature)
 	}
 	return false
+}
+
+func callReplaceOrderWrap(w *provider.WSClient) bool {
+	return callReplaceOrder(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1274,6 +1595,10 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	return false
 }
 
+func callTradeSwapWrap(w *provider.WSClient) bool {
+	return callTradeSwap(w, Environment.publicKey)
+}
+
 func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
@@ -1292,6 +1617,10 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
 	return false
+}
+
+func callTradeSwapWithPriorityFeeWrap(w *provider.WSClient) bool {
+	return callTradeSwapWithPriorityFee(w, Environment.publicKey, computeLimit, computePrice)
 }
 
 func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
@@ -1313,6 +1642,10 @@ func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, comput
 	}
 	log.Infof("trade swap transaction signature : %s", sig)
 	return false
+}
+
+func callRaydiumSwapWrap(w *provider.WSClient) bool {
+	return callRaydiumSwap(w, Environment.publicKey)
 }
 
 func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -1340,7 +1673,11 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callPostPumpFunSwap(ownerAddr string) bool {
+func callPostPumpFunSwapWrap(w *provider.WSClient) bool {
+	return callPostPumpFunSwap(w, Environment.publicKey)
+}
+
+func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting PostPumpFunSwap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1368,6 +1705,10 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	}
 	log.Infof("PumpFun swap transaction signature : %s", sig)
 	return false
+}
+
+func callRouteTradeSwapWrap(w *provider.WSClient) bool {
+	return callRouteTradeSwap(w, Environment.publicKey)
 }
 
 func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -1406,6 +1747,10 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumRouteSwapWrap(w *provider.WSClient) bool {
+	return callRaydiumRouteSwap(w, Environment.publicKey)
+}
+
 func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
@@ -1440,6 +1785,10 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
+func callJupiterSwapWrap(w *provider.WSClient) bool {
+	return callJupiterSwap(w, Environment.publicKey)
+}
+
 func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting Jupiter swap test")
 
@@ -1464,6 +1813,11 @@ func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 	}
 	log.Infof("Jupiter swap transaction signature : %s", sig)
 	return false
+}
+
+func callJupiterSwapInstructionsWrap(w *provider.WSClient) bool {
+	tip := uint64(100000)
+	return callJupiterSwapInstructions(w, Environment.publicKey, &tip, false)
 }
 
 func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
@@ -1493,6 +1847,11 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 	return false
 }
 
+func callRaydiumSwapInstructionsWrap(w *provider.WSClient) bool {
+	tip := uint64(100000)
+	return callRaydiumSwapInstructions(w, Environment.publicKey, &tip, false)
+}
+
 func callRaydiumSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
 	log.Info("starting Raydium swap test")
 
@@ -1516,6 +1875,10 @@ func callRaydiumSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 	}
 	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
+}
+
+func callJupiterRouteSwapWrap(w *provider.WSClient) bool {
+	return callJupiterRouteSwap(w, Environment.publicKey)
 }
 
 func callJupiterRouteSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -1606,6 +1969,20 @@ func callGetTickersWSStream(w *provider.WSClient) bool {
 		log.Infof("response %v received", v)
 	}
 	return false
+}
+
+func callGetPumpFunNewTokensWSStreamWrap(_ *provider.WSClient) bool {
+	ww, err := provider.NewWSClientPumpNY()
+	if err != nil {
+		panic(err)
+	}
+	mint, res := callGetPumpFunNewTokensWSStream(ww)
+
+	if !res {
+		return false
+	}
+
+	return callGetPumpFunSwapsWSStream(ww, mint)
 }
 
 func callGetPumpFunNewTokensWSStream(w *provider.WSClient) (string, bool) {
