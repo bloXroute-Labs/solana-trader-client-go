@@ -123,6 +123,26 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
+// GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
+func (g *GRPCClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {
+	return g.apiClient.GetRaydiumCLMMQuotes(ctx, request)
+}
+
+// GetRaydiumCLMMPools returns the CLMM pools on Raydium
+func (g *GRPCClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error) {
+	return g.apiClient.GetRaydiumCLMMPools(ctx, request)
+}
+
+// PostRaydiumCLMMSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (g *GRPCClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	return g.apiClient.PostRaydiumCLMMSwap(ctx, request)
+}
+
+// PostRaydiumCLMMRouteSwap returns a partially signed transaction(s) for submitting a route swap request on Raydium
+func (g *GRPCClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	return g.apiClient.PostRaydiumCLMMRouteSwap(ctx, request)
+}
+
 // GetPriorityFee returns a priority fee estimate for a given percentile
 func (g *GRPCClient) GetPriorityFee(ctx context.Context, request *pb.GetPriorityFeeRequest) (*pb.GetPriorityFeeResponse, error) {
 	return g.apiClient.GetPriorityFee(ctx, request)
@@ -161,6 +181,24 @@ func (g *GRPCClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFu
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	return g.apiClient.GetRaydiumPrices(ctx, request)
+}
+
+// SubmitRaydiumCLMMSwap builds a Raydium Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostRaydiumCLMMSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitRaydiumCLMMRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := g.PostRaydiumCLMMRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return g.signAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
 // PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
@@ -302,6 +340,7 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.
 	}
 
 	if len(transactions) == 1 {
+		println("here")
 		signature, err := g.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
 		if err != nil {
 			return nil, err
