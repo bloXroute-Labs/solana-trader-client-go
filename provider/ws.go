@@ -1428,3 +1428,23 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 	}
 	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
 }
+
+// GetRecentBlockHash returns recent block hash.
+func (w *WSClient) GetRecentBlockHash(ctx context.Context, request *pb.GetRecentBlockHashRequest) (*pb.GetRecentBlockHashResponse, error) {
+	var response pb.GetRecentBlockHashResponse
+	err := w.conn.Request(ctx, "GetRecentBlockHash", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetRecentBlockHash returns recent block hash, supports optional offset.
+func (w *WSClient) GetRecentBlockHashV2(ctx context.Context, request *pb.GetRecentBlockHashRequestV2) (*pb.GetRecentBlockHashResponseV2, error) {
+	var response pb.GetRecentBlockHashResponseV2
+	err := w.conn.Request(ctx, "GetRecentBlockHashV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}

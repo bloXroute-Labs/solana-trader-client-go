@@ -97,6 +97,9 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM(g) })		
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(g) })
 	failed = failed || logCall("callRecentBlockHashGRPCStream", func() bool { return callRecentBlockHashGRPCStream(g) })
+	failed = failed || logCall("callRecentBlockHash", func() bool { return callRecentBlockHash(g) })
+	failed = failed || logCall("callRecentBlockHashV2", func() bool { return callRecentBlockHashV2(g, 0) })
+	failed = failed || logCall("callRecentBlockHashV2", func() bool { return callRecentBlockHashV2(g, 1) })
 	failed = failed || logCall("callPoolReservesGRPCStream", func() bool { return callPoolReservesGRPCStream(g) })
 	failed = failed || logCall("callBlockGRPCStream", func() bool { return callBlockGRPCStream(g) })
 
@@ -824,6 +827,40 @@ func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
 		}
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callRecentBlockHash(g *provider.GRPCClient) bool {
+	log.Info("starting recent block hash")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// response
+	response, err := g.GetRecentBlockHash(ctx)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	}
+
+	log.Infof("response %v received", response)
+	return false
+}
+
+func callRecentBlockHashV2(g *provider.GRPCClient, offset uint64) bool {
+	log.Info("starting recent block hash V2")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// response
+	response, err := g.GetRecentBlockHashV2(ctx, offset)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHashV2 request: %v", err)
+		return true
+	}
+
+	log.Infof("V2 response %v received", response)
 	return false
 }
 

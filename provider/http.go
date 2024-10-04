@@ -1102,11 +1102,22 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
 }
 
-// GetRecentBlockHash subscribes to a stream for getting recent block hash.
+// GetRecentBlockHash returns recent block hash.
 func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/system/blockhash", h.baseURL)
 	response := new(pb.GetRecentBlockHashResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetRecentBlockHash returns recent block hash, supports optional offset.
+func (h *HTTPClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/system/blockhash?offset=%d", h.baseURL, offset)
+	response := new(pb.GetRecentBlockHashResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponseV2](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 

@@ -119,28 +119,14 @@ func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHas
 	return g.recentBlockHashStore.get(ctx)
 }
 
+// GetRecentBlockHash returns recent block hash.
 func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
-// GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
-func (g *GRPCClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {
-	return g.apiClient.GetRaydiumCLMMQuotes(ctx, request)
-}
-
-// GetRaydiumCLMMPools returns the CLMM pools on Raydium
-func (g *GRPCClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error) {
-	return g.apiClient.GetRaydiumCLMMPools(ctx, request)
-}
-
-// PostRaydiumCLMMSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
-func (g *GRPCClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
-	return g.apiClient.PostRaydiumCLMMSwap(ctx, request)
-}
-
-// PostRaydiumCLMMRouteSwap returns a partially signed transaction(s) for submitting a route swap request on Raydium
-func (g *GRPCClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
-	return g.apiClient.PostRaydiumCLMMRouteSwap(ctx, request)
+// GetRecentBlockHash returns recent block hash, supports optional offset.
+func (g *GRPCClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
+	return g.apiClient.GetRecentBlockHashV2(ctx, &pb.GetRecentBlockHashRequestV2{Offset: offset})
 }
 
 // GetPriorityFee returns a priority fee estimate for a given percentile
