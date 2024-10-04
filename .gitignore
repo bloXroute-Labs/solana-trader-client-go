@@ -2,3 +2,5 @@
 .idea/
 *.csv
 .vscode/launch.json
+.run
+vendor
