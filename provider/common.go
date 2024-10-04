@@ -39,7 +39,7 @@ var (
 	DevnetWS   = wsEndpoint(devnet, false)
 	DevnetGRPC = grpcEndpoint(devnet, false)
 
-	LocalHTTP = "http://localhost:9001"
+	LocalHTTP = "http://localhost:9000"
 	LocalWS   = "ws://localhost:9000/ws"
 	LocalGRPC = "localhost:9000"
 )

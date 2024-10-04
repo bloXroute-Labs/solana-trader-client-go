@@ -87,6 +87,7 @@ func run() bool {
 
 	failed = failed || logCall("callRaydiumPoolReserve", func() bool { return callRaydiumPoolReserve() })
 	failed = failed || logCall("callRaydiumPools", func() bool { return callRaydiumPools() })
+	failed = failed || logCall("callRaydiumCLMMPools ", func() bool { return callRaydiumCLMMPools() })
 	failed = failed || logCall("callRaydiumPrices", func() bool { return callRaydiumPrices() })
 	failed = failed || logCall("callJupiterPrices", func() bool { return callJupiterPrices() })
 	failed = failed || logCall("callPriceHTTP", func() bool { return callPriceHTTP() })
@@ -96,7 +97,8 @@ func run() bool {
 	failed = failed || logCall("callGetQuotesHTTP", func() bool { return callGetQuotesHTTP() })
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
 	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes() })
-	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })	
+	failed = failed || logCall("callGetRaydiumCLMMQuotes", func() bool { return callGetRaydiumCLMMQuotes() })
+	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })		
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
@@ -126,20 +128,16 @@ func run() bool {
 		log.Infof("PAYER environment variable not set: will be set to owner address")
 		payerAddr = ownerAddr
 	}
-	//failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
+	failed = failed || logCall("callGetTokenAccountsHTTP", func() bool { return callGetTokenAccountsHTTP(ownerAddr) })
 	if cfg.RunTrades {
 		// Order Lifecycle
-		clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
-		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
-		failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
-		failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
-		failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
-			return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
-		})
-
-		failed = failed || logCall("callRaydiumSwapCPMM", func() bool {
-			return callRaydiumSwapCPMM(ownerAddr) // this is using raydium swap cpmm
-		})
+		//clientOrderID, fail := callPlaceOrderHTTP(ownerAddr, ooAddr, sideAsk, typeLimit)
+		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return fail })
+		//failed = failed || logCall("callPlaceOrderHTTP", func() bool { return true })
+		//failed = failed || logCall("callCancelByClientOrderIDHTTP", func() bool { return callCancelByClientOrderIDHTTP(ownerAddr, ooAddr, clientOrderID) })
+		//failed = failed || logCall("callPlaceOrderHTTPWithComputePrice", func() bool {
+		//	return callPlaceOrderHTTPWithPriorityFee(ownerAddr, ooAddr, sideAsk, typeLimit, 10000, 2000)
+		//})
 
 		for i := 1; i < 3; i++ {
 			time.Sleep(1 * time.Second)
@@ -165,11 +163,13 @@ func run() bool {
 		failed = failed || logCall("callTradeSwap", func() bool { return callTradeSwap(ownerAddr) })
 		failed = failed || logCall("callRouteTradeSwap", func() bool { return callRouteTradeSwap(ownerAddr) })
 		failed = failed || logCall("callRaydiumTradeSwap", func() bool { return callRaydiumSwap(ownerAddr) })
+		failed = failed || logCall("callRaydiumCLMMSwap", func() bool { return callRaydiumCLMMSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwap", func() bool { return callJupiterSwap(ownerAddr) })
 		failed = failed || logCall("callPostPumpFunSwap", func() bool { return callPostPumpFunSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterTradeSwapInstructions", func() bool { return callJupiterSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumSwapInstructions", func() bool { return callRaydiumSwapInstructions(ownerAddr, nil, false) })
 		failed = failed || logCall("callRaydiumRouteTradeSwap", func() bool { return callRaydiumRouteSwap(ownerAddr) })
+		failed = failed || logCall("callRaydiumCLMMRouteSwap", func() bool { return callRaydiumCLMMRouteSwap(ownerAddr) })
 		failed = failed || logCall("callJupiterRouteTradeSwap", func() bool { return callJupiterRouteSwap(ownerAddr) })
 	}
 
@@ -399,6 +399,23 @@ func callGetRateLimit() bool {
 	return false
 }
 
+func callRaydiumCLMMPools() bool {
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pools, err := h.GetRaydiumCLMMPools(ctx, &pb.GetRaydiumCLMMPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callGetTransaction() bool {
 	h := httpClient()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -547,6 +564,44 @@ func callGetRaydiumQuotes() bool {
 
 	if err != nil {
 		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumCLMMQuotes() bool {
+	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetRaydiumCLMMQuotes(ctx, &pb.GetRaydiumCLMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
@@ -1238,6 +1293,32 @@ func callRaydiumSwap(ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumCLMMSwap(ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium CLMM swap")
+	sig, err := h.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  config.BoolPtr(true),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
 func callPostPumpFunSwap(ownerAddr string) bool {
 	log.Info("starting PostPumpFunSwap test")
 
@@ -1325,6 +1406,45 @@ func callRaydiumRouteSwap(ownerAddr string) bool {
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 		SkipPreFlight:  config.BoolPtr(false),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumCLMMRouteSwap(ownerAddr string) bool {
+	log.Info("starting Raydium CLMM route swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium route swap")
+	sig, err := h.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:      "FIDA",
+				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
