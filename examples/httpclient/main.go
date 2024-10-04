@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	sideAsk   = "ask"
-	typeLimit = "limit"
+	sideAsk      = "ask"
+	typeLimit    = "limit"
+	computeLimit = 100000
+	computePrice = 20000
 )
 
 func httpClient() *provider.HTTPClient {
@@ -96,6 +98,7 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes() })
 	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes() })
 	failed = failed || logCall("callGetRaydiumCLMMQuotes", func() bool { return callGetRaydiumCLMMQuotes() })
+	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM() })		
 	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes() })
 	failed = failed || logCall("callGetPriorityFee", func() bool { return callGetPriorityFee() })
 
@@ -348,8 +351,7 @@ func callRaydiumPoolReserve() bool {
 	defer cancel()
 
 	pools, err := h.GetRaydiumPoolReserve(ctx, &pb.GetRaydiumPoolReserveRequest{
-		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
-			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+		PairsOrAddresses: []string{"66cxXqzCpFttLCdMBXYykjfCEVQKag8Cv1oB5KEacd5b"},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
@@ -639,6 +641,46 @@ func callGetPumpFunQuotes() bool {
 	fmt.Println()
 	return false
 }
+
+
+func callGetRaydiumQuotesCPMM() bool {
+	h := httpClientWithTimeout(time.Second * 60)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetRaydiumQuotesCPMM(ctx, &pb.GetRaydiumCPMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
 
 func callGetJupiterQuotes() bool {
 	h := httpClientWithTimeout(time.Second * 60)
@@ -1303,6 +1345,39 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	log.Infof("PumpFun swap transaction signature : %s", sig)
 	return false
 }
+
+
+func callRaydiumSwapCPMM(ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	h := httpClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	tip := uint64(2000000)
+
+	log.Info("Raydium swap")
+	sig, err := h.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "So11111111111111111111111111111111111111112",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.1,
+		InAmount:     0.01,
+		ComputePrice: computePrice,
+		ComputeLimit: computeLimit,
+		Tip:          &tip,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	// 		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+
 
 func callRaydiumRouteSwap(ownerAddr string) bool {
 	log.Info("starting Raydium route swap test")

@@ -82,7 +82,8 @@ func run() bool {
 	failed = failed || logCall("callGetRaydiumQuotes", func() bool { return callGetRaydiumQuotes(w) })
 	failed = failed || logCall("callGetPumpFunQuotes", func() bool { return callGetPumpFunQuotes(w) })
 	failed = failed || logCall("callGetRaydiumCLMMQuotes", func() bool { return callGetRaydiumCLMMQuotes(w) })
-	failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
+	failed = failed || logCall("callGetRaydiumQuotesCPMM", func() bool { return callGetRaydiumQuotesCPMM(w) })		
+failed = failed || logCall("callGetJupiterQuotes", func() bool { return callGetJupiterQuotes(w) })
 	failed = failed || logCall("callGetPriorityFeeWS", func() bool { return callGetPriorityFeeWS(w) })
 
 	failed = failed || logCall("callGetPumpFunNewTokensWSStream", func() bool {
@@ -621,6 +622,37 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	}
 	for _, route := range quotes.Routes {
 		log.Infof("best route for Jupiter is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumQuotesCPMM(w *provider.WSClient) bool {
+	log.Info("fetching Raydium quotes...")
+
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetRaydiumQuotesCPMM(context.Background(), &pb.GetRaydiumCPMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quote, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
 	}
 
 	fmt.Println()
@@ -1441,6 +1473,31 @@ func callRaydiumCLMMSwap(w *provider.WSClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("Raydium CLMM swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumSwapCPMM(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	tip := uint64(2000000)
+
+	sig, err := w.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
+		Slippage:     0.5,
+		InAmount:     0.01,
+		Tip:          &tip})
+
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	log.Infof("Raydium CPMM swap transaction signature : %s", sig)
 	return false
 }
 
