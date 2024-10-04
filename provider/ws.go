@@ -132,6 +132,16 @@ func (w *WSClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiumQ
 	return &response, nil
 }
 
+// GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
+func (w *WSClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
+	var response pb.GetPumpFunQuotesResponse
+	err := w.conn.Request(ctx, "GetPumpFunQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // GetRaydiumPrices returns the USDC price of requested tokens on Raydium
 func (w *WSClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiumPricesRequest) (*pb.GetRaydiumPricesResponse, error) {
 	var response pb.GetRaydiumPricesResponse

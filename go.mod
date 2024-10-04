@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.22.1
 
 require (
-	github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240924152752-001498a08059
+	github.com/bloXroute-Labs/solana-trader-proto v1.9.2-0.20240926174002-ce349b944f7b
 	github.com/gagliardetto/binary v0.7.7
 	github.com/gagliardetto/solana-go v1.8.4
 	github.com/gorilla/websocket v1.4.2
