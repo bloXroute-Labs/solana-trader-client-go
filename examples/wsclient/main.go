@@ -188,6 +188,12 @@ var ExampleEndpoints = map[string]struct {
 		run:         callPoolsWS,
 		description: "fetch all available markets",
 	},
+
+	"getPoolsCLMM": {
+		run:         callRaydiumCLMMPoolsWS,
+		description: "fetch all available markets",
+	},
+
 	"getTrades": {
 		run:         callTradesWS,
 		description: "get trades",
@@ -289,9 +295,27 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetQuotesWS,
 		description: "get quotes",
 	},
+	"getRecentBlockhash": {
+		run:         callGetRecentBlockHashWS,
+		description: "get quotes",
+	},
+	"getRecentBlockHashV2": {
+		run:         callGetRecentBlockHashV2WSWrap,
+		description: "get quotes",
+	},
 
 	"getRaydiumQuotes": {
 		run:         callGetRaydiumQuotes,
+		description: "get raydium quotes",
+	},
+
+	"getRaydiumCPMMQuotes": {
+		run:         callGetRaydiumCPMMQuotes,
+		description: "get raydium quotes",
+	},
+
+	"getRaydiumCLMMQuotes": {
+		run:         callGetRaydiumCLMMQuotes,
 		description: "get raydium quotes",
 	},
 
@@ -408,6 +432,24 @@ var ExampleEndpoints = map[string]struct {
 	"pumpFunSwap": {
 		run:                               callPostPumpFunSwapWrap,
 		description:                       "pump fun swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCLMMSwap": {
+		run:                               callRaydiumCLMMSwapWSWrap,
+		description:                       "raydium clmm swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCLMMRouteSwap": {
+		run:                               callRaydiumCLMMRouteSwapWSWrap,
+		description:                       "raydium clmm route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCPMMSwap": {
+		run:                               callRaydiumCPMMSwapWSWrap,
+		description:                       "raydium cpmm swap",
 		requiresAdditionalEnvironmentVars: true,
 	},
 
@@ -609,6 +651,21 @@ func callRaydiumPoolsWS(w *provider.WSClient) bool {
 	} else {
 		// prints too much info
 		log.Traceln(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callRaydiumCLMMPoolsWS(w *provider.WSClient) bool {
+	log.Info("fetching Raydium CLMM pools...")
+
+	pools, err := w.GetRaydiumCLMMPools(context.Background(), &pb.GetRaydiumCLMMPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
 	}
 
 	fmt.Println()
@@ -827,6 +884,37 @@ func callGetPumpFunQuotes(w *provider.WSClient) bool {
 	return false
 }
 
+func callGetRaydiumCLMMQuotes(w *provider.WSClient) bool {
+	log.Info("fetching Raydium CLMM quotes...")
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetRaydiumCLMMQuotes(context.Background(), &pb.GetRaydiumCLMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quote, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callGetJupiterQuotes(w *provider.WSClient) bool {
 	log.Info("fetching Jupiter quotes...")
 
@@ -854,6 +942,37 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	}
 	for _, route := range quotes.Routes {
 		log.Infof("best route for Jupiter is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumCPMMQuotes(w *provider.WSClient) bool {
+	log.Info("fetching Raydium quotes...")
+
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := w.GetRaydiumQuotesCPMM(context.Background(), &pb.GetRaydiumCPMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quote, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
 	}
 
 	fmt.Println()
@@ -1711,6 +1830,63 @@ func callRouteTradeSwapWrap(w *provider.WSClient) bool {
 	return callRouteTradeSwap(w, Environment.publicKey)
 }
 
+func callRaydiumCLMMSwapWSWrap(w *provider.WSClient) bool {
+	return callRaydiumCLMMSwapWS(w, Environment.publicKey)
+}
+
+func callRaydiumCLMMSwapWS(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  config.BoolPtr(true),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium CLMM swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumCPMMSwapWSWrap(w *provider.WSClient) bool {
+	return callRaydiumSwapCPMMWS(w, Environment.publicKey)
+}
+
+func callRaydiumSwapCPMMWS(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	tip := uint64(2000000)
+
+	sig, err := w.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
+		Slippage:     0.5,
+		InAmount:     0.01,
+		Tip:          &tip})
+
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	log.Infof("Raydium CPMM swap transaction signature : %s", sig)
+	return false
+}
+
 func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
@@ -1787,6 +1963,48 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 
 func callJupiterSwapWrap(w *provider.WSClient) bool {
 	return callJupiterSwap(w, Environment.publicKey)
+}
+
+func callRaydiumCLMMRouteSwapWSWrap(w *provider.WSClient) bool {
+	return callRaydiumCLMMRouteSwapWS(w, Environment.publicKey)
+}
+
+func callRaydiumCLMMRouteSwapWS(w *provider.WSClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sig, err := w.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:  "FIDA",
+				OutToken: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
+		SkipPreFlight:  config.BoolPtr(true),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
 }
 
 func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -2147,5 +2365,40 @@ func callGetBundleTipWSStream(w *provider.WSClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetRecentBlockHashWS(w *provider.WSClient) bool {
+	log.Info("starting recent block hash")
+
+	result, err := w.GetRecentBlockHash(context.Background(), &pb.GetRecentBlockHashRequest{})
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	}
+
+	log.Infof("response %v received", result)
+	return false
+}
+
+func callGetRecentBlockHashV2WSWrap(w *provider.WSClient) bool {
+	var failed bool
+	for i := 0; i < 2; i++ {
+		failed = callGetRecentBlockHashV2WS(w, uint64(i))
+	}
+
+	return failed
+}
+
+func callGetRecentBlockHashV2WS(w *provider.WSClient, offset uint64) bool {
+	log.Info("starting recent block hash V2")
+
+	result, err := w.GetRecentBlockHashV2(context.Background(), &pb.GetRecentBlockHashRequestV2{Offset: offset})
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHashV2 request: %v", err)
+		return true
+	}
+
+	log.Infof("response %v received V2", result)
 	return false
 }

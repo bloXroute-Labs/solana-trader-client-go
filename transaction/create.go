@@ -5,14 +5,14 @@ import (
 	"github.com/gagliardetto/solana-go/programs/system"
 )
 
-const ReceipientAddress = "EpC5oyb2kx848Skd6guerBfHEyTTSSPZFFdWEhxtLxyt"
+const ReceipientAddress = "5wiGAqf4BX23XU6jc3MDDZAFoNV5pz61thsUuSgpsAxS"
 
-func CreateSampleTx(privateKey solana.PrivateKey, recentBlockHash solana.Hash) (*solana.Transaction, error) {
+func CreateSampleTx(privateKey solana.PrivateKey, recentBlockHash solana.Hash, lamports uint64) (*solana.Transaction, error) {
 
 	recipient := solana.MustPublicKeyFromBase58(ReceipientAddress)
 
 	tx, err := solana.NewTransaction([]solana.Instruction{
-		system.NewTransferInstruction(1, privateKey.PublicKey(), recipient).Build(),
+		system.NewTransferInstruction(lamports, privateKey.PublicKey(), recipient).Build(),
 	}, recentBlockHash)
 	if err != nil {
 		return nil, err

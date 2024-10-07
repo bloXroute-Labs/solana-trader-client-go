@@ -191,7 +191,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callPoolsGRPC,
 		description: "fetch all available markets",
 	},
-
+	"getRaydiumCLMMPools": {
+		run:         callRaydiumCLMMPoolsGRPC,
+		description: "fetch all available markets",
+	},
 	"getRaydiumPoolReserve": {
 		run:         callRaydiumPoolReserveGRPC,
 		description: "get raydium pool reserve",
@@ -221,6 +224,15 @@ var ExampleEndpoints = map[string]struct {
 	"getTransaction": {
 		run:         callGetTransactionGRPC,
 		description: "get tickers",
+	},
+	"getRecentBlockHash": {
+		run:         callRecentBlockHash,
+		description: "get recent blockhash",
+	},
+
+	"getRecentBlockHashV2": {
+		run:         callGetRecentBlockHashV2GRPCWrap,
+		description: "get recent blockhash v2",
 	},
 
 	"getRateLimit": {
@@ -292,6 +304,15 @@ var ExampleEndpoints = map[string]struct {
 	"getRaydiumQuotes": {
 		run:         callGetRaydiumQuotes,
 		description: "get raydium quotes",
+	},
+
+	"getRaydiumQuotesCPMM": {
+		run:         callGetRaydiumCPMMQuotes,
+		description: "get raydium cpmm quotes",
+	},
+	"getRaydiumQuotesCLMM": {
+		run:         callGetRaydiumCLMMQuotes,
+		description: "get raydium cpmm quotes",
 	},
 
 	"getPumpFunQuotes": {
@@ -409,6 +430,24 @@ var ExampleEndpoints = map[string]struct {
 	"raydiumRouteSwap": {
 		run:                               callRaydiumRouteSwapWrap,
 		description:                       "raydium route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCLMMSwap": {
+		run:                               callRaydiumCLMMSwapGRPCWrap,
+		description:                       "raydium clmm swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCLMMRouteSwap": {
+		run:                               callRaydiumCLMMRouteSwapGRPCWrap,
+		description:                       "raydium clmm route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCPMMSwap": {
+		run:                               callRaydiumCPMMSwapGRPCWrap,
+		description:                       "raydium cpmm swap",
 		requiresAdditionalEnvironmentVars: true,
 	},
 
@@ -653,6 +692,19 @@ func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
+func callRaydiumCLMMPoolsGRPC(g *provider.GRPCClient) bool {
+	pools, err := g.GetRaydiumCLMMPools(context.Background(), &pb.GetRaydiumCLMMPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with callRaydiumCLMMPoolsGRPC request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
+	}
+
+	fmt.Println()
+	return false
+}
+
 func callPriceGRPC(g *provider.GRPCClient) bool {
 	prices, err := g.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
 	if err != nil {
@@ -789,6 +841,84 @@ func callGetPumpFunQuotes(g *provider.GRPCClient) bool {
 	}
 
 	log.Infof("best quote for PumpFun is %v", quotes)
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumCLMMQuotes(g *provider.GRPCClient) bool {
+	log.Info("starting get Raydium CLMMQ quotes test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := g.GetRaydiumCLMMQuotes(ctx, &pb.GetRaydiumCLMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumCPMMQuotes(g *provider.GRPCClient) bool {
+	log.Info("starting get Raydium quotes test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := g.GetRaydiumQuotesCPMM(ctx, &pb.GetRaydiumCPMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
 
 	fmt.Println()
 	return false
@@ -979,6 +1109,49 @@ func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
 		}
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callRecentBlockHash(g *provider.GRPCClient) bool {
+	log.Info("starting recent block hash")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// response
+	response, err := g.GetRecentBlockHash(ctx)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	}
+
+	log.Infof("response %v received", response)
+	return false
+}
+
+func callGetRecentBlockHashV2GRPCWrap(g *provider.GRPCClient) bool {
+	var failed bool
+	for i := 0; i < 2; i++ {
+		failed = callRecentBlockHashV2GRPC(g, uint64(i))
+	}
+
+	return failed
+}
+
+func callRecentBlockHashV2GRPC(g *provider.GRPCClient, offset uint64) bool {
+	log.Info("starting recent block hash V2")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// response
+	response, err := g.GetRecentBlockHashV2(ctx, offset)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHashV2 request: %v", err)
+		return true
+	}
+
+	log.Infof("V2 response %v received", response)
 	return false
 }
 
@@ -1711,6 +1884,72 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumCLMMSwapGRPCWrap(g *provider.GRPCClient) bool {
+	return callRaydiumCLMMSwapGRPC(g, Environment.publicKey)
+}
+
+func callRaydiumCLMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	tip := uint64(10000)
+	log.Info("Raydium swap")
+	sig, err := g.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "So11111111111111111111111111111111111111112",
+		OutToken:     "HDa3zJc12ahykSsBRvgiWzr6WLEByf36yzKKbVvy4gnF",
+		Slippage:     0.1,
+		InAmount:     0.0089,
+		Tip:          &tip,
+		ComputePrice: 10000,
+		ComputeLimit: 300000,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  config.BoolPtr(true),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumCPMMSwapGRPCWrap(g *provider.GRPCClient) bool {
+	return callRaydiumCPMMSwapGRPC(g, Environment.publicKey)
+}
+
+func callRaydiumCPMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	tip := uint64(2000000)
+
+	log.Info("Raydium swap")
+	sig, err := g.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		OutToken:     "So11111111111111111111111111111111111111112",
+		Slippage:     0.5,
+		InAmount:     0.01,
+		ComputePrice: computePrice,
+		ComputeLimit: computeLimit,
+		Tip:          &tip,
+	})
+
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	log.Infof("Raydium Swap CPMM transaction signature : %s", sig)
+	return false
+}
+
 func callJupiterSwapWrap(g *provider.GRPCClient) bool {
 	return callJupiterSwap(g, Environment.publicKey)
 }
@@ -1875,6 +2114,41 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 		SkipPreFlight:  config.BoolPtr(false),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumCLMMRouteSwapGRPCWrap(g *provider.GRPCClient) bool {
+	return callRaydiumCLMMRouteSwapGRPC(g, Environment.publicKey)
+}
+
+func callRaydiumCLMMRouteSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+	log.Info("starting Raydium route CLMM swap test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("Raydium route swap")
+	sig, err := g.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:      "HDa3zJc12ahykSsBRvgiWzr6WLEByf36yzKKbVvy4gnF",
+				OutToken:     "So11111111111111111111111111111111111111112",
+				InAmount:     0.000303,
+				OutAmountMin: 0.0006005,
+				OutAmount:    0.00064,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)

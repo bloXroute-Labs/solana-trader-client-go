@@ -68,6 +68,53 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	}
 }
 
+// GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
+func (h *HTTPClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/clmm-quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v",
+		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
+	response := new(pb.GetRaydiumCLMMQuotesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumCLMMQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetRaydiumCLMMPools returns the CLMM pools on Raydium
+func (h *HTTPClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/clmm-pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
+	pools := new(pb.GetRaydiumCLMMPoolsResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumCLMMPoolsResponse](ctx, url, h.httpClient, pools, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return pools, nil
+}
+
+// PostRaydiumCLMMSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (h *HTTPClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/clmm-swap", h.baseURL)
+	var response pb.PostRaydiumSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// PostRaydiumCLMMRouteSwap returns a partially signed transaction(s) for submitting a route swap request on Raydium
+func (h *HTTPClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/clmm-route-swap", h.baseURL)
+	var response pb.PostRaydiumRouteSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumRouteSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // GetTransaction returns details of a recent transaction
 func (h *HTTPClient) GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/transaction?signature=%s", h.baseURL, request.Signature)
@@ -125,6 +172,20 @@ func (h *HTTPClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiu
 	return response, nil
 }
 
+
+// GetRaydiumQuotesCPMM returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium CPMM Pools
+func (h *HTTPClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v",
+		h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
+	response := new(pb.GetRaydiumCPMMQuotesResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetRaydiumCPMMQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+
 // GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
 func (h *HTTPClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/pumpfun/quotes?mintAddress=%s&quoteType=%s&amount=%f&bondingCurveAddress=%s&slippage=%f",
@@ -149,6 +210,24 @@ func (h *HTTPClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiu
 	return respons, nil
 }
 
+// SubmitRaydiumCLMMSwap builds a Raydium CLMM Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostRaydiumCLMMSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitRaydiumCLMMRouteSwap builds a Raydium CLMM RouteSwap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+	resp, err := h.PostRaydiumCLMMRouteSwap(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
 // PostRaydiumSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (h *HTTPClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/swap", h.baseURL)
@@ -161,6 +240,19 @@ func (h *HTTPClient) PostRaydiumSwap(ctx context.Context, request *pb.PostRaydiu
 	return &response, nil
 }
 
+// PostRaydiumSwapCPMM returns a partially signed transaction(s) for submitting a swap request on Raydium
+func (h *HTTPClient) PostRaydiumCPMMSwap(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (*pb.PostRaydiumCPMMSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-swap", h.baseURL)
+	var response pb.PostRaydiumCPMMSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostRaydiumCPMMSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+
 // PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
 func (h *HTTPClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/pumpfun/swap", h.baseURL)
@@ -172,6 +264,8 @@ func (h *HTTPClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFu
 
 	return &response, nil
 }
+
+
 
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (h *HTTPClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
@@ -572,6 +666,22 @@ func (h *HTTPClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRayd
 		return nil, err
 	}
 	return h.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
+}
+
+// SubmitRaydiumSwapCPMM builds a Raydium Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (string, error) {
+	resp, err := h.PostRaydiumCPMMSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+
+	sig, err := h.SignAndSubmit(ctx, resp.Transaction, true, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return sig, nil
 }
 
 // SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
@@ -992,11 +1102,22 @@ func (h *HTTPClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, pay
 	return h.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
 }
 
-// GetRecentBlockHash subscribes to a stream for getting recent block hash.
+// GetRecentBlockHash returns recent block hash.
 func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/system/blockhash", h.baseURL)
 	response := new(pb.GetRecentBlockHashResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// GetRecentBlockHash returns recent block hash, supports optional offset.
+func (h *HTTPClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
+	url := fmt.Sprintf("%s/api/v2/system/blockhash?offset=%d", h.baseURL, offset)
+	response := new(pb.GetRecentBlockHashResponseV2)
+	if err := connections.HTTPGetWithClient[*pb.GetRecentBlockHashResponseV2](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 

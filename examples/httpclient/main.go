@@ -9,10 +9,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
-
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -191,6 +190,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callPoolsHTTP,
 		description: "fetch all available markets",
 	},
+	"getRaydiumCLMMPools": {
+		run:         callRaydiumCLMMPools,
+		description: "fetch all available markets",
+	},
 
 	"getTrades": {
 		run:         callTradesHTTP,
@@ -266,13 +269,23 @@ var ExampleEndpoints = map[string]struct {
 		description: "get raydium quotes",
 	},
 
+	"getRaydiumCLMMQuotes": {
+		run:         callGetRaydiumCLMMQuotes,
+		description: "get raydium quotes",
+	},
+
+	"getRaydiumCPMMQuotes": {
+		run:         callGetRaydiumCPMMQuotes,
+		description: "get raydium quotes",
+	},
+
 	"getPumpFunQuotes": {
 		run:         callGetPumpFunQuotesHTTP,
 		description: "get pump fun quotes",
 	},
 
 	"getJupiterQuotes": {
-		run:         callGetJupiterQuotesHTTP,
+		run:         callGetJupiterQuotes,
 		description: "get jupiter quotes",
 	},
 
@@ -362,6 +375,23 @@ var ExampleEndpoints = map[string]struct {
 	"jupiterRouteSwap": {
 		run:                               callJupiterRouteSwapWrap,
 		description:                       "call jupiter route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+	"raydiumCLMMSwap": {
+		run:                               callRaydiumCLMMSwapHTTPWrap,
+		description:                       "raydium clmm swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCLMMRouteSwap": {
+		run:                               callRaydiumCLMMRouteSwapWrap,
+		description:                       "raydium clmm route swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"raydiumCPMMSwap": {
+		run:                               callRaydiumSwapCPMMWrap,
+		description:                       "raydium cpmm swap",
 		requiresAdditionalEnvironmentVars: true,
 	},
 
@@ -541,8 +571,7 @@ func callRaydiumPoolReserveHTTP(h *provider.HTTPClient) bool {
 	defer cancel()
 
 	pools, err := h.GetRaydiumPoolReserve(ctx, &pb.GetRaydiumPoolReserveRequest{
-		PairsOrAddresses: []string{"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
-			"D8wAxwpH2aKaEGBKfeGdnQbCc2s54NrRvTDXCK98VAeT", "DdpuaJgjB2RptGMnfnCZVmC4vkKsMV6ytRa2gggQtCWt"},
+		PairsOrAddresses: []string{"66cxXqzCpFttLCdMBXYykjfCEVQKag8Cv1oB5KEacd5b"},
 	})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPoolReserve request for Raydium: %v", err)
@@ -582,6 +611,22 @@ func callGetRateLimitHTTP(h *provider.HTTPClient) bool {
 		return true
 	} else {
 		log.Info(tx)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callRaydiumCLMMPools(h *provider.HTTPClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pools, err := h.GetRaydiumCLMMPools(ctx, &pb.GetRaydiumCLMMPoolsRequest{})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMPools request for Raydium: %v", err)
+		return true
+	} else {
+		log.Info(pools)
 	}
 
 	fmt.Println()
@@ -768,7 +813,81 @@ func callGetPumpFunQuotesHTTP(h *provider.HTTPClient) bool {
 	return false
 }
 
-func callGetJupiterQuotesHTTP(h *provider.HTTPClient) bool {
+func callGetRaydiumCLMMQuotes(h *provider.HTTPClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	inToken := "SOL"
+	outToken := "USDT"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetRaydiumCLMMQuotes(ctx, &pb.GetRaydiumCLMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetRaydiumCPMMQuotes(h *provider.HTTPClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	inToken := "So11111111111111111111111111111111111111112"
+	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+	amount := 0.01
+	slippage := float64(5)
+
+	quotes, err := h.GetRaydiumQuotesCPMM(ctx, &pb.GetRaydiumCPMMQuotesRequest{
+		InToken:  inToken,
+		OutToken: outToken,
+		InAmount: amount,
+		Slippage: slippage,
+	})
+	if err != nil {
+		log.Errorf("error with GetQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if err != nil {
+		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
+		return true
+	}
+
+	if len(quotes.Routes) != 1 {
+		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
+		return true
+	}
+	for _, route := range quotes.Routes {
+		log.Infof("best route for Raydium is %v", route)
+	}
+
+	fmt.Println()
+	return false
+}
+
+func callGetJupiterQuotes(h *provider.HTTPClient) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -1410,6 +1529,35 @@ func callRaydiumSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	return false
 }
 
+func callRaydiumCLMMSwapHTTPWrap(h *provider.HTTPClient) bool {
+	return callRaydiumCLMMSwapHTTP(h, Environment.publicKey)
+}
+
+func callRaydiumCLMMSwapHTTP(h *provider.HTTPClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM swap test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium CLMM swap")
+	sig, err := h.SubmitRaydiumCLMMSwap(ctx, &pb.PostRaydiumSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "USDT",
+		OutToken:     "SOL",
+		Slippage:     0.1,
+		InAmount:     0.01,
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  config.BoolPtr(true),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium swap transaction signature : %s", sig)
+	return false
+}
+
 func callPostPumpFunSwapWrap(h *provider.HTTPClient) bool {
 	return callPostPumpFunSwap(h, Environment.publicKey)
 }
@@ -1438,6 +1586,39 @@ func callPostPumpFunSwap(h *provider.HTTPClient, ownerAddr string) bool {
 		return true
 	}
 	log.Infof("PumpFun swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumSwapCPMMWrap(h *provider.HTTPClient) bool {
+	return callRaydiumSwapCPMM(h, Environment.publicKey)
+}
+
+func callRaydiumSwapCPMM(h *provider.HTTPClient, ownerAddr string) bool {
+	log.Info("starting Raydium swap test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	tip := uint64(2000000)
+
+	log.Info("Raydium swap")
+	sig, err := h.SubmitRaydiumSwapCPMM(ctx, &pb.PostRaydiumCPMMSwapRequest{
+		OwnerAddress: ownerAddr,
+		InToken:      "So11111111111111111111111111111111111111112",
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Slippage:     0.1,
+		InAmount:     0.01,
+		ComputePrice: computePrice,
+		ComputeLimit: computeLimit,
+		Tip:          &tip,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+
+	// 		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
 }
 
@@ -1471,6 +1652,48 @@ func callRaydiumRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 		SkipPreFlight:  config.BoolPtr(false),
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("Raydium route swap transaction signature : %s", sig)
+	return false
+}
+
+func callRaydiumCLMMRouteSwapWrap(h *provider.HTTPClient) bool {
+	return callRaydiumCLMMRouteSwap(h, Environment.publicKey)
+}
+
+func callRaydiumCLMMRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
+	log.Info("starting Raydium CLMM route swap test")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Info("Raydium route swap")
+	sig, err := h.SubmitRaydiumCLMMRouteSwap(ctx, &pb.PostRaydiumRouteSwapRequest{
+		OwnerAddress: ownerAddr,
+		Slippage:     0.1,
+		Steps: []*pb.RaydiumRouteStep{
+			{
+				InToken:      "FIDA",
+				OutToken:     "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				InAmount:     0.01,
+				OutAmountMin: 0.007505,
+				OutAmount:    0.0074,
+			},
+			{
+				InToken:      "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+				OutToken:     "USDT",
+				InAmount:     0.007505,
+				OutAmount:    0.004043,
+				OutAmountMin: 0.004000,
+			},
+		},
+	}, provider.SubmitOpts{
+		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
+		SkipPreFlight:  config.BoolPtr(true),
 	})
 	if err != nil {
 		log.Error(err)
