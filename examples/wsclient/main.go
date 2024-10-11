@@ -89,6 +89,7 @@ func main() {
 			}
 		}
 
+	rerun:
 		log.Printf("running example: %s\n", exampleName)
 		if failed := exampleStruct.run(client); failed {
 			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
@@ -97,6 +98,22 @@ func main() {
 			time.Sleep(1 * time.Second)
 			log.Printf("example '%s' completed successfully\n", exampleName)
 		}
+
+		rerunPrompt := promptui.Select{
+			Label: "Choose an option",
+			Items: []string{"Rerun Function", "Return to Main Menu"},
+		}
+
+		_, result, err := rerunPrompt.Run()
+		if err != nil {
+			fmt.Println("Prompt failed, returning to main menu")
+			break
+		}
+
+		if result == "Rerun Function" {
+			goto rerun
+		}
+
 	}
 
 }
