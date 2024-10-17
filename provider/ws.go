@@ -142,7 +142,6 @@ func (w *WSClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRayd
 	return &response, nil
 }
 
-
 // GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
 func (w *WSClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
 	var response pb.GetPumpFunQuotesResponse
@@ -223,7 +222,6 @@ func (w *WSClient) PostRaydiumSwapCPMM(ctx context.Context, request *pb.PostRayd
 	return &response, nil
 }
 
-
 // PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
 func (w *WSClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
 	var response pb.PostPumpFunSwapResponse
@@ -233,7 +231,6 @@ func (w *WSClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunS
 	}
 	return &response, nil
 }
-
 
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (w *WSClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
@@ -1149,6 +1146,17 @@ func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context, includeCPMM boo
 		},
 		func() *pb.GetNewRaydiumPoolsResponse {
 			var v pb.GetNewRaydiumPoolsResponse
+			return &v
+		})
+}
+
+// GetNewRaydiumPoolsByTranasctionStream subscribes to a stream for new Raydium Pools when they are created with some
+// more detailed info compared to the standard straem, while sacrificing some speed
+func (w *WSClient) GetNewRaydiumPoolsByTransactionStream(ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsByTransactionResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsByTransactionStream",
+		&pb.GetNewRaydiumPoolsByTransactionRequest{},
+		func() *pb.GetNewRaydiumPoolsByTransactionResponse {
+			var v pb.GetNewRaydiumPoolsByTransactionResponse
 			return &v
 		})
 }

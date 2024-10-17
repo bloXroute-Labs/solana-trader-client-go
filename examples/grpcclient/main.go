@@ -300,6 +300,11 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetNewRaydiumPoolsStream,
 		description: "stream new raydium pools",
 	},
+
+	"getNewRaydiumPoolByTransactionStream": {
+		run:         callGetNewRaydiumPoolsByTransactionStream,
+		description: "stream new raydium pools (by transaction updates)",
+	},
 	"getNewRaydiumPoolsStreamWithCPMM": {
 		run:         callGetNewRaydiumPoolsStreamWithCPMM,
 		description: "stream new raydium pools with cpmm enabled",
@@ -2386,6 +2391,34 @@ func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
 		}
 
 		log.Infof("response %v received", i)
+	}
+	return false
+}
+
+func callGetNewRaydiumPoolsByTransactionStream(g *provider.GRPCClient) bool {
+	log.Info("starting get new raydium pools stream without cpmm")
+
+	ch := make(chan *pb.GetNewRaydiumPoolsByTransactionResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Stream response
+	stream, err := g.GetNewRaydiumPoolsByTransactionStream(ctx, false)
+	if err != nil {
+		log.Errorf("error with GetNewRaydiumPools stream request: %v", err)
+		return true
+	}
+	stream.Into(ch)
+	for i := 1; i <= 3; i++ {
+		resp, ok := <-ch
+		if !ok {
+			// channel closed
+			return true
+		}
+
+		log.Infof("response %v received", i)
+
+		fmt.Println(resp)
 	}
 	return false
 }

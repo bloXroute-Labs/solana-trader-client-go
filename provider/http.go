@@ -172,7 +172,6 @@ func (h *HTTPClient) GetRaydiumQuotes(ctx context.Context, request *pb.GetRaydiu
 	return response, nil
 }
 
-
 // GetRaydiumQuotesCPMM returns the possible amount(s) of outToken for an inToken and the route to achieve it on Raydium CPMM Pools
 func (h *HTTPClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v",
@@ -184,7 +183,6 @@ func (h *HTTPClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRa
 
 	return response, nil
 }
-
 
 // GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
 func (h *HTTPClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
@@ -252,7 +250,6 @@ func (h *HTTPClient) PostRaydiumCPMMSwap(ctx context.Context, request *pb.PostRa
 	return &response, nil
 }
 
-
 // PostPumpFunSwap returns a partially signed transaction(s) for submitting a swap request on Pumpdotfun platform
 func (h *HTTPClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFunSwapRequest) (*pb.PostPumpFunSwapResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/pumpfun/swap", h.baseURL)
@@ -264,8 +261,6 @@ func (h *HTTPClient) PostPumpFunSwap(ctx context.Context, request *pb.PostPumpFu
 
 	return &response, nil
 }
-
-
 
 // PostRaydiumRouteSwap returns a partially signed transaction(s) for submitting a swap request on Raydium
 func (h *HTTPClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
@@ -674,7 +669,6 @@ func (h *HTTPClient) SubmitRaydiumSwapCPMM(ctx context.Context, request *pb.Post
 	if err != nil {
 		return "", err
 	}
-
 
 	sig, err := h.SignAndSubmit(ctx, resp.Transaction, true, false, false)
 	if err != nil {
