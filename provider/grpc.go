@@ -962,6 +962,20 @@ func (g *GRPCClient) GetNewRaydiumPoolsStream(
 	return connections.GRPCStream[pb.GetNewRaydiumPoolsResponse](stream, ""), nil
 }
 
+// GetNewRaydiumPoolsStreamByTransaction subscribes to a stream for getting recent swaps on projects & markets of interest.
+// The ByTransaction option gives a bit more pool info while sacrificing speed
+
+func (g *GRPCClient) GetNewRaydiumPoolsByTransactionStream(
+	ctx context.Context, includeCPMM bool,
+) (connections.Streamer[*pb.GetNewRaydiumPoolsByTransactionResponse], error) {
+	stream, err := g.apiClient.GetNewRaydiumPoolsByTransactionStream(ctx, &pb.GetNewRaydiumPoolsByTransactionRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetNewRaydiumPoolsByTransactionResponse](stream, ""), nil
+}
+
 // GetBlockStream subscribes to a stream for getting recent blocks.
 func (g *GRPCClient) GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error) {
 	stream, err := g.apiClient.GetBlockStream(ctx, &pb.GetBlockStreamRequest{})
