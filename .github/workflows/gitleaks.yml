@@ -1,0 +1,23 @@
+name: gitleaks
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    environment: develop
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2.3.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: "${{ secrets.GITLEAKS_LICENSE }}"
