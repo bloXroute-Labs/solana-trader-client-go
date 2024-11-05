@@ -8,37 +8,37 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-	"github.com/gagliardetto/solana-go/rpc"
 	"strings"
 
 	"time"
 )
 
 type traderWSPPumpFunNewToken struct {
-	w           *provider.WSClient
-	pumpTxMap   *utils.LockedMap[string, benchmark.PumpTxInfo]
-	messageChan chan *benchmark.NewTokenResult
-	authHeader  string
-	address     string
-	rpcHost     string
+	w            *provider.WSClient
+	pumpTxMap    *utils.LockedMap[string, benchmark.PumpTxInfo]
+	messageChan  chan *benchmark.NewTokenResult
+	authHeader   string
+	address      string
+	rpcHost      string
+	isFirstParty bool
 }
 
-func NewTraderWSPPumpFunNewToken(messageChan chan *benchmark.NewTokenResult, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo],
-	address, authHeader, rpcHost string) (Source[*benchmark.NewTokenResult, benchmark.NewTokenResult], error) {
+func NewTraderWSPPumpFunNewToken(isFirstParty bool, messageChan chan *benchmark.NewTokenResult, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo],
+	address, authHeader string) (Source[*benchmark.NewTokenResult, benchmark.NewTokenResult], error) {
 
 	s := &traderWSPPumpFunNewToken{
-		pumpTxMap:   pumpTxMap,
-		messageChan: messageChan,
-		rpcHost:     rpcHost,
+		pumpTxMap:    pumpTxMap,
+		messageChan:  messageChan,
+		isFirstParty: isFirstParty,
 	}
 
 	if s.w == nil {
 		w, err := provider.NewWSClientWithOpts(provider.RPCOpts{
-			Endpoint: address,
-			//AuthHeader: authHeader,
+			Endpoint:   address,
+			AuthHeader: authHeader,
 		})
 		s.address = address
-		//s.authHeader = authHeader
+		s.authHeader = authHeader
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +57,6 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
-	solanaRpc := rpc.New(fmt.Sprintf("https://%s", s.rpcHost))
 	logger.Log().Infow("stream connecting")
 	stream, err := s.w.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
 	if err != nil {
@@ -77,8 +76,8 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 				logger.Log().Errorf("resetting the stream, because of error %v \n", err)
 				if s.w == nil {
 					w, err := provider.NewWSClientWithOpts(provider.RPCOpts{
-						Endpoint: s.address,
-						//AuthHeader: s.authHeader,
+						Endpoint:   s.address,
+						AuthHeader: s.authHeader,
 					})
 					if err != nil {
 						logger.Log().Errorw("err again", "err", err)
@@ -106,59 +105,42 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 			}
 
 			go func() {
-				tryCount := 0
-				slotInfoCalled := false
-				slotInfo := &rpc.GetBlockResult{}
 
-				for {
-					time.Sleep(10 * time.Second)
-					tryCount++
-					if tryCount >= 6 {
-						logger.Log().Infow("failed to find info for tx",
-							"sig", msg.TxnHash,
-							"s.pumpTxMap.Len()", s.pumpTxMap.Len())
-						break
-					}
+				s.pumpTxMap.Update(msg.TxnHash, func(v benchmark.PumpTxInfo, exists bool) benchmark.PumpTxInfo {
+					if exists {
+						var firstPartyEventTime time.Time
+						var thirdPartyEventTime time.Time
+						if s.isFirstParty {
+							// first party is late
+							firstPartyEventTime = time.Now()
+							thirdPartyEventTime = v.TimeSeen
 
-					if !slotInfoCalled {
-						mstv := uint64(0)
-						slotInfo, err = solanaRpc.GetBlockWithOpts(
-							context.Background(),
-							uint64(msg.Slot),
-							&rpc.GetBlockOpts{
-								TransactionDetails:             rpc.TransactionDetailsNone,
-								Commitment:                     rpc.CommitmentConfirmed,
-								MaxSupportedTransactionVersion: &mstv,
-							},
-						)
-						if err != nil {
-							logger.Log().Errorw("error occurred when getting slot info", "tryCount", tryCount)
 						} else {
-							slotInfoCalled = true
+							// first party is first
+							firstPartyEventTime = v.TimeSeen
+							thirdPartyEventTime = time.Now()
+						}
+
+						res := &benchmark.NewTokenResult{
+							TraderAPIEventTime:  firstPartyEventTime,
+							ThirdPartyEventTime: thirdPartyEventTime,
+							TxHash:              msg.TxnHash,
+							Slot:                msg.Slot,
+							Diff:                firstPartyEventTime.Sub(thirdPartyEventTime),
+						}
+						logger.Log().Infow("diff", "firstParty millis",
+							res.Diff.Milliseconds(), "msg.TxnHash", msg.TxnHash)
+
+						s.messageChan <- res
+
+					} else {
+						v = benchmark.PumpTxInfo{
+							TimeSeen: time.Now(),
 						}
 					}
+					return v
+				})
 
-					if slotInfo != nil {
-						if v, ok := s.pumpTxMap.Get(msg.TxnHash); ok {
-
-							logger.Log().Infow("diff", "traderAPIEventTime - rpcNodePumpTxTime = ",
-								msg.Timestamp.AsTime().Sub(v.TimeSeen),
-								"traderAPIEventTime - BlockTime = ",
-								msg.Timestamp.AsTime().Sub(slotInfo.BlockTime.Time()),
-								"traderAPIEventTime", msg.Timestamp.AsTime().UnixMilli(),
-								"v.TimeSeen", v.TimeSeen.UnixMilli(),
-								"BlockTime.Time()", slotInfo.BlockTime.Time())
-
-							s.messageChan <- &benchmark.NewTokenResult{
-								TraderAPIEventTime:  msg.Timestamp.AsTime(),
-								ThirdPartyEventTime: v.TimeSeen,
-								BlockTime:           slotInfo.BlockTime.Time(),
-								Diff:                msg.Timestamp.AsTime().Sub(v.TimeSeen),
-							}
-							return
-						}
-					}
-				}
 			}()
 
 		case <-ctx.Done():
@@ -166,7 +148,8 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 			if err != nil {
 				logger.Log().Errorw("could not close connection", "err", err)
 			}
-			close(s.messageChan)
+			//close(s.messageChan)
+
 			logger.Log().Infow("end of ws")
 			return nil, err
 		}

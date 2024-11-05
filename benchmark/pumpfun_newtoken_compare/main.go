@@ -8,6 +8,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/pumpfun_newtoken_compare/block"
 	utils2 "github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -82,7 +83,7 @@ func run(c *cli.Context) error {
 	startTime := time.Now()
 	duration := c.Duration(DurationFlag.Name)
 	runCtx, runCancel := context.WithTimeout(ctx, duration)
-	//defer runCancel()
+	defer runCancel()
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -113,17 +114,17 @@ func run(c *cli.Context) error {
 	if !ok {
 		log.Infof("GET_BLOCK_ENDPOINT environment variable not set: requests will be slower")
 	}
-	traderAPIEndpoint, ok := os.LookupEnv("FIRST_PARTY_ENDPOINT")
+	firstPartyEndpoint, ok := os.LookupEnv("FIRST_PARTY_ENDPOINT")
 	if !ok {
 		return errors.New("FIRST_PARTY_ENDPOINT not set in environment")
 	}
 
 	if strings.Contains(thirdPartyEndpoint, ":1809") {
 		skip3rdParty = true
-		//err := startTraderAPIStream(runCtx, messageChan, authHeader, thirdPartyEndpoint, pumpTxMap, getBlockEndpoint)
-		//if err != nil {
-		//	panic(err)
-		//}
+		err := startTraderAPIStream(false, runCtx, messageChan, authHeader, thirdPartyEndpoint, pumpTxMap)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if !skip3rdParty {
@@ -140,17 +141,20 @@ func run(c *cli.Context) error {
 		}()
 	}
 
-	err := startTraderAPIStream(runCtx, messageChan, authHeader, traderAPIEndpoint, pumpTxMap, getBlockEndpoint)
+	err := startTraderAPIStream(true, runCtx, messageChan, authHeader, firstPartyEndpoint, pumpTxMap)
 	if err != nil {
 		panic(err)
 	}
 	ticker := time.NewTicker(updateInterval)
 	var tradeUpdates []*benchmark.NewTokenResult
+	solanaRpc := rpc.New(fmt.Sprintf("https://%s", getBlockEndpoint))
+
 Loop:
 	for {
 		select {
 		case msg, ok := <-messageChan:
 			if ok {
+				populateSlotInfos(msg, solanaRpc)
 				tradeUpdates = append(tradeUpdates, msg)
 			}
 		case <-ticker.C:
@@ -173,8 +177,8 @@ Loop:
 	return nil
 }
 
-func startTraderAPIStream(runCtx context.Context, messageChan chan *benchmark.NewTokenResult, authHeader, traderAPIEndpoint string, pumpTxMap *utils2.LockedMap[string, benchmark.PumpTxInfo], getBlockEndpoint string) error {
-	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, getBlockEndpoint)
+func startTraderAPIStream(isFirstParty bool, runCtx context.Context, messageChan chan *benchmark.NewTokenResult, authHeader, firstPartyEndpoint string, pumpTxMap *utils2.LockedMap[string, benchmark.PumpTxInfo]) error {
+	traderOS, err := stream.NewTraderWSPPumpFunNewToken(isFirstParty, messageChan, pumpTxMap, firstPartyEndpoint, authHeader)
 	if err != nil {
 		return err
 	}
@@ -198,6 +202,7 @@ func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult)
 	total := 0
 	fmt.Println("BlockTime         TraderAPIEventTime     ThirdPartyEventTime       Diff(thirdParty)       Diff(Blocktime)")
 	for _, vs := range datapoints {
+
 		total++
 		fmt.Print(fmt.Sprintf("%d", vs.BlockTime.UnixMilli()))
 		fmt.Print(fmt.Sprintf("     %d", vs.TraderAPIEventTime.UnixMilli()))
@@ -221,4 +226,39 @@ func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult)
 	fmt.Println("Faster counts: ")
 	fmt.Println(fmt.Sprintf(" traderAPIFaster   %d", traderFaster))
 	fmt.Println(fmt.Sprintf(" thirdPartyFaster  %d", tpFaster))
+}
+
+func populateSlotInfos(msg *benchmark.NewTokenResult, solanaRpc *rpc.Client) {
+	tryCount := 0
+	for {
+		if tryCount > 3 {
+			time.Sleep(10 * time.Second)
+		} else {
+			time.Sleep(time.Second)
+		}
+		tryCount++
+		if tryCount >= 6 {
+			logger.Log().Infow("failed to find info for tx",
+				"sig", msg.TxHash)
+			break
+		}
+
+		mstv := uint64(0)
+		slotInfo, err := solanaRpc.GetBlockWithOpts(
+			context.Background(),
+			uint64(msg.Slot),
+			&rpc.GetBlockOpts{
+				TransactionDetails:             rpc.TransactionDetailsNone,
+				Commitment:                     rpc.CommitmentConfirmed,
+				MaxSupportedTransactionVersion: &mstv,
+			},
+		)
+		if err != nil {
+			logger.Log().Errorw("error occurred when getting slot info", "tryCount", tryCount)
+			continue
+		}
+		msg.BlockTime = slotInfo.BlockTime.Time()
+
+	}
+
 }
