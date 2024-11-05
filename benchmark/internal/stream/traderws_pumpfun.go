@@ -57,12 +57,11 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
-	logger.Log().Infow("stream connecting")
 	stream, err := s.w.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
 	if err != nil {
 		return nil, err
 	}
-	logger.Log().Infow("stream connected")
+
 	ch := make(chan *pb.GetPumpFunNewTokensStreamResponse, 10)
 	go func() {
 		for {
