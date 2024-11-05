@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/joho/godotenv"
 	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
@@ -41,6 +42,11 @@ func main() {
 
 	Environment = initializeEnvironmentVariables()
 
+	client := setupGRPCClient(config.Env("mainnet"))
+	//callRecentBlockHashGRPCStream(client)
+	callGetpumpFunNewTokenGRPCStreamWrap(client)
+
+	return
 	listAllEndpoints()
 
 	envPrompt := promptui.Select{
@@ -122,6 +128,10 @@ func main() {
 }
 
 func initializeEnvironmentVariables() EnvironmentVariables {
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
 	if os.Getenv("AUTH_HEADER") == "" {
 		log.Fatal("must specify bloXroute authorization header!")
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
@@ -37,7 +38,10 @@ var Environment EnvironmentVariables
 func main() {
 	utils.InitLogger()
 
-	Environment = initializeEnvironmentVariables()
+	//Environment = initializeEnvironmentVariables()
+
+	client := setupWSClient(config.Env("mainnet"))
+	callGetPumpFunNewTokensWSStreamWrap(client)
 
 	listAllEndpoints()
 
@@ -157,8 +161,12 @@ func initializeEnvironmentVariables() EnvironmentVariables {
 }
 
 func setupWSClient(env config.Env) *provider.WSClient {
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
 	var w *provider.WSClient
-	var err error
 	switch env {
 	case config.EnvLocal:
 		w, err = provider.NewWSClientLocal()

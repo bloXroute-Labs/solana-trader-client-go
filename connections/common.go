@@ -13,6 +13,7 @@ func (s Streamer[T]) Into(ch chan T) {
 		for {
 			v, err := s()
 			if err != nil {
+				panic(err)
 				close(ch)
 				return
 			}

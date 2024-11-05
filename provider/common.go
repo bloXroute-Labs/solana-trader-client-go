@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
+	"github.com/joho/godotenv"
 	"os"
 	"strings"
 	"time"
@@ -92,6 +93,10 @@ type RPCOpts struct {
 }
 
 func DefaultRPCOpts(endpoint string) RPCOpts {
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
 	var spk *solana.PrivateKey
 	privateKey, err := transaction.LoadPrivateKeyFromEnv()
 	if err == nil {
