@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -48,16 +49,11 @@ func main() {
 		Required: false,
 		Value:    "pump_fun_trader_api_comparison.csv",
 	}
-	utils.APIWSEndpoint = &cli.StringFlag{
-		Name:  "solana-trader-ws-endpoint",
-		Usage: "Solana Trader API API websocket connection endpoint",
-		Value: "wss://pump-ny.solana.dex.blxrbdn.com/ws",
-	}
+
 	app := &cli.App{
 		Name:  "benchmark-traderapi-pumpfun-newtokens",
 		Usage: "Compares Solana Trader API pumpfun new token stream",
 		Flags: []cli.Flag{
-			utils.APIWSEndpoint,
 			DurationFlag,
 			utils.OutputFileFlag,
 		},
@@ -78,6 +74,7 @@ func main() {
 }
 
 func run(c *cli.Context) error {
+	//ctx, _ := context.WithCancel(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	pumpTxMap := utils2.NewLockedMap[string, benchmark.PumpTxInfo]()
@@ -85,7 +82,7 @@ func run(c *cli.Context) error {
 	startTime := time.Now()
 	duration := c.Duration(DurationFlag.Name)
 	runCtx, runCancel := context.WithTimeout(ctx, duration)
-	defer runCancel()
+	//defer runCancel()
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -101,50 +98,52 @@ func run(c *cli.Context) error {
 			}
 		}
 	}()
-	rpcHost, ok := os.LookupEnv("RPC_ENDPOINT")
+	thirdPartyEndpoint, ok := os.LookupEnv("THIRD_PARTY_ENDPOINT")
 	if !ok {
-		log.Infof("RPC_ENDPOINT environment variable not set: requests will be slower")
+		log.Infof("THIRD_PARTY_ENDPOINT environment variable not set: requests will be slower")
 	}
-
-	getBlockEndpoint, ok := os.LookupEnv("GET_BLOCK_ENDPOINT")
-	if !ok {
-		log.Infof("GET_BLOCK_ENDPOINT environment variable not set: requests will be slower")
-	}
-
-	go func() {
-		err := block.StartBenchmarking(
-			runCtx,
-			pumpTxMap,
-			http.Header{},
-			rpcHost,
-		)
-		if err != nil {
-			logger.Log().Errorw("startDetecting", "error", err)
-		}
-	}()
-
-	traderAPIEndpoint := c.String(utils.APIWSEndpoint.Name)
+	skip3rdParty := false
+	messageChan := make(chan *benchmark.NewTokenResult, 100)
 
 	authHeader, ok := os.LookupEnv("AUTH_HEADER")
 	if !ok {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
-	messageChan := make(chan *benchmark.NewTokenResult, 100)
-	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, getBlockEndpoint)
-	if err != nil {
-		return err
+	getBlockEndpoint, ok := os.LookupEnv("GET_BLOCK_ENDPOINT")
+	if !ok {
+		log.Infof("GET_BLOCK_ENDPOINT environment variable not set: requests will be slower")
+	}
+	traderAPIEndpoint, ok := os.LookupEnv("FIRST_PARTY_ENDPOINT")
+	if !ok {
+		return errors.New("FIRST_PARTY_ENDPOINT not set in environment")
 	}
 
-	go func() {
-		var err error
+	if strings.Contains(thirdPartyEndpoint, ":1809") {
+		skip3rdParty = true
+		//err := startTraderAPIStream(runCtx, messageChan, authHeader, thirdPartyEndpoint, pumpTxMap, getBlockEndpoint)
+		//if err != nil {
+		//	panic(err)
+		//}
+	}
 
-		_, err = traderOS.Run(runCtx)
-		if err != nil {
-			panic(err)
-			return
-		}
-	}()
+	if !skip3rdParty {
+		go func() {
+			err := block.StartThirdParty(
+				runCtx,
+				pumpTxMap,
+				http.Header{},
+				thirdPartyEndpoint,
+			)
+			if err != nil {
+				logger.Log().Errorw("startDetecting", "error", err)
+			}
+		}()
+	}
 
+	err := startTraderAPIStream(runCtx, messageChan, authHeader, traderAPIEndpoint, pumpTxMap, getBlockEndpoint)
+	if err != nil {
+		panic(err)
+	}
 	ticker := time.NewTicker(updateInterval)
 	var tradeUpdates []*benchmark.NewTokenResult
 Loop:
@@ -170,6 +169,25 @@ Loop:
 	logger.Log().Infow("finished collecting data points", "tradercount", len(tradeUpdates))
 
 	PrintSummary(duration, tradeUpdates)
+
+	return nil
+}
+
+func startTraderAPIStream(runCtx context.Context, messageChan chan *benchmark.NewTokenResult, authHeader, traderAPIEndpoint string, pumpTxMap *utils2.LockedMap[string, benchmark.PumpTxInfo], getBlockEndpoint string) error {
+	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, getBlockEndpoint)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		var err error
+
+		_, err = traderOS.Run(runCtx)
+		if err != nil {
+			panic(err)
+			return
+		}
+	}()
 
 	return nil
 }

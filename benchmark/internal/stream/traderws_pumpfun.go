@@ -34,11 +34,11 @@ func NewTraderWSPPumpFunNewToken(messageChan chan *benchmark.NewTokenResult, pum
 
 	if s.w == nil {
 		w, err := provider.NewWSClientWithOpts(provider.RPCOpts{
-			Endpoint:   address,
-			AuthHeader: authHeader,
+			Endpoint: address,
+			//AuthHeader: authHeader,
 		})
 		s.address = address
-		s.authHeader = authHeader
+		//s.authHeader = authHeader
 		if err != nil {
 			return nil, err
 		}
@@ -58,12 +58,12 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 	defer cancel()
 
 	solanaRpc := rpc.New(fmt.Sprintf("https://%s", s.rpcHost))
-
+	logger.Log().Infow("stream connecting")
 	stream, err := s.w.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
 	if err != nil {
 		return nil, err
 	}
-
+	logger.Log().Infow("stream connected")
 	ch := make(chan *pb.GetPumpFunNewTokensStreamResponse, 10)
 	go func() {
 		for {
@@ -77,8 +77,8 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 				logger.Log().Errorf("resetting the stream, because of error %v \n", err)
 				if s.w == nil {
 					w, err := provider.NewWSClientWithOpts(provider.RPCOpts{
-						Endpoint:   s.address,
-						AuthHeader: s.authHeader,
+						Endpoint: s.address,
+						//AuthHeader: s.authHeader,
 					})
 					if err != nil {
 						logger.Log().Errorw("err again", "err", err)
@@ -140,7 +140,7 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 
 					if slotInfo != nil {
 						if v, ok := s.pumpTxMap.Get(msg.TxnHash); ok {
-							msg.Timestamp.AsTime().Sub(v.TimeSeen)
+
 							logger.Log().Infow("diff", "traderAPIEventTime - rpcNodePumpTxTime = ",
 								msg.Timestamp.AsTime().Sub(v.TimeSeen),
 								"traderAPIEventTime - BlockTime = ",

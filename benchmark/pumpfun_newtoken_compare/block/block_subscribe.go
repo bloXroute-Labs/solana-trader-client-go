@@ -26,13 +26,11 @@ func connect3PWs(header http.Header, rpcHost string) (*websocket.Conn, error) {
 		requestBody = `{"jsonrpc":"2.0","id":420,"method":"transactionSubscribe","params":[{"vote":false,"failed":false,"accountInclude":["6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"],"accountRequired":["TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM"]},{"commitment":"processed","encoding":"base64","transaction_details":"full","showRewards":true,"maxSupportedTransactionVersion":0}]}`
 	} else if strings.Contains(rpcHost, "160.202.128.215") {
 		rpcHost = fmt.Sprintf("ws://%s/ws", rpcHost)
-	} else {
-		rpcHost = fmt.Sprintf("wss://%s/ws", rpcHost)
 	}
 	logger.Log().Infow("connecting to third party", "rpcHost", rpcHost, "requestBody", requestBody)
 	ws, _, err := websocket.DefaultDialer.Dial(rpcHost, header)
 	if err != nil {
-		logger.Log().Errorw("dial error ", "err", err)
+		logger.Log().Errorw("dial error ", "err", err, "rpcHost", rpcHost)
 		return nil, err
 	}
 
@@ -58,7 +56,7 @@ func TransactionFromBase64(txBase64 string) (*solana.Transaction, error) {
 	return tx, nil
 }
 
-func StartBenchmarking(ctx context.Context, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], header http.Header, rpcHost string) error {
+func StartThirdParty(ctx context.Context, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], header http.Header, rpcHost string) error {
 	isHelius := false
 	if strings.Contains(rpcHost, "helius") {
 		isHelius = true
@@ -151,7 +149,7 @@ func processHelius(pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], res
 
 		for _, sig := range txParsed.Signatures {
 			sigStr := sig.String()
-			//logger.Log().Infow("helius signature incoming", "sig", sigStr)
+			logger.Log().Infow("helius signature incoming", "sig", sigStr)
 			pumpTxMap.Set(sigStr, benchmark.PumpTxInfo{
 				TimeSeen: time.Now(),
 			})
