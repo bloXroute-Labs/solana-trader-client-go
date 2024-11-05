@@ -237,7 +237,7 @@ func populateSlotInfos(msg *benchmark.NewTokenResult, solanaRpc *rpc.Client) {
 			time.Sleep(time.Second)
 		}
 		tryCount++
-		if tryCount >= 6 {
+		if tryCount >= 10 {
 			logger.Log().Infow("failed to find info for tx",
 				"sig", msg.TxHash)
 			break
@@ -254,11 +254,12 @@ func populateSlotInfos(msg *benchmark.NewTokenResult, solanaRpc *rpc.Client) {
 			},
 		)
 		if err != nil {
-			logger.Log().Errorw("error occurred when getting slot info", "tryCount", tryCount)
+			logger.Log().Errorw("error occurred when getting slot info",
+				"tryCount", tryCount, "err", err)
 			continue
 		}
 		msg.BlockTime = slotInfo.BlockTime.Time()
-
+		return
 	}
 
 }
