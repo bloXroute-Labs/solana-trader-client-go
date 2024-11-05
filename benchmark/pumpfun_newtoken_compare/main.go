@@ -75,7 +75,6 @@ func main() {
 }
 
 func run(c *cli.Context) error {
-	//ctx, _ := context.WithCancel(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	pumpTxMap := utils2.NewLockedMap[string, benchmark.PumpTxInfo]()
