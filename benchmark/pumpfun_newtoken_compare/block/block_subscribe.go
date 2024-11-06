@@ -56,7 +56,8 @@ func TransactionFromBase64(txBase64 string) (*solana.Transaction, error) {
 	return tx, nil
 }
 
-func StartThirdParty(ctx context.Context, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], header http.Header, rpcHost string) error {
+func StartThirdParty(ctx context.Context, pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo],
+	header http.Header, rpcHost string, messageChan chan *benchmark.NewTokenResult) error {
 	isHelius := false
 	if strings.Contains(rpcHost, "helius") {
 		isHelius = true
@@ -97,7 +98,7 @@ func StartThirdParty(ctx context.Context, pumpTxMap *utils.LockedMap[string, ben
 		select {
 		case response := <-ch:
 			if isHelius {
-				processHelius(pumpTxMap, response)
+				processHelius(pumpTxMap, response, messageChan)
 			} else {
 				process(pumpTxMap, response)
 			}
@@ -113,7 +114,8 @@ func StartThirdParty(ctx context.Context, pumpTxMap *utils.LockedMap[string, ben
 	}
 }
 
-func processHelius(pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], response []byte) {
+func processHelius(pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], response []byte,
+	messageChan chan *benchmark.NewTokenResult) {
 	var tx HeliusTx
 	err := json.Unmarshal(response, &tx)
 	if err != nil {
@@ -149,11 +151,33 @@ func processHelius(pumpTxMap *utils.LockedMap[string, benchmark.PumpTxInfo], res
 
 		for _, sig := range txParsed.Signatures {
 			sigStr := sig.String()
-			logger.Log().Infow("helius signature incoming", "sig", sigStr)
-			pumpTxMap.Set(sigStr, benchmark.PumpTxInfo{
-				TimeSeen: time.Now(),
-			})
 
+			pumpTxMap.Update(sigStr, func(v benchmark.PumpTxInfo, exists bool) benchmark.PumpTxInfo {
+				if exists {
+					// helius is getting the event later than trader-api
+					firstPartyEventTime := v.TimeSeen
+					thirdPartyEventTime := time.Now()
+
+					res := &benchmark.NewTokenResult{
+						TraderAPIEventTime:  firstPartyEventTime,
+						ThirdPartyEventTime: thirdPartyEventTime,
+						TxHash:              sigStr,
+						Slot:                int64(tx.Params.Result.Slot),
+						Diff:                firstPartyEventTime.Sub(thirdPartyEventTime),
+					}
+					logger.Log().Infow("helius setting event", "firstParty diff millis",
+						res.Diff.Milliseconds(), "msg.TxnHash", sigStr, "thirdPartyEventTime", thirdPartyEventTime.UTC())
+
+					messageChan <- res
+
+				} else {
+					logger.Log().Debugw("helius getting the event sooner", "msg.TxnHash", sigStr)
+					v = benchmark.PumpTxInfo{
+						TimeSeen: time.Now(),
+					}
+				}
+				return v
+			})
 		}
 
 	}

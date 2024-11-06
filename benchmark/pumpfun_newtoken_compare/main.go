@@ -119,6 +119,7 @@ func run(c *cli.Context) error {
 	}
 
 	if strings.Contains(thirdPartyEndpoint, ":1809") {
+		// the third party is another trader-api in this case
 		skip3rdParty = true
 		err := startTraderAPIStream(false, runCtx, messageChan, authHeader, thirdPartyEndpoint, pumpTxMap)
 		if err != nil {
@@ -133,6 +134,7 @@ func run(c *cli.Context) error {
 				pumpTxMap,
 				http.Header{},
 				thirdPartyEndpoint,
+				messageChan,
 			)
 			if err != nil {
 				logger.Log().Errorw("startDetecting", "error", err)
@@ -198,7 +200,7 @@ func startTraderAPIStream(isFirstParty bool, runCtx context.Context, messageChan
 func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult) {
 	traderFaster := 0
 	tpFaster := 0
-	total := 0
+	var sumDiff, total int64
 	fmt.Println("BlockTime         TraderAPIEventTime     ThirdPartyEventTime       Diff(thirdParty)       Diff(Blocktime)")
 	for _, vs := range datapoints {
 
@@ -208,7 +210,8 @@ func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult)
 		fmt.Print(fmt.Sprintf("          %d", vs.ThirdPartyEventTime.UnixMilli()))
 		fmt.Print(fmt.Sprintf("            %f sec", vs.Diff.Seconds()))
 		fmt.Println(fmt.Sprintf("        %f sec", vs.TraderAPIEventTime.Sub(vs.BlockTime).Seconds()))
-
+		diffMillis := vs.TraderAPIEventTime.UnixMilli() - vs.ThirdPartyEventTime.UnixMilli()
+		sumDiff += diffMillis
 		if vs.TraderAPIEventTime.Before(vs.ThirdPartyEventTime) {
 			traderFaster++
 		} else if vs.ThirdPartyEventTime.Before(vs.TraderAPIEventTime) {
@@ -225,6 +228,9 @@ func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult)
 	fmt.Println("Faster counts: ")
 	fmt.Println(fmt.Sprintf(" traderAPIFaster   %d", traderFaster))
 	fmt.Println(fmt.Sprintf(" thirdPartyFaster  %d", tpFaster))
+	if total != 0 {
+		fmt.Println(fmt.Sprintf(" Avg time Diff in millis  %f", float64(sumDiff/total)))
+	}
 }
 
 func populateSlotInfos(msg *benchmark.NewTokenResult, solanaRpc *rpc.Client) {

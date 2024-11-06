@@ -127,12 +127,15 @@ func (s traderWSPPumpFunNewToken) Run(parent context.Context) ([]RawUpdate[*benc
 							Slot:                msg.Slot,
 							Diff:                firstPartyEventTime.Sub(thirdPartyEventTime),
 						}
-						logger.Log().Infow("diff", "firstParty millis",
-							res.Diff.Milliseconds(), "msg.TxnHash", msg.TxnHash)
+						logger.Log().Infow("trader-api setting event", "firstParty diff millis",
+							res.Diff.Milliseconds(), "msg.TxnHash", msg.TxnHash, "firstPartyEventTime", firstPartyEventTime.UTC())
 
 						s.messageChan <- res
 
 					} else {
+						logger.Log().Debugw("trader api getting the event sooner",
+							"isFirstParty", s.isFirstParty,
+							"msg.TxnHash", msg.TxnHash)
 						v = benchmark.PumpTxInfo{
 							TimeSeen: time.Now(),
 						}
