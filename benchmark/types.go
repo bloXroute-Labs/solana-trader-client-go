@@ -11,4 +11,6 @@ type NewTokenResult struct {
 	ThirdPartyEventTime time.Time
 	BlockTime           time.Time
 	Diff                time.Duration
+	TxHash              string
+	Slot                int64
 }

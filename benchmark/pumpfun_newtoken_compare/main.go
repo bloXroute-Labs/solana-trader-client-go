@@ -8,6 +8,7 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/pumpfun_newtoken_compare/block"
 	utils2 "github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -48,16 +50,11 @@ func main() {
 		Required: false,
 		Value:    "pump_fun_trader_api_comparison.csv",
 	}
-	utils.APIWSEndpoint = &cli.StringFlag{
-		Name:  "solana-trader-ws-endpoint",
-		Usage: "Solana Trader API API websocket connection endpoint",
-		Value: "wss://pump-ny.solana.dex.blxrbdn.com/ws",
-	}
+
 	app := &cli.App{
 		Name:  "benchmark-traderapi-pumpfun-newtokens",
 		Usage: "Compares Solana Trader API pumpfun new token stream",
 		Flags: []cli.Flag{
-			utils.APIWSEndpoint,
 			DurationFlag,
 			utils.OutputFileFlag,
 		},
@@ -101,57 +98,64 @@ func run(c *cli.Context) error {
 			}
 		}
 	}()
-	rpcHost, ok := os.LookupEnv("RPC_ENDPOINT")
+	thirdPartyEndpoint, ok := os.LookupEnv("THIRD_PARTY_ENDPOINT")
 	if !ok {
-		log.Infof("RPC_ENDPOINT environment variable not set: requests will be slower")
+		log.Infof("THIRD_PARTY_ENDPOINT environment variable not set: requests will be slower")
 	}
-
-	getBlockEndpoint, ok := os.LookupEnv("GET_BLOCK_ENDPOINT")
-	if !ok {
-		log.Infof("GET_BLOCK_ENDPOINT environment variable not set: requests will be slower")
-	}
-
-	go func() {
-		err := block.StartBenchmarking(
-			runCtx,
-			pumpTxMap,
-			http.Header{},
-			rpcHost,
-		)
-		if err != nil {
-			logger.Log().Errorw("startDetecting", "error", err)
-		}
-	}()
-
-	traderAPIEndpoint := c.String(utils.APIWSEndpoint.Name)
+	skip3rdParty := false
+	messageChan := make(chan *benchmark.NewTokenResult, 100)
 
 	authHeader, ok := os.LookupEnv("AUTH_HEADER")
 	if !ok {
 		return errors.New("AUTH_HEADER not set in environment")
 	}
-	messageChan := make(chan *benchmark.NewTokenResult, 100)
-	traderOS, err := stream.NewTraderWSPPumpFunNewToken(messageChan, pumpTxMap, traderAPIEndpoint, authHeader, getBlockEndpoint)
-	if err != nil {
-		return err
+	getBlockEndpoint, ok := os.LookupEnv("GET_BLOCK_ENDPOINT")
+	if !ok {
+		log.Infof("GET_BLOCK_ENDPOINT environment variable not set: requests will be slower")
+	}
+	firstPartyEndpoint, ok := os.LookupEnv("FIRST_PARTY_ENDPOINT")
+	if !ok {
+		return errors.New("FIRST_PARTY_ENDPOINT not set in environment")
 	}
 
-	go func() {
-		var err error
-
-		_, err = traderOS.Run(runCtx)
+	if strings.Contains(thirdPartyEndpoint, ":1809") {
+		// the third party is another trader-api in this case
+		skip3rdParty = true
+		err := startTraderAPIStream(false, runCtx, messageChan, authHeader, thirdPartyEndpoint, pumpTxMap)
 		if err != nil {
 			panic(err)
-			return
 		}
-	}()
+	}
 
+	if !skip3rdParty {
+		go func() {
+			err := block.StartThirdParty(
+				runCtx,
+				pumpTxMap,
+				http.Header{},
+				thirdPartyEndpoint,
+				messageChan,
+			)
+			if err != nil {
+				logger.Log().Errorw("startDetecting", "error", err)
+			}
+		}()
+	}
+
+	err := startTraderAPIStream(true, runCtx, messageChan, authHeader, firstPartyEndpoint, pumpTxMap)
+	if err != nil {
+		panic(err)
+	}
 	ticker := time.NewTicker(updateInterval)
 	var tradeUpdates []*benchmark.NewTokenResult
+	solanaRpc := rpc.New(fmt.Sprintf("https://%s", getBlockEndpoint))
+
 Loop:
 	for {
 		select {
 		case msg, ok := <-messageChan:
 			if ok {
+				populateSlotInfos(msg, solanaRpc)
 				tradeUpdates = append(tradeUpdates, msg)
 			}
 		case <-ticker.C:
@@ -174,19 +178,40 @@ Loop:
 	return nil
 }
 
+func startTraderAPIStream(isFirstParty bool, runCtx context.Context, messageChan chan *benchmark.NewTokenResult, authHeader, firstPartyEndpoint string, pumpTxMap *utils2.LockedMap[string, benchmark.PumpTxInfo]) error {
+	traderOS, err := stream.NewTraderWSPPumpFunNewToken(isFirstParty, messageChan, pumpTxMap, firstPartyEndpoint, authHeader)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		var err error
+
+		_, err = traderOS.Run(runCtx)
+		if err != nil {
+			panic(err)
+			return
+		}
+	}()
+
+	return nil
+}
+
 func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult) {
 	traderFaster := 0
 	tpFaster := 0
-	total := 0
+	var sumDiff, total int64
 	fmt.Println("BlockTime         TraderAPIEventTime     ThirdPartyEventTime       Diff(thirdParty)       Diff(Blocktime)")
 	for _, vs := range datapoints {
+
 		total++
 		fmt.Print(fmt.Sprintf("%d", vs.BlockTime.UnixMilli()))
 		fmt.Print(fmt.Sprintf("     %d", vs.TraderAPIEventTime.UnixMilli()))
 		fmt.Print(fmt.Sprintf("          %d", vs.ThirdPartyEventTime.UnixMilli()))
 		fmt.Print(fmt.Sprintf("            %f sec", vs.Diff.Seconds()))
 		fmt.Println(fmt.Sprintf("        %f sec", vs.TraderAPIEventTime.Sub(vs.BlockTime).Seconds()))
-
+		diffMillis := vs.TraderAPIEventTime.UnixMilli() - vs.ThirdPartyEventTime.UnixMilli()
+		sumDiff += diffMillis
 		if vs.TraderAPIEventTime.Before(vs.ThirdPartyEventTime) {
 			traderFaster++
 		} else if vs.ThirdPartyEventTime.Before(vs.TraderAPIEventTime) {
@@ -203,4 +228,43 @@ func PrintSummary(runtime time.Duration, datapoints []*benchmark.NewTokenResult)
 	fmt.Println("Faster counts: ")
 	fmt.Println(fmt.Sprintf(" traderAPIFaster   %d", traderFaster))
 	fmt.Println(fmt.Sprintf(" thirdPartyFaster  %d", tpFaster))
+	if total != 0 {
+		fmt.Println(fmt.Sprintf(" Avg time Diff in millis  %f", float64(sumDiff/total)))
+	}
+}
+
+func populateSlotInfos(msg *benchmark.NewTokenResult, solanaRpc *rpc.Client) {
+	tryCount := 0
+	for {
+		if tryCount > 3 {
+			time.Sleep(10 * time.Second)
+		} else {
+			time.Sleep(time.Second)
+		}
+		tryCount++
+		if tryCount >= 10 {
+			logger.Log().Infow("failed to find info for tx",
+				"sig", msg.TxHash)
+			break
+		}
+
+		mstv := uint64(0)
+		slotInfo, err := solanaRpc.GetBlockWithOpts(
+			context.Background(),
+			uint64(msg.Slot),
+			&rpc.GetBlockOpts{
+				TransactionDetails:             rpc.TransactionDetailsNone,
+				Commitment:                     rpc.CommitmentConfirmed,
+				MaxSupportedTransactionVersion: &mstv,
+			},
+		)
+		if err != nil {
+			logger.Log().Errorw("error occurred when getting slot info",
+				"tryCount", tryCount, "err", err)
+			continue
+		}
+		msg.BlockTime = slotInfo.BlockTime.Time()
+		return
+	}
+
 }
