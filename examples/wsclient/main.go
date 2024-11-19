@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -369,6 +370,10 @@ var ExampleEndpoints = map[string]struct {
 	"getPriorityFeeStream": {
 		run:         callGetPriorityFeeWSStream,
 		description: "get priority fee stream",
+	},
+	"getPriorityFeeByProgram": {
+		run:         callGetPriorityFeeByProgramWS,
+		description: "get priority fee by program",
 	},
 	"getPumpFunNewTokenStream": {
 		run:         callGetPumpFunNewTokensWSStreamWrap,
@@ -2411,6 +2416,22 @@ func callGetBundleTipWSStream(w *provider.WSClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetPriorityFeeByProgramWS(w *provider.WSClient) bool {
+	log.Info("fetching priority fee by program...")
+
+	RaydiumCLMM := "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+	RaydiumCPMM := "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"
+
+	priorityFee, err := w.GetPriorityFeeByProgram(context.Background(), []string{RaydiumCLMM, RaydiumCPMM})
+	if err != nil {
+		log.Errorf("error with GetPriorityFeeByProgram request: %v", err)
+		return true
+	}
+
+	log.Infof("priority fee by program: %v", priorityFee)
 	return false
 }
 

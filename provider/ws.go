@@ -469,6 +469,19 @@ func (w *WSClient) GetPriorityFee(ctx context.Context, project pb.Project, perce
 	return &response, nil
 }
 
+// GetPriorityFeeByProgram returns priority fees based on a given list of programs
+func (w *WSClient) GetPriorityFeeByProgram(ctx context.Context, programs []string) (*pb.GetPriorityFeeByProgramResponse, error) {
+	request := &pb.GetPriorityFeeByProgramRequest{
+		Programs: programs,
+	}
+	var response pb.GetPriorityFeeByProgramResponse
+	err := w.conn.Request(ctx, "GetPriorityFeeByProgram", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)

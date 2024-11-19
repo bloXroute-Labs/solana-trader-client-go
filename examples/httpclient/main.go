@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -309,6 +310,11 @@ var ExampleEndpoints = map[string]struct {
 	"getPriorityFee": {
 		run:         callGetPriorityFeeHTTP,
 		description: "get priority fee",
+	},
+
+	"getPriorityFeeByProgram": {
+		run:         callGetPriorityFeeByProgramHTTP,
+		description: "get priority fee by program",
 	},
 
 	"getTokenAccounts": {
@@ -1907,5 +1913,22 @@ func callGetPriorityFeeHTTP(h *provider.HTTPClient) bool {
 	}
 
 	log.Infof("priority fee: %v", pf)
+	return false
+}
+
+func callGetPriorityFeeByProgramHTTP(h *provider.HTTPClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	RaydiumCLMM := "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+	RaydiumCPMM := "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"
+
+	pf, err := h.GetPriorityFeeByProgram(ctx, []string{RaydiumCLMM, RaydiumCPMM})
+	if err != nil {
+		log.Errorf("error with GetPriorityFeeByProgram request: %v", err)
+		return true
+	}
+
+	log.Infof("priority fee by program: %v", pf)
 	return false
 }

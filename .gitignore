@@ -4,3 +4,5 @@
 .vscode/launch.json
 .run
 vendor
+.vscode/settings.json
+examples/httpclient/__debug_bin*
