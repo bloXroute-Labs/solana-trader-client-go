@@ -187,8 +187,8 @@ func (h *HTTPClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRa
 
 // GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
 func (h *HTTPClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/pumpfun/quotes?mintAddress=%s&quoteType=%s&amount=%f&bondingCurveAddress=%s&slippage=%f",
-		h.baseURL, request.MintAddress, request.QuoteType, request.Amount, request.BondingCurveAddress, request.Slippage)
+	url := fmt.Sprintf("%s/api/v2/pumpfun/quotes?mintAddress=%s&quoteType=%s&amount=%f&bondingCurveAddress=%s",
+		h.baseURL, request.MintAddress, request.QuoteType, request.Amount, request.BondingCurveAddress)
 	response := new(pb.GetPumpFunQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPumpFunQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err

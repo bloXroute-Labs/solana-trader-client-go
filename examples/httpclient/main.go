@@ -817,14 +817,12 @@ func callGetPumpFunQuotesHTTP(h *provider.HTTPClient) bool {
 	defer cancel()
 
 	amount := 0.01
-	slippage := float64(5)
 
 	quotes, err := h.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
 		QuoteType:           "buy",
-		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
-		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		MintAddress:         "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		Amount:              amount,
-		Slippage:            slippage,
 	})
 	if err != nil {
 		return true
@@ -1595,8 +1593,8 @@ func callPostPumpFunSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("PumpFun swap")
 	sig, err := h.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
-		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		TokenAmount:         10,
 		SolThreshold:        0.0001,
 		IsBuy:               false,
