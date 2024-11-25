@@ -134,6 +134,11 @@ func (g *GRPCClient) GetPriorityFee(ctx context.Context, request *pb.GetPriority
 	return g.apiClient.GetPriorityFee(ctx, request)
 }
 
+// GetPriorityFeeByProgram returns priority fees for given programs
+func (g *GRPCClient) GetPriorityFeeByProgram(ctx context.Context, request *pb.GetPriorityFeeByProgramRequest) (*pb.GetPriorityFeeByProgramResponse, error) {
+	return g.apiClient.GetPriorityFeeByProgram(ctx, request)
+}
+
 // GetRateLimit returns details of an account rate-limits
 func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	return g.apiClient.GetRateLimit(ctx, request)

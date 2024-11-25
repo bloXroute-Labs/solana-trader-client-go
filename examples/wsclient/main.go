@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -369,6 +370,10 @@ var ExampleEndpoints = map[string]struct {
 	"getPriorityFeeStream": {
 		run:         callGetPriorityFeeWSStream,
 		description: "get priority fee stream",
+	},
+	"getPriorityFeeByProgram": {
+		run:         callGetPriorityFeeByProgramWS,
+		description: "get priority fee by program",
 	},
 	"getPumpFunNewTokenStream": {
 		run:         callGetPumpFunNewTokensWSStreamWrap,
@@ -886,14 +891,12 @@ func callGetPumpFunQuotes(w *provider.WSClient) bool {
 	defer cancel()
 
 	amount := 0.01
-	slippage := float64(5)
 
 	quotes, err := w.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
 		QuoteType:           "buy",
-		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
-		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		MintAddress:         "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		Amount:              amount,
-		Slippage:            slippage,
 	})
 	if err != nil {
 		return true
@@ -1855,8 +1858,8 @@ func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
 	log.Info("PumpFun swap")
 	sig, err := w.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
-		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		TokenAmount:         10,
 		SolThreshold:        0.0001,
 		IsBuy:               false,
@@ -2411,6 +2414,22 @@ func callGetBundleTipWSStream(w *provider.WSClient) bool {
 
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetPriorityFeeByProgramWS(w *provider.WSClient) bool {
+	log.Info("fetching priority fee by program...")
+
+	RaydiumCLMM := "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+	RaydiumCPMM := "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"
+
+	priorityFee, err := w.GetPriorityFeeByProgram(context.Background(), []string{RaydiumCLMM, RaydiumCPMM})
+	if err != nil {
+		log.Errorf("error with GetPriorityFeeByProgram request: %v", err)
+		return true
+	}
+
+	log.Infof("priority fee by program: %v", priorityFee)
 	return false
 }
 

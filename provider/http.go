@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -186,8 +187,8 @@ func (h *HTTPClient) GetRaydiumQuotesCPMM(ctx context.Context, request *pb.GetRa
 
 // GetPumpFunQuotes returns the best quotes for swapping a token on PumpFun platform
 func (h *HTTPClient) GetPumpFunQuotes(ctx context.Context, request *pb.GetPumpFunQuotesRequest) (*pb.GetPumpFunQuotesResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/pumpfun/quotes?mintAddress=%s&quoteType=%s&amount=%f&bondingCurveAddress=%s&slippage=%f",
-		h.baseURL, request.MintAddress, request.QuoteType, request.Amount, request.BondingCurveAddress, request.Slippage)
+	url := fmt.Sprintf("%s/api/v2/pumpfun/quotes?mintAddress=%s&quoteType=%s&amount=%f&bondingCurveAddress=%s",
+		h.baseURL, request.MintAddress, request.QuoteType, request.Amount, request.BondingCurveAddress)
 	response := new(pb.GetPumpFunQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPumpFunQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
@@ -1125,6 +1126,16 @@ func (h *HTTPClient) GetPriorityFee(ctx context.Context, project pb.Project, per
 	}
 	response := new(pb.GetPriorityFeeResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetPriorityFeeResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (h *HTTPClient) GetPriorityFeeByProgram(ctx context.Context, programs []string) (*pb.GetPriorityFeeByProgramResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/system/priority-fee-by-program?programs=%v", h.baseURL, strings.Join(programs, "&programs="))
+	response := new(pb.GetPriorityFeeByProgramResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetPriorityFeeByProgramResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
 	}
 

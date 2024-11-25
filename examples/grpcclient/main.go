@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
-	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 
@@ -366,6 +367,10 @@ var ExampleEndpoints = map[string]struct {
 	"getPriorityFeeStream": {
 		run:         callGetPriorityFeeGRPCStream,
 		description: "get priority fee stream",
+	},
+	"getPriorityFeeByProgram": {
+		run:         callGetPriorityFeeByProgramGRPC,
+		description: "get priority fee by program",
 	},
 	"getPumpFunNewTokenStream": {
 		run:         callGetpumpFunNewTokenGRPCStreamWrap,
@@ -849,14 +854,12 @@ func callGetPumpFunQuotes(g *provider.GRPCClient) bool {
 	defer cancel()
 
 	amount := 0.01
-	slippage := float64(5)
 
 	quotes, err := g.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
 		QuoteType:           "buy",
-		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
-		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		MintAddress:         "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		Amount:              amount,
-		Slippage:            slippage,
 	})
 	if err != nil {
 		return true
@@ -1889,8 +1892,8 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	log.Info("PumpFun swap")
 	sig, err := g.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
-		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		TokenAmount:         10,
 		SolThreshold:        0.0001,
 		IsBuy:               false,
@@ -2510,6 +2513,24 @@ func callGetPriorityFeeGRPC(g *provider.GRPCClient) bool {
 	response, err := g.GetPriorityFee(ctx, &pb.GetPriorityFeeRequest{})
 	if err != nil {
 		log.Errorf("error with GetPriorityFee request: %v", err)
+		return true
+	}
+	log.Infof("response received: %v", response)
+	return false
+}
+
+func callGetPriorityFeeByProgramGRPC(g *provider.GRPCClient) bool {
+	log.Info("starting priority fee by program test")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	RaydiumCLMM := "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+	RaydiumCPMM := "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"
+
+	response, err := g.GetPriorityFeeByProgram(ctx, &pb.GetPriorityFeeByProgramRequest{Programs: []string{RaydiumCLMM, RaydiumCPMM}})
+	if err != nil {
+		log.Errorf("error with GetPriorityFeeByProgram request: %v", err)
 		return true
 	}
 	log.Infof("response received: %v", response)

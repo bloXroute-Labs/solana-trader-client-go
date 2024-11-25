@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
@@ -309,6 +310,11 @@ var ExampleEndpoints = map[string]struct {
 	"getPriorityFee": {
 		run:         callGetPriorityFeeHTTP,
 		description: "get priority fee",
+	},
+
+	"getPriorityFeeByProgram": {
+		run:         callGetPriorityFeeByProgramHTTP,
+		description: "get priority fee by program",
 	},
 
 	"getTokenAccounts": {
@@ -811,14 +817,12 @@ func callGetPumpFunQuotesHTTP(h *provider.HTTPClient) bool {
 	defer cancel()
 
 	amount := 0.01
-	slippage := float64(5)
 
 	quotes, err := h.GetPumpFunQuotes(ctx, &pb.GetPumpFunQuotesRequest{
 		QuoteType:           "buy",
-		BondingCurveAddress: "Dga6eouREJ4kLHMqWWtccGGPsGebexuBYrcepBVd494q",
-		MintAddress:         "9QG5NHnfqQCyZ9SKhz7BzfjPseTFWaApmAtBTziXLanY",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		MintAddress:         "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		Amount:              amount,
-		Slippage:            slippage,
 	})
 	if err != nil {
 		return true
@@ -1589,8 +1593,8 @@ func callPostPumpFunSwap(h *provider.HTTPClient, ownerAddr string) bool {
 	log.Info("PumpFun swap")
 	sig, err := h.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "7BcRpqUC7AF5Xsc3QEpCb8xmoi2X1LpwjUBNThbjWvyo",
-		TokenAddress:        "BAHY8ocERNc5j6LqkYav1Prr8GBGsHvBV5X3dWPhsgXw",
+		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
+		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
 		TokenAmount:         10,
 		SolThreshold:        0.0001,
 		IsBuy:               false,
@@ -1907,5 +1911,22 @@ func callGetPriorityFeeHTTP(h *provider.HTTPClient) bool {
 	}
 
 	log.Infof("priority fee: %v", pf)
+	return false
+}
+
+func callGetPriorityFeeByProgramHTTP(h *provider.HTTPClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	RaydiumCLMM := "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+	RaydiumCPMM := "CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C"
+
+	pf, err := h.GetPriorityFeeByProgram(ctx, []string{RaydiumCLMM, RaydiumCPMM})
+	if err != nil {
+		log.Errorf("error with GetPriorityFeeByProgram request: %v", err)
+		return true
+	}
+
+	log.Infof("priority fee by program: %v", pf)
 	return false
 }
