@@ -50,7 +50,7 @@ type WS struct {
 	authHeader string
 }
 
-func NewWS(endpoint string, authHeader string) (*WS, error) {
+func NewWS(endpoint string, authHeader string, disablePingLoop bool) (*WS, error) {
 	conn, err := connect(endpoint, authHeader)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,11 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 	}
 	go ws.readLoop()
 	go ws.writeLoop()
-	go ws.pingLoop()
+
+	if !disablePingLoop {
+		go ws.pingLoop()
+	}
+
 	return ws, nil
 }
 

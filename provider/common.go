@@ -82,13 +82,14 @@ type SubmitOpts struct {
 }
 
 type RPCOpts struct {
-	Endpoint       string
-	DisableAuth    bool
-	UseTLS         bool
-	PrivateKey     *solana.PrivateKey
-	AuthHeader     string
-	CacheBlockHash bool
-	BlockHashTtl   time.Duration
+	Endpoint        string
+	DisableAuth     bool
+	UseTLS          bool
+	PrivateKey      *solana.PrivateKey
+	AuthHeader      string
+	DisablePingLoop bool
+	CacheBlockHash  bool
+	BlockHashTtl    time.Duration
 }
 
 func DefaultRPCOpts(endpoint string) RPCOpts {
