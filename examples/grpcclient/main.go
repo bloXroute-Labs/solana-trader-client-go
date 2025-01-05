@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 	"math/rand"
 	"os"
 	"sort"
@@ -24,8 +26,8 @@ import (
 const (
 	sideAsk      = "ask"
 	typeLimit    = "limit"
-	computePrice = 200000
-	computeLimit = 100000
+	computePrice = 10030000
+	computeLimit = 1030000
 )
 
 type EnvironmentVariables struct {
@@ -1856,17 +1858,69 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	recentBlockhash, err := g.GetRecentBlockHashV2(ctx, 0)
+	if err != nil {
+		panic(err)
+	}
+
+	sender := solana.MustPrivateKeyFromBase58(os.Getenv("PRIVATE_KEY"))
+
+	transferIx, err := system.NewTransferInstructionBuilder().SetLamports(10030000).
+		SetLamports(10030000).
+		SetFundingAccount(solana.MustPublicKeyFromBase58("5Wpy8h4NHB5FrM6ydi9JptCuCNMiGhQGpQVnautevSpW")).
+		SetRecipientAccount(solana.MustPublicKeyFromBase58("96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5")).
+		ValidateAndBuild()
+
+	tx1, err := solana.NewTransactionBuilder().
+		//AddInstruction(unitPriceIx).
+		//AddInstruction(compLimitIx).
+		AddInstruction(transferIx).
+		SetRecentBlockHash(solana.MustHashFromBase58(recentBlockhash.BlockHash)).
+		SetFeePayer(solana.MustPublicKeyFromBase58("5Wpy8h4NHB5FrM6ydi9JptCuCNMiGhQGpQVnautevSpW")).
+		Build()
+
+	tx1Message := pb.TransactionMessage{Content: tx1.Message.ToBase64(), IsCleanup: false}
+
+	signatures, err := tx1.Sign(func(key solana.PublicKey) *solana.PrivateKey { return &sender })
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(signatures[0])
+
+	//fmt.Println(tx1.Message.ToBase64())
+	//fmt.Println(signatures[0].String())
+
+	tip := uint64(10030000)
+
 	log.Info("Raydium swap")
-	sig, err := g.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
+	sig, err := g.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "So11111111111111111111111111111111111111112",
-		Slippage:     0.1,
+		Slippage:     0.5,
 		InAmount:     0.01,
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		ComputeLimit: computeLimit,
+		ComputePrice: computePrice,
+		Tip:          &tip,
 	})
+
+	tx2Message := pb.TransactionMessage{Content: sig.Transactions[0].GetContent(), IsCleanup: false}
+
+	lolzardo := true
+
+	batch, err := g.SignAndSubmitBatch(ctx, []*pb.TransactionMessage{&tx1Message, &tx2Message}, false,
+		provider.SubmitOpts{
+			SubmitStrategy: 4,
+			SkipPreFlight:  &lolzardo,
+		})
+
+	fmt.Println(batch.String())
+
+	if err != nil {
+		panic(err)
+	}
+
 	if err != nil {
 		log.Error(err)
 		return true
