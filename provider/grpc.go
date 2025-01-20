@@ -334,6 +334,48 @@ func (g *GRPCClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 	return response.Signature, nil
 }
 
+func (g *GRPCClient) SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error) {
+	if g.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
+	entries := make([]*pb.PostSubmitRequestEntry, len(transactions))
+
+	for i, tx := range transactions {
+		txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sign transaction: %w", err)
+		}
+
+		entries[i] = &pb.PostSubmitRequestEntry{
+			Transaction: &pb.TransactionMessage{
+				Content:   txBase64,
+				IsCleanup: tx.IsCleanup,
+			},
+			SkipPreFlight: false,
+		}
+	}
+
+	snipeRequest := &pb.PostSubmitSnipeRequest{
+		Entries:       entries,
+		UseStakedRPCs: &useStakedRPCs,
+	}
+
+	response, err := g.apiClient.PostSubmitSnipeV2(ctx, snipeRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit snipe request: %w", err)
+	}
+
+	signatures := make([]string, 0, len(response.Transactions))
+	for _, entry := range response.Transactions {
+		if entry.Submitted {
+			signatures = append(signatures, entry.Signature)
+		}
+	}
+
+	return signatures, nil
+}
+
 // signAndSubmitBatch signs the given transactions and submits them.
 func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if g.privateKey == nil {

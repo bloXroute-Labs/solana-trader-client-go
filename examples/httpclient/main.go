@@ -8,6 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
@@ -315,6 +317,12 @@ var ExampleEndpoints = map[string]struct {
 	"getPriorityFeeByProgram": {
 		run:         callGetPriorityFeeByProgramHTTP,
 		description: "get priority fee by program",
+	},
+
+	"callTestSubmitSnipe": {
+		run:                               callTestSubmitSnipeHTTPWrap,
+		description:                       "test submit snipe",
+		requiresAdditionalEnvironmentVars: true,
 	},
 
 	"getTokenAccounts": {
@@ -1928,5 +1936,81 @@ func callGetPriorityFeeByProgramHTTP(h *provider.HTTPClient) bool {
 	}
 
 	log.Infof("priority fee by program: %v", pf)
+	return false
+}
+
+func callTestSubmitSnipeHTTPWrap(h *provider.HTTPClient) bool {
+	return callTestSubmitSnipeHTTP(h, Environment.publicKey)
+}
+
+func callTestSubmitSnipeHTTP(h *provider.HTTPClient, ownerAddr string) bool {
+	ownerKey, err := solana.PublicKeyFromBase58(ownerAddr)
+	if err != nil {
+		log.Errorf("Please set Public key environment variable: %v", err)
+		return true
+	}
+
+	log.Info("starting submit snipe test")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	response, err := h.GetRecentBlockHash(ctx)
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
+	}
+	blockHash := solana.MustHashFromBase58(response.BlockHash)
+
+	// Constants for test
+	lamportsToTransfer := uint64(1_000_000)
+	tipWallet := solana.MustPublicKeyFromBase58("HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY")
+
+	// Create two transfer transactions
+	transactions := make([]*pb.TransactionMessage, 2)
+
+	// First transfer to tip wallet
+	tx1, err := solana.NewTransaction([]solana.Instruction{
+		system.NewTransferInstruction(
+			lamportsToTransfer,
+			ownerKey,
+			tipWallet,
+		).Build(),
+	}, blockHash, solana.TransactionPayer(ownerKey))
+	if err != nil {
+		log.Errorf("failed to create first transaction: %v", err)
+		return true
+	}
+
+	// Second transfer back to self
+	tx2, err := solana.NewTransaction([]solana.Instruction{
+		system.NewTransferInstruction(
+			lamportsToTransfer,
+			ownerKey,
+			ownerKey,
+		).Build(),
+	}, blockHash, solana.TransactionPayer(ownerKey))
+	if err != nil {
+		log.Errorf("failed to create second transaction: %v", err)
+		return true
+	}
+
+	// Prepare unsigned transaction messages
+	transactions[0] = &pb.TransactionMessage{
+		Content:   tx1.MustToBase64(),
+		IsCleanup: false,
+	}
+	transactions[1] = &pb.TransactionMessage{
+		Content:   tx2.MustToBase64(),
+		IsCleanup: false,
+	}
+
+	// Submit snipe request
+	signatures, err := h.SignAndSubmitSnipe(ctx, transactions, true)
+	if err != nil {
+		log.Errorf("failed to submit snipe request: %v", err)
+		return true
+	}
+
+	log.Infof("snipe signatures: %v", signatures)
 	return false
 }
