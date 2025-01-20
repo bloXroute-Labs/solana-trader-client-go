@@ -415,10 +415,12 @@ func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 
 // PostSubmitV2 posts the transaction string to the Solana network.
 func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage,
-	skipPreFlight bool, frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
+	skipPreFlight bool, frontRunningProtection bool, allowsBackRun bool, sniping bool) (*pb.PostSubmitResponse, error) {
 	return g.apiClient.PostSubmitV2(ctx, &pb.PostSubmitRequest{Transaction: tx,
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: &frontRunningProtection,
+		AllowBackRun:           &allowsBackRun,
+		Sniping:                &sniping,
 	})
 }
 

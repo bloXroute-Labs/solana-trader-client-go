@@ -2362,17 +2362,21 @@ func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	stream, err := w.GetPriorityFeeStream(ctx, pb.Project_P_RAYDIUM, nil)
+	percentile := 10.0
+
+	stream, err := w.GetPriorityFeeStream(ctx, pb.Project_P_RAYDIUM, &percentile)
 	if err != nil {
 		log.Errorf("error with GetPriorityFee stream request: %v", err)
 		return true
 	}
 	stream.Into(ch)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-ch
+	for i := 1; i <= 1000000; i++ {
+		resp, ok := <-ch
 		if !ok {
 			return true
 		}
+
+		fmt.Println(resp)
 
 		log.Infof("response %v received", i)
 	}
