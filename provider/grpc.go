@@ -1007,6 +1007,19 @@ func (g *GRPCClient) GetPriorityFeeStream(ctx context.Context, project pb.Projec
 	return connections.GRPCStream[pb.GetPriorityFeeResponse](stream, fmt.Sprint(percentile)), nil
 }
 
+func (g *GRPCClient) GetPriorityFeeByProgramStream(ctx context.Context, programs []string) (connections.Streamer[*pb.GetPriorityFeeByProgramResponse], error) {
+	request := &pb.GetPriorityFeeByProgramRequest{
+		Programs: programs,
+	}
+
+	stream, err := g.apiClient.GetPriorityFeeByProgramStream(ctx, request)
+	if err != nil {
+		return nil, fmt.Errorf("GetPriorityFeeByProgramStream error: %v", err)
+	}
+
+	return connections.GRPCStream[pb.GetPriorityFeeByProgramResponse](stream, "programs"), nil
+}
+
 // GetBundleTipStream subscribes to a stream of bundle tip percentiles
 func (g *GRPCClient) GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error) {
 	stream, err := g.apiClient.GetBundleTipStream(ctx, &pb.GetBundleTipRequest{})

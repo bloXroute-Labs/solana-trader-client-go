@@ -1264,6 +1264,16 @@ func (w *WSClient) GetPriorityFeeStream(ctx context.Context, project pb.Project,
 	})
 }
 
+func (w *WSClient) GetPriorityFeeByProgramStream(ctx context.Context, programs []string) (connections.Streamer[*pb.GetPriorityFeeByProgramResponse], error) {
+	request := &pb.GetPriorityFeeByProgramRequest{
+		Programs: programs,
+	}
+
+	return connections.WSStreamProto(w.conn, ctx, "GetPriorityFeeByProgramStream", request, func() *pb.GetPriorityFeeByProgramResponse {
+		return &pb.GetPriorityFeeByProgramResponse{}
+	})
+}
+
 // GetBundleTipStream subscribes to a stream of recent bundle tip percentiles
 func (w *WSClient) GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error) {
 	newResponse := func() *pb.GetBundleTipResponse {
