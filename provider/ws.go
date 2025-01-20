@@ -709,6 +709,30 @@ func (w *WSClient) SignAndSubmitSnipe(ctx context.Context, transactions []*pb.Tr
 	return signatures, nil
 }
 
+func (w *WSClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage) (string, error) {
+	if w.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *w.privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign transaction: %w", err)
+	}
+
+	paladinRequest := &pb.PostSubmitPaladinRequest{
+		Transaction: &pb.TransactionMessageV2{
+			Content: txBase64,
+		},
+	}
+
+	response, err := w.PostSubmitPaladinV2(ctx, paladinRequest)
+	if err != nil {
+		return "", fmt.Errorf("failed to submit paladin request: %w", err)
+	}
+
+	return response.Signature, nil
+}
+
 // SignAndSubmitBatch signs the given transactions and submits them.
 func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if w.privateKey == nil {

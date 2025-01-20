@@ -376,6 +376,30 @@ func (g *GRPCClient) SignAndSubmitSnipe(ctx context.Context, transactions []*pb.
 	return signatures, nil
 }
 
+func (g *GRPCClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage) (string, error) {
+	if g.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign transaction: %w", err)
+	}
+
+	paladinRequest := &pb.PostSubmitPaladinRequest{
+		Transaction: &pb.TransactionMessageV2{
+			Content: txBase64,
+		},
+	}
+
+	response, err := g.apiClient.PostSubmitPaladinV2(ctx, paladinRequest)
+	if err != nil {
+		return "", fmt.Errorf("failed to submit paladin request: %w", err)
+	}
+
+	return response.Signature, nil
+}
+
 // signAndSubmitBatch signs the given transactions and submits them.
 func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	if g.privateKey == nil {
