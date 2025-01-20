@@ -372,6 +372,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetPriorityFeeByProgramGRPC,
 		description: "get priority fee by program",
 	},
+	"getPriorityFeeByProgramStream": {
+		run:         callGetPriorityFeeByProgramGRPCStream,
+		description: "get priority fee by program stream",
+	},
 	"getPumpFunNewTokenStream": {
 		run:         callGetpumpFunNewTokenGRPCStreamWrap,
 		description: "get pump fun new token stream",
@@ -2500,6 +2504,37 @@ func callGetPriorityFeeGRPCStream(g *provider.GRPCClient) bool {
 		}
 		log.Infof("response %v received", i)
 	}
+	return false
+}
+
+func callGetPriorityFeeByProgramGRPCStream(g *provider.GRPCClient) bool {
+	programs := []string{
+		"JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+		"CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
+		"CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C",
+	}
+
+	log.Info("starting priority fee by program stream")
+
+	ch := make(chan *pb.GetPriorityFeeByProgramResponse)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := g.GetPriorityFeeByProgramStream(ctx, programs)
+	if err != nil {
+		log.Errorf("error with GetPriorityFeeByProgram stream request: %v", err)
+		return true
+	}
+
+	stream.Into(ch)
+	for i := 1; i <= 1; i++ {
+		response, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received: %+v", i, response)
+	}
+
 	return false
 }
 

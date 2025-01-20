@@ -118,7 +118,7 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]RawUpdate[SolanaRa
 				return
 			}
 
-			ar, err := asksSub.Recv()
+			ar, err := asksSub.Recv(ctx)
 			if err != nil {
 				s.log().Debugw("closing Asks subscription", "err", err)
 				cancel()
@@ -137,7 +137,7 @@ func (s solanaOrderbookStream) Run(parent context.Context) ([]RawUpdate[SolanaRa
 				return
 			}
 
-			ar, err := bidsSub.Recv()
+			ar, err := bidsSub.Recv(ctx)
 			if err != nil {
 				s.log().Debugw("closing Bids subscription", "err", err)
 				cancel()
