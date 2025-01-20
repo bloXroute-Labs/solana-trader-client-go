@@ -31,19 +31,12 @@ const (
 	computeLimit = 100000
 )
 
-type EnvironmentVariables struct {
-	privateKey        string
-	publicKey         string
-	openOrdersAddress string
-	payer             string
-}
-
-var Environment EnvironmentVariables
+var Environment config.EnvironmentVariables
 
 func main() {
 	utils.InitLogger()
 
-	Environment = initializeEnvironmentVariables()
+	Environment = config.InitializeEnvironmentVariables()
 
 	listAllEndpoints()
 
@@ -123,44 +116,6 @@ func main() {
 
 	}
 
-}
-
-func initializeEnvironmentVariables() EnvironmentVariables {
-	if os.Getenv("AUTH_HEADER") == "" {
-		log.Fatal("must specify bloXroute authorization header!")
-	}
-
-	privateKey, ok := os.LookupEnv("PRIVATE_KEY")
-	if !ok {
-		log.Errorf(fmt.Sprintf("PRIVATE_KEY environment variable not set, cannot run any examples that require tx submission"))
-	}
-
-	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
-	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Warnf(fmt.Sprintf("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples"))
-	}
-
-	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Errorf("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
-	payerAddr, ok := os.LookupEnv("PAYER")
-	if !ok {
-		log.Warnf("PAYER environment variable not set: will be set to owner address")
-		payerAddr = ownerAddr
-	}
-
-	return EnvironmentVariables{
-		privateKey:        privateKey,
-		publicKey:         ownerAddr,
-		openOrdersAddress: ooAddr,
-		payer:             payerAddr,
-	}
 }
 
 func setupGRPCClient(env config.Env) *provider.GRPCClient {
@@ -623,7 +578,7 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 }
 
 func callGetTokenAccountsGRPCWrap(g *provider.GRPCClient) bool {
-	return callGetTokenAccountsGRPC(g, Environment.openOrdersAddress)
+	return callGetTokenAccountsGRPC(g, Environment.OpenOrdersAddress)
 
 }
 
@@ -1240,7 +1195,7 @@ const (
 )
 
 func orderLifecycleTestWrap(g *provider.GRPCClient) bool {
-	return orderLifecycleTest(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress)
+	return orderLifecycleTest(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress)
 }
 
 func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
@@ -1344,7 +1299,7 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 }
 
 func callPlaceOrderBundleWrap(g *provider.GRPCClient) bool {
-	return callPlaceOrderBundle(g, Environment.publicKey, Environment.payer, sideAsk,
+	return callPlaceOrderBundle(g, Environment.PublicKey, Environment.Payer, sideAsk,
 		computeLimit, computePrice, typeLimit, 100000)
 }
 
@@ -1385,7 +1340,7 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr,
 }
 
 func callPlaceOrderWithStakedRPCsWrap(g *provider.GRPCClient) bool {
-	return callPlaceOrderWithStakedRPCs(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk,
+	return callPlaceOrderWithStakedRPCs(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk,
 		10000, 10000, typeLimit, uint64(1100000))
 }
 
@@ -1426,7 +1381,7 @@ func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, 
 }
 
 func callPlaceOrderBundleWithBatchWrap(g *provider.GRPCClient) bool {
-	return callPlaceOrderBundleWithBatch(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk,
+	return callPlaceOrderBundleWithBatch(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk,
 		computeLimit, computePrice, typeLimit, uint64(1000000))
 }
 
@@ -1487,7 +1442,7 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 }
 
 func callPlaceOrderGRPCWithPriorityFeeWrap(g *provider.GRPCClient) bool {
-	return callPlaceOrderGRPCWithPriorityFee(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress,
+	return callPlaceOrderGRPCWithPriorityFee(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress,
 		sideAsk, computeLimit, computePrice, typeLimit)
 }
 
@@ -1554,7 +1509,7 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) bool {
 }
 
 func cancelAllWrap(g *provider.GRPCClient) bool {
-	return cancelAll(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return cancelAll(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1648,7 +1603,7 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 }
 
 func callReplaceByClientOrderIDWrap(g *provider.GRPCClient) bool {
-	return callReplaceByClientOrderID(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceByClientOrderID(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1743,7 +1698,7 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 }
 
 func callReplaceOrderWrap(g *provider.GRPCClient) bool {
-	return callReplaceOrder(g, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceOrder(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1860,7 +1815,7 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callRaydiumSwapWrap(g *provider.GRPCClient) bool {
-	return callRaydiumSwap(g, Environment.publicKey)
+	return callRaydiumSwap(g, Environment.PublicKey)
 }
 
 func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -1889,7 +1844,7 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callPostPumpFunSwapWrap(g *provider.GRPCClient) bool {
-	return callPostPumpFunSwap(Environment.publicKey)
+	return callPostPumpFunSwap(Environment.PublicKey)
 }
 
 func callPostPumpFunSwap(ownerAddr string) bool {
@@ -1923,7 +1878,7 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 }
 
 func callRaydiumCLMMSwapGRPCWrap(g *provider.GRPCClient) bool {
-	return callRaydiumCLMMSwapGRPC(g, Environment.publicKey)
+	return callRaydiumCLMMSwapGRPC(g, Environment.PublicKey)
 }
 
 func callRaydiumCLMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
@@ -1956,7 +1911,7 @@ func callRaydiumCLMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callRaydiumCPMMSwapGRPCWrap(g *provider.GRPCClient) bool {
-	return callRaydiumCPMMSwapGRPC(g, Environment.publicKey)
+	return callRaydiumCPMMSwapGRPC(g, Environment.PublicKey)
 }
 
 func callRaydiumCPMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
@@ -1989,7 +1944,7 @@ func callRaydiumCPMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callJupiterSwapWrap(g *provider.GRPCClient) bool {
-	return callJupiterSwap(g, Environment.publicKey)
+	return callJupiterSwap(g, Environment.PublicKey)
 }
 
 func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -2018,7 +1973,7 @@ func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callJupiterSwapInstructionsWrap(g *provider.GRPCClient) bool {
-	return callJupiterSwapInstructions(g, Environment.publicKey, uint64(1100), false)
+	return callJupiterSwapInstructions(g, Environment.PublicKey, uint64(1100), false)
 }
 
 func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
@@ -2049,7 +2004,7 @@ func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAm
 }
 
 func callRaydiumSwapInstructionsWrap(g *provider.GRPCClient) bool {
-	return callRaydiumSwapInstructions(g, Environment.publicKey, uint64(1100), true)
+	return callRaydiumSwapInstructions(g, Environment.PublicKey, uint64(1100), true)
 }
 
 func callRaydiumSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
@@ -2080,10 +2035,10 @@ func callRaydiumSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAm
 }
 
 func callTradeSwapWrap(g *provider.GRPCClient) bool {
-	return callTradeSwap(g, Environment.publicKey)
+	return callTradeSwap(g, Environment.PublicKey)
 }
 func callRouteTradeSwapWrap(g *provider.GRPCClient) bool {
-	return callRouteTradeSwap(g, Environment.publicKey)
+	return callRouteTradeSwap(g, Environment.PublicKey)
 }
 
 func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -2123,7 +2078,7 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callRaydiumRouteSwapWrap(g *provider.GRPCClient) bool {
-	return callRaydiumRouteSwap(g, Environment.publicKey)
+	return callRaydiumRouteSwap(g, Environment.PublicKey)
 }
 
 func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -2162,7 +2117,7 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 }
 
 func callRaydiumCLMMRouteSwapGRPCWrap(g *provider.GRPCClient) bool {
-	return callRaydiumCLMMRouteSwapGRPC(g, Environment.publicKey)
+	return callRaydiumCLMMRouteSwapGRPC(g, Environment.PublicKey)
 }
 
 func callRaydiumCLMMRouteSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
@@ -2197,7 +2152,7 @@ func callRaydiumCLMMRouteSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool
 }
 
 func callJupiterRouteSwapWrap(g *provider.GRPCClient) bool {
-	return callJupiterRouteSwap(g, Environment.publicKey)
+	return callJupiterRouteSwap(g, Environment.PublicKey)
 }
 
 func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
@@ -2607,7 +2562,7 @@ func callGetBundleTipGRPCStream(g *provider.GRPCClient) bool {
 }
 
 func callTestSubmitSnipeWrap(g *provider.GRPCClient) bool {
-	return callTestSubmitSnipe(g, Environment.publicKey)
+	return callTestSubmitSnipe(g, Environment.PublicKey)
 }
 
 func callTestSubmitSnipe(g *provider.GRPCClient, ownerAddr string) bool {

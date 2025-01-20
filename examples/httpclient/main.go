@@ -29,19 +29,12 @@ const (
 	computeLimit = 5000
 )
 
-type EnvironmentVariables struct {
-	privateKey        string
-	publicKey         string
-	openOrdersAddress string
-	payer             string
-}
-
-var Environment EnvironmentVariables
+var Environment config.EnvironmentVariables
 
 func main() {
 	utils.InitLogger()
 
-	Environment = initializeEnvironmentVariables()
+	Environment = config.InitializeEnvironmentVariables()
 
 	listAllEndpoints()
 
@@ -139,44 +132,6 @@ func setupHTTPClient(env config.Env) *provider.HTTPClient {
 	}
 
 	return h
-}
-
-func initializeEnvironmentVariables() EnvironmentVariables {
-	if os.Getenv("AUTH_HEADER") == "" {
-		log.Fatal("must specify bloXroute authorization header!")
-	}
-
-	privateKey, ok := os.LookupEnv("PRIVATE_KEY")
-	if !ok {
-		log.Errorf(fmt.Sprintf("PRIVATE_KEY environment variable not set, cannot run any examples that require tx submission"))
-	}
-
-	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
-	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Warnf(fmt.Sprintf("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples"))
-	}
-
-	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Errorf("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
-	payerAddr, ok := os.LookupEnv("PAYER")
-	if !ok {
-		log.Warnf("PAYER environment variable not set: will be set to owner address")
-		payerAddr = ownerAddr
-	}
-
-	return EnvironmentVariables{
-		privateKey:        privateKey,
-		publicKey:         ownerAddr,
-		openOrdersAddress: ooAddr,
-		payer:             payerAddr,
-	}
 }
 
 func listAllEndpoints() {
@@ -543,7 +498,7 @@ func callGetAccountBalanceHTTP(h *provider.HTTPClient) bool {
 }
 
 func callGetTokenAccountsHTTPWrap(h *provider.HTTPClient) bool {
-	return callGetTokenAccountsHTTP(h, Environment.publicKey)
+	return callGetTokenAccountsHTTP(h, Environment.PublicKey)
 }
 
 func callGetTokenAccountsHTTP(h *provider.HTTPClient, ownerAddr string) bool {
@@ -959,7 +914,7 @@ const (
 )
 
 func callPlaceOrderHTTPWrap(h *provider.HTTPClient) bool {
-	_, ok := callPlaceOrderHTTP(h, Environment.publicKey, Environment.openOrdersAddress, sideAsk, typeLimit)
+	_, ok := callPlaceOrderHTTP(h, Environment.PublicKey, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 	return ok
 }
 
@@ -999,7 +954,7 @@ func callPlaceOrderHTTP(h *provider.HTTPClient, ownerAddr, ooAddr string, orderS
 }
 
 func callPlaceOrderHTTPWithPriorityFeeWrap(h *provider.HTTPClient) bool {
-	return callPlaceOrderHTTPWithPriorityFee(h, Environment.publicKey, Environment.openOrdersAddress, sideAsk, typeLimit,
+	return callPlaceOrderHTTPWithPriorityFee(h, Environment.PublicKey, Environment.OpenOrdersAddress, sideAsk, typeLimit,
 		computeLimit, computePrice)
 }
 
@@ -1039,7 +994,7 @@ func callPlaceOrderHTTPWithPriorityFee(h *provider.HTTPClient, ownerAddr, ooAddr
 }
 
 func callPlaceOrderBundleUsingBatchHTTPWithWrap(h *provider.HTTPClient) bool {
-	return callPlaceOrderBundleUsingBatchHTTP(h, Environment.publicKey, 100000)
+	return callPlaceOrderBundleUsingBatchHTTP(h, Environment.PublicKey, 100000)
 }
 
 func callPlaceOrderBundleUsingBatchHTTP(h *provider.HTTPClient, ownerAddr string, bundleTip uint64) bool {
@@ -1092,7 +1047,7 @@ func callPlaceOrderBundleUsingBatchHTTP(h *provider.HTTPClient, ownerAddr string
 }
 
 func callPlaceOrderBundleWrap(h *provider.HTTPClient) bool {
-	return callPlaceOrderBundle(h, Environment.publicKey, 100000)
+	return callPlaceOrderBundle(h, Environment.PublicKey, 100000)
 }
 
 func callPlaceOrderBundle(h *provider.HTTPClient, ownerAddr string, bundleTip uint64) bool {
@@ -1129,7 +1084,7 @@ func callPlaceOrderBundle(h *provider.HTTPClient, ownerAddr string, bundleTip ui
 }
 
 func callPlaceOrderWithStakedRPCsHTTPWrap(h *provider.HTTPClient) bool {
-	return callPlaceOrderWithStakedRPCsHTTP(h, Environment.publicKey, 100000)
+	return callPlaceOrderWithStakedRPCsHTTP(h, Environment.PublicKey, 100000)
 }
 
 func callPlaceOrderWithStakedRPCsHTTP(h *provider.HTTPClient, ownerAddr string, bundleTip uint64) bool {
@@ -1185,7 +1140,7 @@ func callCancelByClientOrderIDHTTP(h *provider.HTTPClient, ownerAddr, ooAddr str
 }
 
 func callPostSettleHTTPWrap(h *provider.HTTPClient) bool {
-	return callPostSettleHTTP(h, Environment.publicKey, Environment.openOrdersAddress)
+	return callPostSettleHTTP(h, Environment.PublicKey, Environment.OpenOrdersAddress)
 }
 
 func callPostSettleHTTP(h *provider.HTTPClient, ownerAddr, ooAddr string) bool {
@@ -1204,7 +1159,7 @@ func callPostSettleHTTP(h *provider.HTTPClient, ownerAddr, ooAddr string) bool {
 }
 
 func cancelAllWrap(h *provider.HTTPClient) bool {
-	return cancelAll(h, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return cancelAll(h, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func cancelAll(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1299,7 +1254,7 @@ func cancelAll(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orde
 }
 
 func callReplaceByClientOrderIDWrap(h *provider.HTTPClient) bool {
-	return callReplaceByClientOrderID(h, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceByClientOrderID(h, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceByClientOrderID(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1393,7 +1348,7 @@ func callReplaceByClientOrderID(h *provider.HTTPClient, ownerAddr, payerAddr, oo
 }
 
 func callReplaceOrderWrap(h *provider.HTTPClient) bool {
-	return callReplaceOrder(h, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceOrder(h, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceOrder(h *provider.HTTPClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1506,7 +1461,7 @@ func callGetRecentBlockHashHTTP(h *provider.HTTPClient) bool {
 }
 
 func callTradeSwapWrap(h *provider.HTTPClient) bool {
-	return callTradeSwap(h, Environment.publicKey)
+	return callTradeSwap(h, Environment.PublicKey)
 }
 
 func callTradeSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1530,7 +1485,7 @@ func callTradeSwap(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callRaydiumSwapWrap(h *provider.HTTPClient) bool {
-	return callRaydiumSwap(h, Environment.publicKey)
+	return callRaydiumSwap(h, Environment.PublicKey)
 }
 
 func callRaydiumSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1559,7 +1514,7 @@ func callRaydiumSwap(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callRaydiumCLMMSwapHTTPWrap(h *provider.HTTPClient) bool {
-	return callRaydiumCLMMSwapHTTP(h, Environment.publicKey)
+	return callRaydiumCLMMSwapHTTP(h, Environment.PublicKey)
 }
 
 func callRaydiumCLMMSwapHTTP(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1588,7 +1543,7 @@ func callRaydiumCLMMSwapHTTP(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callPostPumpFunSwapWrap(h *provider.HTTPClient) bool {
-	return callPostPumpFunSwap(h, Environment.publicKey)
+	return callPostPumpFunSwap(h, Environment.PublicKey)
 }
 
 func callPostPumpFunSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1619,7 +1574,7 @@ func callPostPumpFunSwap(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callRaydiumSwapCPMMWrap(h *provider.HTTPClient) bool {
-	return callRaydiumSwapCPMM(h, Environment.publicKey)
+	return callRaydiumSwapCPMM(h, Environment.PublicKey)
 }
 
 func callRaydiumSwapCPMM(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1652,7 +1607,7 @@ func callRaydiumSwapCPMM(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callRaydiumRouteSwapWrap(h *provider.HTTPClient) bool {
-	return callRaydiumRouteSwap(h, Environment.publicKey)
+	return callRaydiumRouteSwap(h, Environment.PublicKey)
 }
 
 func callRaydiumRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1691,7 +1646,7 @@ func callRaydiumRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callRaydiumCLMMRouteSwapWrap(h *provider.HTTPClient) bool {
-	return callRaydiumCLMMRouteSwap(h, Environment.publicKey)
+	return callRaydiumCLMMRouteSwap(h, Environment.PublicKey)
 }
 
 func callRaydiumCLMMRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1733,7 +1688,7 @@ func callRaydiumCLMMRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callJupiterRouteSwapWrap(h *provider.HTTPClient) bool {
-	return callJupiterRouteSwap(h, Environment.publicKey)
+	return callJupiterRouteSwap(h, Environment.PublicKey)
 }
 
 func callJupiterRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1777,7 +1732,7 @@ func callJupiterRouteSwap(h *provider.HTTPClient, ownerAddr string) bool {
 }
 
 func callJupiterSwapWrap(h *provider.HTTPClient) bool {
-	return callJupiterSwap(h, Environment.publicKey)
+	return callJupiterSwap(h, Environment.PublicKey)
 }
 
 func callJupiterSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1807,7 +1762,7 @@ func callJupiterSwap(h *provider.HTTPClient, ownerAddr string) bool {
 
 func callJupiterSwapInstructionsWrap(h *provider.HTTPClient) bool {
 	tip := uint64(100000)
-	return callJupiterSwapInstructions(h, Environment.publicKey, &tip, true)
+	return callJupiterSwapInstructions(h, Environment.PublicKey, &tip, true)
 }
 
 func callJupiterSwapInstructions(h *provider.HTTPClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
@@ -1838,7 +1793,7 @@ func callJupiterSwapInstructions(h *provider.HTTPClient, ownerAddr string, tipAm
 
 func callRaydiumSwapInstructionsWrap(h *provider.HTTPClient) bool {
 	tip := uint64(100000)
-	return callRaydiumSwapInstructions(h, Environment.publicKey, &tip, true)
+	return callRaydiumSwapInstructions(h, Environment.PublicKey, &tip, true)
 }
 
 func callRaydiumSwapInstructions(h *provider.HTTPClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
@@ -1868,7 +1823,7 @@ func callRaydiumSwapInstructions(h *provider.HTTPClient, ownerAddr string, tipAm
 }
 
 func callRouteTradeSwapWrap(h *provider.HTTPClient) bool {
-	return callRouteTradeSwap(h, Environment.publicKey)
+	return callRouteTradeSwap(h, Environment.PublicKey)
 }
 
 func callRouteTradeSwap(h *provider.HTTPClient, ownerAddr string) bool {
@@ -1940,7 +1895,7 @@ func callGetPriorityFeeByProgramHTTP(h *provider.HTTPClient) bool {
 }
 
 func callTestSubmitSnipeHTTPWrap(h *provider.HTTPClient) bool {
-	return callTestSubmitSnipeHTTP(h, Environment.publicKey)
+	return callTestSubmitSnipeHTTP(h, Environment.PublicKey)
 }
 
 func callTestSubmitSnipeHTTP(h *provider.HTTPClient, ownerAddr string) bool {

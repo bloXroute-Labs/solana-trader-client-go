@@ -28,19 +28,12 @@ const (
 	computeLimit = 5000
 )
 
-type EnvironmentVariables struct {
-	privateKey        string
-	publicKey         string
-	openOrdersAddress string
-	payer             string
-}
-
-var Environment EnvironmentVariables
+var Environment config.EnvironmentVariables
 
 func main() {
 	utils.InitLogger()
 
-	Environment = initializeEnvironmentVariables()
+	Environment = config.InitializeEnvironmentVariables()
 
 	listAllEndpoints()
 
@@ -119,44 +112,6 @@ func main() {
 
 	}
 
-}
-
-func initializeEnvironmentVariables() EnvironmentVariables {
-	if os.Getenv("AUTH_HEADER") == "" {
-		log.Fatal("must specify bloXroute authorization header!")
-	}
-
-	privateKey, ok := os.LookupEnv("PRIVATE_KEY")
-	if !ok {
-		log.Errorf(fmt.Sprintf("PRIVATE_KEY environment variable not set, cannot run any examples that require tx submission"))
-	}
-
-	// you must specify:
-	//	- PRIVATE_KEY (by default loaded during provider.NewClient()) to sign transactions
-	// 	- PUBLIC_KEY to indicate which account you wish to trade from
-	//	- OPEN_ORDERS to indicate your Serum account to speed up lookups (optional in actual usage)
-	ownerAddr, ok := os.LookupEnv("PUBLIC_KEY")
-	if !ok {
-		log.Warnf(fmt.Sprintf("PUBLIC_KEY environment variable not set: will skip place/cancel/settle examples"))
-	}
-
-	ooAddr, ok := os.LookupEnv("OPEN_ORDERS")
-	if !ok {
-		log.Errorf("OPEN_ORDERS environment variable not set: requests will be slower")
-	}
-
-	payerAddr, ok := os.LookupEnv("PAYER")
-	if !ok {
-		log.Warnf("PAYER environment variable not set: will be set to owner address")
-		payerAddr = ownerAddr
-	}
-
-	return EnvironmentVariables{
-		privateKey:        privateKey,
-		publicKey:         ownerAddr,
-		openOrdersAddress: ooAddr,
-		payer:             payerAddr,
-	}
 }
 
 func setupWSClient(env config.Env) *provider.WSClient {
@@ -802,7 +757,7 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 }
 
 func callGetTokenAccountsWSWrap(w *provider.WSClient) bool {
-	return callGetTokenAccountsWS(w, Environment.publicKey)
+	return callGetTokenAccountsWS(w, Environment.PublicKey)
 }
 
 func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
@@ -1229,7 +1184,7 @@ const (
 )
 
 func orderLifecycleTestWrap(w *provider.WSClient) bool {
-	return orderLifecycleTest(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress)
+	return orderLifecycleTest(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress)
 }
 
 func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
@@ -1298,7 +1253,7 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 }
 
 func callPlaceOrderWSWrap(w *provider.WSClient) bool {
-	_, ok := callPlaceOrderWS(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	_, ok := callPlaceOrderWS(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 
 	return ok
 }
@@ -1329,7 +1284,7 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 }
 
 func callPlaceOrderBundleWrap(w *provider.WSClient) bool {
-	return callPlaceOrderBundle(w, Environment.publicKey, 1100000)
+	return callPlaceOrderBundle(w, Environment.PublicKey, 1100000)
 }
 
 func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
@@ -1365,7 +1320,7 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint
 }
 
 func callPlaceOrderWithStakedRPCsWrap(w *provider.WSClient) bool {
-	return callPlaceOrderWithStakedRPCs(w, Environment.publicKey, 1100000)
+	return callPlaceOrderWithStakedRPCs(w, Environment.PublicKey, 1100000)
 }
 
 func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
@@ -1401,7 +1356,7 @@ func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmo
 }
 
 func callPlaceOrderBundleWithBatchWrap(w *provider.WSClient) bool {
-	return callPlaceOrderBundleWithBatch(w, Environment.publicKey, 1100000)
+	return callPlaceOrderBundleWithBatch(w, Environment.PublicKey, 1100000)
 }
 
 func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
@@ -1460,7 +1415,7 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 }
 
 func callPostSettleWSWrap(w *provider.WSClient) bool {
-	return callPostSettleWS(w, Environment.publicKey, Environment.openOrdersAddress)
+	return callPostSettleWS(w, Environment.PublicKey, Environment.OpenOrdersAddress)
 }
 
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
@@ -1478,7 +1433,7 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 }
 
 func cancelAllWrap(w *provider.WSClient) bool {
-	return callReplaceByClientOrderID(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1577,7 +1532,7 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderS
 }
 
 func callReplaceByClientOrderIDWrap(w *provider.WSClient) bool {
-	return callReplaceByClientOrderID(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1676,7 +1631,7 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 }
 
 func callReplaceOrderWrap(w *provider.WSClient) bool {
-	return callReplaceOrder(w, Environment.publicKey, Environment.payer, Environment.openOrdersAddress, sideAsk, typeLimit)
+	return callReplaceOrder(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
 func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
@@ -1776,7 +1731,7 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 }
 
 func callTradeSwapWrap(w *provider.WSClient) bool {
-	return callTradeSwap(w, Environment.publicKey)
+	return callTradeSwap(w, Environment.PublicKey)
 }
 
 func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -1800,7 +1755,7 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callTradeSwapWithPriorityFeeWrap(w *provider.WSClient) bool {
-	return callTradeSwapWithPriorityFee(w, Environment.publicKey, computeLimit, computePrice)
+	return callTradeSwapWithPriorityFee(w, Environment.PublicKey, computeLimit, computePrice)
 }
 
 func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
@@ -1825,7 +1780,7 @@ func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, comput
 }
 
 func callRaydiumSwapWrap(w *provider.WSClient) bool {
-	return callRaydiumSwap(w, Environment.publicKey)
+	return callRaydiumSwap(w, Environment.PublicKey)
 }
 
 func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -1854,7 +1809,7 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callPostPumpFunSwapWrap(w *provider.WSClient) bool {
-	return callPostPumpFunSwap(w, Environment.publicKey)
+	return callPostPumpFunSwap(w, Environment.PublicKey)
 }
 
 func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -1888,11 +1843,11 @@ func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callRouteTradeSwapWrap(w *provider.WSClient) bool {
-	return callRouteTradeSwap(w, Environment.publicKey)
+	return callRouteTradeSwap(w, Environment.PublicKey)
 }
 
 func callRaydiumCLMMSwapWSWrap(w *provider.WSClient) bool {
-	return callRaydiumCLMMSwapWS(w, Environment.publicKey)
+	return callRaydiumCLMMSwapWS(w, Environment.PublicKey)
 }
 
 func callRaydiumCLMMSwapWS(w *provider.WSClient, ownerAddr string) bool {
@@ -1920,7 +1875,7 @@ func callRaydiumCLMMSwapWS(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callRaydiumCPMMSwapWSWrap(w *provider.WSClient) bool {
-	return callRaydiumSwapCPMMWS(w, Environment.publicKey)
+	return callRaydiumSwapCPMMWS(w, Environment.PublicKey)
 }
 
 func callRaydiumSwapCPMMWS(w *provider.WSClient, ownerAddr string) bool {
@@ -1985,7 +1940,7 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callRaydiumRouteSwapWrap(w *provider.WSClient) bool {
-	return callRaydiumRouteSwap(w, Environment.publicKey)
+	return callRaydiumRouteSwap(w, Environment.PublicKey)
 }
 
 func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -2023,11 +1978,11 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callJupiterSwapWrap(w *provider.WSClient) bool {
-	return callJupiterSwap(w, Environment.publicKey)
+	return callJupiterSwap(w, Environment.PublicKey)
 }
 
 func callRaydiumCLMMRouteSwapWSWrap(w *provider.WSClient) bool {
-	return callRaydiumCLMMRouteSwapWS(w, Environment.publicKey)
+	return callRaydiumCLMMRouteSwapWS(w, Environment.PublicKey)
 }
 
 func callRaydiumCLMMRouteSwapWS(w *provider.WSClient, ownerAddr string) bool {
@@ -2096,7 +2051,7 @@ func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 
 func callJupiterSwapInstructionsWrap(w *provider.WSClient) bool {
 	tip := uint64(100000)
-	return callJupiterSwapInstructions(w, Environment.publicKey, &tip, false)
+	return callJupiterSwapInstructions(w, Environment.PublicKey, &tip, false)
 }
 
 func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
@@ -2128,7 +2083,7 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 
 func callRaydiumSwapInstructionsWrap(w *provider.WSClient) bool {
 	tip := uint64(100000)
-	return callRaydiumSwapInstructions(w, Environment.publicKey, &tip, false)
+	return callRaydiumSwapInstructions(w, Environment.PublicKey, &tip, false)
 }
 
 func callRaydiumSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
@@ -2157,7 +2112,7 @@ func callRaydiumSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 }
 
 func callJupiterRouteSwapWrap(w *provider.WSClient) bool {
-	return callJupiterRouteSwap(w, Environment.publicKey)
+	return callJupiterRouteSwap(w, Environment.PublicKey)
 }
 
 func callJupiterRouteSwap(w *provider.WSClient, ownerAddr string) bool {
@@ -2511,7 +2466,7 @@ func callGetRecentBlockHashV2WS(w *provider.WSClient, offset uint64) bool {
 }
 
 func callTestSubmitSnipeWSWrap(w *provider.WSClient) bool {
-	return callTestSubmitSnipeWS(w, Environment.publicKey)
+	return callTestSubmitSnipeWS(w, Environment.PublicKey)
 }
 
 func callTestSubmitSnipeWS(w *provider.WSClient, ownerAddr string) bool {
