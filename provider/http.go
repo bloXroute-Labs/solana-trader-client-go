@@ -514,6 +514,17 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFli
 	return &response, nil
 }
 
+func (h *HTTPClient) PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/submit-snipe", h.baseURL)
+
+	var response pb.PostSubmitSnipeResponse
+	err := connections.HTTPPostWithClient[*pb.PostSubmitSnipeResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostSubmitBatch posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit-batch", h.baseURL)
@@ -573,6 +584,48 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 	}
 
 	return response.Signature, nil
+}
+
+func (h *HTTPClient) SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error) {
+	if h.privateKey == nil {
+		return nil, ErrPrivateKeyNotFound
+	}
+
+	entries := make([]*pb.PostSubmitRequestEntry, len(transactions))
+
+	for i, tx := range transactions {
+		txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.privateKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sign transaction: %w", err)
+		}
+
+		entries[i] = &pb.PostSubmitRequestEntry{
+			Transaction: &pb.TransactionMessage{
+				Content:   txBase64,
+				IsCleanup: tx.IsCleanup,
+			},
+			SkipPreFlight: false,
+		}
+	}
+
+	snipeRequest := &pb.PostSubmitSnipeRequest{
+		Entries:       entries,
+		UseStakedRPCs: &useStakedRPCs,
+	}
+
+	response, err := h.PostSubmitSnipeV2(ctx, snipeRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to submit snipe request: %w", err)
+	}
+
+	signatures := make([]string, 0, len(response.Transactions))
+	for _, entry := range response.Transactions {
+		if entry.Submitted {
+			signatures = append(signatures, entry.Signature)
+		}
+	}
+
+	return signatures, nil
 }
 
 // SignAndSubmitBatch signs the given transactions and submits them.

@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/manifoldco/promptui"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
@@ -416,6 +418,12 @@ var ExampleEndpoints = map[string]struct {
 	"placeBundleWithStakedRPCs": {
 		run:                               callPlaceOrderWithStakedRPCsWrap,
 		description:                       "place order (openbook) with priority fee",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"callTestSubmitSnipe": {
+		run:                               callTestSubmitSnipeWSWrap,
+		description:                       "call test submit snipe",
 		requiresAdditionalEnvironmentVars: true,
 	},
 
@@ -2499,5 +2507,87 @@ func callGetRecentBlockHashV2WS(w *provider.WSClient, offset uint64) bool {
 	}
 
 	log.Infof("response %v received V2", result)
+	return false
+}
+
+func callTestSubmitSnipeWSWrap(w *provider.WSClient) bool {
+	return callTestSubmitSnipeWS(w, Environment.publicKey)
+}
+
+func callTestSubmitSnipeWS(w *provider.WSClient, ownerAddr string) bool {
+	ownerKey, err := solana.PublicKeyFromBase58(ownerAddr)
+	if err != nil {
+		log.Errorf("Please set Public key environment variable: %v", err)
+		return true
+	}
+
+	log.Info("starting submit snipe test")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	result, err := w.GetRecentBlockHashV2(context.Background(), &pb.GetRecentBlockHashRequestV2{Offset: 0})
+	if err != nil {
+		log.Errorf("error with GetRecentBlockHashV2 request: %v", err)
+		return true
+	}
+
+	blockHash := solana.MustHashFromBase58(result.BlockHash)
+
+	smallTip := uint64(1_000)
+	stakedTipThreshold := uint64(1_000_000)
+	tipWallet := solana.MustPublicKeyFromBase58("HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY")
+	jitoTipWallet := solana.MustPublicKeyFromBase58("96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5")
+
+	transactions := make([]*pb.TransactionMessage, 2)
+
+	// First transfer to jito tip wallet, then to bloxroute.
+	tx1, err := solana.NewTransaction([]solana.Instruction{
+		system.NewTransferInstruction(
+			smallTip,
+			ownerKey,
+			jitoTipWallet,
+		).Build(),
+		system.NewTransferInstruction(
+			smallTip,
+			ownerKey,
+			tipWallet,
+		).Build(),
+	}, blockHash, solana.TransactionPayer(ownerKey))
+	if err != nil {
+		log.Errorf("failed to create first transaction: %v", err)
+		return true
+	}
+
+	// Second transfer to bloxroute directly, with a tip big enough to propegate directly as a staked transaction. > 1_000_000
+	tx2, err := solana.NewTransaction([]solana.Instruction{
+		system.NewTransferInstruction(
+			stakedTipThreshold,
+			ownerKey,
+			tipWallet,
+		).Build(),
+	}, blockHash, solana.TransactionPayer(ownerKey))
+	if err != nil {
+		log.Errorf("failed to create second transaction: %v", err)
+		return true
+	}
+
+	// Prepare unsigned transaction messages
+	transactions[0] = &pb.TransactionMessage{
+		Content:   tx1.MustToBase64(),
+		IsCleanup: false,
+	}
+	transactions[1] = &pb.TransactionMessage{
+		Content:   tx2.MustToBase64(),
+		IsCleanup: false,
+	}
+
+	// Submit snipe request
+	signatures, err := w.SignAndSubmitSnipe(ctx, transactions, true)
+	if err != nil {
+		log.Errorf("failed to submit snipe request: %v", err)
+		return true
+	}
+
+	log.Infof("snipe signatures: %v", signatures)
 	return false
 }
