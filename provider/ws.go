@@ -564,8 +564,7 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool,
-	frontRunningProtection bool, useStakedRPCs bool) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -574,9 +573,13 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFligh
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
 		},
-		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection,
-		UseStakedRPCs:          &useStakedRPCs,
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: &opts.FrontRunningProtection,
+		UseStakedRPCs:          &opts.UseStakedRPCs,
+		AllowBackRun:           &opts.AllowBackRun,
+		RevenueAddress:         &opts.RevenueAddress,
+		Sniping:                &opts.Sniping,
+		AllowRevert:            &opts.AllowRevert,
 	}
 	var response pb.PostSubmitResponse
 	err := w.conn.Request(ctx, "PostSubmit", request, &response)
@@ -610,8 +613,7 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool,
-	useBundle bool, useStakedRPCs bool) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -625,9 +627,13 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFli
 		Transaction: &pb.TransactionMessage{
 			Content: txBase64,
 		},
-		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &useBundle,
-		UseStakedRPCs:          &useStakedRPCs,
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: &opts.FrontRunningProtection,
+		UseStakedRPCs:          &opts.UseStakedRPCs,
+		AllowBackRun:           &opts.AllowBackRun,
+		RevenueAddress:         &opts.RevenueAddress,
+		Sniping:                &opts.Sniping,
+		AllowRevert:            &opts.AllowRevert,
 	}
 	var response pb.PostSubmitResponse
 	err = w.conn.Request(ctx, "PostSubmitV2", request, &response)
@@ -659,7 +665,12 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		return "", err
 	}
 
-	response, err := w.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, useStakedRPCs)
+	response, err := w.PostSubmit(ctx, txBase64, PostSubmitOpts{
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: frontRunningProtection,
+		UseStakedRPCs:          useStakedRPCs,
+		// Other fields default to zero values
+	})
 	if err != nil {
 		return "", err
 	}
