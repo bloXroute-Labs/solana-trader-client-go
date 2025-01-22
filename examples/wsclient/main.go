@@ -2505,7 +2505,7 @@ func callTestSubmitSnipeWS(w *provider.WSClient, ownerAddr string) bool {
 
 	blockHash := solana.MustHashFromBase58(result.BlockHash)
 
-	smallTip := uint64(1_000)
+	smallTip := uint64(100_000)
 	stakedTipThreshold := uint64(1_000_000)
 	tipWallet := solana.MustPublicKeyFromBase58("HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY")
 	jitoTipWallet := solana.MustPublicKeyFromBase58("96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5")
