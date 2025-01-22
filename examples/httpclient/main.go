@@ -274,6 +274,11 @@ var ExampleEndpoints = map[string]struct {
 		description: "get priority fee by program",
 	},
 
+	"getLeaderSchedule": {
+		run:         callGetLeaderScheduleHTTP,
+		description: "get leader schedule",
+	},
+
 	"callTestSubmitSnipe": {
 		run:                               callTestSubmitSnipeHTTPWrap,
 		description:                       "test submit snipe",
@@ -1891,6 +1896,20 @@ func callGetPriorityFeeByProgramHTTP(h *provider.HTTPClient) bool {
 	}
 
 	log.Infof("priority fee by program: %v", pf)
+	return false
+}
+
+func callGetLeaderScheduleHTTP(h *provider.HTTPClient) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	leaderSchedule, err := h.GetLeaderSchedule(ctx, 0)
+	if err != nil {
+		log.Errorf("error with GetLeaderSchedule request: %v", err)
+		return true
+	}
+
+	log.Infof("leader schedule: %v", leaderSchedule)
 	return false
 }
 
