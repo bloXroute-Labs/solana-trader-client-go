@@ -482,6 +482,19 @@ func (w *WSClient) GetPriorityFeeByProgram(ctx context.Context, programs []strin
 	return &response, nil
 }
 
+// GetLeaderSchedule returns leader schedule given max Slots
+func (w *WSClient) GetLeaderSchedule(ctx context.Context, maxSlots uint64) (*pb.GetLeaderScheduleResponse, error) {
+	request := &pb.GetLeaderScheduleRequest{
+		MaxSlots: maxSlots,
+	}
+	var response pb.GetLeaderScheduleResponse
+	err := w.conn.Request(ctx, "GetLeaderSchedule", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // PostTradeSwap returns a partially signed transaction for submitting a swap request
 func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
 	project, err := ProjectFromString(projectStr)

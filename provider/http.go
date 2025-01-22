@@ -1232,6 +1232,17 @@ func (h *HTTPClient) GetPriorityFeeByProgram(ctx context.Context, programs []str
 	return response, nil
 }
 
+func (h *HTTPClient) GetLeaderSchedule(ctx context.Context, maxSlots uint) (*pb.GetLeaderScheduleResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/system/leader-schedule?maxSlots=%v", h.baseURL, maxSlots)
+	response := new(pb.GetLeaderScheduleResponse)
+	if err := connections.HTTPGetWithClient[*pb.GetLeaderScheduleResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+
+}
+
 //V2 Openbook
 
 // GetMarketsV2 returns the list of all available named markets
