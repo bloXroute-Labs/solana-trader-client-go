@@ -497,13 +497,17 @@ func (h *HTTPClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, skipPreFlight bool,
-	frontRunningProtection bool, useStakedRPCs bool) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
-		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection,
-		UseStakedRPCs:          &useStakedRPCs,
+	request := &pb.PostSubmitRequest{
+		Transaction:            &pb.TransactionMessage{Content: txBase64},
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: &opts.FrontRunningProtection,
+		UseStakedRPCs:          &opts.UseStakedRPCs,
+		AllowBackRun:           &opts.AllowBackRun,
+		RevenueAddress:         &opts.RevenueAddress,
+		Sniping:                &opts.Sniping,
+		AllowRevert:            &opts.AllowRevert,
 	}
 
 	var response pb.PostSubmitResponse
@@ -538,13 +542,17 @@ func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, skipPreFlight bool,
-	frontRunningProtection bool, useStakedRPCs bool) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{Transaction: &pb.TransactionMessage{Content: txBase64},
-		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection,
-		UseStakedRPCs:          &useStakedRPCs,
+	request := &pb.PostSubmitRequest{
+		Transaction:            &pb.TransactionMessage{Content: txBase64},
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: &opts.FrontRunningProtection,
+		UseStakedRPCs:          &opts.UseStakedRPCs,
+		AllowBackRun:           &opts.AllowBackRun,
+		RevenueAddress:         &opts.RevenueAddress,
+		Sniping:                &opts.Sniping,
+		AllowRevert:            &opts.AllowRevert,
 	}
 
 	var response pb.PostSubmitResponse
@@ -578,7 +586,12 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 		return "", err
 	}
 
-	response, err := h.PostSubmit(ctx, txBase64, skipPreFlight, frontRunningProtection, useStakedRPCs)
+	response, err := h.PostSubmit(ctx, txBase64, PostSubmitOpts{
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: frontRunningProtection,
+		UseStakedRPCs:          useStakedRPCs,
+		// Other fields default to zero values
+	})
 	if err != nil {
 		return "", err
 	}

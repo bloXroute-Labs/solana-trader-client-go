@@ -326,7 +326,16 @@ func (g *GRPCClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 	response, err := g.PostSubmit(ctx, &pb.TransactionMessage{
 		Content:   txBase64,
 		IsCleanup: tx.IsCleanup,
-	}, skipPreFlight, frontRunningProtection, useStakedRPCs)
+	}, PostSubmitOpts{
+		SkipPreFlight:          skipPreFlight,
+		FrontRunningProtection: frontRunningProtection,
+		UseStakedRPCs:          useStakedRPCs,
+		// Using zero values for other fields:
+		// AllowBackRun:    false,
+		// RevenueAddress:  "",
+		// Sniping:         false,
+		// AllowRevert:     false,
+	})
 	if err != nil {
 		return "", err
 	}
@@ -461,12 +470,16 @@ func (g *GRPCClient) PostOrder(ctx context.Context, owner, payer, market string,
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool,
-	frontRunningProtection bool, useStakedRPCs bool) (*pb.PostSubmitResponse, error) {
-	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{Transaction: tx,
-		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection,
-		UseStakedRPCs:          &useStakedRPCs,
+func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
+	return g.apiClient.PostSubmit(ctx, &pb.PostSubmitRequest{
+		Transaction:            tx,
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: &opts.FrontRunningProtection,
+		UseStakedRPCs:          &opts.UseStakedRPCs,
+		AllowBackRun:           &opts.AllowBackRun,
+		RevenueAddress:         &opts.RevenueAddress,
+		Sniping:                &opts.Sniping,
+		AllowRevert:            &opts.AllowRevert,
 	})
 }
 
@@ -476,11 +489,11 @@ func (g *GRPCClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage,
-	skipPreFlight bool, frontRunningProtection bool, tpu uint32) (*pb.PostSubmitResponse, error) {
-	return g.apiClient.PostSubmitV2(ctx, &pb.PostSubmitRequest{Transaction: tx,
-		SkipPreFlight:          skipPreFlight,
-		FrontRunningProtection: &frontRunningProtection,
+func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
+	return g.apiClient.PostSubmitV2(ctx, &pb.PostSubmitRequest{
+		Transaction:            tx,
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: &opts.FrontRunningProtection,
 	})
 }
 

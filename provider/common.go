@@ -3,11 +3,12 @@ package provider
 import (
 	"errors"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 
 	"github.com/gagliardetto/solana-go"
 )
@@ -79,6 +80,16 @@ type PostOrderOpts struct {
 type SubmitOpts struct {
 	SubmitStrategy pb.SubmitStrategy
 	SkipPreFlight  *bool
+}
+
+type PostSubmitOpts struct {
+	SkipPreFlight          bool
+	FrontRunningProtection bool
+	UseStakedRPCs          bool
+	AllowBackRun           bool
+	RevenueAddress         string
+	Sniping                bool
+	AllowRevert            bool
 }
 
 type RPCOpts struct {
