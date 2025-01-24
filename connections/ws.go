@@ -97,7 +97,7 @@ func (w *WS) readLoop() {
 	defer w.cancel()
 
 	for {
-		outerLoop:
+	outerLoop:
 		// all message reading is done on a single goroutine, while message processing is dispatched on independent
 		// goroutines in parallel. in most cases this is fine, but if not message processors can request to hold the lock
 		// (see lockHeld attribute usage) to force sequential processing
@@ -112,14 +112,14 @@ func (w *WS) readLoop() {
 		if w.conn != nil {
 			_, msg, err = w.conn.ReadMessage()
 		}
-		if err != nil  || w.conn == nil {
+		if err != nil || w.conn == nil {
 			// reconnect the websocket connection if connection read message fails
 
 			// IMPORTANT:
 			// Don't do this for the timeout case for this sceniaro:
 			// case <-time.After(connectionRetryTimeout):
-			// The timer will be re-created every time the select is called, so it will never fire. 
-			
+			// The timer will be re-created every time the select is called, so it will never fire.
+
 			connectionRetyTimer := time.After(connectionRetryTimeout)
 
 			for {
@@ -164,7 +164,7 @@ func (w *WS) readLoop() {
 func (w *WS) writeLoop() {
 	for {
 		m := <-w.writeCh
-		if (w.conn != nil) {
+		if w.conn != nil {
 			err := w.conn.WriteMessage(websocket.TextMessage, m)
 			if err != nil {
 				_ = w.Close(fmt.Errorf("error sending message: %w", err))
@@ -180,7 +180,7 @@ func (w *WS) pingLoop() {
 	for {
 		select {
 		case <-ticker.C:
-			if (w.conn != nil) {
+			if w.conn != nil {
 				err := w.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(pingWriteWait))
 				if err != nil {
 					_ = w.Close(fmt.Errorf("ping failed: %w", err))
