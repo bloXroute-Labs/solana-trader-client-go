@@ -55,7 +55,7 @@ func NewWSClientLocal() (*WSClient, error) {
 
 // NewWSClientWithOpts connects to custom Trader API
 func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
-	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader)
+	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader, opts.DisablePingLoop)
 	if err != nil {
 		return nil, err
 	}
