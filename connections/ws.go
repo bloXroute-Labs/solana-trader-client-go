@@ -50,7 +50,7 @@ type WS struct {
 	authHeader string
 }
 
-func NewWS(endpoint string, authHeader string) (*WS, error) {
+func NewWS(endpoint string, authHeader string, disablePingLoop bool) (*WS, error) {
 	conn, err := connect(endpoint, authHeader)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,9 @@ func NewWS(endpoint string, authHeader string) (*WS, error) {
 	}
 	go ws.readLoop()
 	go ws.writeLoop()
-	go ws.pingLoop()
+	if !disablePingLoop {
+		go ws.pingLoop()
+	}
 	return ws, nil
 }
 
@@ -95,6 +97,7 @@ func (w *WS) readLoop() {
 	defer w.cancel()
 
 	for {
+	outerLoop:
 		// all message reading is done on a single goroutine, while message processing is dispatched on independent
 		// goroutines in parallel. in most cases this is fine, but if not message processors can request to hold the lock
 		// (see lockHeld attribute usage) to force sequential processing
@@ -104,12 +107,24 @@ func (w *WS) readLoop() {
 		w.messageM.Lock()
 		w.messageM.Unlock()
 
-		_, msg, err := w.conn.ReadMessage()
-		if err != nil {
+		var msg []byte
+		var err error
+		if w.conn != nil {
+			_, msg, err = w.conn.ReadMessage()
+		}
+		if err != nil || w.conn == nil {
 			// reconnect the websocket connection if connection read message fails
+
+			// IMPORTANT:
+			// Don't do this for the timeout case for this sceniaro:
+			// case <-time.After(connectionRetryTimeout):
+			// The timer will be re-created every time the select is called, so it will never fire.
+
+			connectionRetyTimer := time.After(connectionRetryTimeout)
+
 			for {
 				select {
-				case <-time.After(connectionRetryTimeout):
+				case <-connectionRetyTimer:
 					_ = w.Close(err)
 					return
 				default:
@@ -118,7 +133,7 @@ func (w *WS) readLoop() {
 						time.Sleep(connectionRetryInterval)
 					} else {
 						// websocket connection re-established
-						break
+						goto outerLoop
 					}
 				}
 			}
@@ -149,10 +164,12 @@ func (w *WS) readLoop() {
 func (w *WS) writeLoop() {
 	for {
 		m := <-w.writeCh
-		err := w.conn.WriteMessage(websocket.TextMessage, m)
-		if err != nil {
-			_ = w.Close(fmt.Errorf("error sending message: %w", err))
-			return
+		if w.conn != nil {
+			err := w.conn.WriteMessage(websocket.TextMessage, m)
+			if err != nil {
+				_ = w.Close(fmt.Errorf("error sending message: %w", err))
+				return
+			}
 		}
 	}
 }
@@ -163,10 +180,12 @@ func (w *WS) pingLoop() {
 	for {
 		select {
 		case <-ticker.C:
-			err := w.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(pingWriteWait))
-			if err != nil {
-				_ = w.Close(fmt.Errorf("ping failed: %w", err))
-				return
+			if w.conn != nil {
+				err := w.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(pingWriteWait))
+				if err != nil {
+					_ = w.Close(fmt.Errorf("ping failed: %w", err))
+					return
+				}
 			}
 		case <-w.ctx.Done():
 			return
@@ -436,5 +455,9 @@ func (w *WS) Close(reason error) error {
 	}
 
 	// close underlying connection
-	return w.conn.Close()
+	if w.conn != nil {
+		return w.conn.Close()
+	}
+
+	return nil
 }
