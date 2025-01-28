@@ -186,7 +186,7 @@ func (g *GRPCClient) GetRaydiumPrices(ctx context.Context, request *pb.GetRaydiu
 
 // SubmitRaydiumCLMMSwap builds a Raydium Swap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostRaydiumCLMMSwap(ctx, request)
+	resp, err := g.apiClient.PostRaydiumCLMMSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (g *GRPCClient) SubmitRaydiumCLMMSwap(ctx context.Context, request *pb.Post
 
 // SubmitRaydiumCLMMRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := g.PostRaydiumCLMMRouteSwap(ctx, request)
+	resp, err := g.apiClient.PostRaydiumCLMMRouteSwap(ctx, request)
 	if err != nil {
 		return nil, err
 	}
