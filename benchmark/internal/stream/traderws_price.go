@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"go.uber.org/zap"
 )
 
 type tradeWSPrice struct {
-	w    *provider.WSClient
+	w    provider.WSClientTraderAPI
 	mint string
 }
 
@@ -27,7 +28,7 @@ func NewTraderWSPrice(opts ...TraderWSPriceOpt) (Source[*pb.GetPricesStreamRespo
 	}
 
 	if s.w == nil {
-		w, err := provider.NewWSClient()
+		w, err := provider.NewWSClientFullService(config.WSUrls["ny"])
 		if err != nil {
 			return nil, err
 		}
