@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"os"
 	"strings"
 
@@ -50,6 +51,30 @@ const (
 	EnvMainnet Env = "mainnet"
 	EnvTestnet Env = "testnet"
 	EnvLocal   Env = "local"
+)
+
+type Region string
+
+const (
+	NY Region = "ny"
+	UK Region = "uk"
+)
+
+var (
+	GRPCUrls = map[Region]string{
+		NY: provider.MainnetNYGRPC,
+		UK: provider.MainnetUKGRPC,
+	}
+
+	HTTPUrls = map[Region]string{
+		NY: provider.MainnetNYHTTP,
+		UK: provider.MainnetUKHTTP,
+	}
+
+	WSUrls = map[Region]string{
+		NY: provider.MainnetNYWS,
+		UK: provider.MainnetUKWS,
+	}
 )
 
 func loadEnv() (Env, error) {

@@ -50,8 +50,18 @@ func main() {
 		panic(fmt.Errorf("prompt failed: %v", err))
 	}
 
+	regionPrompt := promptui.Select{
+		Label: "Select region",
+		Items: []string{"ny", "uk"},
+	}
+
+	_, region, err := regionPrompt.Run()
+	if err != nil {
+		panic(fmt.Errorf("prompt failed: %v", err))
+	}
+
 	for {
-		client := setupGRPCClient(config.Env(environment))
+		client := setupGRPCClient(config.Env(environment), config.GRPCUrls[config.Region(region)])
 		if err != nil {
 			log.Fatalf("failed to setup GRPC client: %v", err)
 		}
@@ -118,16 +128,17 @@ func main() {
 
 }
 
-func setupGRPCClient(env config.Env) *provider.GRPCClient {
-	var g *provider.GRPCClient
+func setupGRPCClient(env config.Env, endpoint string) provider.GRPCClientTraderAPI {
+	var g provider.GRPCClientTraderAPI
 	var err error
+
 	switch env {
 	case config.EnvLocal:
 		g, err = provider.NewGRPCLocal()
 	case config.EnvTestnet:
 		g, err = provider.NewGRPCTestnet()
 	case config.EnvMainnet:
-		g, err = provider.NewGRPCClient()
+		g, err = provider.NewGRPCClientFullService(endpoint)
 	}
 	if err != nil {
 		log.Fatalf("error dialing GRPC client: %v", err)
@@ -156,7 +167,7 @@ func listAllEndpoints() {
 	}
 }
 
-type ExampleFunc func(*provider.GRPCClient) bool
+type ExampleFunc func(provider.GRPCClientTraderAPI) bool
 
 var ExampleEndpoints = map[string]struct {
 	run                               ExampleFunc
@@ -479,7 +490,7 @@ var ExampleEndpoints = map[string]struct {
 	},
 }
 
-func callMarketsGRPC(g *provider.GRPCClient) bool {
+func callMarketsGRPC(g provider.GRPCClientTraderAPI) bool {
 	markets, err := g.GetMarketsV2(context.Background())
 	if err != nil {
 		log.Errorf("error with GetMarkets request: %v", err)
@@ -492,7 +503,7 @@ func callMarketsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callOrderbookGRPC(g *provider.GRPCClient) bool {
+func callOrderbookGRPC(g provider.GRPCClientTraderAPI) bool {
 	orderbook, err := g.GetOrderbookV2(context.Background(), "SOL-USDC", 0)
 	if err != nil {
 		log.Errorf("error with GetOrderbook request for SOL-USDC: %v", err)
@@ -525,7 +536,7 @@ func callOrderbookGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callMarketDepthGRPC(g *provider.GRPCClient) bool {
+func callMarketDepthGRPC(g provider.GRPCClientTraderAPI) bool {
 	mktDepth, err := g.GetMarketDepthV2(context.Background(), "SOL-USDC", 0)
 	if err != nil {
 		log.Errorf("error with GetMarketDepth request for SOL-USDC: %v", err)
@@ -538,7 +549,7 @@ func callMarketDepthGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
+func callOpenOrdersGRPC(g provider.GRPCClientTraderAPI) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -555,7 +566,7 @@ func callOpenOrdersGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callUnsettledGRPC(g *provider.GRPCClient) bool {
+func callUnsettledGRPC(g provider.GRPCClientTraderAPI) bool {
 	response, err := g.GetUnsettledV2(context.Background(), "SOLUSDC", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetUnsettled request for SOLUSDC: %v", err)
@@ -568,7 +579,7 @@ func callUnsettledGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
+func callGetAccountBalanceGRPC(g provider.GRPCClientTraderAPI) bool {
 	response, err := g.GetAccountBalance(context.Background(), "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
 	if err != nil {
 		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
@@ -581,12 +592,12 @@ func callGetAccountBalanceGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetTokenAccountsGRPCWrap(g *provider.GRPCClient) bool {
+func callGetTokenAccountsGRPCWrap(g provider.GRPCClientTraderAPI) bool {
 	return callGetTokenAccountsGRPC(g, Environment.OpenOrdersAddress)
 
 }
 
-func callGetTokenAccountsGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+func callGetTokenAccountsGRPC(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	response, err := g.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{
 		OwnerAddress: ownerAddr,
 	})
@@ -601,7 +612,7 @@ func callGetTokenAccountsGRPC(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callTickersGRPC(g *provider.GRPCClient) bool {
+func callTickersGRPC(g provider.GRPCClientTraderAPI) bool {
 	orders, err := g.GetTickersV2(context.Background(), "SOLUSDC")
 	if err != nil {
 		log.Errorf("error with GetTickers request for SOLUSDC: %v", err)
@@ -614,7 +625,7 @@ func callTickersGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callPoolsGRPC(g *provider.GRPCClient) bool {
+func callPoolsGRPC(g provider.GRPCClientTraderAPI) bool {
 	pools, err := g.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
 	if err != nil {
 		log.Errorf("error with GetPools request for Raydium: %v", err)
@@ -628,7 +639,7 @@ func callPoolsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetRateLimitGRPC(g *provider.GRPCClient) bool {
+func callGetRateLimitGRPC(g provider.GRPCClientTraderAPI) bool {
 	tx, err := g.GetRateLimit(context.Background(), &pb.GetRateLimitRequest{})
 	if err != nil {
 		log.Errorf("error with GetRateLimit request: %v", err)
@@ -640,7 +651,7 @@ func callGetRateLimitGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetTransactionGRPC(g *provider.GRPCClient) bool {
+func callGetTransactionGRPC(g provider.GRPCClientTraderAPI) bool {
 	tx, err := g.GetTransaction(context.Background(), &pb.GetTransactionRequest{
 		Signature: "2s48MnhH54GfJbRwwiEK7iWKoEh3uNbS2zDEVBPNu7DaCjPXe3bfqo6RuCg9NgHRFDn3L28sMVfEh65xevf4o5W3",
 	})
@@ -655,7 +666,7 @@ func callGetTransactionGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callRaydiumPoolReserveGRPC(g *provider.GRPCClient) bool {
+func callRaydiumPoolReserveGRPC(g provider.GRPCClientTraderAPI) bool {
 	pools, err := g.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
 		PairsOrAddresses: []string{
 			"HZ1znC9XBasm9AMDhGocd9EHSyH8Pyj1EUdiPb4WnZjo",
@@ -677,7 +688,7 @@ func callRaydiumPoolReserveGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
+func callRaydiumPoolsGRPC(g provider.GRPCClientTraderAPI) bool {
 	pools, err := g.GetRaydiumPools(context.Background(), &pb.GetRaydiumPoolsRequest{})
 	if err != nil {
 		log.Errorf("error with GetRaydiumPools request for Raydium: %v", err)
@@ -691,7 +702,7 @@ func callRaydiumPoolsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callRaydiumCLMMPoolsGRPC(g *provider.GRPCClient) bool {
+func callRaydiumCLMMPoolsGRPC(g provider.GRPCClientTraderAPI) bool {
 	pools, err := g.GetRaydiumCLMMPools(context.Background(), &pb.GetRaydiumCLMMPoolsRequest{})
 	if err != nil {
 		log.Errorf("error with callRaydiumCLMMPoolsGRPC request for Raydium: %v", err)
@@ -704,7 +715,7 @@ func callRaydiumCLMMPoolsGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callPriceGRPC(g *provider.GRPCClient) bool {
+func callPriceGRPC(g provider.GRPCClientTraderAPI) bool {
 	prices, err := g.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
 	if err != nil {
 		log.Errorf("error with GetPrice request for SOL and BONK: %v", err)
@@ -717,7 +728,7 @@ func callPriceGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
+func callRaydiumPricesGRPC(g provider.GRPCClientTraderAPI) bool {
 	prices, err := g.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
 		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
 	})
@@ -732,7 +743,7 @@ func callRaydiumPricesGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
+func callJupiterPricesGRPC(g provider.GRPCClientTraderAPI) bool {
 	prices, err := g.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
 		Tokens: []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"},
 	})
@@ -747,7 +758,7 @@ func callJupiterPricesGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetQuotes(g *provider.GRPCClient) bool {
+func callGetQuotes(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get quotes test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -782,7 +793,7 @@ func callGetQuotes(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
+func callGetRaydiumQuotes(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get Raydium quotes test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -821,7 +832,7 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetPumpFunQuotes(g *provider.GRPCClient) bool {
+func callGetPumpFunQuotes(g provider.GRPCClientTraderAPI) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -843,7 +854,7 @@ func callGetPumpFunQuotes(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetRaydiumCLMMQuotes(g *provider.GRPCClient) bool {
+func callGetRaydiumCLMMQuotes(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get Raydium CLMMQ quotes test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -882,7 +893,7 @@ func callGetRaydiumCLMMQuotes(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetRaydiumCPMMQuotes(g *provider.GRPCClient) bool {
+func callGetRaydiumCPMMQuotes(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get Raydium quotes test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -921,7 +932,7 @@ func callGetRaydiumCPMMQuotes(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetJupiterQuotes(g *provider.GRPCClient) bool {
+func callGetJupiterQuotes(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get Jupiter quotes test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -961,7 +972,7 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
+func callOrderbookGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1010,7 +1021,7 @@ func callOrderbookGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callMarketDepthGRPCStream(g *provider.GRPCClient) bool {
+func callMarketDepthGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting market depth stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1059,7 +1070,7 @@ func callMarketDepthGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callTradesGRPCStream(g *provider.GRPCClient) bool {
+func callTradesGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting trades stream")
 
 	tradesChan := make(chan *pb.GetTradesStreamResponse)
@@ -1084,7 +1095,7 @@ func callTradesGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
+func callRecentBlockHashGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting recent block hash stream")
 
 	ch := make(chan *pb.GetRecentBlockHashResponse)
@@ -1109,7 +1120,7 @@ func callRecentBlockHashGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callRecentBlockHash(g *provider.GRPCClient) bool {
+func callRecentBlockHash(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting recent block hash")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1126,7 +1137,7 @@ func callRecentBlockHash(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetRecentBlockHashV2GRPCWrap(g *provider.GRPCClient) bool {
+func callGetRecentBlockHashV2GRPCWrap(g provider.GRPCClientTraderAPI) bool {
 	var failed bool
 	for i := 0; i < 2; i++ {
 		failed = callRecentBlockHashV2GRPC(g, uint64(i))
@@ -1135,7 +1146,7 @@ func callGetRecentBlockHashV2GRPCWrap(g *provider.GRPCClient) bool {
 	return failed
 }
 
-func callRecentBlockHashV2GRPC(g *provider.GRPCClient, offset uint64) bool {
+func callRecentBlockHashV2GRPC(g provider.GRPCClientTraderAPI, offset uint64) bool {
 	log.Info("starting recent block hash V2")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1152,7 +1163,7 @@ func callRecentBlockHashV2GRPC(g *provider.GRPCClient, offset uint64) bool {
 	return false
 }
 
-func callPoolReservesGRPCStream(g *provider.GRPCClient) bool {
+func callPoolReservesGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get pool reserves stream")
 
 	ch := make(chan *pb.GetPoolReservesStreamResponse)
@@ -1198,11 +1209,11 @@ const (
 	orderAmount = float64(0.001)
 )
 
-func orderLifecycleTestWrap(g *provider.GRPCClient) bool {
+func orderLifecycleTestWrap(g provider.GRPCClientTraderAPI) bool {
 	return orderLifecycleTest(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress)
 }
 
-func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string) bool {
+func orderLifecycleTest(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting order lifecycle test")
 	fmt.Println()
 
@@ -1266,7 +1277,7 @@ func orderLifecycleTest(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	return callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 
-func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
+func callPlaceOrderGRPC(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	log.Info("starting place order")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1302,12 +1313,12 @@ func callPlaceOrderGRPC(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr str
 	return clientOrderID, false
 }
 
-func callPlaceOrderBundleWrap(g *provider.GRPCClient) bool {
+func callPlaceOrderBundleWrap(g provider.GRPCClientTraderAPI) bool {
 	return callPlaceOrderBundle(g, Environment.PublicKey, Environment.Payer, sideAsk,
 		computeLimit, computePrice, typeLimit, 100000)
 }
 
-func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr,
+func callPlaceOrderBundle(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr,
 	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
 	log.Info("starting place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1343,12 +1354,12 @@ func callPlaceOrderBundle(g *provider.GRPCClient, ownerAddr, payerAddr,
 	return false
 }
 
-func callPlaceOrderWithStakedRPCsWrap(g *provider.GRPCClient) bool {
+func callPlaceOrderWithStakedRPCsWrap(g provider.GRPCClientTraderAPI) bool {
 	return callPlaceOrderWithStakedRPCs(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk,
 		10000, 10000, typeLimit, uint64(1100000))
 }
 
-func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
+func callPlaceOrderWithStakedRPCs(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, _ string,
 	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
 	log.Info("starting place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1384,12 +1395,12 @@ func callPlaceOrderWithStakedRPCs(g *provider.GRPCClient, ownerAddr, payerAddr, 
 	return false
 }
 
-func callPlaceOrderBundleWithBatchWrap(g *provider.GRPCClient) bool {
+func callPlaceOrderBundleWithBatchWrap(g provider.GRPCClientTraderAPI) bool {
 	return callPlaceOrderBundleWithBatch(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk,
 		computeLimit, computePrice, typeLimit, uint64(1000000))
 }
 
-func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr, _ string,
+func callPlaceOrderBundleWithBatch(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, _ string,
 	orderSide string, computeLimit uint32, computePrice uint64, orderType string, tipAmount uint64) bool {
 	log.Info("starting to place order with bundle")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1445,12 +1456,12 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 	return false
 }
 
-func callPlaceOrderGRPCWithPriorityFeeWrap(g *provider.GRPCClient) bool {
+func callPlaceOrderGRPCWithPriorityFeeWrap(g provider.GRPCClientTraderAPI) bool {
 	return callPlaceOrderGRPCWithPriorityFee(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress,
 		sideAsk, computeLimit, computePrice, typeLimit)
 }
 
-func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string,
+func callPlaceOrderGRPCWithPriorityFee(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string,
 	computeLimit uint32, computePrice uint64, orderType string) bool {
 	log.Info("starting place order")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1475,7 +1486,7 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 	return false
 }
 
-func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string, clientID uint64) bool {
+func callCancelByClientOrderIDGRPC(g provider.GRPCClientTraderAPI, ownerAddr, ooAddr string, clientID uint64) bool {
 	log.Info("starting cancel order by client order ID")
 	time.Sleep(30 * time.Second)
 
@@ -1496,7 +1507,7 @@ func callCancelByClientOrderIDGRPC(g *provider.GRPCClient, ownerAddr, ooAddr str
 	return false
 }
 
-func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) bool {
+func callPostSettleGRPC(g provider.GRPCClientTraderAPI, ownerAddr, ooAddr string) bool {
 	log.Info("starting post settle")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1512,11 +1523,11 @@ func callPostSettleGRPC(g *provider.GRPCClient, ownerAddr, ooAddr string) bool {
 	return false
 }
 
-func cancelAllWrap(g *provider.GRPCClient) bool {
+func cancelAllWrap(g provider.GRPCClientTraderAPI) bool {
 	return cancelAll(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func cancelAll(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
@@ -1606,11 +1617,11 @@ func cancelAll(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orde
 	return callPostSettleGRPC(g, ownerAddr, ooAddr)
 }
 
-func callReplaceByClientOrderIDWrap(g *provider.GRPCClient) bool {
+func callReplaceByClientOrderIDWrap(g provider.GRPCClientTraderAPI) bool {
 	return callReplaceByClientOrderID(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func callReplaceByClientOrderID(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
@@ -1701,11 +1712,11 @@ func callReplaceByClientOrderID(g *provider.GRPCClient, ownerAddr, payerAddr, oo
 	return false
 }
 
-func callReplaceOrderWrap(g *provider.GRPCClient) bool {
+func callReplaceOrderWrap(g provider.GRPCClientTraderAPI) bool {
 	return callReplaceOrder(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func callReplaceOrder(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
@@ -1798,7 +1809,7 @@ func callReplaceOrder(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr strin
 	return false
 }
 
-func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
+func callTradeSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1818,11 +1829,11 @@ func callTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumSwapWrap(g *provider.GRPCClient) bool {
+func callRaydiumSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRaydiumSwap(g, Environment.PublicKey)
 }
 
-func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
+func callRaydiumSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1847,7 +1858,7 @@ func callRaydiumSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callPostPumpFunSwapWrap(g *provider.GRPCClient) bool {
+func callPostPumpFunSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callPostPumpFunSwap(Environment.PublicKey)
 }
 
@@ -1881,11 +1892,11 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumCLMMSwapGRPCWrap(g *provider.GRPCClient) bool {
+func callRaydiumCLMMSwapGRPCWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRaydiumCLMMSwapGRPC(g, Environment.PublicKey)
 }
 
-func callRaydiumCLMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+func callRaydiumCLMMSwapGRPC(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium CLMM swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1914,11 +1925,11 @@ func callRaydiumCLMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumCPMMSwapGRPCWrap(g *provider.GRPCClient) bool {
+func callRaydiumCPMMSwapGRPCWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRaydiumCPMMSwapGRPC(g, Environment.PublicKey)
 }
 
-func callRaydiumCPMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+func callRaydiumCPMMSwapGRPC(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1947,11 +1958,11 @@ func callRaydiumCPMMSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwapWrap(g *provider.GRPCClient) bool {
+func callJupiterSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callJupiterSwap(g, Environment.PublicKey)
 }
 
-func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
+func callJupiterSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Jupiter swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1976,11 +1987,11 @@ func callJupiterSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwapInstructionsWrap(g *provider.GRPCClient) bool {
+func callJupiterSwapInstructionsWrap(g provider.GRPCClientTraderAPI) bool {
 	return callJupiterSwapInstructions(g, Environment.PublicKey, uint64(1100), false)
 }
 
-func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
+func callJupiterSwapInstructions(g provider.GRPCClientTraderAPI, ownerAddr string, tipAmount uint64, useBundle bool) bool {
 	log.Info("starting Jupiter swap instructions test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2007,11 +2018,11 @@ func callJupiterSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAm
 	return false
 }
 
-func callRaydiumSwapInstructionsWrap(g *provider.GRPCClient) bool {
+func callRaydiumSwapInstructionsWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRaydiumSwapInstructions(g, Environment.PublicKey, uint64(1100), true)
 }
 
-func callRaydiumSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAmount uint64, useBundle bool) bool {
+func callRaydiumSwapInstructions(g provider.GRPCClientTraderAPI, ownerAddr string, tipAmount uint64, useBundle bool) bool {
 	log.Info("starting Raydium swap instructions test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2038,14 +2049,14 @@ func callRaydiumSwapInstructions(g *provider.GRPCClient, ownerAddr string, tipAm
 	return false
 }
 
-func callTradeSwapWrap(g *provider.GRPCClient) bool {
+func callTradeSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callTradeSwap(g, Environment.PublicKey)
 }
-func callRouteTradeSwapWrap(g *provider.GRPCClient) bool {
+func callRouteTradeSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRouteTradeSwap(g, Environment.PublicKey)
 }
 
-func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
+func callRouteTradeSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2081,11 +2092,11 @@ func callRouteTradeSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumRouteSwapWrap(g *provider.GRPCClient) bool {
+func callRaydiumRouteSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRaydiumRouteSwap(g, Environment.PublicKey)
 }
 
-func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
+func callRaydiumRouteSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium route swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2120,11 +2131,11 @@ func callRaydiumRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumCLMMRouteSwapGRPCWrap(g *provider.GRPCClient) bool {
+func callRaydiumCLMMRouteSwapGRPCWrap(g provider.GRPCClientTraderAPI) bool {
 	return callRaydiumCLMMRouteSwapGRPC(g, Environment.PublicKey)
 }
 
-func callRaydiumCLMMRouteSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool {
+func callRaydiumCLMMRouteSwapGRPC(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium route CLMM swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2155,11 +2166,11 @@ func callRaydiumCLMMRouteSwapGRPC(g *provider.GRPCClient, ownerAddr string) bool
 	return false
 }
 
-func callJupiterRouteSwapWrap(g *provider.GRPCClient) bool {
+func callJupiterRouteSwapWrap(g provider.GRPCClientTraderAPI) bool {
 	return callJupiterRouteSwap(g, Environment.PublicKey)
 }
 
-func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
+func callJupiterRouteSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Jupiter route swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2199,7 +2210,7 @@ func callJupiterRouteSwap(g *provider.GRPCClient, ownerAddr string) bool {
 	return false
 }
 
-func callGetpumpFunNewTokenGRPCStreamWrap(g *provider.GRPCClient) bool {
+func callGetpumpFunNewTokenGRPCStreamWrap(g provider.GRPCClientTraderAPI) bool {
 	gg, err := provider.NewGRPCClientPumpNY()
 	if err != nil {
 		log.Fatal(err)
@@ -2210,7 +2221,7 @@ func callGetpumpFunNewTokenGRPCStreamWrap(g *provider.GRPCClient) bool {
 	return res
 }
 
-func callGetPumpFunNewTokensGRPCStream(g *provider.GRPCClient) (string, bool) {
+func callGetPumpFunNewTokensGRPCStream(g provider.GRPCClientTraderAPI) (string, bool) {
 	log.Info("starting GetPumpFunNewTokens stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2235,7 +2246,7 @@ func callGetPumpFunNewTokensGRPCStream(g *provider.GRPCClient) (string, bool) {
 	return mint, false
 }
 
-func callGetPumpFunSwapsGRPCStream(g *provider.GRPCClient, mint string) bool {
+func callGetPumpFunSwapsGRPCStream(g provider.GRPCClientTraderAPI, mint string) bool {
 	log.Info("starting GetPumpFunSwaps stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2261,7 +2272,7 @@ func callGetPumpFunSwapsGRPCStream(g *provider.GRPCClient, mint string) bool {
 	return false
 }
 
-func callGetTickersGRPCStream(g *provider.GRPCClient) bool {
+func callGetTickersGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get ticker stream")
 
 	ch := make(chan *pb.GetTickersStreamResponse)
@@ -2292,7 +2303,7 @@ func callGetTickersGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callPricesGRPCStream(g *provider.GRPCClient) bool {
+func callPricesGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get prices stream")
 
 	ch := make(chan *pb.GetPricesStreamResponse)
@@ -2318,7 +2329,7 @@ func callPricesGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callSwapsGRPCStream(g *provider.GRPCClient) bool {
+func callSwapsGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get swaps stream")
 
 	ch := make(chan *pb.GetSwapsStreamResponse)
@@ -2344,7 +2355,7 @@ func callSwapsGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
+func callGetNewRaydiumPoolsStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream without cpmm")
 
 	ch := make(chan *pb.GetNewRaydiumPoolsResponse)
@@ -2370,7 +2381,7 @@ func callGetNewRaydiumPoolsStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetNewRaydiumPoolsByTransactionStream(g *provider.GRPCClient) bool {
+func callGetNewRaydiumPoolsByTransactionStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream without cpmm")
 
 	ch := make(chan *pb.GetNewRaydiumPoolsByTransactionResponse)
@@ -2398,7 +2409,7 @@ func callGetNewRaydiumPoolsByTransactionStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetNewRaydiumPoolsStreamWithCPMM(g *provider.GRPCClient) bool {
+func callGetNewRaydiumPoolsStreamWithCPMM(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream with cpmm")
 
 	ch := make(chan *pb.GetNewRaydiumPoolsResponse)
@@ -2424,7 +2435,7 @@ func callGetNewRaydiumPoolsStreamWithCPMM(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callBlockGRPCStream(g *provider.GRPCClient) bool {
+func callBlockGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get block stream")
 
 	ch := make(chan *pb.GetBlockStreamResponse)
@@ -2450,7 +2461,7 @@ func callBlockGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetPriorityFeeGRPCStream(g *provider.GRPCClient) bool {
+func callGetPriorityFeeGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting priority fee stream")
 
 	ch := make(chan *pb.GetPriorityFeeResponse)
@@ -2475,7 +2486,7 @@ func callGetPriorityFeeGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetPriorityFeeByProgramGRPCStream(g *provider.GRPCClient) bool {
+func callGetPriorityFeeByProgramGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	programs := []string{
 		"JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
 		"CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK",
@@ -2506,7 +2517,7 @@ func callGetPriorityFeeByProgramGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetPriorityFeeGRPC(g *provider.GRPCClient) bool {
+func callGetPriorityFeeGRPC(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting priority fee test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2522,7 +2533,7 @@ func callGetPriorityFeeGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetPriorityFeeByProgramGRPC(g *provider.GRPCClient) bool {
+func callGetPriorityFeeByProgramGRPC(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting priority fee by program test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2540,7 +2551,7 @@ func callGetPriorityFeeByProgramGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetLeaderScheduleGRPC(g *provider.GRPCClient) bool {
+func callGetLeaderScheduleGRPC(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get leader schedule test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2557,7 +2568,7 @@ func callGetLeaderScheduleGRPC(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callGetBundleTipGRPCStream(g *provider.GRPCClient) bool {
+func callGetBundleTipGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	log.Info("starting get bundle tip stream")
 
 	ch := make(chan *pb.GetBundleTipResponse)
@@ -2582,11 +2593,11 @@ func callGetBundleTipGRPCStream(g *provider.GRPCClient) bool {
 	return false
 }
 
-func callTestSubmitSnipeWrap(g *provider.GRPCClient) bool {
+func callTestSubmitSnipeWrap(g provider.GRPCClientTraderAPI) bool {
 	return callTestSubmitSnipe(g, Environment.PublicKey)
 }
 
-func callTestSubmitSnipe(g *provider.GRPCClient, ownerAddr string) bool {
+func callTestSubmitSnipe(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	ownerKey, err := solana.PublicKeyFromBase58(ownerAddr)
 	if err != nil {
 		log.Errorf("Please set Public key environment variable: %v", err)

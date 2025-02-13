@@ -47,8 +47,18 @@ func main() {
 		panic(fmt.Errorf("prompt failed: %v", err))
 	}
 
+	regionPrompt := promptui.Select{
+		Label: "Select region",
+		Items: []string{"ny", "uk"},
+	}
+
+	_, region, err := regionPrompt.Run()
+	if err != nil {
+		panic(fmt.Errorf("prompt failed: %v", err))
+	}
+
 	for {
-		client := setupWSClient(config.Env(environment))
+		client := setupWSClient(config.Env(environment), config.WSUrls[config.Region(region)])
 		if err != nil {
 			log.Fatalf("failed to setup GRPC client: %v", err)
 		}
@@ -114,19 +124,20 @@ func main() {
 
 }
 
-func setupWSClient(env config.Env) *provider.WSClient {
-	var w *provider.WSClient
+func setupWSClient(env config.Env, endpoint string) provider.WSClientTraderAPI {
+	var w provider.WSClientTraderAPI
 	var err error
+
 	switch env {
 	case config.EnvLocal:
 		w, err = provider.NewWSClientLocal()
 	case config.EnvTestnet:
 		w, err = provider.NewWSClientTestnet()
 	case config.EnvMainnet:
-		w, err = provider.NewWSClient()
+		w, err = provider.NewWSClientFullService(endpoint)
 	}
 	if err != nil {
-		log.Fatalf("error connecting to ws client: %v", err)
+		log.Fatalf("error dialing HTTP client: %v", err)
 	}
 
 	return w
@@ -152,7 +163,7 @@ func listAllEndpoints() {
 	}
 }
 
-type ExampleFunc func(w *provider.WSClient) bool
+type ExampleFunc func(api provider.WSClientTraderAPI) bool
 
 var ExampleEndpoints = map[string]struct {
 	run                               ExampleFunc
@@ -487,7 +498,7 @@ var ExampleEndpoints = map[string]struct {
 	"runAllExamples": {},
 }
 
-func callMarketsWS(w *provider.WSClient) bool {
+func callMarketsWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching markets...")
 
 	markets, err := w.GetMarketsV2(context.Background())
@@ -502,7 +513,7 @@ func callMarketsWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callOrderbookWS(w *provider.WSClient) bool {
+func callOrderbookWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching orderbooks...")
 
 	orderbook, err := w.GetOrderbookV2(context.Background(), "SOL-USDT", 0)
@@ -537,7 +548,7 @@ func callOrderbookWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callMarketDepthWS(w *provider.WSClient) bool {
+func callMarketDepthWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching market depth data...")
 
 	mktDepth, err := w.GetMarketDepthV2(context.Background(), "SOL:USDT", 3)
@@ -552,7 +563,7 @@ func callMarketDepthWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callTradesWS(w *provider.WSClient) bool {
+func callTradesWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching trades...")
 
 	trades, err := w.GetTrades(context.Background(), "SOLUSDC", 3, pb.Project_P_OPENBOOK)
@@ -567,7 +578,7 @@ func callTradesWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callPoolsWS(w *provider.WSClient) bool {
+func callPoolsWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching pools...")
 
 	pools, err := w.GetPools(context.Background(), []pb.Project{pb.Project_P_RAYDIUM})
@@ -583,7 +594,7 @@ func callPoolsWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetRateLimitWS(w *provider.WSClient) bool {
+func callGetRateLimitWS(w provider.WSClientTraderAPI) bool {
 	log.Info("calling callGetRateLimit...")
 
 	tx, err := w.GetRateLimit(context.Background(), &pb.GetRateLimitRequest{})
@@ -598,7 +609,7 @@ func callGetRateLimitWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetTransactionWS(w *provider.WSClient) bool {
+func callGetTransactionWS(w provider.WSClientTraderAPI) bool {
 	log.Info("calling GetTransaction...")
 
 	tx, err := w.GetTransaction(context.Background(), &pb.GetTransactionRequest{
@@ -615,7 +626,7 @@ func callGetTransactionWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callRaydiumPoolReserveWS(w *provider.WSClient) bool {
+func callRaydiumPoolReserveWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching raydium pool reserve...")
 
 	pools, err := w.GetRaydiumPoolReserve(context.Background(), &pb.GetRaydiumPoolReserveRequest{
@@ -638,7 +649,7 @@ func callRaydiumPoolReserveWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callRaydiumPoolsWS(w *provider.WSClient) bool {
+func callRaydiumPoolsWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium pools...")
 
 	pools, err := w.GetRaydiumPools(context.Background(), &pb.GetRaydiumPoolsRequest{})
@@ -654,7 +665,7 @@ func callRaydiumPoolsWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callRaydiumCLMMPoolsWS(w *provider.WSClient) bool {
+func callRaydiumCLMMPoolsWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium CLMM pools...")
 
 	pools, err := w.GetRaydiumCLMMPools(context.Background(), &pb.GetRaydiumCLMMPoolsRequest{})
@@ -669,7 +680,7 @@ func callRaydiumCLMMPoolsWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callPriceWS(w *provider.WSClient) bool {
+func callPriceWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching prices...")
 
 	pools, err := w.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
@@ -683,7 +694,7 @@ func callPriceWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callRaydiumPricesWS(w *provider.WSClient) bool {
+func callRaydiumPricesWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium prices...")
 
 	pools, err := w.GetRaydiumPrices(context.Background(), &pb.GetRaydiumPricesRequest{
@@ -699,7 +710,7 @@ func callRaydiumPricesWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callJupiterPricesWS(w *provider.WSClient) bool {
+func callJupiterPricesWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Jupiter prices...")
 
 	pools, err := w.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
@@ -715,7 +726,7 @@ func callJupiterPricesWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callOpenOrdersWS(w *provider.WSClient) bool {
+func callOpenOrdersWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching open orders...")
 
 	orders, err := w.GetOpenOrdersV2(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", "", 0)
@@ -730,7 +741,7 @@ func callOpenOrdersWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callUnsettledWS(w *provider.WSClient) bool {
+func callUnsettledWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching unsettled...")
 
 	response, err := w.GetUnsettledV2(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
@@ -745,7 +756,7 @@ func callUnsettledWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callAccountBalanceWS(w *provider.WSClient) bool {
+func callAccountBalanceWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching balances...")
 
 	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
@@ -760,11 +771,11 @@ func callAccountBalanceWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetTokenAccountsWSWrap(w *provider.WSClient) bool {
+func callGetTokenAccountsWSWrap(w provider.WSClientTraderAPI) bool {
 	return callGetTokenAccountsWS(w, Environment.PublicKey)
 }
 
-func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
+func callGetTokenAccountsWS(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("fetching token accounts...")
 
 	response, err := w.GetTokenAccounts(context.Background(), &pb.GetTokenAccountsRequest{OwnerAddress: ownerAddr})
@@ -779,7 +790,7 @@ func callGetTokenAccountsWS(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callTickersWS(w *provider.WSClient) bool {
+func callTickersWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching tickers...")
 
 	tickers, err := w.GetTickersV2(context.Background(), "SOLUSDC")
@@ -794,7 +805,7 @@ func callTickersWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetQuotesWS(w *provider.WSClient) bool {
+func callGetQuotesWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching quotes...")
 
 	inToken := "So11111111111111111111111111111111111111112"
@@ -826,7 +837,7 @@ func callGetQuotesWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetRaydiumQuotes(w *provider.WSClient) bool {
+func callGetRaydiumQuotes(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium quotes...")
 
 	inToken := "So11111111111111111111111111111111111111112"
@@ -857,7 +868,7 @@ func callGetRaydiumQuotes(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetPumpFunQuotes(w *provider.WSClient) bool {
+func callGetPumpFunQuotes(w provider.WSClientTraderAPI) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -879,7 +890,7 @@ func callGetPumpFunQuotes(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetRaydiumCLMMQuotes(w *provider.WSClient) bool {
+func callGetRaydiumCLMMQuotes(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium CLMM quotes...")
 
 	inToken := "SOL"
@@ -910,7 +921,7 @@ func callGetRaydiumCLMMQuotes(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetJupiterQuotes(w *provider.WSClient) bool {
+func callGetJupiterQuotes(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Jupiter quotes...")
 
 	inToken := "So11111111111111111111111111111111111111112"
@@ -943,7 +954,7 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetRaydiumCPMMQuotes(w *provider.WSClient) bool {
+func callGetRaydiumCPMMQuotes(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium quotes...")
 
 	inToken := "So11111111111111111111111111111111111111112"
@@ -975,7 +986,7 @@ func callGetRaydiumCPMMQuotes(w *provider.WSClient) bool {
 }
 
 // Stream response
-func callOrderbookWSStream(w *provider.WSClient) bool {
+func callOrderbookWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting orderbook stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -999,7 +1010,7 @@ func callOrderbookWSStream(w *provider.WSClient) bool {
 }
 
 // Stream response
-func callMarketDepthWSStream(w *provider.WSClient) bool {
+func callMarketDepthWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting market depth stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1022,7 +1033,7 @@ func callMarketDepthWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callTradesWSStream(w *provider.WSClient) bool {
+func callTradesWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting trades stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1046,7 +1057,7 @@ func callTradesWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetNewRaydiumPoolsStream(w *provider.WSClient) bool {
+func callGetNewRaydiumPoolsStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream without cpmm")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1071,7 +1082,7 @@ func callGetNewRaydiumPoolsStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetNewRaydiumPoolsByTransactionStream(w *provider.WSClient) bool {
+func callGetNewRaydiumPoolsByTransactionStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream without cpmm")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1096,7 +1107,7 @@ func callGetNewRaydiumPoolsByTransactionStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetNewRaydiumPoolsStreamWithCPMM(w *provider.WSClient) bool {
+func callGetNewRaydiumPoolsStreamWithCPMM(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream with cpmm")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1122,7 +1133,7 @@ func callGetNewRaydiumPoolsStreamWithCPMM(w *provider.WSClient) bool {
 }
 
 // Stream response
-func callRecentBlockHashWSStream(w *provider.WSClient) bool {
+func callRecentBlockHashWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting recent block hash stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1145,7 +1156,7 @@ func callRecentBlockHashWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callPoolReservesWSStream(w *provider.WSClient) bool {
+func callPoolReservesWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting pool reserves stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1187,11 +1198,11 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func orderLifecycleTestWrap(w *provider.WSClient) bool {
+func orderLifecycleTestWrap(w provider.WSClientTraderAPI) bool {
 	return orderLifecycleTest(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress)
 }
 
-func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string) bool {
+func orderLifecycleTest(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string) bool {
 	log.Info("starting order lifecycle test")
 	fmt.Println()
 
@@ -1256,13 +1267,13 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	return false
 }
 
-func callPlaceOrderWSWrap(w *provider.WSClient) bool {
+func callPlaceOrderWSWrap(w provider.WSClientTraderAPI) bool {
 	_, ok := callPlaceOrderWS(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 
 	return ok
 }
 
-func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
+func callPlaceOrderWS(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	log.Info("trying to place an order")
 
 	// generate a random clientOrderId for this order
@@ -1287,11 +1298,11 @@ func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	return clientOrderID, false
 }
 
-func callPlaceOrderBundleWrap(w *provider.WSClient) bool {
+func callPlaceOrderBundleWrap(w provider.WSClientTraderAPI) bool {
 	return callPlaceOrderBundle(w, Environment.PublicKey, 1100000)
 }
 
-func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
+func callPlaceOrderBundle(w provider.WSClientTraderAPI, ownerAddr string, tipAmount uint64) bool {
 	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
@@ -1323,11 +1334,11 @@ func callPlaceOrderBundle(w *provider.WSClient, ownerAddr string, tipAmount uint
 	return false
 }
 
-func callPlaceOrderWithStakedRPCsWrap(w *provider.WSClient) bool {
+func callPlaceOrderWithStakedRPCsWrap(w provider.WSClientTraderAPI) bool {
 	return callPlaceOrderWithStakedRPCs(w, Environment.PublicKey, 1100000)
 }
 
-func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
+func callPlaceOrderWithStakedRPCs(w provider.WSClientTraderAPI, ownerAddr string, tipAmount uint64) bool {
 	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
@@ -1359,11 +1370,11 @@ func callPlaceOrderWithStakedRPCs(w *provider.WSClient, ownerAddr string, tipAmo
 	return false
 }
 
-func callPlaceOrderBundleWithBatchWrap(w *provider.WSClient) bool {
+func callPlaceOrderBundleWithBatchWrap(w provider.WSClientTraderAPI) bool {
 	return callPlaceOrderBundleWithBatch(w, Environment.PublicKey, 1100000)
 }
 
-func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAmount uint64) bool {
+func callPlaceOrderBundleWithBatch(w provider.WSClientTraderAPI, ownerAddr string, tipAmount uint64) bool {
 	log.Info("trying to place an order with bundling")
 
 	// generate a random clientOrderId for this order
@@ -1398,7 +1409,7 @@ func callPlaceOrderBundleWithBatch(w *provider.WSClient, ownerAddr string, tipAm
 	return false
 }
 
-func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string, clientOrderID uint64, orderSide string) bool {
+func callCancelByClientOrderIDWS(w provider.WSClientTraderAPI, ownerAddr, ooAddr string, clientOrderID uint64, orderSide string) bool {
 	log.Info("trying to cancel order")
 
 	_, err := w.SubmitCancelOrderV2(context.Background(), &pb.PostCancelOrderRequestV2{
@@ -1418,11 +1429,11 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 	return false
 }
 
-func callPostSettleWSWrap(w *provider.WSClient) bool {
+func callPostSettleWSWrap(w provider.WSClientTraderAPI) bool {
 	return callPostSettleWS(w, Environment.PublicKey, Environment.OpenOrdersAddress)
 }
 
-func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
+func callPostSettleWS(w provider.WSClientTraderAPI, ownerAddr, ooAddr string) bool {
 	log.Info("starting post settle")
 
 	sig, err := w.SubmitSettleV2(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7",
@@ -1436,11 +1447,11 @@ func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	return false
 }
 
-func cancelAllWrap(w *provider.WSClient) bool {
+func cancelAllWrap(w provider.WSClientTraderAPI) bool {
 	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func cancelAll(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting cancel all test")
 	fmt.Println()
 
@@ -1535,11 +1546,11 @@ func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderS
 	return false
 }
 
-func callReplaceByClientOrderIDWrap(w *provider.WSClient) bool {
+func callReplaceByClientOrderIDWrap(w provider.WSClientTraderAPI) bool {
 	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func callReplaceByClientOrderID(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace by client order ID test")
 	fmt.Println()
 
@@ -1634,11 +1645,11 @@ func callReplaceByClientOrderID(w *provider.WSClient, ownerAddr, payerAddr, ooAd
 	return false
 }
 
-func callReplaceOrderWrap(w *provider.WSClient) bool {
+func callReplaceOrderWrap(w provider.WSClientTraderAPI) bool {
 	return callReplaceOrder(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+func callReplaceOrder(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
 	log.Info("starting replace order test")
 	fmt.Println()
 
@@ -1734,11 +1745,11 @@ func callReplaceOrder(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string,
 	return false
 }
 
-func callTradeSwapWrap(w *provider.WSClient) bool {
+func callTradeSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callTradeSwap(w, Environment.PublicKey)
 }
 
-func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
+func callTradeSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting trade swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1758,11 +1769,11 @@ func callTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callTradeSwapWithPriorityFeeWrap(w *provider.WSClient) bool {
+func callTradeSwapWithPriorityFeeWrap(w provider.WSClientTraderAPI) bool {
 	return callTradeSwapWithPriorityFee(w, Environment.PublicKey, computeLimit, computePrice)
 }
 
-func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
+func callTradeSwapWithPriorityFee(w provider.WSClientTraderAPI, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
 	log.Info("starting trade swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1783,11 +1794,11 @@ func callTradeSwapWithPriorityFee(w *provider.WSClient, ownerAddr string, comput
 	return false
 }
 
-func callRaydiumSwapWrap(w *provider.WSClient) bool {
+func callRaydiumSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumSwap(w, Environment.PublicKey)
 }
 
-func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
+func callRaydiumSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1812,11 +1823,11 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callPostPumpFunSwapWrap(w *provider.WSClient) bool {
+func callPostPumpFunSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callPostPumpFunSwap(w, Environment.PublicKey)
 }
 
-func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
+func callPostPumpFunSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting PostPumpFunSwap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1846,15 +1857,15 @@ func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callRouteTradeSwapWrap(w *provider.WSClient) bool {
+func callRouteTradeSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callRouteTradeSwap(w, Environment.PublicKey)
 }
 
-func callRaydiumCLMMSwapWSWrap(w *provider.WSClient) bool {
+func callRaydiumCLMMSwapWSWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumCLMMSwapWS(w, Environment.PublicKey)
 }
 
-func callRaydiumCLMMSwapWS(w *provider.WSClient, ownerAddr string) bool {
+func callRaydiumCLMMSwapWS(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium CLMM swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1878,11 +1889,11 @@ func callRaydiumCLMMSwapWS(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumCPMMSwapWSWrap(w *provider.WSClient) bool {
+func callRaydiumCPMMSwapWSWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumSwapCPMMWS(w, Environment.PublicKey)
 }
 
-func callRaydiumSwapCPMMWS(w *provider.WSClient, ownerAddr string) bool {
+func callRaydiumSwapCPMMWS(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1907,7 +1918,7 @@ func callRaydiumSwapCPMMWS(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
+func callRouteTradeSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting route trade swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1943,11 +1954,11 @@ func callRouteTradeSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callRaydiumRouteSwapWrap(w *provider.WSClient) bool {
+func callRaydiumRouteSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumRouteSwap(w, Environment.PublicKey)
 }
 
-func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
+func callRaydiumRouteSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1981,15 +1992,15 @@ func callRaydiumRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwapWrap(w *provider.WSClient) bool {
+func callJupiterSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callJupiterSwap(w, Environment.PublicKey)
 }
 
-func callRaydiumCLMMRouteSwapWSWrap(w *provider.WSClient) bool {
+func callRaydiumCLMMRouteSwapWSWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumCLMMRouteSwapWS(w, Environment.PublicKey)
 }
 
-func callRaydiumCLMMRouteSwapWS(w *provider.WSClient, ownerAddr string) bool {
+func callRaydiumCLMMRouteSwapWS(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Raydium CLMM swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2027,7 +2038,7 @@ func callRaydiumCLMMRouteSwapWS(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
+func callJupiterSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Jupiter swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2053,12 +2064,12 @@ func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callJupiterSwapInstructionsWrap(w *provider.WSClient) bool {
+func callJupiterSwapInstructionsWrap(w provider.WSClientTraderAPI) bool {
 	tip := uint64(100000)
 	return callJupiterSwapInstructions(w, Environment.PublicKey, &tip, false)
 }
 
-func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
+func callJupiterSwapInstructions(w provider.WSClientTraderAPI, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
 	log.Info("starting Jupiter swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2085,12 +2096,12 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 	return false
 }
 
-func callRaydiumSwapInstructionsWrap(w *provider.WSClient) bool {
+func callRaydiumSwapInstructionsWrap(w provider.WSClientTraderAPI) bool {
 	tip := uint64(100000)
 	return callRaydiumSwapInstructions(w, Environment.PublicKey, &tip, false)
 }
 
-func callRaydiumSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
+func callRaydiumSwapInstructions(w provider.WSClientTraderAPI, ownerAddr string, tipAmount *uint64, useBundle bool) bool {
 	log.Info("starting Raydium swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2115,11 +2126,11 @@ func callRaydiumSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 	return false
 }
 
-func callJupiterRouteSwapWrap(w *provider.WSClient) bool {
+func callJupiterRouteSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callJupiterRouteSwap(w, Environment.PublicKey)
 }
 
-func callJupiterRouteSwap(w *provider.WSClient, ownerAddr string) bool {
+func callJupiterRouteSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("starting Jupiter swap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2158,7 +2169,7 @@ func callJupiterRouteSwap(w *provider.WSClient, ownerAddr string) bool {
 	return false
 }
 
-func callPricesWSStream(w *provider.WSClient) bool {
+func callPricesWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting prices stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2181,7 +2192,7 @@ func callPricesWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetTickersWSStream(w *provider.WSClient) bool {
+func callGetTickersWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting ticker stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2209,7 +2220,7 @@ func callGetTickersWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetPumpFunNewTokensWSStreamWrap(_ *provider.WSClient) bool {
+func callGetPumpFunNewTokensWSStreamWrap(_ provider.WSClientTraderAPI) bool {
 	ww, err := provider.NewWSClientPumpNY()
 	if err != nil {
 		panic(err)
@@ -2223,7 +2234,7 @@ func callGetPumpFunNewTokensWSStreamWrap(_ *provider.WSClient) bool {
 	return callGetPumpFunSwapsWSStream(ww, mint)
 }
 
-func callGetPumpFunNewTokensWSStream(w *provider.WSClient) (string, bool) {
+func callGetPumpFunNewTokensWSStream(w provider.WSClientTraderAPI) (string, bool) {
 	log.Info("starting GetPumpFunNewTokens stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2248,7 +2259,7 @@ func callGetPumpFunNewTokensWSStream(w *provider.WSClient) (string, bool) {
 	return mint, false
 }
 
-func callGetPumpFunSwapsWSStream(w *provider.WSClient, mint string) bool {
+func callGetPumpFunSwapsWSStream(w provider.WSClientTraderAPI, mint string) bool {
 	log.Info("starting GetPumpFunSwaps stream")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -2274,7 +2285,7 @@ func callGetPumpFunSwapsWSStream(w *provider.WSClient, mint string) bool {
 	return false
 }
 
-func callSwapsWSStream(w *provider.WSClient) bool {
+func callSwapsWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get swaps stream")
 
 	ch := make(chan *pb.GetSwapsStreamResponse)
@@ -2300,7 +2311,7 @@ func callSwapsWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callBlockWSStream(w *provider.WSClient) bool {
+func callBlockWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get block stream")
 
 	ch := make(chan *pb.GetBlockStreamResponse)
@@ -2326,7 +2337,7 @@ func callBlockWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
+func callGetPriorityFeeWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get priority fee stream")
 
 	ch := make(chan *pb.GetPriorityFeeResponse)
@@ -2350,7 +2361,7 @@ func callGetPriorityFeeWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetPriorityFeeWS(w *provider.WSClient) bool {
+func callGetPriorityFeeWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching priority fee...")
 
 	priorityFee, err := w.GetPriorityFee(context.Background(), pb.Project_P_RAYDIUM, nil)
@@ -2363,7 +2374,7 @@ func callGetPriorityFeeWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetLeaderScheduleWS(w *provider.WSClient) bool {
+func callGetLeaderScheduleWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching leader schedule...")
 
 	leaderSchedule, err := w.GetLeaderSchedule(context.Background(), 0)
@@ -2376,7 +2387,7 @@ func callGetLeaderScheduleWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetBundleTipWSStream(w *provider.WSClient) bool {
+func callGetBundleTipWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get bundle tip stream")
 
 	ch := make(chan *pb.GetBundleTipResponse)
@@ -2401,7 +2412,7 @@ func callGetBundleTipWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetPriorityFeeByProgramWS(w *provider.WSClient) bool {
+func callGetPriorityFeeByProgramWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching priority fee by program...")
 
 	RaydiumCLMM := "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
@@ -2417,7 +2428,7 @@ func callGetPriorityFeeByProgramWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetPriorityFeeByProgramWSStream(w *provider.WSClient) bool {
+func callGetPriorityFeeByProgramWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get priority fee by program stream")
 
 	ch := make(chan *pb.GetPriorityFeeByProgramResponse)
@@ -2447,7 +2458,7 @@ func callGetPriorityFeeByProgramWSStream(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetRecentBlockHashWS(w *provider.WSClient) bool {
+func callGetRecentBlockHashWS(w provider.WSClientTraderAPI) bool {
 	log.Info("starting recent block hash")
 
 	result, err := w.GetRecentBlockHash(context.Background(), &pb.GetRecentBlockHashRequest{})
@@ -2460,7 +2471,7 @@ func callGetRecentBlockHashWS(w *provider.WSClient) bool {
 	return false
 }
 
-func callGetRecentBlockHashV2WSWrap(w *provider.WSClient) bool {
+func callGetRecentBlockHashV2WSWrap(w provider.WSClientTraderAPI) bool {
 	var failed bool
 	for i := 0; i < 2; i++ {
 		failed = callGetRecentBlockHashV2WS(w, uint64(i))
@@ -2469,7 +2480,7 @@ func callGetRecentBlockHashV2WSWrap(w *provider.WSClient) bool {
 	return failed
 }
 
-func callGetRecentBlockHashV2WS(w *provider.WSClient, offset uint64) bool {
+func callGetRecentBlockHashV2WS(w provider.WSClientTraderAPI, offset uint64) bool {
 	log.Info("starting recent block hash V2")
 
 	result, err := w.GetRecentBlockHashV2(context.Background(), &pb.GetRecentBlockHashRequestV2{Offset: offset})
@@ -2482,11 +2493,11 @@ func callGetRecentBlockHashV2WS(w *provider.WSClient, offset uint64) bool {
 	return false
 }
 
-func callTestSubmitSnipeWSWrap(w *provider.WSClient) bool {
+func callTestSubmitSnipeWSWrap(w provider.WSClientTraderAPI) bool {
 	return callTestSubmitSnipeWS(w, Environment.PublicKey)
 }
 
-func callTestSubmitSnipeWS(w *provider.WSClient, ownerAddr string) bool {
+func callTestSubmitSnipeWS(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	ownerKey, err := solana.PublicKeyFromBase58(ownerAddr)
 	if err != nil {
 		log.Errorf("Please set Public key environment variable: %v", err)
