@@ -7,7 +7,7 @@ import (
 
 type TraderHTTPPriceOpt func(s *traderHTTPPriceStream)
 
-func WithTraderHTTPClient(h *provider.HTTPClient) TraderHTTPPriceOpt {
+func WithTraderHTTPClient(h provider.HTTPClientTraderAPI) TraderHTTPPriceOpt {
 	return func(s *traderHTTPPriceStream) {
 		s.h = h
 	}

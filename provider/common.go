@@ -17,20 +17,48 @@ const (
 	mainnetNY     = "ny.solana.dex.blxrbdn.com"
 	mainnetPumpNY = "pump-ny.solana.dex.blxrbdn.com"
 	mainnetUK     = "uk.solana.dex.blxrbdn.com"
-	testnet       = "solana.dex.bxrtest.com"
-	devnet        = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
+	// see https://docs.bloxroute.com/solana/trader-api/introduction/regions for all regions of traderAPI. There are
+	// some regions below that are only available for transaction submission related endpoints, not full API service.
+	mainnetFrankfurt = "germany.solana.dex.blxrbdn.com"
+	mainnetLA        = "la.solana.dex.blxrbdn.com"
+	mainnetAmsterdam = "amsterdam.solana.dex.blxrbdn.com"
+	mainnetTokyo     = "tokyo.solana.dex.blxrbdn.com"
+	testnet          = "solana.dex.bxrtest.com"
+	devnet           = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
+
+// for information about submit only regions, see documentation: https://docs.bloxroute.com/solana/trader-api/introduction/regions
 
 var (
 	MainnetNYHTTP     = httpEndpoint(mainnetNY, true)
 	MainnetPumpNYHTTP = httpEndpoint(mainnetPumpNY, true)
 	MainnetUKHTTP     = httpEndpoint(mainnetUK, true)
-	MainnetNYWS       = wsEndpoint(mainnetNY, true)
-	MainnetPumpNYWS   = wsEndpoint(mainnetPumpNY, true)
-	MainnetUKWS       = wsEndpoint(mainnetUK, true)
+
+	// submit only http
+	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, true)
+	MainnetLAHTTP        = httpEndpoint(mainnetLA, true)
+	MainnetAmsterdamHTTP = httpEndpoint(mainnetAmsterdam, true)
+	MainnetTokyoHTTP     = httpEndpoint(mainnetTokyo, true)
+
+	MainnetNYWS     = wsEndpoint(mainnetNY, true)
+	MainnetPumpNYWS = wsEndpoint(mainnetPumpNY, true)
+	MainnetUKWS     = wsEndpoint(mainnetUK, true)
+
+	// submit only ws
+	MainnetFrankfurtWS = wsEndpoint(mainnetFrankfurt, true)
+	MainnetLAWS        = wsEndpoint(mainnetLA, true)
+	MainnetAmsterdamWS = wsEndpoint(mainnetAmsterdam, true)
+	MainnetTokyoWS     = wsEndpoint(mainnetTokyo, true)
+
 	MainnetNYGRPC     = grpcEndpoint(mainnetNY, true)
 	MainnetPumpNYGRPC = grpcEndpoint(mainnetPumpNY, true)
 	MainnetUKGRPC     = grpcEndpoint(mainnetUK, true)
+
+	// submit only grpc
+	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, true)
+	MainnetLAGRPC        = grpcEndpoint(mainnetLA, true)
+	MainnetAmsterdamGRPC = grpcEndpoint(mainnetAmsterdam, true)
+	MainnetTokyoGRPC     = grpcEndpoint(mainnetTokyo, true)
 
 	TestnetHTTP = httpEndpoint(testnet, true)
 	TestnetWS   = wsEndpoint(testnet, true)

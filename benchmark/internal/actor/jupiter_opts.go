@@ -38,7 +38,7 @@ func WithJupiterInterval(interval time.Duration) JupiterOpt {
 	}
 }
 
-func WithJupiterClient(client *provider.HTTPClient) JupiterOpt {
+func WithJupiterClient(client provider.HTTPClientTraderAPI) JupiterOpt {
 	return func(s *jupiterSwap) {
 		s.client = client
 	}

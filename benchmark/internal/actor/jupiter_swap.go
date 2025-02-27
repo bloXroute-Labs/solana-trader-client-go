@@ -33,7 +33,7 @@ type jupiterSwap struct {
 	publicKey      string
 	alternate      bool
 
-	client *provider.HTTPClient
+	client provider.HTTPClientTraderAPI
 }
 
 func NewJupiterSwap(opts ...JupiterOpt) (Liquidity, error) {

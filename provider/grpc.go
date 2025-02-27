@@ -2,118 +2,15 @@ package provider
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 
-	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 )
-
-type GRPCClient struct {
-	pb.UnimplementedApiServer
-
-	apiClient pb.ApiClient
-
-	privateKey           *solana.PrivateKey
-	recentBlockHashStore *recentBlockHashStore
-}
-
-// NewGRPCClient connects to Mainnet Trader API
-func NewGRPCClient() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetNYGRPC)
-	opts.UseTLS = true
-	return NewGRPCClientWithOpts(opts)
-}
-
-// NewGRPCClientPumpNY connects to Mainnet NY Pump Trader API
-func NewGRPCClientPumpNY() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(MainnetPumpNYGRPC)
-	opts.UseTLS = true
-	return NewGRPCClientWithOpts(opts)
-}
-
-// NewGRPCTestnet connects to Testnet Trader API
-func NewGRPCTestnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(TestnetGRPC)
-	opts.UseTLS = true
-	return NewGRPCClientWithOpts(opts)
-}
-
-// NewGRPCDevnet connects to Devnet Trader API
-func NewGRPCDevnet() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(DevnetGRPC)
-	return NewGRPCClientWithOpts(opts)
-}
-
-// NewGRPCLocal connects to local Trader API
-func NewGRPCLocal() (*GRPCClient, error) {
-	opts := DefaultRPCOpts(LocalGRPC)
-	return NewGRPCClientWithOpts(opts)
-}
-
-type blxrCredentials struct {
-	authorization string
-}
-
-func (bc blxrCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": bc.authorization,
-		"x-sdk":         package_info.Name,
-		"x-sdk-version": package_info.Version,
-	}, nil
-}
-
-func (bc blxrCredentials) RequireTransportSecurity() bool {
-	return false
-}
-
-// NewGRPCClientWithOpts connects to custom Trader API
-func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClient, error) {
-	var (
-		conn     grpc.ClientConnInterface
-		err      error
-		grpcOpts = make([]grpc.DialOption, 0)
-	)
-
-	transportOption := grpc.WithTransportCredentials(insecure.NewCredentials())
-	if opts.UseTLS {
-		transportOption = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))
-	}
-	grpcOpts = append(grpcOpts, transportOption)
-
-	if !opts.DisableAuth {
-		grpcOpts = append(grpcOpts, grpc.WithPerRPCCredentials(blxrCredentials{authorization: opts.AuthHeader}))
-	}
-	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(&grpc.MaxRecvMsgSizeCallOption{MaxRecvMsgSize: 1024 * 1024 * 16}))
-	grpcOpts = append(grpcOpts, dialOpts...)
-	conn, err = grpc.Dial(opts.Endpoint, grpcOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	client := &GRPCClient{
-		apiClient:  pb.NewApiClient(conn),
-		privateKey: opts.PrivateKey,
-	}
-
-	client.recentBlockHashStore = newRecentBlockHashStore(
-		client.GetRecentBlockHash,
-		client.GetRecentBlockHashStream,
-		opts,
-	)
-	if opts.CacheBlockHash {
-		go client.recentBlockHashStore.run(context.Background())
-	}
-	return client, nil
-}
 
 func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return g.recentBlockHashStore.get(ctx)
@@ -1278,6 +1175,26 @@ func (g *GRPCClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, pay
 		ClientOrderID:     opts.ClientOrderID,
 		OrderID:           orderID,
 	})
+}
+
+// GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
+func (g *GRPCClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {
+	quotes, err := g.apiClient.GetRaydiumCLMMQuotes(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return quotes, nil
+}
+
+// GetRaydiumCLMMPools returns the CLMM pools on Raydium
+func (g *GRPCClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error) {
+	pools, err := g.apiClient.GetRaydiumCLMMPools(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return pools, nil
 }
 
 func (g *GRPCClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {

@@ -12,7 +12,7 @@ import (
 )
 
 type traderHTTPPriceStream struct {
-	h        *provider.HTTPClient
+	h        provider.HTTPClientTraderAPI
 	mint     string
 	ticker   *time.Ticker
 	interval time.Duration

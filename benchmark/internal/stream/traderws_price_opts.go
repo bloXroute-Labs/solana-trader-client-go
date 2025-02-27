@@ -4,7 +4,7 @@ import "github.com/bloXroute-Labs/solana-trader-client-go/provider"
 
 type TraderWSPriceOpt func(s *tradeWSPrice)
 
-func WithTraderWSClient(w *provider.WSClient) TraderWSPriceOpt {
+func WithTraderWSClient(w provider.WSClientTraderAPI) TraderWSPriceOpt {
 	return func(s *tradeWSPrice) {
 		s.w = w
 	}

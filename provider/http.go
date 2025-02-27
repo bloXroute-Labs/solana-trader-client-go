@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
@@ -13,61 +12,6 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 )
-
-type HTTPClient struct {
-	pb.UnimplementedApiServer
-
-	baseURL    string
-	httpClient *http.Client
-	requestID  utils.RequestID
-	privateKey *solana.PrivateKey
-	authHeader string
-}
-
-// NewHTTPClient connects to Mainnet Trader API
-func NewHTTPClient() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetNYHTTP)
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
-// NewHTTPClientPumpNY connects to Mainnet Trader API
-func NewHTTPClientPumpNY() *HTTPClient {
-	opts := DefaultRPCOpts(MainnetPumpNYHTTP)
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
-// NewHTTPTestnet connects to Testnet Trader API
-func NewHTTPTestnet() *HTTPClient {
-	opts := DefaultRPCOpts(TestnetHTTP)
-	opts.UseTLS = true
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
-// NewHTTPDevnet connects to Devnet Trader API
-func NewHTTPDevnet() *HTTPClient {
-	opts := DefaultRPCOpts(DevnetHTTP)
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
-// NewHTTPLocal connects to local Trader API
-func NewHTTPLocal() *HTTPClient {
-	opts := DefaultRPCOpts(LocalHTTP)
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
-// NewHTTPClientWithOpts connects to custom Trader API (set client to nil to use default client)
-func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
-	if client == nil {
-		client = &http.Client{}
-	}
-
-	return &HTTPClient{
-		baseURL:    opts.Endpoint,
-		httpClient: client,
-		privateKey: opts.PrivateKey,
-		authHeader: opts.AuthHeader,
-	}
-}
 
 // GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
 func (h *HTTPClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {

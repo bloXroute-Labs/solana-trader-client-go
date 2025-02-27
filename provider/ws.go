@@ -13,71 +13,6 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
-type WSClient struct {
-	pb.UnimplementedApiServer
-
-	addr                 string
-	conn                 *connections.WS
-	privateKey           *solana.PrivateKey
-	recentBlockHashStore *recentBlockHashStore
-}
-
-// NewWSClient connects to Mainnet Trader API
-func NewWSClient() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetNYWS)
-	return NewWSClientWithOpts(opts)
-}
-
-// NewWSClientPumpNY connects to Mainnet NY Pump Trader API
-func NewWSClientPumpNY() (*WSClient, error) {
-	opts := DefaultRPCOpts(MainnetPumpNYWS)
-	return NewWSClientWithOpts(opts)
-}
-
-// NewWSClientTestnet connects to Testnet Trader API
-func NewWSClientTestnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(TestnetWS)
-	opts.UseTLS = true
-	return NewWSClientWithOpts(opts)
-}
-
-// NewWSClientDevnet connects to Devnet Trader API
-func NewWSClientDevnet() (*WSClient, error) {
-	opts := DefaultRPCOpts(DevnetWS)
-	return NewWSClientWithOpts(opts)
-}
-
-// NewWSClientLocal connects to local Trader API
-func NewWSClientLocal() (*WSClient, error) {
-	opts := DefaultRPCOpts(LocalWS)
-	return NewWSClientWithOpts(opts)
-}
-
-// NewWSClientWithOpts connects to custom Trader API
-func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
-	conn, err := connections.NewWS(opts.Endpoint, opts.AuthHeader, opts.DisablePingLoop)
-	if err != nil {
-		return nil, err
-	}
-
-	client := &WSClient{
-		addr:       opts.Endpoint,
-		conn:       conn,
-		privateKey: opts.PrivateKey,
-	}
-	client.recentBlockHashStore = newRecentBlockHashStore(
-		func(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
-			return client.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
-		},
-		client.GetRecentBlockHashStream,
-		opts,
-	)
-	if opts.CacheBlockHash {
-		go client.recentBlockHashStore.run(context.Background())
-	}
-	return client, nil
-}
-
 func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return w.recentBlockHashStore.get(ctx)
 }
@@ -1571,7 +1506,7 @@ func (w *WSClient) GetRecentBlockHash(ctx context.Context, request *pb.GetRecent
 	return &response, nil
 }
 
-// GetRecentBlockHash returns recent block hash, supports optional offset.
+// GetRecentBlockHashV2 returns recent block hash, supports optional offset.
 func (w *WSClient) GetRecentBlockHashV2(ctx context.Context, request *pb.GetRecentBlockHashRequestV2) (*pb.GetRecentBlockHashResponseV2, error) {
 	var response pb.GetRecentBlockHashResponseV2
 	err := w.conn.Request(ctx, "GetRecentBlockHashV2", request, &response)

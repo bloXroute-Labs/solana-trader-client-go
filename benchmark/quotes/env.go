@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 )
 
-func traderClients(env string) (*provider.HTTPClient, *provider.WSClient, error) {
+func traderClients(env string) (provider.HTTPClientTraderAPI, provider.WSClientTraderAPI, error) {
 	var (
-		httpClient *provider.HTTPClient
-		wsClient   *provider.WSClient
+		httpClient provider.HTTPClientTraderAPI
+		wsClient   provider.WSClientTraderAPI
 		err        error
 	)
 	switch env {
@@ -32,7 +33,7 @@ func traderClients(env string) (*provider.HTTPClient, *provider.WSClient, error)
 		}
 	case "mainnet":
 		httpClient = provider.NewHTTPClient()
-		wsClient, err = provider.NewWSClient()
+		wsClient, err = provider.NewWSClientFullService(config.WSUrls["ny"])
 		if err != nil {
 			return nil, nil, err
 		}
