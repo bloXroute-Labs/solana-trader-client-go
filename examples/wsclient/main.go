@@ -76,7 +76,7 @@ func main() {
 			for _, content := range ExampleEndpoints {
 				if !content.requiresAdditionalEnvironmentVars {
 					if failed := content.run(client); failed {
-						log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+						log.Errorf("%s", fmt.Sprintf("example '%s' failed", exampleName))
 						time.Sleep(1 * time.Second)
 					}
 					time.Sleep(1 * time.Second)
@@ -88,7 +88,7 @@ func main() {
 	rerun:
 		log.Printf("running example: %s\n", exampleName)
 		if failed := exampleStruct.run(client); failed {
-			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+			log.Errorf("%s", fmt.Sprintf("example '%s' failed", exampleName))
 			time.Sleep(1 * time.Second)
 		} else {
 			time.Sleep(1 * time.Second)
@@ -133,7 +133,7 @@ func setupWSClient(env config.Env) *provider.WSClient {
 }
 
 func listAllEndpoints() {
-	fmt.Println(fmt.Sprintf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
+	fmt.Println(fmt.Printf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
 
 	var names []string
 	for name := range ExampleEndpoints {
@@ -917,14 +917,12 @@ func callGetJupiterQuotes(w *provider.WSClient) bool {
 	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
-	fastMode := true
 
 	quotes, err := w.GetJupiterQuotes(context.Background(), &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		FastMode: &fastMode,
 	})
 	if err != nil {
 		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
@@ -1256,12 +1254,6 @@ func orderLifecycleTest(w *provider.WSClient, ownerAddr, payerAddr, ooAddr strin
 	return false
 }
 
-func callPlaceOrderWSWrap(w *provider.WSClient) bool {
-	_, ok := callPlaceOrderWS(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-
-	return ok
-}
-
 func callPlaceOrderWS(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
 	log.Info("trying to place an order")
 
@@ -1418,10 +1410,6 @@ func callCancelByClientOrderIDWS(w *provider.WSClient, ownerAddr, ooAddr string,
 	return false
 }
 
-func callPostSettleWSWrap(w *provider.WSClient) bool {
-	return callPostSettleWS(w, Environment.PublicKey, Environment.OpenOrdersAddress)
-}
-
 func callPostSettleWS(w *provider.WSClient, ownerAddr, ooAddr string) bool {
 	log.Info("starting post settle")
 
@@ -1440,100 +1428,100 @@ func cancelAllWrap(w *provider.WSClient) bool {
 	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 }
 
-func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting cancel all test")
-	fmt.Println()
+// func cancelAll(w *provider.WSClient, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
+// 	log.Info("starting cancel all test")
+// 	fmt.Println()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	defer cancel()
 
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	clientOrderID2 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
+// 	rand.Seed(time.Now().UnixNano())
+// 	clientOrderID1 := rand.Uint64()
+// 	clientOrderID2 := rand.Uint64()
+// 	opts := provider.PostOrderOpts{
+// 		ClientOrderID:     clientOrderID1,
+// 		OpenOrdersAddress: ooAddr,
+// 		SkipPreFlight:     config.BoolPtr(true),
+// 	}
 
-	// Place 2 orders in orderbook
-	log.Info("placing orders")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #1, signature %s", sig)
+// 	// Place 2 orders in orderbook
+// 	log.Info("placing orders")
+// 	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return true
+// 	}
+// 	log.Infof("submitting place order #1, signature %s", sig)
 
-	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
+// 	opts.ClientOrderID = clientOrderID2
+// 	sig, err = w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return true
+// 	}
+// 	log.Infof("submitting place order #2, signature %s", sig)
 
-	time.Sleep(time.Minute)
+// 	time.Sleep(time.Minute)
 
-	// Check orders are there
-	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found1 := false
-	found2 := false
+// 	// Check orders are there
+// 	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return true
+// 	}
+// 	found1 := false
+// 	found2 := false
 
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = true
-			continue
-		}
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
-			found2 = true
-		}
-	}
-	if !(found1 && found2) {
-		log.Error("one/both orders not found in orderbook")
-		return true
-	}
-	log.Info("2 orders placed successfully")
+// 	for _, order := range orders.Orders {
+// 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
+// 			found1 = true
+// 			continue
+// 		}
+// 		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
+// 			found2 = true
+// 		}
+// 	}
+// 	if !(found1 && found2) {
+// 		log.Error("one/both orders not found in orderbook")
+// 		return true
+// 	}
+// 	log.Info("2 orders placed successfully")
 
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
-		OrderID:           "",
-		Side:              pb.Side_S_ASK.String(),
-		MarketAddress:     marketAddr,
-		OwnerAddress:      ownerAddr,
-		OpenOrdersAddress: ooAddr,
-		ClientOrderID:     0,
-	}, true)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
+// 	// Cancel all the orders
+// 	log.Info("cancelling the orders")
+// 	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
+// 		OrderID:           "",
+// 		Side:              pb.Side_S_ASK.String(),
+// 		MarketAddress:     marketAddr,
+// 		OwnerAddress:      ownerAddr,
+// 		OpenOrdersAddress: ooAddr,
+// 		ClientOrderID:     0,
+// 	}, true)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return true
+// 	}
+// 	for _, tx := range sigs.Transactions {
+// 		log.Infof("placing cancel order(s) %s", tx.Signature)
+// 	}
 
-	time.Sleep(time.Minute)
+// 	time.Sleep(time.Minute)
 
-	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	if len(orders.Orders) != 0 {
-		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
-		return true
-	}
-	log.Info("orders cancelled")
+// 	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return true
+// 	}
+// 	if len(orders.Orders) != 0 {
+// 		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
+// 		return true
+// 	}
+// 	log.Info("orders cancelled")
 
-	fmt.Println()
-	callPostSettleWS(w, ownerAddr, ooAddr)
-	return false
-}
+// 	fmt.Println()
+// 	callPostSettleWS(w, ownerAddr, ooAddr)
+// 	return false
+// }
 
 func callReplaceByClientOrderIDWrap(w *provider.WSClient) bool {
 	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
@@ -1813,21 +1801,21 @@ func callRaydiumSwap(w *provider.WSClient, ownerAddr string) bool {
 }
 
 func callPostPumpFunSwapWrap(w *provider.WSClient) bool {
-	return callPostPumpFunSwap(w, Environment.PublicKey)
+	return callPostPumpFunSwap(Environment.PublicKey)
 }
 
-func callPostPumpFunSwap(w *provider.WSClient, ownerAddr string) bool {
+func callPostPumpFunSwap(ownerAddr string) bool {
 	log.Info("starting PostPumpFunSwap test")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	w, err := provider.NewWSClientPumpNY()
+	wp, err := provider.NewWSClientPumpNY()
 	if err != nil {
 		panic(err)
 	}
 
 	log.Info("PumpFun swap")
-	sig, err := w.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+	sig, err := wp.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
 		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
 		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
@@ -2033,14 +2021,12 @@ func callJupiterSwap(w *provider.WSClient, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fastMode := true
 	sig, err := w.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
-		FastMode:     &fastMode,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),
@@ -2064,7 +2050,6 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fastMode := true
 	sig, err := w.SubmitJupiterSwapInstructions(ctx, &pb.PostJupiterSwapInstructionsRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -2072,7 +2057,6 @@ func callJupiterSwapInstructions(w *provider.WSClient, ownerAddr string, tipAmou
 		Slippage:     0.4,
 		InAmount:     0.01,
 		Tip:          tipAmount,
-		FastMode:     &fastMode,
 	}, useBundle, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),

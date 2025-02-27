@@ -79,7 +79,7 @@ func main() {
 			for _, content := range ExampleEndpoints {
 				if !content.requiresAdditionalEnvironmentVars {
 					if failed := content.run(client); failed {
-						log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+						log.Errorf("%s", fmt.Sprintf("example '%s' failed", exampleName))
 						time.Sleep(1 * time.Second)
 					}
 					time.Sleep(1 * time.Second)
@@ -91,7 +91,7 @@ func main() {
 	rerun:
 		log.Printf("running example: %s\n", exampleName)
 		if failed := exampleStruct.run(client); failed {
-			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+			log.Errorf("%s", fmt.Sprintf("example '%s' failed", exampleName))
 			time.Sleep(1 * time.Second)
 		} else {
 
@@ -137,7 +137,7 @@ func setupGRPCClient(env config.Env) *provider.GRPCClient {
 }
 
 func listAllEndpoints() {
-	fmt.Println(fmt.Sprintf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
+	fmt.Println(fmt.Printf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
 
 	var names []string
 	for name := range ExampleEndpoints {
@@ -804,11 +804,6 @@ func callGetRaydiumQuotes(g *provider.GRPCClient) bool {
 		return true
 	}
 
-	if err != nil {
-		log.Errorf("error with GetRaydiumQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
 	if len(quotes.Routes) != 1 {
 		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
 		return true
@@ -865,11 +860,6 @@ func callGetRaydiumCLMMQuotes(g *provider.GRPCClient) bool {
 		return true
 	}
 
-	if err != nil {
-		log.Errorf("error with GetRaydiumCLMMQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
 	if len(quotes.Routes) != 1 {
 		log.Errorf("did not get back 1 quotes, got %v quotes", len(quotes.Routes))
 		return true
@@ -901,11 +891,6 @@ func callGetRaydiumCPMMQuotes(g *provider.GRPCClient) bool {
 	})
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if err != nil {
-		log.Errorf("error with GetRaydiumQuotesCPMM request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
@@ -941,11 +926,6 @@ func callGetJupiterQuotes(g *provider.GRPCClient) bool {
 
 	if err != nil {
 		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if err != nil {
-		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
 		return true
 	}
 
@@ -1438,19 +1418,15 @@ func callPlaceOrderBundleWithBatch(g *provider.GRPCClient, ownerAddr, payerAddr,
 
 	log.Infof("successfully placed bundle batch order with signature : %s", batchResp.Transactions[0].Signature)
 
-	if err != nil {
-		return false
-	}
-
 	return false
 }
 
 func callPlaceOrderGRPCWithPriorityFeeWrap(g *provider.GRPCClient) bool {
-	return callPlaceOrderGRPCWithPriorityFee(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress,
+	return callPlaceOrderGRPCWithPriorityFee(g, Environment.PublicKey, Environment.Payer,
 		sideAsk, computeLimit, computePrice, typeLimit)
 }
 
-func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, ooAddr string, orderSide string,
+func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, orderSide string,
 	computeLimit uint32, computePrice uint64, orderType string) bool {
 	log.Info("starting place order")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1464,8 +1440,8 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 		ClientOrderID: clientOrderID}
 
 	// sign/submit transaction after creation
-	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderType, orderAmount, orderPrice, 0, 0, nil, opts)
+	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr,
+		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, nil, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return true

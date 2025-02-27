@@ -484,7 +484,6 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, 
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
-		AllowRevert:            &opts.AllowRevert,
 	})
 }
 
