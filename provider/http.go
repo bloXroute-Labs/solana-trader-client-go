@@ -222,9 +222,6 @@ func (h *HTTPClient) PostRaydiumRouteSwap(ctx context.Context, request *pb.PostR
 // GetJupiterQuotes returns the possible amount(s) of outToken for an inToken and the route to achieve it on Jupiter
 func (h *HTTPClient) GetJupiterQuotes(ctx context.Context, request *pb.GetJupiterQuotesRequest) (*pb.GetJupiterQuotesResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/jupiter/quotes?inToken=%s&outToken=%s&inAmount=%v&slippage=%v", h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
-	if request.FastMode != nil {
-		url += fmt.Sprintf("&fastMode=%v", *request.FastMode)
-	}
 	response := new(pb.GetJupiterQuotesResponse)
 	if err := connections.HTTPGetWithClient[*pb.GetJupiterQuotesResponse](ctx, url, h.httpClient, response, h.authHeader); err != nil {
 		return nil, err
@@ -451,7 +448,6 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts PostS
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
-		AllowRevert:            &opts.AllowRevert,
 	}
 
 	var response pb.PostSubmitResponse
@@ -496,7 +492,6 @@ func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, opts Pos
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
-		AllowRevert:            &opts.AllowRevert,
 	}
 
 	var response pb.PostSubmitResponse

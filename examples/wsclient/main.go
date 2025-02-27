@@ -86,7 +86,7 @@ func main() {
 			for _, content := range ExampleEndpoints {
 				if !content.requiresAdditionalEnvironmentVars {
 					if failed := content.run(client); failed {
-						log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+						log.Errorf("%s", fmt.Sprintf("example '%s' failed", exampleName))
 						time.Sleep(1 * time.Second)
 					}
 					time.Sleep(1 * time.Second)
@@ -98,7 +98,7 @@ func main() {
 	rerun:
 		log.Printf("running example: %s\n", exampleName)
 		if failed := exampleStruct.run(client); failed {
-			log.Errorf(fmt.Sprintf("example '%s' failed", exampleName))
+			log.Errorf("%s", fmt.Sprintf("example '%s' failed", exampleName))
 			time.Sleep(1 * time.Second)
 		} else {
 			time.Sleep(1 * time.Second)
@@ -144,7 +144,7 @@ func setupWSClient(env config.Env, endpoint string) provider.WSClientTraderAPI {
 }
 
 func listAllEndpoints() {
-	fmt.Println(fmt.Sprintf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
+	fmt.Println(fmt.Printf("Available Endpoints (see docs for more info: https://docs.bloxroute.com/solana/trader-api-v2) \n"))
 
 	var names []string
 	for name := range ExampleEndpoints {
@@ -928,14 +928,12 @@ func callGetJupiterQuotes(w provider.WSClientTraderAPI) bool {
 	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	amount := 0.01
 	slippage := float64(5)
-	fastMode := true
 
 	quotes, err := w.GetJupiterQuotes(context.Background(), &pb.GetJupiterQuotesRequest{
 		InToken:  inToken,
 		OutToken: outToken,
 		InAmount: amount,
 		Slippage: slippage,
-		FastMode: &fastMode,
 	})
 	if err != nil {
 		log.Errorf("error with GetJupiterQuotes request for %s to %s: %v", inToken, outToken, err)
@@ -1832,13 +1830,13 @@ func callPostPumpFunSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	w, err := provider.NewWSClientPumpNY()
+	wp, err := provider.NewWSClientPumpNY()
 	if err != nil {
 		panic(err)
 	}
 
 	log.Info("PumpFun swap")
-	sig, err := w.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
+	sig, err := wp.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
 		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
 		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
@@ -2044,14 +2042,12 @@ func callJupiterSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fastMode := true
 	sig, err := w.SubmitJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "So11111111111111111111111111111111111111112",
 		Slippage:     0.1,
 		InAmount:     0.01,
-		FastMode:     &fastMode,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),
@@ -2075,7 +2071,6 @@ func callJupiterSwapInstructions(w provider.WSClientTraderAPI, ownerAddr string,
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	fastMode := true
 	sig, err := w.SubmitJupiterSwapInstructions(ctx, &pb.PostJupiterSwapInstructionsRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
@@ -2083,7 +2078,6 @@ func callJupiterSwapInstructions(w provider.WSClientTraderAPI, ownerAddr string,
 		Slippage:     0.4,
 		InAmount:     0.01,
 		Tip:          tipAmount,
-		FastMode:     &fastMode,
 	}, useBundle, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
 		SkipPreFlight:  config.BoolPtr(false),
