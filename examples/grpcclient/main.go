@@ -1432,12 +1432,12 @@ func callPlaceOrderBundleWithBatch(g provider.GRPCClientTraderAPI, ownerAddr, pa
 	return false
 }
 
-func callPlaceOrderGRPCWithPriorityFeeWrap(g *provider.GRPCClient) bool {
-	return callPlaceOrderGRPCWithPriorityFee(g, Environment.PublicKey, Environment.Payer,
+func callPlaceOrderGRPCWithPriorityFeeWrap(g provider.GRPCClientTraderAPI) bool {
+	return callPlaceOrderGRPCWithPriorityFee(g, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress,
 		sideAsk, computeLimit, computePrice, typeLimit)
 }
 
-func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerAddr, orderSide string,
+func callPlaceOrderGRPCWithPriorityFee(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string,
 	computeLimit uint32, computePrice uint64, orderType string) bool {
 	log.Info("starting place order")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1451,8 +1451,8 @@ func callPlaceOrderGRPCWithPriorityFee(g *provider.GRPCClient, ownerAddr, payerA
 		ClientOrderID: clientOrderID}
 
 	// sign/submit transaction after creation
-	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr,
-		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, nil, opts)
+	sig, err := g.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
+		orderSide, orderType, orderAmount, orderPrice, 0, 0, nil, opts)
 	if err != nil {
 		log.Errorf("failed to submit order (%v)", err)
 		return true
