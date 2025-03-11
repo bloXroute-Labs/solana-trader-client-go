@@ -1814,14 +1814,17 @@ func callRaydiumSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	tip := uint64(2000000)
 
 	log.Info("Raydium swap")
 	sig, err := g.SubmitRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
 		OwnerAddress: ownerAddr,
 		InToken:      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		OutToken:     "So11111111111111111111111111111111111111112",
-		Slippage:     0.1,
+		Slippage:     0.3,
 		InAmount:     0.01,
+		Tip:          &tip,
+		ComputePrice: computePrice,
 	}, provider.SubmitOpts{
 		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
 		SkipPreFlight:  config.BoolPtr(false),
@@ -1830,7 +1833,7 @@ func callRaydiumSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 		log.Error(err)
 		return true
 	}
-	log.Infof("Raydium swap transaction signature : %s", sig)
+	log.Infof("Raydium swap transaction signature : %s, time: %s", sig, time.Now().String())
 	return false
 }
 

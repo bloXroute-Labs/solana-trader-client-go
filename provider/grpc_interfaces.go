@@ -22,6 +22,7 @@ type GRPCClientTraderAPISubmitOnly interface {
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
+	PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error)
 }
 
 type GRPCClientTraderAPI interface {
@@ -74,6 +75,7 @@ type GRPCClientTraderAPI interface {
 	PostSubmit(ctx context.Context, tx *pb.TransactionMessage, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error)
 	SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error)
