@@ -18,7 +18,7 @@ type WSClientTraderAPISubmitOnly interface {
 	SignAndSubmit(ctx context.Context, tx *api.TransactionMessage,
 		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*api.TransactionMessage, useStakedRPCs bool) ([]string, error)
-	SignAndSubmitPaladin(ctx context.Context, tx *api.TransactionMessage) (string, error)
+	SignAndSubmitPaladin(ctx context.Context, tx *api.TransactionMessage, revertProtection *bool) (string, error)
 	SignAndSubmitBatch(ctx context.Context, transactions []*api.TransactionMessage, useBundle bool, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 }
 
@@ -77,7 +77,7 @@ type WSClientTraderAPI interface {
 	SignAndSubmit(ctx context.Context, tx *api.TransactionMessage,
 		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*api.TransactionMessage, useStakedRPCs bool) ([]string, error)
-	SignAndSubmitPaladin(ctx context.Context, tx *api.TransactionMessage) (string, error)
+	SignAndSubmitPaladin(ctx context.Context, tx *api.TransactionMessage, revertProtection *bool) (string, error)
 	SignAndSubmitBatch(ctx context.Context, transactions []*api.TransactionMessage, useBundle bool, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 	SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 	SubmitTradeSwapWithPriorityFee(ctx context.Context, owner, inToken, outToken string,

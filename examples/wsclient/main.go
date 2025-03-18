@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"math/rand"
 	"os"
 	"sort"
@@ -1307,28 +1309,44 @@ func callPlaceOrderBundle(w provider.WSClientTraderAPI, ownerAddr string, tipAmo
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	resp, err := w.PostRaydiumSwap(ctx, &pb.PostRaydiumSwapRequest{
-		OwnerAddress: ownerAddr,
-		InToken:      "USDC",
-		OutToken:     "SOL",
-		Slippage:     0.2,
-		InAmount:     0.01,
-		Tip:          &tipAmount})
-
+	response, err := w.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 	if err != nil {
-		log.Error(fmt.Errorf("failed to generate raydium swap: %w", err))
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
 		return true
 	}
 
-	signature, err := w.SignAndSubmit(ctx, &pb.TransactionMessage{Content: resp.Transactions[0].Content},
-		true,
-		true, false)
+	bh := solana.MustHashFromBase58(response.BlockHash)
+
+	wlt := solana.NewWallet()
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	priceLimitIx, err := computebudget.NewSetComputeUnitPriceInstruction(uint64(200000000)).ValidateAndBuild()
 	if err != nil {
-		log.Errorf("failed to sign and submit tx: %s", err)
+		return false
+	}
+
+	tx1, err := solana.NewTransaction([]solana.Instruction{
+		priceLimitIx,
+		system.NewTransferInstruction(10000000, privateKey.PublicKey(), solana.MustPublicKeyFromBase58("FZwLKcQupnTy2CbaVMGGsutxDtjv9CqYVDJxiNZSj5Xi")).Build(),
+	}, bh, solana.TransactionPayer(privateKey.PublicKey()))
+	if err != nil {
+		return false
+	}
+
+	tx1.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+		if key.Equals(privateKey.PublicKey()) {
+			return &privateKey
+		}
+		return &wlt.PrivateKey
+	})
+	tru := true
+	resp, err := w.SignAndSubmitPaladin(ctx, &pb.TransactionMessage{
+		Content: tx1.MustToBase64()}, &tru)
+	if err != nil {
+		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
 	}
 
-	log.Infof("submitted bundle with signature: %s", signature)
+	log.Infof("submitted bundle order to trader api %v", resp)
 	return false
 }
 

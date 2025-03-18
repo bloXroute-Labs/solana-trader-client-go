@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"math/rand"
 	"os"
 	"sort"
@@ -930,43 +931,53 @@ const (
 )
 
 func callPlaceOrderHTTPWrap(h provider.HTTPClientTraderAPI) bool {
-	_, ok := callPlaceOrderHTTP(h, Environment.PublicKey, Environment.OpenOrdersAddress, sideAsk, typeLimit)
+	ok := callPlaceOrderHTTP(h, Environment.PublicKey, Environment.OpenOrdersAddress, sideAsk, typeLimit)
 	return ok
 }
 
-func callPlaceOrderHTTP(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+func callPlaceOrderHTTP(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string, orderSide string, orderType string) bool {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// generate a random clientOrderId for this order
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID := rand.Uint64()
-
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID,
-		OpenOrdersAddress: ooAddr,
-	}
-
-	// create order without actually submitting
-	response, err := h.PostOrderV2(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
+	response, err := h.GetRecentBlockHash(ctx)
 	if err != nil {
-		log.Errorf("failed to create order (%v)", err)
-		return 0, true
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
+		return true
 	}
-	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
-	// sign/submit transaction after creation
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderType, orderAmount,
-		orderPrice, opts)
+	bh := solana.MustHashFromBase58(response.BlockHash)
+
+	wlt := solana.NewWallet()
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	priceLimitIx, err := computebudget.NewSetComputeUnitPriceInstruction(uint64(200000000)).ValidateAndBuild()
 	if err != nil {
-		log.Errorf("failed to submit order (%v)", err)
-		return 0, true
+		return false
 	}
 
-	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
+	tx1, err := solana.NewTransaction([]solana.Instruction{
+		priceLimitIx,
+		system.NewTransferInstruction(10000000, privateKey.PublicKey(), solana.MustPublicKeyFromBase58("FZwLKcQupnTy2CbaVMGGsutxDtjv9CqYVDJxiNZSj5Xi")).Build(),
+	}, bh, solana.TransactionPayer(privateKey.PublicKey()))
+	if err != nil {
+		return false
+	}
 
-	return clientOrderID, false
+	tx1.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+		if key.Equals(privateKey.PublicKey()) {
+			return &privateKey
+		}
+		return &wlt.PrivateKey
+	})
+	tru := true
+	resp, err := h.SignAndSubmitPaladin(ctx, &pb.TransactionMessage{
+		Content: tx1.MustToBase64()}, &tru)
+	if err != nil {
+		log.Errorf("failed to sign and submit order (%v)", err)
+		return true
+	}
+
+	log.Infof("submitted bundle order to trader api %v", resp)
+	return false
 }
 
 func callPlaceOrderHTTPWithPriorityFeeWrap(h provider.HTTPClientTraderAPI) bool {

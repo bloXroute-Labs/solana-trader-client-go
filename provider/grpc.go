@@ -287,18 +287,15 @@ func (g *GRPCClient) SignAndSubmitSnipe(ctx context.Context, transactions []*pb.
 	return signatures, nil
 }
 
-func (g *GRPCClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage) (string, error) {
+func (g *GRPCClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage, revertProtection *bool) (string, error) {
 	if g.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
-	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *g.privateKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to sign transaction: %w", err)
-	}
 	paladinRequest := &pb.PostSubmitPaladinRequest{
 		Transaction: &pb.TransactionMessageV2{
-			Content: txBase64,
+			Content: tx.Content,
 		},
+		RevertProtection: revertProtection,
 	}
 	response, err := g.apiClient.PostSubmitPaladinV2(ctx, paladinRequest)
 	if err != nil {
@@ -398,11 +395,6 @@ func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage
 	})
 }
 
-// PostSubmitSnipeV2 posts the transaction string to the Solana network.
-func (g *GRPCClient) PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error) {
-	return g.apiClient.PostSubmitSnipeV2(ctx, request)
-}
-
 // PostSubmitBatchV2 posts a bundle of transactions string based on a specific SubmitStrategy to the Solana network.
 func (g *GRPCClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error) {
 	return g.apiClient.PostSubmitBatchV2(ctx, request)
@@ -410,8 +402,6 @@ func (g *GRPCClient) PostSubmitBatchV2(ctx context.Context, request *pb.PostSubm
 
 // SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
 func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	tip := uint64(1100000)
-
 	resp, err := g.apiClient.PostTradeSwap(ctx, &pb.TradeSwapRequest{
 		OwnerAddress: ownerAddress,
 		InToken:      inToken,
@@ -419,8 +409,6 @@ func (g *GRPCClient) SubmitTradeSwap(ctx context.Context, ownerAddress, inToken,
 		InAmount:     inAmount,
 		Slippage:     slippage,
 		Project:      project,
-		Tip:          &tip,
-		ComputePrice: 32000,
 	})
 	if err != nil {
 		return nil, err
