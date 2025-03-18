@@ -9,9 +9,12 @@ import (
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 )
+
+func (w *WSClient) Close() error {
+	return w.conn.Close(errors.New("shutdown requested"))
+}
 
 func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return w.recentBlockHashStore.get(ctx)
@@ -255,36 +258,6 @@ func (w *WSClient) PostJupiterRouteSwap(ctx context.Context, request *pb.PostJup
 	return &response, nil
 }
 
-// GetOrderbook returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (w *WSClient) GetOrderbook(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetOrderbookResponse, error) {
-	var response pb.GetOrderbookResponse
-	err := w.conn.Request(ctx, "GetOrderbook", &pb.GetOrderbookRequest{Market: market, Limit: limit, Project: project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetMarketDepth returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (w *WSClient) GetMarketDepth(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetMarketDepthResponse, error) {
-	var response pb.GetMarketDepthResponse
-	err := w.conn.Request(ctx, "GetMarketDepth", &pb.GetMarketDepthRequest{Market: market, Limit: limit, Project: project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetTrades returns the requested market's currently executing trades. Set limit to 0 for all trades.
-func (w *WSClient) GetTrades(ctx context.Context, market string, limit uint32, project pb.Project) (*pb.GetTradesResponse, error) {
-	var response pb.GetTradesResponse
-	err := w.conn.Request(ctx, "GetTrades", &pb.GetTradesRequest{Market: market, Limit: limit, Project: project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
 // GetPools returns pools for given projects.
 func (w *WSClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.GetPoolsResponse, error) {
 	response := pb.GetPoolsResponse{}
@@ -295,70 +268,10 @@ func (w *WSClient) GetPools(ctx context.Context, projects []pb.Project) (*pb.Get
 	return &response, nil
 }
 
-// GetTickers returns the requested market tickets. Set market to "" for all markets.
-func (w *WSClient) GetTickers(ctx context.Context, market string, project pb.Project) (*pb.GetTickersResponse, error) {
-	var response pb.GetTickersResponse
-	err := w.conn.Request(ctx, "GetTickers", &pb.GetTickersRequest{Market: market, Project: project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetOpenOrders returns all open orders by owner address and market
-func (w *WSClient) GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project pb.Project) (*pb.GetOpenOrdersResponse, error) {
-	var response pb.GetOpenOrdersResponse
-	err := w.conn.Request(ctx, "GetOpenOrders", &pb.GetOpenOrdersRequest{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, Project: project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetOrderByID returns an order by id
-func (w *WSClient) GetOrderByID(ctx context.Context, in *pb.GetOrderByIDRequest) (*pb.GetOrderByIDResponse, error) {
-	var response pb.GetOrderByIDResponse
-	err := w.conn.Request(ctx, "GetOrderByID", &pb.GetOrderByIDRequest{OrderID: in.OrderID, Market: in.Market, Project: in.Project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetUnsettled returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (w *WSClient) GetUnsettled(ctx context.Context, market string, ownerAddress string, project pb.Project) (*pb.GetUnsettledResponse, error) {
-	var response pb.GetUnsettledResponse
-	err := w.conn.Request(ctx, "GetUnsettled", &pb.GetUnsettledRequest{Market: market, OwnerAddress: ownerAddress, Project: project}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetAccountBalance returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (w *WSClient) GetAccountBalance(ctx context.Context, owner string) (*pb.GetAccountBalanceResponse, error) {
-	var response pb.GetAccountBalanceResponse
-	err := w.conn.Request(ctx, "GetAccountBalanceV2", &pb.GetAccountBalanceRequest{OwnerAddress: owner}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
 // GetTokenAccounts returns all tokens associated with the owner address
 func (w *WSClient) GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error) {
 	var response pb.GetTokenAccountsResponse
 	err := w.conn.Request(ctx, "GetTokenAccounts", req, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetMarkets returns the list of all available named markets
-func (w *WSClient) GetMarkets(ctx context.Context) (*pb.GetMarketsResponse, error) {
-	var response pb.GetMarketsResponse
-	err := w.conn.Request(ctx, "GetMarkets", &pb.GetMarketsRequest{}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -424,87 +337,6 @@ func (w *WSClient) GetLeaderSchedule(ctx context.Context, maxSlots uint64) (*pb.
 	}
 	var response pb.GetLeaderScheduleResponse
 	err := w.conn.Request(ctx, "GetLeaderSchedule", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostTradeSwap returns a partially signed transaction for submitting a swap request
-func (w *WSClient) PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*pb.TradeSwapResponse, error) {
-	project, err := ProjectFromString(projectStr)
-	if err != nil {
-		return nil, err
-	}
-	request := &pb.TradeSwapRequest{
-		OwnerAddress: ownerAddress,
-		InToken:      inToken,
-		OutToken:     outToken,
-		InAmount:     inAmount,
-		Slippage:     slippage,
-		Project:      project,
-	}
-
-	var response pb.TradeSwapResponse
-	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostTradeSwapWithPriorityFee returns a partially signed transaction for submitting a swap request with computeLimit and computePrice
-func (w *WSClient) PostTradeSwapWithPriorityFee(ctx context.Context, ownerAddress, inToken, outToken string, inAmount,
-	slippage float64, computeLimit uint32, computePrice uint64, projectStr string) (*pb.TradeSwapResponse, error) {
-	project, err := ProjectFromString(projectStr)
-	if err != nil {
-		return nil, err
-	}
-	request := &pb.TradeSwapRequest{
-		OwnerAddress: ownerAddress,
-		InToken:      inToken,
-		OutToken:     outToken,
-		InAmount:     inAmount,
-		Slippage:     slippage,
-		Project:      project,
-		ComputeLimit: computeLimit,
-		ComputePrice: computePrice,
-	}
-
-	var response pb.TradeSwapResponse
-	err = w.conn.Request(ctx, "PostTradeSwap", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostRouteTradeSwap returns a partially signed transaction(s) for submitting a swap request
-func (w *WSClient) PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error) {
-	var response pb.TradeSwapResponse
-	err := w.conn.Request(ctx, "PostRouteTradeSwap", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostOrder returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request := &pb.PostOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-		Project:           project,
-	}
-	var response pb.PostOrderResponse
-	err := w.conn.Request(ctx, "PostOrder", request, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -719,35 +551,6 @@ func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 	return w.PostSubmitBatch(ctx, batchRequest)
 }
 
-// SubmitTradeSwap builds a TradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := w.PostTradeSwap(ctx, owner, inToken, outToken, inAmount, slippage, project)
-	if err != nil {
-		return nil, err
-	}
-	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
-}
-
-// SubmitTradeSwapWithPriorityFee builds a TradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitTradeSwapWithPriorityFee(ctx context.Context, owner, inToken, outToken string,
-	inAmount, slippage float64, project string, computeLimit uint32, computePrice uint64, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := w.PostTradeSwapWithPriorityFee(ctx, owner, inToken, outToken, inAmount, slippage, computeLimit,
-		computePrice, project)
-	if err != nil {
-		return nil, err
-	}
-	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
-}
-
-// SubmitRouteTradeSwap builds a RouteTradeSwap transaction then signs it, and submits to the network.
-func (w *WSClient) SubmitRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	resp, err := w.PostRouteTradeSwap(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
-}
-
 // SubmitRaydiumSwap builds a Raydium Swap transaction then signs it, and submits to the network.
 func (w *WSClient) SubmitRaydiumSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
 	resp, err := w.PostRaydiumSwap(ctx, request)
@@ -929,223 +732,6 @@ func (w *WSClient) SubmitJupiterRouteSwap(ctx context.Context, request *pb.PostJ
 	return w.SignAndSubmitBatch(ctx, resp.Transactions, false, opts)
 }
 
-// SubmitOrder builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrder(ctx context.Context, owner, payer, market string, side pb.Side,
-	types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := w.PostOrder(ctx, owner, payer, market, side, types, amount, price, project, opts)
-	if err != nil {
-		return "", err
-	}
-
-	skipPreFlight := true
-	if opts.SkipPreFlight != nil {
-		skipPreFlight = *opts.SkipPreFlight
-	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
-}
-
-// PostCancelOrder builds a Serum cancel order.
-func (w *WSClient) PostCancelOrder(ctx context.Context, request *pb.PostCancelOrderRequest) (*pb.PostCancelOrderResponse, error) {
-	var response pb.PostCancelOrderResponse
-	err := w.conn.Request(ctx, "PostCancelOrder", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitCancelOrder builds a Serum cancel order, signs and submits it to the network.
-func (w *WSClient) SubmitCancelOrder(ctx context.Context, request *pb.PostCancelOrderRequest, skipPreFlight bool) (string, error) {
-	order, err := w.PostCancelOrder(ctx, request)
-	if err != nil {
-		return "", err
-	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
-}
-
-// PostCancelByClientOrderID builds a Serum cancel order by client ID.
-func (w *WSClient) PostCancelByClientOrderID(
-	ctx context.Context,
-	clientOrderID uint64,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-) (*pb.PostCancelOrderResponse, error) {
-	request := &pb.PostCancelByClientOrderIDRequest{
-		ClientOrderID:     clientOrderID,
-		OwnerAddress:      owner,
-		MarketAddress:     market,
-		OpenOrdersAddress: openOrders,
-		Project:           project,
-	}
-	var response pb.PostCancelOrderResponse
-	err := w.conn.Request(ctx, "PostCancelByClientOrderID", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitCancelByClientOrderID builds a Serum cancel order by client ID, signs and submits it to the network.
-func (w *WSClient) SubmitCancelByClientOrderID(
-	ctx context.Context,
-	clientOrderID uint64,
-	owner,
-	market,
-	openOrders string,
-	project pb.Project,
-	skipPreFlight bool,
-) (string, error) {
-	order, err := w.PostCancelByClientOrderID(ctx, clientOrderID, owner, market, openOrders, project)
-	if err != nil {
-		return "", err
-	}
-
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
-}
-
-func (w *WSClient) PostCancelAll(
-	ctx context.Context,
-	market,
-	owner string,
-	openOrdersAddresses []string,
-	project pb.Project,
-) (*pb.PostCancelAllResponse, error) {
-	request := &pb.PostCancelAllRequest{
-		Market:              market,
-		OwnerAddress:        owner,
-		OpenOrdersAddresses: openOrdersAddresses,
-		Project:             project,
-	}
-	var response pb.PostCancelAllResponse
-	err := w.conn.Request(ctx, "PostCancelAll", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-func (w *WSClient) SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, project pb.Project, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
-	orders, err := w.PostCancelAll(ctx, market, owner, openOrdersAddresses, project)
-	if err != nil {
-		return nil, err
-	}
-	return w.SignAndSubmitBatch(ctx, orders.Transactions, false, opts)
-}
-
-// PostSettle returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
-func (w *WSClient) PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project pb.Project) (*pb.PostSettleResponse, error) {
-	request := &pb.PostSettleRequest{
-		OwnerAddress:      owner,
-		Market:            market,
-		BaseTokenWallet:   baseTokenWallet,
-		QuoteTokenWallet:  quoteTokenWallet,
-		OpenOrdersAddress: openOrdersAccount,
-		Project:           project,
-	}
-	var response pb.PostSettleResponse
-	err := w.conn.Request(ctx, "PostSettle", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitSettle builds a market SubmitSettle transaction, signs it, and submits to the network.
-func (w *WSClient) SubmitSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project pb.Project, skipPreflight bool) (string, error) {
-	order, err := w.PostSettle(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount, project)
-	if err != nil {
-		return "", err
-	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, false)
-}
-
-func (w *WSClient) PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request := &pb.PostOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		Project:           project,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-	}
-	var response pb.PostOrderResponse
-	err := w.conn.Request(ctx, "PostReplaceByClientOrderID", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-func (w *WSClient) SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := w.PostReplaceByClientOrderID(ctx, owner, payer, market, side, types, amount, price, project, opts)
-	if err != nil {
-		return "", err
-	}
-	skipPreFlight := true
-	if opts.SkipPreFlight != nil {
-		skipPreFlight = *opts.SkipPreFlight
-	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
-}
-
-func (w *WSClient) PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request := &pb.PostReplaceOrderRequest{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              types,
-		Amount:            amount,
-		Price:             price,
-		Project:           project,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-		OrderID:           orderID,
-	}
-	var response pb.PostOrderResponse
-	err := w.conn.Request(ctx, "PostReplaceOrder", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-func (w *WSClient) SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (string, error) {
-	order, err := w.PostReplaceOrder(ctx, orderID, owner, payer, market, side, types, amount, price, project, opts)
-	if err != nil {
-		return "", err
-	}
-	skipPreFlight := true
-	if opts.SkipPreFlight != nil {
-		skipPreFlight = *opts.SkipPreFlight
-	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
-}
-
-func (w *WSClient) Close() error {
-	return w.conn.Close(errors.New("shutdown requested"))
-}
-
-// GetOrderbooksStream subscribes to a stream for changes to the requested market updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetOrderbooksStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetOrderbooksStream", &pb.GetOrderbooksRequest{
-		Markets: markets,
-		Limit:   limit,
-		Project: project,
-	}, func() *pb.GetOrderbooksStreamResponse {
-		var v pb.GetOrderbooksStreamResponse
-		return &v
-	})
-}
-
 // GetPumpFunSwapsStream subscribes to a stream for swap events related to a set of pumpdotfun tokens
 func (w *WSClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFunSwapsStreamRequest) (connections.Streamer[*pb.GetPumpFunSwapsStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunSwapsStream", req, func() *pb.GetPumpFunSwapsStreamResponse {
@@ -1158,30 +744,6 @@ func (w *WSClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFun
 func (w *WSClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunNewTokensStream", req, func() *pb.GetPumpFunNewTokensStreamResponse {
 		var v pb.GetPumpFunNewTokensStreamResponse
-		return &v
-	})
-}
-
-// GetMarketDepthsStream subscribes to a stream for changes to the requested market data updates (e.g. asks and bids. Set limit to 0 for all bids/ asks).
-func (w *WSClient) GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetMarketDepthsStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetMarketDepthsStream", &pb.GetMarketDepthsRequest{
-		Markets: markets,
-		Limit:   limit,
-		Project: project,
-	}, func() *pb.GetMarketDepthsStreamResponse {
-		var v pb.GetMarketDepthsStreamResponse
-		return &v
-	})
-}
-
-// GetTradesStream subscribes to a stream for trades as they execute. Set limit to 0 for all trades.
-func (w *WSClient) GetTradesStream(ctx context.Context, market string, limit uint32, project pb.Project) (connections.Streamer[*pb.GetTradesStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetTradesStream", &pb.GetTradesRequest{
-		Market:  market,
-		Limit:   limit,
-		Project: project,
-	}, func() *pb.GetTradesStreamResponse {
-		var v pb.GetTradesStreamResponse
 		return &v
 	})
 }
@@ -1208,18 +770,6 @@ func (w *WSClient) GetNewRaydiumPoolsByTransactionStream(ctx context.Context) (c
 			var v pb.GetNewRaydiumPoolsByTransactionResponse
 			return &v
 		})
-}
-
-// GetOrderStatusStream subscribes to a stream that shows updates to the owner's orders
-func (w *WSClient) GetOrderStatusStream(ctx context.Context, market, ownerAddress string, project pb.Project) (connections.Streamer[*pb.GetOrderStatusStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetOrderStatusStream", &pb.GetOrderStatusStreamRequest{
-		Market:       market,
-		OwnerAddress: ownerAddress,
-		Project:      project,
-	}, func() *pb.GetOrderStatusStreamResponse {
-		var v pb.GetOrderStatusStreamResponse
-		return &v
-	})
 }
 
 // GetRecentBlockHashStream subscribes to a stream for getting recent block hash.
@@ -1253,13 +803,6 @@ func (w *WSClient) GetPricesStream(ctx context.Context, projects []pb.Project, t
 		Tokens:   tokens,
 	}, func() *pb.GetPricesStreamResponse {
 		return &pb.GetPricesStreamResponse{}
-	})
-}
-
-// GetTickersStream subscribes to a stream for getting recent tickers of specified markets.
-func (w *WSClient) GetTickersStream(ctx context.Context, request *pb.GetTickersStreamRequest) (connections.Streamer[*pb.GetTickersStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetTickersStream", request, func() *pb.GetTickersStreamResponse {
-		return &pb.GetTickersStreamResponse{}
 	})
 }
 
@@ -1316,184 +859,6 @@ func (w *WSClient) GetBundleTipStream(ctx context.Context) (connections.Streamer
 		return &pb.GetBundleTipResponse{}
 	}
 	return connections.WSStreamProto(w.conn, ctx, "GetBundleTipStream", &pb.GetBundleTipRequest{}, newResponse)
-}
-
-// V2 Openbook
-
-// GetMarketsV2 returns the list of all available named markets
-func (w *WSClient) GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponse, error) {
-	var response pb.GetMarketsResponse
-	err := w.conn.Request(ctx, "GetMarketsV2", &pb.GetMarketsRequestV2{}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetOrderbookV2 returns the requested market's orderbook (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (w *WSClient) GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error) {
-	var response pb.GetOrderbookResponseV2
-	err := w.conn.Request(ctx, "GetOrderbookV2", &pb.GetOrderbookRequestV2{Market: market, Limit: limit}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetMarketDepthV2 returns the requested market's coalesced price data (e.g. asks and bids). Set limit to 0 for all bids / asks.
-func (w *WSClient) GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*pb.GetMarketDepthResponseV2, error) {
-	var response pb.GetMarketDepthResponseV2
-	err := w.conn.Request(ctx, "GetMarketDepthV2", &pb.GetMarketDepthRequestV2{Market: market, Limit: limit}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetTickersV2 returns the requested market tickets. Set market to "" for all markets.
-func (w *WSClient) GetTickersV2(ctx context.Context, market string) (*pb.GetTickersResponseV2, error) {
-	var response pb.GetTickersResponseV2
-	err := w.conn.Request(ctx, "GetTickersV2", &pb.GetTickersRequestV2{Market: market}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetOpenOrdersV2 returns all open orders by owner address and market
-func (w *WSClient) GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*pb.GetOpenOrdersResponse, error) {
-	var response pb.GetOpenOrdersResponse
-	err := w.conn.Request(ctx, "GetOpenOrdersV2", &pb.GetOpenOrdersRequestV2{Market: market, Address: owner, OpenOrdersAddress: openOrdersAddress, OrderID: orderID, ClientOrderID: clientOrderID}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// GetUnsettledV2 returns all OpenOrders accounts for a given market with the amounts of unsettled funds
-func (w *WSClient) GetUnsettledV2(ctx context.Context, market string, ownerAddress string) (*pb.GetUnsettledResponse, error) {
-	var response pb.GetUnsettledResponse
-	err := w.conn.Request(ctx, "GetUnsettledV2", &pb.GetUnsettledRequestV2{Market: market, OwnerAddress: ownerAddress}, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// PostOrderV2 returns a partially signed transaction for placing a Serum market order. Typically, you want to use SubmitOrder instead of this.
-func (w *WSClient) PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request := &pb.PostOrderRequestV2{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              orderType,
-		Amount:            amount,
-		Price:             price,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-	}
-	var response pb.PostOrderResponse
-	err := w.conn.Request(ctx, "PostOrderV2", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitOrderV2 builds a Serum market order, signs it, and submits to the network.
-func (w *WSClient) SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := w.PostOrderV2(ctx, owner, payer, market, side, orderType, amount, price, opts)
-	if err != nil {
-		return "", err
-	}
-	skipPreFlight := true
-	if opts.SkipPreFlight != nil {
-		skipPreFlight = *opts.SkipPreFlight
-	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
-}
-
-// PostCancelOrderV2 builds a Serum cancel order.
-func (w *WSClient) PostCancelOrderV2(ctx context.Context, request *pb.PostCancelOrderRequestV2) (*pb.PostCancelOrderResponseV2, error) {
-	var response pb.PostCancelOrderResponseV2
-	err := w.conn.Request(ctx, "PostCancelOrderV2", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitCancelOrderV2 builds a Serum cancel order, signs and submits it to the network.
-func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCancelOrderRequestV2, skipPreFlight bool) (*pb.PostSubmitBatchResponse, error) {
-	order, err := w.PostCancelOrderV2(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-
-	return w.SignAndSubmitBatch(ctx, order.Transactions, false, SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  &skipPreFlight,
-	})
-}
-
-// PostSettleV2 returns a partially signed transaction for settling market funds. Typically, you want to use SubmitSettle instead of this.
-func (w *WSClient) PostSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*pb.PostSettleResponse, error) {
-	request := &pb.PostSettleRequestV2{
-		OwnerAddress:      owner,
-		Market:            market,
-		BaseTokenWallet:   baseTokenWallet,
-		QuoteTokenWallet:  quoteTokenWallet,
-		OpenOrdersAddress: openOrdersAccount,
-	}
-	var response pb.PostSettleResponse
-	err := w.conn.Request(ctx, "PostSettleV2", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-// SubmitSettleV2 builds a market SubmitSettle transaction, signs it, and submits to the network.
-func (w *WSClient) SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error) {
-	order, err := w.PostSettleV2(ctx, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount)
-	if err != nil {
-		return "", err
-	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreflight, false, false)
-}
-
-func (w *WSClient) PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error) {
-	request := &pb.PostReplaceOrderRequestV2{
-		OwnerAddress:      owner,
-		PayerAddress:      payer,
-		Market:            market,
-		Side:              side,
-		Type:              orderType,
-		Amount:            amount,
-		Price:             price,
-		OpenOrdersAddress: opts.OpenOrdersAddress,
-		ClientOrderID:     opts.ClientOrderID,
-		OrderID:           orderID,
-	}
-	var response pb.PostOrderResponse
-	err := w.conn.Request(ctx, "PostReplaceOrderV2", request, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
-}
-
-func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error) {
-	order, err := w.PostReplaceOrderV2(ctx, orderID, owner, payer, market, side, orderType, amount, price, opts)
-	if err != nil {
-		return "", err
-	}
-	skipPreFlight := true
-	if opts.SkipPreFlight != nil {
-		skipPreFlight = *opts.SkipPreFlight
-	}
-	return w.SignAndSubmit(ctx, order.Transaction, skipPreFlight, false, false)
 }
 
 // GetRecentBlockHash returns recent block hash.
