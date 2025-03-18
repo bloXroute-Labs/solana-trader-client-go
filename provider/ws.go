@@ -666,7 +666,7 @@ func (w *WSClient) SignAndSubmitSnipe(ctx context.Context, transactions []*pb.Tr
 	return signatures, nil
 }
 
-func (w *WSClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage) (string, error) {
+func (w *WSClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage, revertProtection *bool) (string, error) {
 	if w.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -680,13 +680,14 @@ func (w *WSClient) SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionM
 		Transaction: &pb.TransactionMessageV2{
 			Content: txBase64,
 		},
+		RevertProtection: revertProtection,
 	}
 
-	response, err := w.PostSubmitPaladinV2(ctx, paladinRequest)
+	var response pb.PostSubmitResponse
+	err = w.conn.Request(ctx, "PostSubmitPaladinV2", paladinRequest, &response)
 	if err != nil {
-		return "", fmt.Errorf("failed to submit paladin request: %w", err)
+		return "", err
 	}
-
 	return response.Signature, nil
 }
 

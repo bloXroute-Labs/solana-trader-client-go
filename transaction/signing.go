@@ -78,16 +78,6 @@ func appendSignature(solanaTx *solana.Transaction, privateKey solana.PrivateKey)
 }
 
 func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) error {
-	messageContent, err := tx.Message.MarshalBinary()
-	if err != nil {
-		return fmt.Errorf("unable to encode message for signing: %w", err)
-	}
-
-	signedMessageContent, err := privateKey.Sign(messageContent)
-	if err != nil {
-		return fmt.Errorf("unable to sign message: %v", err)
-	}
-
 	zeroSigIndex := -1
 	for i, sig := range tx.Signatures {
 		if sig.IsZero() {
@@ -97,8 +87,19 @@ func replaceZeroSignature(tx *solana.Transaction, privateKey solana.PrivateKey) 
 			zeroSigIndex = i
 		}
 	}
+
 	if zeroSigIndex == -1 {
-		return errors.New("no zero signatures to replace in transaction")
+		return nil
+	}
+
+	messageContent, err := tx.Message.MarshalBinary()
+	if err != nil {
+		return fmt.Errorf("unable to encode message for signing: %w", err)
+	}
+
+	signedMessageContent, err := privateKey.Sign(messageContent)
+	if err != nil {
+		return fmt.Errorf("unable to sign message: %v", err)
 	}
 
 	tx.Signatures[zeroSigIndex] = signedMessageContent

@@ -56,7 +56,7 @@ type HTTPClientTraderAPI interface {
 	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error)
-	SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage) (string, error)
+	SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage, revertProtection *bool) (string, error)
 	SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool,
 		opts SubmitOpts) (*pb.PostSubmitBatchResponse, error)
 	PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, project pb.Project) (*pb.TradeSwapResponse, error)
@@ -170,7 +170,7 @@ type HTTPClientTraderAPISubmitOnly interface {
 	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error)
-	SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage) (string, error)
+	SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage, revertProtection *bool) (string, error)
 	SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool,
 		opts SubmitOpts) (*pb.PostSubmitBatchResponse, error)
 }

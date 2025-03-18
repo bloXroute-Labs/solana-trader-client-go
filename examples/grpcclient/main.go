@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"math/rand"
 	"os"
 	"sort"
@@ -1304,26 +1305,38 @@ func callPlaceOrderBundle(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr,
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// generate a random clientOrderID for this order
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID := rand.Uint64()
-
-	opts := provider.PostOrderOpts{
-		ClientOrderID: clientOrderID,
-		SkipPreFlight: config.BoolPtr(true),
-	}
-
-	// create order without actually submitting
-	response, err := g.PostOrderV2WithPriorityFee(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType,
-		orderAmount, orderPrice, computeLimit, computePrice, &tipAmount, opts)
+	response, err := g.GetRecentBlockHash(ctx)
 	if err != nil {
-		log.Errorf("failed to create order (%v)", err)
+		log.Errorf("error with GetRecentBlockHash request: %v", err)
 		return true
 	}
-	log.Infof("created unsigned place order transaction: %v", response.Transaction)
 
-	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
-		Content: response.Transaction.Content}, true, true, false)
+	bh := solana.MustHashFromBase58(response.BlockHash)
+
+	wlt := solana.NewWallet()
+	privateKey, err := transaction.LoadPrivateKeyFromEnv()
+	priceLimitIx, err := computebudget.NewSetComputeUnitPriceInstruction(uint64(200000000)).ValidateAndBuild()
+	if err != nil {
+		return false
+	}
+
+	tx1, err := solana.NewTransaction([]solana.Instruction{
+		priceLimitIx,
+		system.NewTransferInstruction(10000000, privateKey.PublicKey(), solana.MustPublicKeyFromBase58("FZwLKcQupnTy2CbaVMGGsutxDtjv9CqYVDJxiNZSj5Xi")).Build(),
+	}, bh, solana.TransactionPayer(privateKey.PublicKey()))
+	if err != nil {
+		return false
+	}
+
+	tx1.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+		if key.Equals(privateKey.PublicKey()) {
+			return &privateKey
+		}
+		return &wlt.PrivateKey
+	})
+	tru := true
+	resp, err := g.SignAndSubmitPaladin(ctx, &pb.TransactionMessage{
+		Content: tx1.MustToBase64()}, &tru)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true
