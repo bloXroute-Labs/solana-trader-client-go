@@ -40,37 +40,48 @@ import (
 )
 
 func main() {
-	// GPRC
+	// GRPC
 	g, err := provider.NewGRPCClient()
 	if err != nil {
 		panic(err)
 	}
 
-	orderbook, err := g.GetOrderbook(context.Background(), "ETH/USDT", 5, pb.Project_P_OPENBOOK) // in this case limit to 5 bids and asks. 0 for no limit
+	// Get Raydium pools
+	pools, err := g.GetRaydiumPools(context.Background(), &pb.GetRaydiumPoolsRequest{})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(orderbook)
+	fmt.Println("Raydium pools:", pools)
 
 	// HTTP
 	h := provider.NewHTTPClient()
-	tickers, err := h.GetTickers(context.Background(), "ETHUSDT", pb.Project_P_OPENBOOK)
+	
+	// Get token prices from Jupiter
+	prices, err := h.GetJupiterPrices(context.Background(), &pb.GetJupiterPricesRequest{
+		Tokens: []string{"So11111111111111111111111111111111111111112", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},
+	})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(tickers)
+	fmt.Println("Jupiter prices:", prices)
 	
 	// WS
 	w, err := provider.NewWSClient()
 	if err != nil {
 		panic(err)
 	}
-	// note that open orders is a slow function call
-	openOrders, err := w.GetOpenOrders(context.Background(), "ETH/USDT", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", "", pb.Project_P_OPENBOOK)
+	
+	// Get swap quotes from Raydium
+	quotes, err := w.GetRaydiumQuotes(context.Background(), &pb.GetRaydiumQuotesRequest{
+		InToken:  "So11111111111111111111111111111111111111112", // SOL
+		OutToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+		InAmount: 0.01,
+		Slippage: 0.5,
+	})
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(openOrders)
+	fmt.Println("Raydium quotes:", quotes)
 }
 
 ```
@@ -95,17 +106,37 @@ func main() {
 		panic(err)
 	}
 
-	stream, err := g.GetOrderbookStream(ctx, []string{"SOL/USDT"}, 5, pb.Project_P_OPENBOOK)
+	// Stream prices updates for SOL token
+	stream, err := g.GetPricesStream(ctx, []pb.Project{pb.Project_P_RAYDIUM}, 
+		[]string{"So11111111111111111111111111111111111111112"})
 	if err != nil {
 		panic(err)
 	}
 	
-	// wrap result in channel for easy of use
-	orderbookCh := make(chan *pb.GetOrderbooksStreamResponse)
-	stream.Into(orderbookCh)
+	// Wrap result in channel for ease of use
+	pricesCh := make(chan *pb.GetPricesStreamResponse)
+	stream.Into(pricesCh)
 	for i := 0; i < 3; i++ {
-		orderbook := <-orderbookCh
-		fmt.Println(orderbook)
+		prices := <-pricesCh
+		fmt.Println("Price update:", prices)
+	}
+	
+	// Example of pool reserves stream
+	poolsStream, err := g.GetPoolReservesStream(ctx, &pb.GetPoolReservesStreamRequest{
+		Projects: []pb.Project{pb.Project_P_RAYDIUM},
+		Pools: []string{
+			"58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2", // SOL-USDC pool
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	
+	poolsCh := make(chan *pb.GetPoolReservesStreamResponse)
+	poolsStream.Into(poolsCh)
+	for i := 0; i < 3; i++ {
+		poolUpdate := <-poolsCh
+		fmt.Println("Pool reserves update:", poolUpdate)
 	}
 }
 ```
