@@ -1138,7 +1138,7 @@ func (h *HTTPClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return response, nil
 }
 
-// GetRecentBlockHash returns recent block hash, supports optional offset.
+// GetRecentBlockHashV2 returns recent block hash, supports optional offset.
 func (h *HTTPClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
 	url := fmt.Sprintf("%s/api/v2/system/blockhash?offset=%d", h.baseURL, offset)
 	response := new(pb.GetRecentBlockHashResponseV2)

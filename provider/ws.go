@@ -1200,7 +1200,7 @@ func (w *WSClient) GetNewRaydiumPoolsStream(ctx context.Context, includeCPMM boo
 		})
 }
 
-// GetNewRaydiumPoolsByTranasctionStream subscribes to a stream for new Raydium Pools when they are created with some
+// GetNewRaydiumPoolsByTransactionStream subscribes to a stream for new Raydium Pools when they are created with some
 // more detailed info compared to the standard straem, while sacrificing some speed
 func (w *WSClient) GetNewRaydiumPoolsByTransactionStream(ctx context.Context) (connections.Streamer[*pb.GetNewRaydiumPoolsByTransactionResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetNewRaydiumPoolsByTransactionStream",

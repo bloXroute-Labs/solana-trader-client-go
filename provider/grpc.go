@@ -21,7 +21,7 @@ func (g *GRPCClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlock
 	return g.apiClient.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
 }
 
-// GetRecentBlockHash returns recent block hash, supports optional offset.
+// GetRecentBlockHashV2 returns recent block hash, supports optional offset.
 func (g *GRPCClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
 	return g.apiClient.GetRecentBlockHashV2(ctx, &pb.GetRecentBlockHashRequestV2{Offset: offset})
 }
