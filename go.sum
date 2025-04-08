@@ -11,12 +11,10 @@ github.com/benbjohnson/clock v1.3.5 h1:VvXlSJBzZpA/zum6Sj74hxwYI2DIxRWuNIoXAzHZz
 github.com/benbjohnson/clock v1.3.5/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/blendle/zapdriver v1.3.1 h1:C3dydBOWYRiOk+B8X9IVZ5IOe+7cl+tGOexN4QqHfpE=
 github.com/blendle/zapdriver v1.3.1/go.mod h1:mdXfREi6u5MArG4j9fewC+FGnXaBR+T4Ox4J2u4eHCc=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250226202856-64892700d9ad h1:6ZZbVoTze6tUemykaXw5pe5wICruI4j+OOY49JWBEm0=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250226202856-64892700d9ad/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250317201339-613c4b196760 h1:EfnOJOAasD+qZY3aF5Zs9E2yICncqoa0RqKsxBjUpgg=
-github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250317201339-613c4b196760/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250318014321-3bcfd1425d22 h1:8sBhUMLbdF5zVtxmUnjHNOT32XucNxPQArhyDw8V2XM=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250318014321-3bcfd1425d22/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250326175608-b60a6a33d927 h1:JxVsmqLmG+XHFv6keyqeoqAWCf3kTK6En2bjkY573nw=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250326175608-b60a6a33d927/go.mod h1:OPAXgJCllC8aCvjRO1uOvpd1eHP0x5Rfr61oQAZEX8Y=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
