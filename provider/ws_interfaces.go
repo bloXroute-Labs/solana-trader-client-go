@@ -147,6 +147,7 @@ type WSClientTraderAPI interface {
 		includeFailed bool,
 	) (connections.Streamer[*api.GetSwapsStreamResponse], error)
 	GetBlockStream(ctx context.Context) (connections.Streamer[*api.GetBlockStreamResponse], error)
+	GetPumpFunNewAmmPoolStream(ctx context.Context, req *api.GetPumpFunNewAmmPoolStreamRequest) (connections.Streamer[*api.GetPumpFunNewAmmPoolStreamResponse], error)
 	GetPriorityFeeStream(ctx context.Context, project api.Project, percentile *float64) (connections.Streamer[*api.GetPriorityFeeResponse], error)
 	GetPriorityFeeByProgramStream(ctx context.Context, programs []string) (connections.Streamer[*api.GetPriorityFeeByProgramResponse], error)
 	GetBundleTipStream(ctx context.Context) (connections.Streamer[*api.GetBundleTipResponse], error)

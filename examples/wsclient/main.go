@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
-	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
@@ -357,7 +358,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetPumpFunNewTokensWSStreamWrap,
 		description: "get pump fun new token stream",
 	},
-
+	"getPumpFunNewAmmPoolStream": {
+		run:         callGetPumpFunNewAmmPoolWSStream,
+		description: "get new amm pools on pump swap",
+	},
 	"getBundleTipStream": {
 		run:         callGetBundleTipWSStream,
 		description: "get bundle tip stream",
@@ -2269,6 +2273,35 @@ func callGetPumpFunNewTokensWSStream(w provider.WSClientTraderAPI) (string, bool
 		mint = v.Mint
 	}
 	return mint, false
+}
+
+func callGetPumpFunNewAmmPoolWSStream(w provider.WSClientTraderAPI) bool {
+	log.Info("starting GetPumpFunNewAmmPool stream")
+
+	wp, err := provider.NewWSClientPumpNY()
+	if err != nil {
+		log.Errorf("failed to create pump fun provider: %v", err)
+		return true
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := wp.GetPumpFunNewAmmPoolStream(ctx, &pb.GetPumpFunNewAmmPoolStreamRequest{})
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewAmmPool stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+	}
+	return false
 }
 
 func callGetPumpFunSwapsWSStream(w provider.WSClientTraderAPI, mint string) bool {

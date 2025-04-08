@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
@@ -354,7 +355,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetpumpFunNewTokenGRPCStreamWrap,
 		description: "get pump fun new token stream",
 	},
-
+	"getPumpFunNewAmmPoolStream": {
+		run:         callGetPumpFunNewAmmPoolGRPCStream,
+		description: "get new amm pools on pump swap",
+	},
 	"getBundleTipStream": {
 		run:         callGetBundleTipGRPCStream,
 		description: "get bundle tip stream",
@@ -2236,6 +2240,35 @@ func callGetPumpFunNewTokensGRPCStream(g provider.GRPCClientTraderAPI) (string, 
 		mint = v.Mint
 	}
 	return mint, false
+}
+
+func callGetPumpFunNewAmmPoolGRPCStream(g provider.GRPCClientTraderAPI) bool {
+	gg, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		log.Errorf("failed to create pump provider: %v", err)
+		return true
+	}
+
+	log.Info("starting GetPumpFunNewAmmPool stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := gg.GetPumpFunNewAmmPoolStream(ctx, &pb.GetPumpFunNewAmmPoolStreamRequest{})
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewAmmPool stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+	}
+	return false
 }
 
 func callGetPumpFunSwapsGRPCStream(g provider.GRPCClientTraderAPI, mint string) bool {

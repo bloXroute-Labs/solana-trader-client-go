@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.23.4
 
 require (
-	github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250318014321-3bcfd1425d22
+	github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250326175608-b60a6a33d927
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.12.0
 	github.com/gorilla/websocket v1.5.3

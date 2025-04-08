@@ -1155,6 +1155,14 @@ func (w *WSClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFun
 	})
 }
 
+// GetPumpFunNewAmmPoolStream subscribes to a stream for new AMM pool events
+func (w *WSClient) GetPumpFunNewAmmPoolStream(ctx context.Context, req *pb.GetPumpFunNewAmmPoolStreamRequest) (connections.Streamer[*pb.GetPumpFunNewAmmPoolStreamResponse], error) {
+	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunNewAmmPoolStream", req, func() *pb.GetPumpFunNewAmmPoolStreamResponse {
+		var v pb.GetPumpFunNewAmmPoolStreamResponse
+		return &v
+	})
+}
+
 // GetPumpFunNewTokensStream subscribes to a stream for pumpdotfun's new pool events
 func (w *WSClient) GetPumpFunNewTokensStream(ctx context.Context, req *pb.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*pb.GetPumpFunNewTokensStreamResponse], error) {
 	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunNewTokensStream", req, func() *pb.GetPumpFunNewTokensStreamResponse {

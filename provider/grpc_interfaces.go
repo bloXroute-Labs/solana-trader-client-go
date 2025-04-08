@@ -157,6 +157,7 @@ type GRPCClientTraderAPI interface {
 		ctx context.Context, includeCPMM bool,
 	) (connections.Streamer[*pb.GetNewRaydiumPoolsByTransactionResponse], error)
 	GetBlockStream(ctx context.Context) (connections.Streamer[*pb.GetBlockStreamResponse], error)
+	GetPumpFunNewAmmPoolStream(ctx context.Context, req *pb.GetPumpFunNewAmmPoolStreamRequest) (connections.Streamer[*pb.GetPumpFunNewAmmPoolStreamResponse], error)
 	GetPriorityFeeStream(ctx context.Context, project pb.Project, percentile *float64) (connections.Streamer[*pb.GetPriorityFeeResponse], error)
 	GetPriorityFeeByProgramStream(ctx context.Context, programs []string) (connections.Streamer[*pb.GetPriorityFeeByProgramResponse], error)
 	GetBundleTipStream(ctx context.Context) (connections.Streamer[*pb.GetBundleTipResponse], error)
