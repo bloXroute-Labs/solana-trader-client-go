@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
-	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
@@ -182,32 +182,10 @@ var ExampleEndpoints = map[string]struct {
 		description: "fetch all available markets",
 	},
 
-	"getTrades": {
-		run:         callTradesHTTP,
-		description: "get trades",
-	},
-
 	"getRaydiumPoolReserve": {
 		run:         callRaydiumPoolReserveHTTP,
 		description: "get raydium pool reserve",
 	},
-	"getMarkets": {
-		run:         callMarketsHTTP,
-		description: "fetch all available markets",
-	},
-	"getOrderbook": {
-		run:         callOrderbookHTTP,
-		description: "fetch orderbook for specific market",
-	},
-	"getMarketDepth": {
-		run:         callMarketDepthHTTP,
-		description: "get market depth",
-	},
-	"getTickers": {
-		run:         callTickersHTTP,
-		description: "get tickers",
-	},
-
 	"getTransaction": {
 		run:         callGetTransactionHTTP,
 		description: "get tickers",
@@ -221,10 +199,6 @@ var ExampleEndpoints = map[string]struct {
 		run:         callRaydiumPoolsHTTP,
 		description: "get raydium pools",
 	},
-	"getPrice": {
-		run:         callPriceHTTP,
-		description: "get raydium pools",
-	},
 	"getRecentBlockhash": {
 		run:         callGetRecentBlockHashHTTP,
 		description: "get recent blockhash",
@@ -236,19 +210,6 @@ var ExampleEndpoints = map[string]struct {
 	"getJupiterPrices": {
 		run:         callJupiterPricesHTTP,
 		description: "get jupiter prices",
-	},
-
-	"getUnsettled": {
-		run:         callUnsettledHTTP,
-		description: "get unsettled",
-	},
-	"getAccountBalance": {
-		run:         callGetAccountBalanceHTTP,
-		description: "get account balance",
-	},
-	"getQuotes": {
-		run:         callGetQuotesHTTP,
-		description: "get quotes",
 	},
 
 	"getRaydiumQuotes": {
@@ -321,36 +282,6 @@ var ExampleEndpoints = map[string]struct {
 		requiresAdditionalEnvironmentVars: true,
 	},
 
-	"placeOrderWithPriorityFee": {
-		run:                               callPlaceOrderHTTPWithPriorityFeeWrap,
-		description:                       "place order (openbook) with priority fee",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"replaceByClientOrderID": {
-		run:                               callReplaceByClientOrderIDWrap,
-		description:                       "replace order by client id (openbook)",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"replaceOrder": {
-		run:                               callReplaceOrderWrap,
-		description:                       "replace order (openbook)",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"tradeSwap": {
-		run:                               callTradeSwapWrap,
-		description:                       "trade swap",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"routeTradeSwap": {
-		run:                               callRouteTradeSwapWrap,
-		description:                       "route trade swap",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
 	"raydiumTradeSwap": {
 		run:                               callRaydiumSwapWrap,
 		description:                       "raydium trade swap",
@@ -408,110 +339,6 @@ var ExampleEndpoints = map[string]struct {
 		description:                       "call jupiter swap with instructions",
 		requiresAdditionalEnvironmentVars: true,
 	},
-
-	"cancelAll": {
-		run:                               cancelAllWrap,
-		description:                       "cancel all test (run order lifecycle before)",
-		requiresAdditionalEnvironmentVars: true,
-	},
-}
-
-func callMarketsHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	markets, err := h.GetMarketsV2(ctx)
-	if err != nil {
-		log.Errorf("error with GetMarkets request: %v", err)
-		return true
-	} else {
-		log.Info(markets)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callOrderbookHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	orderbook, err := h.GetOrderbookV2(ctx, "SOL-USDT", 0)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	fmt.Println()
-
-	orderbook, err = h.GetOrderbookV2(ctx, "SOLUSDT", 2)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOLUSDT: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	fmt.Println()
-
-	orderbook, err = h.GetOrderbookV2(ctx, "SOL:USDC", 3)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	return false
-}
-
-func callMarketDepthHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	mdData, err := h.GetMarketDepthV2(ctx, "SOL-USDC", 0)
-	if err != nil {
-		log.Errorf("error with GetMarketDepth request for SOL-USDC: %v", err)
-		return true
-	} else {
-		log.Info(mdData)
-	}
-
-	return false
-}
-
-func callUnsettledHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	response, err := h.GetUnsettledV2(ctx, "SOLUSDT", "HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc")
-	if err != nil {
-		log.Errorf("error with GetUnsettled request for SOLUSDT: %v", err)
-		return true
-	} else {
-		log.Info(response)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetAccountBalanceHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	response, err := h.GetAccountBalance(ctx, "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7")
-	if err != nil {
-		log.Errorf("error with GetAccountBalance request for HxFLKUAmAMLz1jtT3hbvCMELwH5H9tpM2QugP8sKyfhc: %v", err)
-		return true
-	} else {
-		log.Info(response)
-	}
-
-	fmt.Println()
-	return false
 }
 
 func callGetTokenAccountsHTTPWrap(h provider.HTTPClientTraderAPI) bool {
@@ -530,22 +357,6 @@ func callGetTokenAccountsHTTP(h provider.HTTPClientTraderAPI, ownerAddr string) 
 		return true
 	} else {
 		log.Info(response)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callTradesHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	trades, err := h.GetTrades(ctx, "SOLUSDT", 5, pb.Project_P_OPENBOOK)
-	if err != nil {
-		log.Errorf("error with GetTrades request for SOLUSDT: %v", err)
-		return true
-	} else {
-		log.Info(trades)
 	}
 
 	fmt.Println()
@@ -654,22 +465,6 @@ func callGetTransactionHTTP(h provider.HTTPClientTraderAPI) bool {
 	return false
 }
 
-func callPriceHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	prices, err := h.GetPrice(ctx, []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
-	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and BONK: %v", err)
-		return true
-	} else {
-		log.Info(prices)
-	}
-
-	fmt.Println()
-	return false
-}
-
 func callRaydiumPricesHTTP(h provider.HTTPClientTraderAPI) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -700,55 +495,6 @@ func callJupiterPricesHTTP(h provider.HTTPClientTraderAPI) bool {
 		return true
 	} else {
 		log.Info(prices)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callTickersHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	tickers, err := h.GetTickersV2(ctx, "SOLUSDT")
-	if err != nil {
-		log.Errorf("error with GetTickers request for SOLUSDT: %v", err)
-		return true
-	} else {
-		log.Info(tickers)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetQuotesHTTP(h provider.HTTPClientTraderAPI) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	inToken := "So11111111111111111111111111111111111111112"
-	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-	amount := 0.01
-	slippage := float64(5)
-	limit := 5
-
-	quotes, err := h.GetQuotes(ctx, inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if len(quotes.Quotes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
-		return true
-	}
-	for _, quote := range quotes.Quotes {
-		if len(quote.Routes) == 0 {
-			log.Errorf("no routes gotten for project %s", quote.Project)
-			return true
-		} else {
-			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
-		}
 	}
 
 	fmt.Println()
@@ -980,46 +726,6 @@ func callPlaceOrderHTTP(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string
 	return false
 }
 
-func callPlaceOrderHTTPWithPriorityFeeWrap(h provider.HTTPClientTraderAPI) bool {
-	return callPlaceOrderHTTPWithPriorityFee(h, Environment.PublicKey, Environment.OpenOrdersAddress, sideAsk, typeLimit,
-		computeLimit, computePrice)
-}
-
-func callPlaceOrderHTTPWithPriorityFee(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string, orderSide string, orderType string,
-	computeLimit uint32, computePrice uint64) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	// generate a random clientOrderId for this order
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID := rand.Uint64()
-
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID,
-		OpenOrdersAddress: ooAddr,
-	}
-
-	// create order without actually submitting
-	response, err := h.PostOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr, orderSide, orderType,
-		orderAmount, orderPrice, computeLimit, computePrice, opts)
-	if err != nil {
-		log.Errorf("failed to create order (%v)", err)
-		return true
-	}
-	log.Infof("created unsigned place order transaction: %v", response.Transaction)
-
-	// sign/submit transaction after creation
-	sig, err := h.SubmitOrderV2WithPriorityFee(ctx, ownerAddr, ownerAddr, marketAddr,
-		orderSide, orderType, orderAmount, orderPrice, computeLimit, computePrice, opts)
-	if err != nil {
-		log.Errorf("failed to submit order (%v)", err)
-	}
-
-	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
-
-	return false
-}
-
 func callPlaceOrderBundleUsingBatchHTTPWithWrap(h provider.HTTPClientTraderAPI) bool {
 	return callPlaceOrderBundleUsingBatchHTTP(h, Environment.PublicKey, 100000)
 }
@@ -1147,330 +853,6 @@ func callPlaceOrderWithStakedRPCsHTTP(h provider.HTTPClientTraderAPI, ownerAddr 
 	return false
 }
 
-func callCancelByClientOrderIDHTTP(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string, clientOrderID uint64) bool {
-	time.Sleep(60 * time.Second)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	_, err := h.SubmitCancelOrderV2(ctx, "", clientOrderID, sideAsk, ownerAddr,
-		marketAddr, ooAddr, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(false),
-		})
-	if err != nil {
-		log.Errorf("failed to cancel order by client ID (%v)", err)
-		return true
-	}
-
-	log.Infof("canceled order for clientOrderID %v", clientOrderID)
-	return false
-}
-
-func callPostSettleHTTPWrap(h provider.HTTPClientTraderAPI) bool {
-	return callPostSettleHTTP(h, Environment.PublicKey, Environment.OpenOrdersAddress)
-}
-
-func callPostSettleHTTP(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string) bool {
-	time.Sleep(60 * time.Second)
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	sig, err := h.SubmitSettleV2(ctx, ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7", "4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
-	if err != nil {
-		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
-		return true
-	}
-
-	log.Infof("response signature received: %v", sig)
-	return false
-}
-
-func cancelAllWrap(h provider.HTTPClientTraderAPI) bool {
-	return cancelAll(h, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-}
-
-func cancelAll(h provider.HTTPClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting cancel all test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	clientOrderID2 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
-
-	// Place 2 orders in orderbook
-	log.Info("placing orders")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #1, signature %s", sig)
-
-	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check orders are there
-	orders, err := h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found1 := false
-	found2 := false
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = true
-			continue
-		}
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
-			found2 = true
-		}
-	}
-	if !(found1 && found2) {
-		log.Error("one/both orders not found in orderbook")
-		return true
-	}
-	log.Info("2 orders placed successfully")
-
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-
-	time.Sleep(time.Minute)
-
-	orders, err = h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	if len(orders.Orders) != 0 {
-		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
-		return true
-	}
-	log.Info("orders cancelled")
-
-	fmt.Println()
-	callPostSettleHTTP(h, ownerAddr, ooAddr)
-	return false
-}
-
-func callReplaceByClientOrderIDWrap(h provider.HTTPClientTraderAPI) bool {
-	return callReplaceByClientOrderID(h, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-}
-
-func callReplaceByClientOrderID(h provider.HTTPClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting replace by client order ID test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
-
-	// Place order in orderbook
-	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	} else {
-		log.Infof("submitting place order #1, signature %s", sig)
-	}
-	time.Sleep(time.Minute)
-	// Check order is there
-	orders, err := h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found1 := false
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = true
-			continue
-		}
-	}
-	if !(found1) {
-		log.Error("order not found in orderbook")
-		return true
-	}
-	log.Info("order placed successfully")
-
-	// replacing order
-	sig, err = h.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice/2, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check order #2 is in orderbook
-	orders, err = h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found2 := false
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) && order.Price == orderPrice/2 {
-			found2 = true
-		}
-	}
-	if !(found2) {
-		log.Error("order #2 not found in orderbook")
-		return true
-	}
-	log.Info("order #2 placed successfully")
-
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-	return false
-}
-
-func callReplaceOrderWrap(h provider.HTTPClientTraderAPI) bool {
-	return callReplaceOrder(h, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-}
-
-func callReplaceOrder(h provider.HTTPClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting replace order test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	clientOrderID2 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
-
-	// Place order in orderbook
-	log.Info("placing order")
-	sig, err := h.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	} else {
-		log.Infof("submitting place order #1, signature %s", sig)
-	}
-	time.Sleep(time.Minute)
-	// Check orders are there
-	orders, err := h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	var found1 *pb.Order
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = order
-			continue
-		}
-	}
-	if found1 == nil {
-		log.Error("order not found in orderbook")
-		return true
-	} else {
-		log.Info("order placed successfully")
-	}
-
-	opts.ClientOrderID = clientOrderID2
-	sig, err = h.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, typeLimit, orderAmount, orderPrice/2, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check orders are there
-	orders, err = h.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	var found2 *pb.Order
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
-			found2 = order
-		}
-	}
-	if found2 == nil {
-		log.Error("order 2 not found in orderbook")
-		return true
-	} else {
-		log.Info("order 2 placed successfully")
-	}
-
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-	return false
-}
-
 func callGetRecentBlockHashHTTP(h provider.HTTPClientTraderAPI) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -1484,30 +866,6 @@ func callGetRecentBlockHashHTTP(h provider.HTTPClientTraderAPI) bool {
 	}
 
 	fmt.Println()
-	return false
-}
-
-func callTradeSwapWrap(h provider.HTTPClientTraderAPI) bool {
-	return callTradeSwap(h, Environment.PublicKey)
-}
-
-func callTradeSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool {
-	log.Info("starting trade swap test")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	log.Info("trade swap")
-	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "So11111111111111111111111111111111111111112",
-		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  config.BoolPtr(false),
-		})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("trade swap transaction signature : %s", sig)
 	return false
 }
 
@@ -1847,47 +1205,6 @@ func callRaydiumSwapInstructions(h provider.HTTPClientTraderAPI, ownerAddr strin
 	}
 	log.Infof("Raydium swap transaction signature : %s", sig)
 	return false
-}
-
-func callRouteTradeSwapWrap(h provider.HTTPClientTraderAPI) bool {
-	return callRouteTradeSwap(h, Environment.PublicKey)
-}
-
-func callRouteTradeSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool {
-	log.Info("starting route trade swap test")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	log.Info("route trade swap")
-	sig, err := h.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
-		OwnerAddress: ownerAddr,
-		Project:      pb.Project_P_RAYDIUM,
-		Slippage:     0.1,
-		Steps: []*pb.RouteStep{
-			{
-				InToken:      "So11111111111111111111111111111111111111112",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
-				},
-			},
-		},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("route trade swap transaction signature : %s", sig)
-	return false
-
 }
 
 func callGetPriorityFeeHTTP(h provider.HTTPClientTraderAPI) bool {

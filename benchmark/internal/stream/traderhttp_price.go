@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"go.uber.org/zap"
-	"time"
 )
 
 type traderHTTPPriceStream struct {
@@ -18,7 +19,7 @@ type traderHTTPPriceStream struct {
 	interval time.Duration
 }
 
-func NewTraderHTTPPriceStream(opts ...TraderHTTPPriceOpt) (Source[DurationUpdate[*pb.GetPriceResponse], QuoteResult], error) {
+func NewTraderHTTPPriceStream(opts ...TraderHTTPPriceOpt) (Source[DurationUpdate[*pb.GetJupiterPricesResponse], QuoteResult], error) {
 	s := &traderHTTPPriceStream{
 		h:        provider.NewHTTPClient(),
 		interval: defaultInterval,
@@ -44,7 +45,7 @@ func (s traderHTTPPriceStream) Name() string {
 }
 
 // Run stops when parent ctx is canceled
-func (s traderHTTPPriceStream) Run(parent context.Context) ([]RawUpdate[DurationUpdate[*pb.GetPriceResponse]], error) {
+func (s traderHTTPPriceStream) Run(parent context.Context) ([]RawUpdate[DurationUpdate[*pb.GetJupiterPricesResponse]], error) {
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
@@ -53,25 +54,23 @@ func (s traderHTTPPriceStream) Run(parent context.Context) ([]RawUpdate[Duration
 		ticker = time.NewTicker(s.interval)
 	}
 
-	return collectOrderedUpdates(ctx, ticker, func() (*pb.GetPriceResponse, error) {
-		res, err := s.h.GetPrice(ctx, []string{s.mint})
+	return collectOrderedUpdates(ctx, ticker, func() (*pb.GetJupiterPricesResponse, error) {
+		res, err := s.h.GetJupiterPrices(ctx, &pb.GetJupiterPricesRequest{Tokens: []string{s.mint}})
 		if err != nil {
 			return nil, err
 		}
 
-		filteredRes := &pb.GetPriceResponse{TokenPrices: nil}
+		filteredRes := &pb.GetJupiterPricesResponse{TokenPrices: nil}
 		for _, price := range res.TokenPrices {
-			if price.Project == pb.Project_P_JUPITER {
-				filteredRes.TokenPrices = append(filteredRes.TokenPrices, price)
-			}
+			filteredRes.TokenPrices = append(filteredRes.TokenPrices, price)
 		}
 		return filteredRes, nil
-	}, &pb.GetPriceResponse{}, func(err error) {
+	}, &pb.GetJupiterPricesResponse{}, func(err error) {
 		s.log().Errorw("could not fetch price", "err", err)
 	})
 }
 
-func (s traderHTTPPriceStream) Process(updates []RawUpdate[DurationUpdate[*pb.GetPriceResponse]], removeDuplicates bool) (results map[int][]ProcessedUpdate[QuoteResult], duplicates map[int][]ProcessedUpdate[QuoteResult], err error) {
+func (s traderHTTPPriceStream) Process(updates []RawUpdate[DurationUpdate[*pb.GetJupiterPricesResponse]], removeDuplicates bool) (results map[int][]ProcessedUpdate[QuoteResult], duplicates map[int][]ProcessedUpdate[QuoteResult], err error) {
 	results = make(map[int][]ProcessedUpdate[QuoteResult])
 	duplicates = make(map[int][]ProcessedUpdate[QuoteResult])
 

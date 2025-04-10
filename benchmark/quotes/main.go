@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/actor"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
@@ -12,8 +15,6 @@ import (
 	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
-	"os"
-	"time"
 )
 
 // requires AUTH_HEADER and PRIVATE_KEY to work.
@@ -128,7 +129,7 @@ func run(c *cli.Context) error {
 
 	var (
 		tradeWSUpdates    []stream.RawUpdate[*pb.GetPricesStreamResponse]
-		tradeHTTPUpdates  []stream.RawUpdate[stream.DurationUpdate[*pb.GetPriceResponse]]
+		tradeHTTPUpdates  []stream.RawUpdate[stream.DurationUpdate[*pb.GetJupiterPricesResponse]]
 		jupiterUpdates    []stream.RawUpdate[stream.DurationUpdate[*stream.JupiterPriceResponse]]
 		errCh             = make(chan error, 2)
 		runCtx, runCancel = context.WithTimeout(ctx, maxRuntime)

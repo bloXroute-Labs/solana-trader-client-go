@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 const (
@@ -102,8 +103,13 @@ func (j *jupiterSwap) Swap(ctx context.Context, iterations int) ([]SwapEvent, er
 				}
 
 				info := fmt.Sprintf("%v => %v: %v", inputMint, outputMint, amount)
-
-				postResponse, err := j.client.PostTradeSwap(ctx, j.publicKey, inputMint, outputMint, amount, j.slippage, pb.Project_P_JUPITER)
+				postResponse, err := j.client.PostJupiterSwap(ctx, &pb.PostJupiterSwapRequest{
+					OwnerAddress: j.publicKey,
+					InToken:      inputMint,
+					OutToken:     outputMint,
+					Slippage:     j.slippage,
+					InAmount:     amount,
+				})
 				if err != nil {
 					errCh <- fmt.Errorf("error posting swap %v: %w", i, err)
 					resultCh <- err

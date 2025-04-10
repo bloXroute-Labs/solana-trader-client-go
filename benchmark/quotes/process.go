@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/actor"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/output"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/actor"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/output"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/stream"
+	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 )
 
 type benchmarkResult struct {
@@ -18,7 +19,7 @@ type benchmarkResult struct {
 	swaps               []actor.SwapEvent
 	jupiterRawUpdates   []stream.RawUpdate[stream.DurationUpdate[*stream.JupiterPriceResponse]]
 	tradeWSRawUpdates   []stream.RawUpdate[*pb.GetPricesStreamResponse]
-	tradeHTTPRawUpdates []stream.RawUpdate[stream.DurationUpdate[*pb.GetPriceResponse]]
+	tradeHTTPRawUpdates []stream.RawUpdate[stream.DurationUpdate[*pb.GetJupiterPricesResponse]]
 
 	jupiterProcessedUpdates   map[int][]stream.ProcessedUpdate[stream.QuoteResult]
 	tradeWSProcessedUpdates   map[int][]stream.ProcessedUpdate[stream.QuoteResult]
@@ -166,22 +167,22 @@ func (br benchmarkResult) distinctWSSell() int {
 	})
 }
 
-func (br benchmarkResult) firstHTTP() stream.DurationUpdate[*pb.GetPriceResponse] {
+func (br benchmarkResult) firstHTTP() stream.DurationUpdate[*pb.GetJupiterPricesResponse] {
 	return br.tradeHTTPRawUpdates[0].Data
 }
 
-func (br benchmarkResult) lastHTTP() stream.DurationUpdate[*pb.GetPriceResponse] {
+func (br benchmarkResult) lastHTTP() stream.DurationUpdate[*pb.GetJupiterPricesResponse] {
 	return br.tradeHTTPRawUpdates[len(br.tradeHTTPRawUpdates)-1].Data
 }
 
 func (br benchmarkResult) distinctHTTPBuy() int {
-	return distinctPrices(br.tradeHTTPRawUpdates, func(v stream.RawUpdate[stream.DurationUpdate[*pb.GetPriceResponse]]) float64 {
+	return distinctPrices(br.tradeHTTPRawUpdates, func(v stream.RawUpdate[stream.DurationUpdate[*pb.GetJupiterPricesResponse]]) float64 {
 		return v.Data.Data.TokenPrices[0].Buy
 	})
 }
 
 func (br benchmarkResult) distinctHTTPSell() int {
-	return distinctPrices(br.tradeHTTPRawUpdates, func(v stream.RawUpdate[stream.DurationUpdate[*pb.GetPriceResponse]]) float64 {
+	return distinctPrices(br.tradeHTTPRawUpdates, func(v stream.RawUpdate[stream.DurationUpdate[*pb.GetJupiterPricesResponse]]) float64 {
 		return v.Data.Data.TokenPrices[0].Sell
 	})
 }
