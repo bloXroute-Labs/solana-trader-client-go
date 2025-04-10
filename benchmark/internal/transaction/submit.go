@@ -2,16 +2,14 @@ package transaction
 
 import (
 	"context"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
-	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
-	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
-	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
-	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-	"github.com/gagliardetto/solana-go"
-	solanarpc "github.com/gagliardetto/solana-go/rpc"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/logger"
+	"github.com/bloXroute-Labs/solana-trader-client-go/benchmark/internal/utils"
+	"github.com/gagliardetto/solana-go"
+	solanarpc "github.com/gagliardetto/solana-go/rpc"
 )
 
 const (
@@ -134,28 +132,6 @@ var (
 	orderID  = 1
 	orderIDM = sync.Mutex{}
 )
-
-// SerumBuilder builds a transaction that's expected to fail (canceling a not found order from Serum). Transactions are submitted with `skipPreflight` however, so it should still be "executed."
-func SerumBuilder(ctx context.Context, g *provider.GRPCClient, publicKey solana.PublicKey, ooAddress solana.PublicKey, privateKey solana.PrivateKey) Builder {
-	return func() (string, error) {
-		orderIDM.Lock()
-		defer orderIDM.Unlock()
-
-		response, err := g.PostCancelOrder(ctx, strconv.Itoa(orderID), pb.Side_S_ASK, publicKey.String(), market, ooAddress.String(), pb.Project_P_SERUM)
-		if err != nil {
-			return "", err
-		}
-
-		orderID++
-
-		signedTx, err := transaction.SignTxWithPrivateKey(response.Transaction.Content, privateKey)
-		if err != nil {
-			return "", err
-		}
-
-		return signedTx, nil
-	}
-}
 
 var (
 	memoID  = 0

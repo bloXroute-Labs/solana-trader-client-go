@@ -3,9 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-proto/api"
-	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
 )
 
@@ -48,27 +48,11 @@ type WSClientTraderAPI interface {
 	PostJupiterSwapInstructions(ctx context.Context, request *api.PostJupiterSwapInstructionsRequest) (*api.PostJupiterSwapInstructionsResponse, error)
 	PostRaydiumSwapInstructions(ctx context.Context, request *api.PostRaydiumSwapInstructionsRequest) (*api.PostRaydiumSwapInstructionsResponse, error)
 	PostJupiterRouteSwap(ctx context.Context, request *api.PostJupiterRouteSwapRequest) (*api.PostJupiterRouteSwapResponse, error)
-	GetOrderbook(ctx context.Context, market string, limit uint32, project api.Project) (*api.GetOrderbookResponse, error)
-	GetMarketDepth(ctx context.Context, market string, limit uint32, project api.Project) (*api.GetMarketDepthResponse, error)
-	GetTrades(ctx context.Context, market string, limit uint32, project api.Project) (*api.GetTradesResponse, error)
 	GetPools(ctx context.Context, projects []api.Project) (*api.GetPoolsResponse, error)
-	GetTickers(ctx context.Context, market string, project api.Project) (*api.GetTickersResponse, error)
-	GetOpenOrders(ctx context.Context, market string, owner string, openOrdersAddress string, project api.Project) (*api.GetOpenOrdersResponse, error)
-	GetOrderByID(ctx context.Context, in *api.GetOrderByIDRequest) (*api.GetOrderByIDResponse, error)
-	GetUnsettled(ctx context.Context, market string, ownerAddress string, project api.Project) (*api.GetUnsettledResponse, error)
-	GetAccountBalance(ctx context.Context, owner string) (*api.GetAccountBalanceResponse, error)
 	GetTokenAccounts(ctx context.Context, req *api.GetTokenAccountsRequest) (*api.GetTokenAccountsResponse, error)
-	GetMarkets(ctx context.Context) (*api.GetMarketsResponse, error)
-	GetPrice(ctx context.Context, tokens []string) (*api.GetPriceResponse, error)
-	GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []api.Project) (*api.GetQuotesResponse, error)
 	GetPriorityFee(ctx context.Context, project api.Project, percentile *float64) (*api.GetPriorityFeeResponse, error)
 	GetPriorityFeeByProgram(ctx context.Context, programs []string) (*api.GetPriorityFeeByProgramResponse, error)
 	GetLeaderSchedule(ctx context.Context, maxSlots uint64) (*api.GetLeaderScheduleResponse, error)
-	PostTradeSwap(ctx context.Context, ownerAddress, inToken, outToken string, inAmount, slippage float64, projectStr string) (*api.TradeSwapResponse, error)
-	PostTradeSwapWithPriorityFee(ctx context.Context, ownerAddress, inToken, outToken string, inAmount,
-		slippage float64, computeLimit uint32, computePrice uint64, projectStr string) (*api.TradeSwapResponse, error)
-	PostRouteTradeSwap(ctx context.Context, request *api.RouteTradeSwapRequest) (*api.TradeSwapResponse, error)
-	PostOrder(ctx context.Context, owner, payer, market string, side api.Side, types []common.OrderType, amount, price float64, project api.Project, opts PostOrderOpts) (*api.PostOrderResponse, error)
 	PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*api.PostSubmitResponse, error)
 	PostSubmitSnipeV2(ctx context.Context, request *api.PostSubmitSnipeRequest) (*api.PostSubmitSnipeResponse, error)
 	PostSubmitBatch(ctx context.Context, request *api.PostSubmitBatchRequest) (*api.PostSubmitBatchResponse, error)
@@ -79,10 +63,6 @@ type WSClientTraderAPI interface {
 	SignAndSubmitSnipe(ctx context.Context, transactions []*api.TransactionMessage, useStakedRPCs bool) ([]string, error)
 	SignAndSubmitPaladin(ctx context.Context, tx *api.TransactionMessage, revertProtection *bool) (string, error)
 	SignAndSubmitBatch(ctx context.Context, transactions []*api.TransactionMessage, useBundle bool, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
-	SubmitTradeSwap(ctx context.Context, owner, inToken, outToken string, inAmount, slippage float64, project string, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
-	SubmitTradeSwapWithPriorityFee(ctx context.Context, owner, inToken, outToken string,
-		inAmount, slippage float64, project string, computeLimit uint32, computePrice uint64, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
-	SubmitRouteTradeSwap(ctx context.Context, request *api.RouteTradeSwapRequest, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 	SubmitRaydiumSwap(ctx context.Context, request *api.PostRaydiumSwapRequest, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 	SubmitRaydiumSwapCPMM(ctx context.Context, request *api.PostRaydiumCPMMSwapRequest) (string, error)
 	SubmitPostPumpFunSwap(ctx context.Context, request *api.PostPumpFunSwapRequest) (string, error)
@@ -91,55 +71,15 @@ type WSClientTraderAPI interface {
 	SubmitJupiterSwapInstructions(ctx context.Context, request *api.PostJupiterSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 	SubmitRaydiumSwapInstructions(ctx context.Context, request *api.PostRaydiumSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
 	SubmitJupiterRouteSwap(ctx context.Context, request *api.PostJupiterRouteSwapRequest, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
-	SubmitOrder(ctx context.Context, owner, payer, market string, side api.Side,
-		types []common.OrderType, amount, price float64, project api.Project, opts PostOrderOpts) (string, error)
-	PostCancelOrder(ctx context.Context, request *api.PostCancelOrderRequest) (*api.PostCancelOrderResponse, error)
-	SubmitCancelOrder(ctx context.Context, request *api.PostCancelOrderRequest, skipPreFlight bool) (string, error)
-	PostCancelByClientOrderID(
-		ctx context.Context,
-		clientOrderID uint64,
-		owner,
-		market,
-		openOrders string,
-		project api.Project,
-	) (*api.PostCancelOrderResponse, error)
-	SubmitCancelByClientOrderID(
-		ctx context.Context,
-		clientOrderID uint64,
-		owner,
-		market,
-		openOrders string,
-		project api.Project,
-		skipPreFlight bool,
-	) (string, error)
-	PostCancelAll(
-		ctx context.Context,
-		market,
-		owner string,
-		openOrdersAddresses []string,
-		project api.Project,
-	) (*api.PostCancelAllResponse, error)
-	SubmitCancelAll(ctx context.Context, market, owner string, openOrdersAddresses []string, project api.Project, opts SubmitOpts) (*api.PostSubmitBatchResponse, error)
-	PostSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project api.Project) (*api.PostSettleResponse, error)
-	SubmitSettle(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, project api.Project, skipPreflight bool) (string, error)
-	PostReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side api.Side, types []common.OrderType, amount, price float64, project api.Project, opts PostOrderOpts) (*api.PostOrderResponse, error)
-	SubmitReplaceByClientOrderID(ctx context.Context, owner, payer, market string, side api.Side, types []common.OrderType, amount, price float64, project api.Project, opts PostOrderOpts) (string, error)
-	PostReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side api.Side, types []common.OrderType, amount, price float64, project api.Project, opts PostOrderOpts) (*api.PostOrderResponse, error)
-	SubmitReplaceOrder(ctx context.Context, orderID, owner, payer, market string, side api.Side, types []common.OrderType, amount, price float64, project api.Project, opts PostOrderOpts) (string, error)
 	Close() error
-	GetOrderbooksStream(ctx context.Context, markets []string, limit uint32, project api.Project) (connections.Streamer[*api.GetOrderbooksStreamResponse], error)
 	GetPumpFunSwapsStream(ctx context.Context, req *api.GetPumpFunSwapsStreamRequest) (connections.Streamer[*api.GetPumpFunSwapsStreamResponse], error)
 	GetPumpFunNewTokensStream(ctx context.Context, req *api.GetPumpFunNewTokensStreamRequest) (connections.Streamer[*api.GetPumpFunNewTokensStreamResponse], error)
-	GetMarketDepthsStream(ctx context.Context, markets []string, limit uint32, project api.Project) (connections.Streamer[*api.GetMarketDepthsStreamResponse], error)
-	GetTradesStream(ctx context.Context, market string, limit uint32, project api.Project) (connections.Streamer[*api.GetTradesStreamResponse], error)
 	GetNewRaydiumPoolsStream(ctx context.Context, includeCPMM bool) (connections.Streamer[*api.GetNewRaydiumPoolsResponse], error)
 	GetNewRaydiumPoolsByTransactionStream(ctx context.Context) (connections.Streamer[*api.GetNewRaydiumPoolsByTransactionResponse], error)
-	GetOrderStatusStream(ctx context.Context, market, ownerAddress string, project api.Project) (connections.Streamer[*api.GetOrderStatusStreamResponse], error)
 	GetRecentBlockHashStream(ctx context.Context) (connections.Streamer[*api.GetRecentBlockHashResponse], error)
 	GetQuotesStream(ctx context.Context, projects []api.Project, tokenPairs []*api.TokenPair) (connections.Streamer[*api.GetQuotesStreamResponse], error)
 	GetPoolReservesStream(ctx context.Context, request *api.GetPoolReservesStreamRequest) (connections.Streamer[*api.GetPoolReservesStreamResponse], error)
 	GetPricesStream(ctx context.Context, projects []api.Project, tokens []string) (connections.Streamer[*api.GetPricesStreamResponse], error)
-	GetTickersStream(ctx context.Context, request *api.GetTickersStreamRequest) (connections.Streamer[*api.GetTickersStreamResponse], error)
 	GetSwapsStream(
 		ctx context.Context,
 		projects []api.Project,
@@ -151,20 +91,6 @@ type WSClientTraderAPI interface {
 	GetPriorityFeeStream(ctx context.Context, project api.Project, percentile *float64) (connections.Streamer[*api.GetPriorityFeeResponse], error)
 	GetPriorityFeeByProgramStream(ctx context.Context, programs []string) (connections.Streamer[*api.GetPriorityFeeByProgramResponse], error)
 	GetBundleTipStream(ctx context.Context) (connections.Streamer[*api.GetBundleTipResponse], error)
-	GetMarketsV2(ctx context.Context) (*api.GetMarketsResponse, error)
-	GetOrderbookV2(ctx context.Context, market string, limit uint32) (*api.GetOrderbookResponseV2, error)
-	GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*api.GetMarketDepthResponseV2, error)
-	GetTickersV2(ctx context.Context, market string) (*api.GetTickersResponseV2, error)
-	GetOpenOrdersV2(ctx context.Context, market string, owner string, openOrdersAddress string, orderID string, clientOrderID uint64) (*api.GetOpenOrdersResponse, error)
-	GetUnsettledV2(ctx context.Context, market string, ownerAddress string) (*api.GetUnsettledResponse, error)
-	PostOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*api.PostOrderResponse, error)
-	SubmitOrderV2(ctx context.Context, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error)
-	PostCancelOrderV2(ctx context.Context, request *api.PostCancelOrderRequestV2) (*api.PostCancelOrderResponseV2, error)
-	SubmitCancelOrderV2(ctx context.Context, request *api.PostCancelOrderRequestV2, skipPreFlight bool) (*api.PostSubmitBatchResponse, error)
-	PostSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string) (*api.PostSettleResponse, error)
-	SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error)
-	PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*api.PostOrderResponse, error)
-	SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error)
 	GetRecentBlockHash(ctx context.Context, request *api.GetRecentBlockHashRequest) (*api.GetRecentBlockHashResponse, error)
 	GetRecentBlockHashV2(ctx context.Context, request *api.GetRecentBlockHashRequestV2) (*api.GetRecentBlockHashResponseV2, error)
 }

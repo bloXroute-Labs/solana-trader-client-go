@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"sort"
 	"time"
@@ -182,38 +181,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callRaydiumCLMMPoolsWS,
 		description: "fetch all available markets",
 	},
-
-	"getTrades": {
-		run:         callTradesWS,
-		description: "get trades",
-	},
-
 	"getRaydiumPoolReserve": {
 		run:         callRaydiumPoolReserveWS,
 		description: "get raydium pool reserve",
 	},
-	"getMarkets": {
-		run:         callMarketsWS,
-		description: "fetch all available markets",
-	},
-	"getOrderbook": {
-		run:         callOrderbookWS,
-		description: "fetch orderbook for specific market",
-	},
-	"getMarketDepth": {
-		run:         callMarketDepthWS,
-		description: "get market depth",
-	},
-	"getOpenOrders": {
-		run:         callOpenOrdersWS,
-		description: "get open orders",
-	},
-
-	"getTickers": {
-		run:         callTickersWS,
-		description: "get tickers",
-	},
-
 	"getTransaction": {
 		run:         callGetTransactionWS,
 		description: "get tickers",
@@ -227,10 +198,6 @@ var ExampleEndpoints = map[string]struct {
 		run:         callRaydiumPoolsWS,
 		description: "get raydium pools",
 	},
-	"getPrice": {
-		run:         callPriceWS,
-		description: "get raydium pools",
-	},
 	"getRaydiumPrices": {
 		run:         callRaydiumPricesWS,
 		description: "get raydium prices",
@@ -239,25 +206,9 @@ var ExampleEndpoints = map[string]struct {
 		run:         callJupiterPricesWS,
 		description: "get jupiter prices",
 	},
-	"orderbookStream": {
-		run:         callOrderbookWSStream,
-		description: "stream orderbook updates (slow example)",
-	},
-	"marketDepthStream": {
-		run:         callMarketDepthWSStream,
-		description: "stream market depth updates (slow example)",
-	},
-	"getTickersStream": {
-		run:         callGetTickersWSStream,
-		description: "stream get tickers",
-	},
 	"getPricesStream": {
 		run:         callPricesWSStream,
 		description: "stream prices",
-	},
-	"getTradesStream": {
-		run:         callTradesWSStream,
-		description: "stream trades",
 	},
 	"getSwapsStream": {
 		run:         callSwapsWSStream,
@@ -274,19 +225,6 @@ var ExampleEndpoints = map[string]struct {
 	"getNewRaydiumPoolsStreamWithCPMM": {
 		run:         callGetNewRaydiumPoolsStreamWithCPMM,
 		description: "stream new raydium pools with cpmm enabled",
-	},
-	"getUnsettled": {
-		run:         callUnsettledWS,
-		description: "get unsettled",
-	},
-	"getAccountBalance": {
-		run:         callAccountBalanceWS,
-		description: "get account balance",
-	},
-
-	"getQuotes": {
-		run:         callGetQuotesWS,
-		description: "get quotes",
 	},
 	"getRecentBlockhash": {
 		run:         callGetRecentBlockHashWS,
@@ -402,35 +340,6 @@ var ExampleEndpoints = map[string]struct {
 		description:                       "call test submit snipe",
 		requiresAdditionalEnvironmentVars: true,
 	},
-
-	"replaceByClientOrderID": {
-		run:                               callReplaceByClientOrderIDWrap,
-		description:                       "replace order by client id (openbook)",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"replaceOrder": {
-		run:                               callReplaceOrderWrap,
-		description:                       "replace order (openbook)",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"tradeSwap": {
-		run:                               callTradeSwapWrap,
-		description:                       "trade swap",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
-	"routeTradeSwap": {
-		run:                               callRouteTradeSwapWrap,
-		description:                       "route trade swap",
-		requiresAdditionalEnvironmentVars: true,
-	},
-	"tradeSwapWithPriorityFee": {
-		run:                               callTradeSwapWithPriorityFeeWrap,
-		description:                       "route trade swap with priority fee",
-		requiresAdditionalEnvironmentVars: true,
-	},
 	"raydiumTradeSwap": {
 		run:                               callRaydiumSwapWrap,
 		description:                       "raydium trade swap",
@@ -490,98 +399,7 @@ var ExampleEndpoints = map[string]struct {
 		requiresAdditionalEnvironmentVars: true,
 	},
 
-	"orderLifeCycleTest": {
-		run:                               orderLifecycleTestWrap,
-		description:                       "order lifecycle test",
-		requiresAdditionalEnvironmentVars: true,
-	},
-	"cancelAll": {
-		run:                               cancelAllWrap,
-		description:                       "cancel all test (run order lifecycle before)",
-		requiresAdditionalEnvironmentVars: true,
-	},
-
 	"runAllExamples": {},
-}
-
-func callMarketsWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching markets...")
-
-	markets, err := w.GetMarketsV2(context.Background())
-	if err != nil {
-		log.Errorf("error with GetMarkets request: %v", err)
-		return true
-	} else {
-		log.Info(markets)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callOrderbookWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching orderbooks...")
-
-	orderbook, err := w.GetOrderbookV2(context.Background(), "SOL-USDT", 0)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	fmt.Println()
-
-	orderbook, err = w.GetOrderbookV2(context.Background(), "SOLUSDT", 2)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL-USDT: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	fmt.Println()
-
-	orderbook, err = w.GetOrderbookV2(context.Background(), "SOL:USDT", 3)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
-		return true
-	} else {
-		log.Info(orderbook)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callMarketDepthWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching market depth data...")
-
-	mktDepth, err := w.GetMarketDepthV2(context.Background(), "SOL:USDT", 3)
-	if err != nil {
-		log.Errorf("error with GetMarketDepth request for SOL:USDC: %v", err)
-		return true
-	} else {
-		log.Info(mktDepth)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callTradesWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching trades...")
-
-	trades, err := w.GetTrades(context.Background(), "SOLUSDC", 3, pb.Project_P_OPENBOOK)
-	if err != nil {
-		log.Errorf("error with GetOrderbook request for SOL:USDC: %v", err)
-		return true
-	} else {
-		log.Info(trades)
-	}
-
-	fmt.Println()
-	return false
 }
 
 func callPoolsWS(w provider.WSClientTraderAPI) bool {
@@ -686,20 +504,6 @@ func callRaydiumCLMMPoolsWS(w provider.WSClientTraderAPI) bool {
 	return false
 }
 
-func callPriceWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching prices...")
-
-	pools, err := w.GetPrice(context.Background(), []string{"So11111111111111111111111111111111111111112", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"})
-	if err != nil {
-		log.Errorf("error with GetPrice request for SOL and BONK: %v", err)
-		return true
-	} else {
-		log.Info(pools)
-	}
-
-	return false
-}
-
 func callRaydiumPricesWS(w provider.WSClientTraderAPI) bool {
 	log.Info("fetching Raydium prices...")
 
@@ -732,51 +536,6 @@ func callJupiterPricesWS(w provider.WSClientTraderAPI) bool {
 	return false
 }
 
-func callOpenOrdersWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching open orders...")
-
-	orders, err := w.GetOpenOrdersV2(context.Background(), "SOLUSDC", "FFqDwRq8B4hhFKRqx7N1M6Dg6vU699hVqeynDeYJdPj5", "", "", 0)
-	if err != nil {
-		log.Errorf("error with GetOrders request for SOL-USDT: %v", err)
-		return true
-	} else {
-		log.Info(orders)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callUnsettledWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching unsettled...")
-
-	response, err := w.GetUnsettledV2(context.Background(), "SOLUSDC", "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
-	if err != nil {
-		log.Errorf("error with GetUnsettled request for SOL-USDT: %v", err)
-		return true
-	} else {
-		log.Info(response)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callAccountBalanceWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching balances...")
-
-	response, err := w.GetAccountBalance(context.Background(), "AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ")
-	if err != nil {
-		log.Errorf("error with GetAccountBalance request for AFT8VayE7qr8MoQsW3wHsDS83HhEvhGWdbNSHRKeUDfQ: %v", err)
-		return true
-	} else {
-		log.Info(response)
-	}
-
-	fmt.Println()
-	return false
-}
-
 func callGetTokenAccountsWSWrap(w provider.WSClientTraderAPI) bool {
 	return callGetTokenAccountsWS(w, Environment.PublicKey)
 }
@@ -790,53 +549,6 @@ func callGetTokenAccountsWS(w provider.WSClientTraderAPI, ownerAddr string) bool
 		return true
 	} else {
 		log.Info(response)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callTickersWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching tickers...")
-
-	tickers, err := w.GetTickersV2(context.Background(), "SOLUSDC")
-	if err != nil {
-		log.Errorf("error with GetTickers request for SOL-USDT: %v", err)
-		return true
-	} else {
-		log.Info(tickers)
-	}
-
-	fmt.Println()
-	return false
-}
-
-func callGetQuotesWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching quotes...")
-
-	inToken := "So11111111111111111111111111111111111111112"
-	outToken := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-	amount := 0.01
-	slippage := float64(5)
-	limit := 5
-
-	quotes, err := w.GetQuotes(context.Background(), inToken, outToken, amount, slippage, int32(limit), []pb.Project{pb.Project_P_ALL})
-	if err != nil {
-		log.Errorf("error with GetQuotes request for %s to %s: %v", inToken, outToken, err)
-		return true
-	}
-
-	if len(quotes.Quotes) != 2 {
-		log.Errorf("did not get back 2 quotes, got %v quotes", len(quotes.Quotes))
-		return true
-	}
-	for _, quote := range quotes.Quotes {
-		if len(quote.Routes) == 0 {
-			log.Errorf("no routes gotten for project %s", quote.Project)
-			return true
-		} else {
-			log.Infof("best route for project %s: %v", quote.Project, quote.Routes[0])
-		}
 	}
 
 	fmt.Println()
@@ -989,78 +701,6 @@ func callGetRaydiumCPMMQuotes(w provider.WSClientTraderAPI) bool {
 	return false
 }
 
-// Stream response
-func callOrderbookWSStream(w provider.WSClientTraderAPI) bool {
-	log.Info("starting orderbook stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	stream, err := w.GetOrderbooksStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
-	if err != nil {
-		log.Errorf("error with GetOrderbooksStream request for SOL/USDC: %v", err)
-		return true
-	}
-
-	orderbookCh := stream.Channel(0)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-orderbookCh
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-// Stream response
-func callMarketDepthWSStream(w provider.WSClientTraderAPI) bool {
-	log.Info("starting market depth stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	stream, err := w.GetMarketDepthsStream(ctx, []string{"SOL/USDC"}, 3, pb.Project_P_OPENBOOK)
-	if err != nil {
-		log.Errorf("error with GetMarketDepthsStream request for SOL/USDC: %v", err)
-		return true
-	}
-
-	mktDepthDataCh := stream.Channel(0)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-mktDepthDataCh
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-func callTradesWSStream(w provider.WSClientTraderAPI) bool {
-	log.Info("starting trades stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	tradesChan := make(chan *pb.GetTradesStreamResponse)
-	stream, err := w.GetTradesStream(ctx, "SOL/USDC", 3, pb.Project_P_OPENBOOK)
-	if err != nil {
-		log.Errorf("error with GetTradesStream request for SOL/USDC: %v", err)
-		return true
-	}
-
-	stream.Into(tradesChan)
-	for i := 1; i <= 1; i++ {
-		_, ok := <-tradesChan
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", i)
-	}
-	return false
-}
-
 func callGetNewRaydiumPoolsStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting get new raydium pools stream without cpmm")
 
@@ -1202,106 +842,6 @@ const (
 	orderAmount = float64(0.1)
 )
 
-func orderLifecycleTestWrap(w provider.WSClientTraderAPI) bool {
-	return orderLifecycleTest(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress)
-}
-
-func orderLifecycleTest(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string) bool {
-	log.Info("starting order lifecycle test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ch := make(chan *pb.GetOrderStatusStreamResponse)
-	errCh := make(chan error)
-	stream, err := w.GetOrderStatusStream(ctx, marketAddr, ownerAddr, pb.Project_P_OPENBOOK)
-	if err != nil {
-		log.Errorf("error getting order status stream %v", err)
-		errCh <- err
-	}
-	stream.Into(ch)
-
-	time.Sleep(time.Second * 10)
-
-	clientOrderID, fail := callPlaceOrderWS(w, ownerAddr, payerAddr, ooAddr, sideAsk, typeLimit)
-	if fail {
-		return true
-	}
-
-	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_OPEN {
-			log.Infof("order went to orderbook (`OPEN`) successfully")
-		} else {
-			log.Errorf("order should be `OPEN` but is %s", update.OrderInfo.OrderStatus.String())
-		}
-	case <-errCh:
-		return true
-
-	case <-time.After(time.Second * 60):
-		log.Error("no updates after placing order")
-		return true
-	}
-
-	fmt.Println()
-	time.Sleep(time.Second * 10)
-
-	fail = callCancelByClientOrderIDWS(w, ownerAddr, ooAddr, clientOrderID, sideAsk)
-	if fail {
-		return true
-	}
-
-	select {
-	case update := <-ch:
-		if update.OrderInfo.OrderStatus == pb.OrderStatus_OS_CANCELLED {
-			log.Infof("order cancelled (`CANCELLED`) successfully")
-		} else {
-			log.Errorf("order should be `CANCELLED` but is %s", update.OrderInfo.OrderStatus.String())
-		}
-	case <-errCh:
-		return true
-	case <-time.After(time.Second * 60):
-		log.Error("no updates after cancelling order")
-		return true
-	}
-
-	fmt.Println()
-	callPostSettleWS(w, ownerAddr, ooAddr)
-	return false
-}
-
-func callPlaceOrderWSWrap(w provider.WSClientTraderAPI) bool {
-	_, ok := callPlaceOrderWS(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-
-	return ok
-}
-
-func callPlaceOrderWS(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) (uint64, bool) {
-	log.Info("trying to place an order")
-
-	// generate a random clientOrderId for this order
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID := rand.Uint64()
-
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID,
-		OpenOrdersAddress: ooAddr,
-	}
-
-	// sign/submit transaction after creation
-	sig, err := w.SubmitOrderV2(context.Background(), ownerAddr, payerAddr, marketAddr,
-		orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Errorf("failed to submit order (%v)", err)
-		return 0, true
-	}
-
-	log.Infof("placed order %v with clientOrderID %v", sig, clientOrderID)
-
-	return clientOrderID, false
-}
-
 func callPlaceOrderBundleWrap(w provider.WSClientTraderAPI) bool {
 	return callPlaceOrderBundle(w, Environment.PublicKey, 1100000)
 }
@@ -1429,391 +969,6 @@ func callPlaceOrderBundleWithBatch(w provider.WSClientTraderAPI, ownerAddr strin
 	return false
 }
 
-func callCancelByClientOrderIDWS(w provider.WSClientTraderAPI, ownerAddr, ooAddr string, clientOrderID uint64, orderSide string) bool {
-	log.Info("trying to cancel order")
-
-	_, err := w.SubmitCancelOrderV2(context.Background(), &pb.PostCancelOrderRequestV2{
-		OrderID:           "",
-		Side:              orderSide,
-		MarketAddress:     marketAddr,
-		OwnerAddress:      ownerAddr,
-		OpenOrdersAddress: ooAddr,
-		ClientOrderID:     clientOrderID,
-	}, true)
-	if err != nil {
-		log.Errorf("failed to cancel order by client ID (%v)", err)
-		return true
-	}
-
-	log.Infof("canceled order for clientOrderID %v", clientOrderID)
-	return false
-}
-
-func callPostSettleWSWrap(w provider.WSClientTraderAPI) bool {
-	return callPostSettleWS(w, Environment.PublicKey, Environment.OpenOrdersAddress)
-}
-
-func callPostSettleWS(w provider.WSClientTraderAPI, ownerAddr, ooAddr string) bool {
-	log.Info("starting post settle")
-
-	sig, err := w.SubmitSettleV2(context.Background(), ownerAddr, "SOL/USDC", "F75gCEckFAyeeCWA9FQMkmLCmke7ehvBnZeVZ3QgvJR7",
-		"4raJjCwLLqw8TciQXYruDEF4YhDkGwoEnwnAdwJSjcgv", ooAddr, false)
-	if err != nil {
-		log.Errorf("error with post transaction stream request for SOL/USDC: %v", err)
-		return true
-	}
-
-	log.Infof("response signature received: %v", sig)
-	return false
-}
-
-func cancelAllWrap(w provider.WSClientTraderAPI) bool {
-	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-}
-
-func cancelAll(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting cancel all test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	clientOrderID2 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
-
-	// Place 2 orders in orderbook
-	log.Info("placing orders")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #1, signature %s", sig)
-
-	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check orders are there
-	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found1 := false
-	found2 := false
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = true
-			continue
-		}
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
-			found2 = true
-		}
-	}
-	if !(found1 && found2) {
-		log.Error("one/both orders not found in orderbook")
-		return true
-	}
-	log.Info("2 orders placed successfully")
-
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
-		OrderID:           "",
-		Side:              pb.Side_S_ASK.String(),
-		MarketAddress:     marketAddr,
-		OwnerAddress:      ownerAddr,
-		OpenOrdersAddress: ooAddr,
-		ClientOrderID:     0,
-	}, true)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-
-	time.Sleep(time.Minute)
-
-	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	if len(orders.Orders) != 0 {
-		log.Errorf("%v orders in ob not cancelled", len(orders.Orders))
-		return true
-	}
-	log.Info("orders cancelled")
-
-	fmt.Println()
-	callPostSettleWS(w, ownerAddr, ooAddr)
-	return false
-}
-
-func callReplaceByClientOrderIDWrap(w provider.WSClientTraderAPI) bool {
-	return callReplaceByClientOrderID(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-}
-
-func callReplaceByClientOrderID(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting replace by client order ID test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
-
-	// Place order in orderbook
-	log.Info("placing order")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	} else {
-		log.Infof("submitting place order #1, signature %s", sig)
-	}
-	time.Sleep(time.Minute)
-	// Check order is there
-	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found1 := false
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = true
-			continue
-		}
-	}
-	if !(found1) {
-		log.Error("order not found in orderbook")
-		return true
-	}
-	log.Info("order placed successfully")
-
-	// replacing order
-	sig, err = w.SubmitReplaceOrderV2(ctx, "", ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice/2, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check order #2 is in orderbook
-	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	found2 := false
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) && order.Price == orderPrice/2 {
-			found2 = true
-		}
-	}
-	if !(found2) {
-		log.Error("order #2 not found in orderbook")
-		return true
-	} else {
-		log.Info("order #2 placed successfully")
-	}
-	time.Sleep(time.Minute)
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
-		OrderID:           "",
-		Side:              orderSide,
-		MarketAddress:     marketAddr,
-		OwnerAddress:      ownerAddr,
-		OpenOrdersAddress: ooAddr,
-		ClientOrderID:     0,
-	}, true)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-	return false
-}
-
-func callReplaceOrderWrap(w provider.WSClientTraderAPI) bool {
-	return callReplaceOrder(w, Environment.PublicKey, Environment.Payer, Environment.OpenOrdersAddress, sideAsk, typeLimit)
-}
-
-func callReplaceOrder(w provider.WSClientTraderAPI, ownerAddr, payerAddr, ooAddr string, orderSide string, orderType string) bool {
-	log.Info("starting replace order test")
-	fmt.Println()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rand.Seed(time.Now().UnixNano())
-	clientOrderID1 := rand.Uint64()
-	clientOrderID2 := rand.Uint64()
-	opts := provider.PostOrderOpts{
-		ClientOrderID:     clientOrderID1,
-		OpenOrdersAddress: ooAddr,
-		SkipPreFlight:     config.BoolPtr(true),
-	}
-
-	// Place order in orderbook
-	log.Info("placing order")
-	sig, err := w.SubmitOrderV2(ctx, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #1, signature %s", sig)
-
-	time.Sleep(time.Minute)
-	// Check orders are there
-	orders, err := w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	var found1 *pb.Order
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID1) {
-			found1 = order
-			continue
-		}
-	}
-	if found1 == nil {
-		log.Error("order not found in orderbook")
-		return true
-	} else {
-		log.Info("order placed successfully")
-	}
-
-	opts.ClientOrderID = clientOrderID2
-	sig, err = w.SubmitReplaceOrderV2(ctx, found1.OrderID, ownerAddr, payerAddr, marketAddr, orderSide, orderType, orderAmount, orderPrice/2, opts)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("submitting place order #2, signature %s", sig)
-
-	time.Sleep(time.Minute)
-
-	// Check orders are there
-	orders, err = w.GetOpenOrdersV2(ctx, marketAddr, ownerAddr, "", "", 0)
-	if err != nil {
-		log.Error(err)
-	}
-	var found2 *pb.Order
-
-	for _, order := range orders.Orders {
-		if order.ClientOrderID == fmt.Sprintf("%v", clientOrderID2) {
-			found2 = order
-		}
-	}
-	if found2 == nil {
-		log.Error("order 2 not found in orderbook")
-		return true
-	} else {
-		log.Info("order 2 placed successfully")
-	}
-
-	// Cancel all the orders
-	log.Info("cancelling the orders")
-	sigs, err := w.SubmitCancelOrderV2(ctx, &pb.PostCancelOrderRequestV2{
-		OrderID:           "",
-		Side:              orderSide,
-		MarketAddress:     marketAddr,
-		OwnerAddress:      ownerAddr,
-		OpenOrdersAddress: ooAddr,
-		ClientOrderID:     0,
-	}, true)
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	for _, tx := range sigs.Transactions {
-		log.Infof("placing cancel order(s) %s", tx.Signature)
-	}
-	return false
-}
-
-func callTradeSwapWrap(w provider.WSClientTraderAPI) bool {
-	return callTradeSwap(w, Environment.PublicKey)
-}
-
-func callTradeSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
-	log.Info("starting trade swap test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-		"So11111111111111111111111111111111111111112", 0.01, 0.1, "raydium", provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(false),
-		})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("trade swap transaction signature : %s", sig)
-	return false
-}
-
-func callTradeSwapWithPriorityFeeWrap(w provider.WSClientTraderAPI) bool {
-	return callTradeSwapWithPriorityFee(w, Environment.PublicKey, computeLimit, computePrice)
-}
-
-func callTradeSwapWithPriorityFee(w provider.WSClientTraderAPI, ownerAddr string, computeLimit uint32, computePrice uint64) bool {
-	log.Info("starting trade swap test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	log.Info("trade swap")
-	sig, err := w.SubmitTradeSwapWithPriorityFee(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-		"So11111111111111111111111111111111111111112", 0.01, 0.1, "raydium", computeLimit, computePrice,
-		provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(false),
-		})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("trade swap transaction signature : %s", sig)
-	return false
-}
-
 func callRaydiumSwapWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumSwap(w, Environment.PublicKey)
 }
@@ -1877,10 +1032,6 @@ func callPostPumpFunSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	return false
 }
 
-func callRouteTradeSwapWrap(w provider.WSClientTraderAPI) bool {
-	return callRouteTradeSwap(w, Environment.PublicKey)
-}
-
 func callRaydiumCLMMSwapWSWrap(w provider.WSClientTraderAPI) bool {
 	return callRaydiumCLMMSwapWS(w, Environment.PublicKey)
 }
@@ -1935,42 +1086,6 @@ func callRaydiumSwapCPMMWS(w provider.WSClientTraderAPI, ownerAddr string) bool 
 	}
 
 	log.Infof("Raydium CPMM swap transaction signature : %s", sig)
-	return false
-}
-
-func callRouteTradeSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
-	log.Info("starting route trade swap test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	log.Info("route trade swap")
-	sig, err := w.SubmitRouteTradeSwap(ctx, &pb.RouteTradeSwapRequest{
-		OwnerAddress: ownerAddr,
-		Project:      pb.Project_P_RAYDIUM,
-		Slippage:     0.1,
-		Steps: []*pb.RouteStep{
-			{
-				InToken:      "So11111111111111111111111111111111111111112",
-				OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-				InAmount:     0.01,
-				OutAmountMin: 0.007505,
-				OutAmount:    0.0074,
-				Project: &pb.StepProject{
-					Label: "Raydium",
-					Id:    "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
-				},
-			},
-		},
-	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
-	})
-	if err != nil {
-		log.Error(err)
-		return true
-	}
-	log.Infof("route trade swap transaction signature : %s", sig)
 	return false
 }
 
@@ -2204,34 +1319,6 @@ func callPricesWSStream(w provider.WSClientTraderAPI) bool {
 			return true
 		}
 		log.Infof("response %v received", i)
-	}
-	return false
-}
-
-func callGetTickersWSStream(w provider.WSClientTraderAPI) bool {
-	log.Info("starting ticker stream")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	stream, err := w.GetTickersStream(ctx, &pb.GetTickersStreamRequest{
-		Project: pb.Project_P_OPENBOOK,
-		Markets: []string{"BONK/SOL", "wSOL/RAY", "BONK/RAY", "RAY/USDC",
-			"SOL/USDC", "SOL/USDC",
-			"RAY/USDC", "USDT/USDC"},
-	})
-	if err != nil {
-		log.Errorf("error with GetTickers stream request: %v", err)
-		return true
-	}
-
-	ch := stream.Channel(0)
-	for i := 1; i <= 1; i++ {
-		v, ok := <-ch
-		if !ok {
-			return true
-		}
-		log.Infof("response %v received", v)
 	}
 	return false
 }
