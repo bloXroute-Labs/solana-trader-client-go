@@ -50,9 +50,9 @@ func (h *HTTPClient) PostPumpFunSwapSol(ctx context.Context, request *pb.PostPum
 
 // Get quote for Raydium CPMM pool
 func (h *HTTPClient) GetRaydiumCPMMQuotes(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-quotes", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-quotes?inToken=%s&outToken=%s&inAmount=%f&slippage=%f", h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
 	var response pb.GetRaydiumCPMMQuotesResponse
-	err := connections.HTTPPostWithClient[*pb.GetRaydiumCPMMQuotesResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPGetWithClient[*pb.GetRaydiumCPMMQuotesResponse](ctx, url, h.httpClient, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +62,9 @@ func (h *HTTPClient) GetRaydiumCPMMQuotes(ctx context.Context, request *pb.GetRa
 
 // GetRaydiumCLMMQuotes returns the CLMM quotes on Raydium
 func (h *HTTPClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/clmm-quotes", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/raydium/clmm-quotes?inToken=%s&outToken=%s&inAmount=%f&slippage=%f", h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
 	var response pb.GetRaydiumCLMMQuotesResponse
-	err := connections.HTTPPostWithClient[*pb.GetRaydiumCLMMQuotesResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPGetWithClient[*pb.GetRaydiumCLMMQuotesResponse](ctx, url, h.httpClient, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +74,9 @@ func (h *HTTPClient) GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRa
 
 // GetRaydiumCLMMPools returns the CLMM pools on Raydium
 func (h *HTTPClient) GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error) {
-	url := fmt.Sprintf("%s/api/v2/raydium/clmm-pools", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/raydium/clmm-pools?pairOrAddress=%s", h.baseURL, request.PairOrAddress)
 	var response pb.GetRaydiumCLMMPoolsResponse
-	err := connections.HTTPPostWithClient[*pb.GetRaydiumCLMMPoolsResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	err := connections.HTTPGetWithClient[*pb.GetRaydiumCLMMPoolsResponse](ctx, url, h.httpClient, &response, h.authHeader)
 	if err != nil {
 		return nil, err
 	}
