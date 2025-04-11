@@ -13,6 +13,57 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
+// Get the current server time
+func (w *WSClient) GetServerTime(ctx context.Context, request *pb.GetServerTimeRequest) (*pb.GetServerTimeResponse, error) {
+	var response pb.GetServerTimeResponse
+	err := w.conn.Request(ctx, "GetServerTime", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// Post and Submit a transaction to a Paladin validator
+func (w *WSClient) PostSubmitPaladinV2(ctx context.Context, request *pb.PostSubmitPaladinRequest) (*pb.PostSubmitResponse, error) {
+	var response pb.PostSubmitResponse
+	err := w.conn.Request(ctx, "PostSubmitPaladinV2", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// Post a Pump Swap transaction in SOL
+func (w *WSClient) PostPumpFunSwapSol(ctx context.Context, request *pb.PostPumpFunSwapRequestSol) (*pb.PostPumpFunSwapResponse, error) {
+	var response pb.PostPumpFunSwapResponse
+	err := w.conn.Request(ctx, "PostPumpFunSwapSol", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// Get quotes for Raydium CPMM pool
+func (w *WSClient) GetRaydiumCPMMQuotes(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
+	var response pb.GetRaydiumCPMMQuotesResponse
+	err := w.conn.Request(ctx, "GetRaydiumCPMMQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// Post a Raydium CPMM pool swap
+func (w *WSClient) PostRaydiumCPMMSwap(ctx context.Context, request *pb.PostRaydiumCPMMSwapRequest) (*pb.PostRaydiumCPMMSwapResponse, error) {
+	var response pb.PostRaydiumCPMMSwapResponse
+	err := w.conn.Request(ctx, "PostRaydiumCPMMSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// Get the most recently cached block hash
 func (w *WSClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return w.recentBlockHashStore.get(ctx)
 }

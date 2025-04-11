@@ -3,14 +3,18 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
+	"net/http"
+
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
 	"github.com/gagliardetto/solana-go"
-	"net/http"
 )
 
 type HTTPClientTraderAPI interface {
+	GetServerTime(ctx context.Context, request *pb.GetServerTimeRequest) (*pb.GetServerTimeResponse, error)
+	PostSubmitPaladinV2(ctx context.Context, request *pb.PostSubmitPaladinRequest) (*pb.PostSubmitResponse, error)
+	PostPumpFunSwapSol(ctx context.Context, request *pb.PostPumpFunSwapRequestSol) (*pb.PostPumpFunSwapResponse, error)
+	GetRaydiumCPMMQuotes(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error)
 	GetRaydiumCLMMQuotes(ctx context.Context, request *pb.GetRaydiumCLMMQuotesRequest) (*pb.GetRaydiumCLMMQuotesResponse, error)
 	GetRaydiumCLMMPools(ctx context.Context, request *pb.GetRaydiumCLMMPoolsRequest) (*pb.GetRaydiumCLMMPoolsResponse, error)
 	PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error)
@@ -167,12 +171,10 @@ type HTTPClientTraderAPISubmitOnly interface {
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
-	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
-		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
+	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error)
 	SignAndSubmitPaladin(ctx context.Context, tx *pb.TransactionMessage, revertProtection *bool) (string, error)
-	SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool,
-		opts SubmitOpts) (*pb.PostSubmitBatchResponse, error)
+	SignAndSubmitBatch(ctx context.Context, transactions []*pb.TransactionMessage, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error)
 }
 
 type HTTPClient struct {
@@ -180,7 +182,6 @@ type HTTPClient struct {
 
 	baseURL    string
 	httpClient *http.Client
-	requestID  utils.RequestID
 	privateKey *solana.PrivateKey
 	authHeader string
 }
