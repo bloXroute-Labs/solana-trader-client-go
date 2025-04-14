@@ -12,6 +12,32 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
+// Get the server time
+func (g *GRPCClient) GetServerTime(ctx context.Context, request *pb.GetServerTimeRequest) (*pb.GetServerTimeResponse, error) {
+	return g.apiClient.GetServerTime(ctx, request)
+}
+
+// Submit a transaction to Paladin validator
+func (g *GRPCClient) PostSubmitPaladinV2(ctx context.Context, request *pb.PostSubmitPaladinRequest) (*pb.PostSubmitResponse, error) {
+	return g.apiClient.PostSubmitPaladinV2(ctx, request)
+}
+
+// Post a pump fun swap in SOL
+func (g *GRPCClient) PostPumpFunSwapSol(ctx context.Context, request *pb.PostPumpFunSwapRequestSol) (*pb.PostPumpFunSwapResponse, error) {
+	return g.apiClient.PostPumpFunSwapSol(ctx, request)
+}
+
+// Post a Raydium swap for a specific route
+func (g *GRPCClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
+	return g.apiClient.PostRaydiumCLMMRouteSwap(ctx, request)
+}
+
+// Post a Raydium swap for CLMM pools
+func (g *GRPCClient) PostRaydiumCLMMSwap(ctx context.Context, request *pb.PostRaydiumSwapRequest) (*pb.PostRaydiumSwapResponse, error) {
+	return g.apiClient.PostRaydiumCLMMSwap(ctx, request)
+}
+
+// Get the most recently cached block hash
 func (g *GRPCClient) RecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	return g.recentBlockHashStore.get(ctx)
 }
