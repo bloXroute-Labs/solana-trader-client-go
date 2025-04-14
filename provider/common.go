@@ -3,14 +3,14 @@ package provider
 import (
 	"errors"
 	"fmt"
+	"github.com/gagliardetto/solana-go"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 const (
@@ -74,7 +74,7 @@ var (
 )
 
 func httpEndpoint(baseUrl string, secure bool) string {
-	prefix := "http"
+	prefix := "https"
 	if secure {
 		prefix = "https"
 	}
@@ -174,6 +174,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 	}
 
 	batchRequest.UseBundle = &useBundle
+	batchRequest.Timestamp = timestamppb.New(time.Now())
 
 	return &batchRequest, nil
 }
@@ -193,5 +194,6 @@ func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana
 	oneRequest.Transaction = &pb.TransactionMessage{
 		Content: signedTxBase64,
 	}
+
 	return &oneRequest, nil
 }

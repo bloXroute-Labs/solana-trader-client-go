@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -578,6 +580,7 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, opts PostSub
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
+		Timestamp:              timestamppb.New(time.Now()),
 	}
 	var response pb.PostSubmitResponse
 	err := w.conn.Request(ctx, "PostSubmit", request, &response)
