@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gagliardetto/solana-go"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 const (
@@ -174,6 +175,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 	}
 
 	batchRequest.UseBundle = &useBundle
+	batchRequest.Timestamp = timestamppb.New(time.Now())
 
 	return &batchRequest, nil
 }
@@ -193,5 +195,6 @@ func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana
 	oneRequest.Transaction = &pb.TransactionMessage{
 		Content: signedTxBase64,
 	}
+
 	return &oneRequest, nil
 }
