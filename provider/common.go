@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/gagliardetto/solana-go"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
+	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 )
 
@@ -175,7 +175,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 	}
 
 	batchRequest.UseBundle = &useBundle
-	batchRequest.Timestamp = timestamppb.New(time.Now())
+	batchRequest.Timestamp = utils.GetTimestamp()
 
 	return &batchRequest, nil
 }

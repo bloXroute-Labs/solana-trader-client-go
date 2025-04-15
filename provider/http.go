@@ -3,9 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
-	"time"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -498,7 +496,7 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts PostS
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
-		Timestamp:              timestamppb.New(time.Now()),
+		Timestamp:              utils.GetTimestamp(),
 	}
 
 	var response pb.PostSubmitResponse
@@ -543,7 +541,7 @@ func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, opts Pos
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
-		Timestamp:              timestamppb.New(time.Now()),
+		Timestamp:              utils.GetTimestamp(),
 	}
 
 	var response pb.PostSubmitResponse

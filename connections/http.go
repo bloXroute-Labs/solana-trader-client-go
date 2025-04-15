@@ -3,7 +3,6 @@ package connections
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -50,12 +50,21 @@ func HTTPGetWithClient[T protoreflect.ProtoMessage](ctx context.Context, url str
 }
 
 func HTTPPostWithClient[T protoreflect.ProtoMessage](ctx context.Context, url string, client *http.Client, body interface{}, val T, authHeader string) error {
-	b, err := json.Marshal(body)
+	protoMsg := body.(proto.Message)
+
+	// Use protojson marshaler
+	marshaler := protojson.MarshalOptions{
+		UseProtoNames: true,
+	}
+	b, err := marshaler.Marshal(protoMsg)
 	if err != nil {
 		return err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Authorization", authHeader)
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("x-sdk", package_info.Name)
