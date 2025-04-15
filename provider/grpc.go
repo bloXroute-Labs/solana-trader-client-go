@@ -3,8 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -360,8 +361,6 @@ func (g *GRPCClient) signAndSubmitBatch(ctx context.Context, transactions []*pb.
 		return nil, err
 	}
 
-	t := time.Now()
-	batchRequest.Timestamp = timestamppb.New(t)
 	return g.PostSubmitBatch(ctx, batchRequest)
 }
 
