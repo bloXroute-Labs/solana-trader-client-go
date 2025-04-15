@@ -3,11 +3,12 @@ package provider
 import (
 	"errors"
 	"fmt"
-	"github.com/gagliardetto/solana-go"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gagliardetto/solana-go"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -74,7 +75,7 @@ var (
 )
 
 func httpEndpoint(baseUrl string, secure bool) string {
-	prefix := "https"
+	prefix := "http"
 	if secure {
 		prefix = "https"
 	}
