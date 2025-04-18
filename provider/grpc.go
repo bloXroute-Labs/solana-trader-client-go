@@ -3,9 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -407,7 +404,7 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, 
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
 		Sniping:                &opts.Sniping,
-		Timestamp:              timestamppb.New(time.Now()),
+		Timestamp:              utils.GetTimestamp(),
 	})
 }
 
@@ -422,7 +419,7 @@ func (g *GRPCClient) PostSubmitV2(ctx context.Context, tx *pb.TransactionMessage
 		Transaction:            tx,
 		SkipPreFlight:          opts.SkipPreFlight,
 		FrontRunningProtection: &opts.FrontRunningProtection,
-		Timestamp:              timestamppb.New(time.Now()),
+		Timestamp:              utils.GetTimestamp(),
 	})
 }
 
