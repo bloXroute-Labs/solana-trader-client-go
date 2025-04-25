@@ -838,7 +838,7 @@ func (g *GRPCClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpF
 	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
 }
 
-// GetPumpFunAmmSwapStream subscribes to a stream for swap events related to a set of pumpswap tokens
+// GetPumpFunAmmSwapStream subscribes to a stream for swap events related to a set of pumpdotswap tokens
 func (g *GRPCClient) GetPumpFunAmmSwapStream(ctx context.Context, req *pb.GetPumpFunAMMSwapStreamRequest) (connections.Streamer[*pb.GetPumpFunAMMSwapStreamResponse], error) {
 	stream, err := g.apiClient.GetPumpFunAMMSwapStream(ctx, req)
 	if err != nil {
