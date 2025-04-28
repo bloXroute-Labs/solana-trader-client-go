@@ -1210,7 +1210,7 @@ func (w *WSClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpFun
 
 // GetPumpFunAmmSwapStream subscribes to a stream for swap events related to a set of pumpdotswap tokens
 func (w *WSClient) GetPumpFunAmmSwapStream(ctx context.Context, req *pb.GetPumpFunAMMSwapStreamRequest) (connections.Streamer[*pb.GetPumpFunAMMSwapStreamResponse], error) {
-	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunAmmSwapStream", req, func() *pb.GetPumpFunAMMSwapStreamResponse {
+	return connections.WSStreamProto(w.conn, ctx, "GetPumpFunAMMSwapStream", req, func() *pb.GetPumpFunAMMSwapStreamResponse {
 		var v pb.GetPumpFunAMMSwapStreamResponse
 		return &v
 	})
