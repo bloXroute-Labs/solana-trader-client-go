@@ -838,6 +838,16 @@ func (g *GRPCClient) GetPumpFunSwapsStream(ctx context.Context, req *pb.GetPumpF
 	return connections.GRPCStream[pb.GetPumpFunSwapsStreamResponse](stream, ""), nil
 }
 
+// GetPumpFunAmmSwapStream subscribes to a stream for swap events related to a set of pumpdotswap tokens
+func (g *GRPCClient) GetPumpFunAmmSwapStream(ctx context.Context, req *pb.GetPumpFunAMMSwapStreamRequest) (connections.Streamer[*pb.GetPumpFunAMMSwapStreamResponse], error) {
+	stream, err := g.apiClient.GetPumpFunAMMSwapStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return connections.GRPCStream[pb.GetPumpFunAMMSwapStreamResponse](stream, ""), nil
+}
+
 // GetPumpFunNewAmmPoolStream subscribes to a stream for new AMM pool events in Pump Swap
 func (g *GRPCClient) GetPumpFunNewAmmPoolStream(ctx context.Context, req *pb.GetPumpFunNewAmmPoolStreamRequest) (connections.Streamer[*pb.GetPumpFunNewAmmPoolStreamResponse], error) {
 	stream, err := g.apiClient.GetPumpFunNewAmmPoolStream(ctx, req)
