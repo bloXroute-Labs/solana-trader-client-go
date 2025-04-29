@@ -359,6 +359,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetPumpFunNewAmmPoolGRPCStream,
 		description: "get new amm pools on pump swap",
 	},
+	"getPumpFunAmmSwapStream": {
+		run:         callGetPumpFunAmmSwapGRPCStream,
+		description: "get new amm swaps on pump swap",
+	},
 	"getBundleTipStream": {
 		run:         callGetBundleTipGRPCStream,
 		description: "get bundle tip stream",
@@ -2257,6 +2261,37 @@ func callGetPumpFunNewAmmPoolGRPCStream(g provider.GRPCClientTraderAPI) bool {
 	stream, err := gg.GetPumpFunNewAmmPoolStream(ctx, &pb.GetPumpFunNewAmmPoolStreamRequest{})
 	if err != nil {
 		log.Errorf("error with GetPumpFunNewAmmPool stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+	}
+	return false
+}
+
+func callGetPumpFunAmmSwapGRPCStream(g provider.GRPCClientTraderAPI) bool {
+	gg, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		log.Errorf("failed to create pump provider: %v", err)
+		return true
+	}
+
+	log.Info("starting GetPumpFunAMMSwap stream")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := gg.GetPumpFunAmmSwapStream(ctx, &pb.GetPumpFunAMMSwapStreamRequest{
+		Pools: []string{"Gj5t6KjTw3gWW7SrMHEi1ojCkaYHyvLwb17gktf96HNH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetPumpFunAMMSwap stream request: %v", err)
 		return true
 	}
 

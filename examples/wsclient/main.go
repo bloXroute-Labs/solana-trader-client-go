@@ -358,6 +358,10 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetPumpFunNewTokensWSStreamWrap,
 		description: "get pump fun new token stream",
 	},
+	"getPumpFunAmmSwapStream": {
+		run:         callGetPumpFunAmmSwapWSStream,
+		description: "get pump swap swaps stream",
+	},
 	"getPumpFunNewAmmPoolStream": {
 		run:         callGetPumpFunNewAmmPoolWSStream,
 		description: "get new amm pools on pump swap",
@@ -2273,6 +2277,36 @@ func callGetPumpFunNewTokensWSStream(w provider.WSClientTraderAPI) (string, bool
 		mint = v.Mint
 	}
 	return mint, false
+}
+
+func callGetPumpFunAmmSwapWSStream(_ provider.WSClientTraderAPI) bool {
+	log.Info("starting GetPumpFunAMMSwap stream")
+	wp, err := provider.NewWSClientPumpNY()
+	if err != nil {
+		log.Errorf("failed to create pump fun provider: %v", err)
+		return true
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := wp.GetPumpFunAmmSwapStream(ctx, &pb.GetPumpFunAMMSwapStreamRequest{
+		Pools: []string{"Gj5t6KjTw3gWW7SrMHEi1ojCkaYHyvLwb17gktf96HNH"},
+	})
+	if err != nil {
+		log.Errorf("error with GetPumpFunAMMSwap stream request: %v", err)
+		return true
+	}
+
+	ch := stream.Channel(0)
+	for i := 1; i <= 1; i++ {
+		v, ok := <-ch
+		if !ok {
+			return true
+		}
+		log.Infof("response %v received", v)
+	}
+	return false
 }
 
 func callGetPumpFunNewAmmPoolWSStream(w provider.WSClientTraderAPI) bool {
