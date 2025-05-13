@@ -3,16 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
-	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
 
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/manifoldco/promptui"
 
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/transaction"
@@ -1580,11 +1582,17 @@ func callPostPumpFunSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool 
 	defer cancel()
 	h = provider.NewHTTPClientPumpNY()
 
+	newToken, err := examples.GetPumpFunNewTokenHelper()
+	if err != nil {
+		panic(err)
+	}
+
 	log.Info("PumpFun swap")
 	sig, err := h.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
-		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
+		BondingCurveAddress: newToken.BondingCurve,
+		TokenAddress:        newToken.Mint,
+		Creator:             newToken.Creator,
 		TokenAmount:         10,
 		SolThreshold:        0.0001,
 		IsBuy:               false,

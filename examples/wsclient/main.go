@@ -14,6 +14,7 @@ import (
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/manifoldco/promptui"
 
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples"
 	"github.com/bloXroute-Labs/solana-trader-client-go/examples/config"
 	"github.com/bloXroute-Labs/solana-trader-client-go/provider"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
@@ -1861,11 +1862,17 @@ func callPostPumpFunSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 		panic(err)
 	}
 
+	newToken, err := examples.GetPumpFunNewTokenHelper()
+	if err != nil {
+		panic(err)
+	}
+
 	log.Info("PumpFun swap")
 	sig, err := wp.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
-		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
+		BondingCurveAddress: newToken.BondingCurve,
+		TokenAddress:        newToken.Mint,
+		Creator:             newToken.Creator,
 		TokenAmount:         10,
 		SolThreshold:        0.0001,
 		IsBuy:               false,

@@ -13,6 +13,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 
+	"github.com/bloXroute-Labs/solana-trader-client-go/examples"
 	"github.com/bloXroute-Labs/solana-trader-client-go/utils"
 	"github.com/manifoldco/promptui"
 
@@ -1872,12 +1873,18 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	newToken, err := examples.GetPumpFunNewTokenHelper()
+	if err != nil {
+		panic(err)
+	}
+
 	log.Info("PumpFun swap")
 	sig, err := g.SubmitPostPumpFunSwap(ctx, &pb.PostPumpFunSwapRequest{
 		UserAddress:         ownerAddr,
-		BondingCurveAddress: "Fh8fnZUVEpPStJ2hKFNNjMAyuyvoJLMouENawg4DYCBc",
-		TokenAddress:        "2DEsbYgW94AtZxgUfYXoL8DqJAorsLrEWZdSfriipump",
+		BondingCurveAddress: newToken.BondingCurve,
+		TokenAddress:        newToken.Mint,
 		TokenAmount:         10,
+		Creator:             newToken.Creator,
 		SolThreshold:        0.0001,
 		IsBuy:               false,
 		ComputeLimit:        0,
@@ -2730,4 +2737,27 @@ func callTestSubmitSnipe(g provider.GRPCClientTraderAPI, ownerAddr string) bool 
 
 	log.Infof("snipe signatures: %v", signatures)
 	return false
+}
+
+func getPumpFunNewTokenHelper(g provider.GRPCClientTraderAPI) (*pb.GetPumpFunNewTokensStreamResponse, bool) {
+	log.Info("starting GetPumpFunNewTokens stream")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream, err := g.GetPumpFunNewTokensStream(ctx, &pb.GetPumpFunNewTokensStreamRequest{})
+	if err != nil {
+		log.Errorf("error with GetPumpFunNewTokens stream request: %v", err)
+		return nil, true
+	}
+
+	ch := stream.Channel(0)
+
+	// Wait for a single response
+	v, ok := <-ch
+	if !ok {
+		return nil, true
+	}
+
+	log.Infof("response %v received", v)
+	return v, false
 }
