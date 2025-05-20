@@ -344,10 +344,6 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetPriorityFeeByProgramGRPC,
 		description: "get priority fee by program",
 	},
-	"getGetLeaderSchedule": {
-		run:         callGetLeaderScheduleGRPC,
-		description: "get leader schedule",
-	},
 	"getPriorityFeeByProgramStream": {
 		run:         callGetPriorityFeeByProgramGRPCStream,
 		description: "get priority fee by program stream",
@@ -2612,23 +2608,6 @@ func callGetPriorityFeeByProgramGRPC(g provider.GRPCClientTraderAPI) bool {
 	response, err := g.GetPriorityFeeByProgram(ctx, &pb.GetPriorityFeeByProgramRequest{Programs: []string{RaydiumCLMM, RaydiumCPMM}})
 	if err != nil {
 		log.Errorf("error with GetPriorityFeeByProgram request: %v", err)
-		return true
-	}
-	log.Infof("response received: %v", response)
-	return false
-}
-
-func callGetLeaderScheduleGRPC(g provider.GRPCClientTraderAPI) bool {
-	log.Info("starting get leader schedule test")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	response, err := g.GetLeaderSchedule(ctx, &pb.GetLeaderScheduleRequest{
-		MaxSlots: 0,
-	})
-	if err != nil {
-		log.Errorf("error with GetLeaderSchedule request: %v", err)
 		return true
 	}
 	log.Infof("response received: %v", response)

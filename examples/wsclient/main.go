@@ -339,10 +339,6 @@ var ExampleEndpoints = map[string]struct {
 		run:         callGetPriorityFeeWS,
 		description: "get priority fee",
 	},
-	"getLeaderSchedule": {
-		run:         callGetLeaderScheduleWS,
-		description: "get leader schedule",
-	},
 	"getPriorityFeeStream": {
 		run:         callGetPriorityFeeWSStream,
 		description: "get priority fee stream",
@@ -2457,19 +2453,6 @@ func callGetPriorityFeeWS(w provider.WSClientTraderAPI) bool {
 	}
 
 	log.Infof("priority fee: %v", priorityFee)
-	return false
-}
-
-func callGetLeaderScheduleWS(w provider.WSClientTraderAPI) bool {
-	log.Info("fetching leader schedule...")
-
-	leaderSchedule, err := w.GetLeaderSchedule(context.Background(), 0)
-	if err != nil {
-		log.Errorf("error with GetLeaderSchedule request: %v", err)
-		return true
-	}
-
-	log.Infof("leader schedule: %v", leaderSchedule)
 	return false
 }
 
