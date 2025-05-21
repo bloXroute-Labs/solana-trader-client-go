@@ -125,7 +125,6 @@ type HTTPClientTraderAPI interface {
 	GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error)
 	GetPriorityFee(ctx context.Context, project pb.Project, percentile *float64) (*pb.GetPriorityFeeResponse, error)
 	GetPriorityFeeByProgram(ctx context.Context, programs []string) (*pb.GetPriorityFeeByProgramResponse, error)
-	GetLeaderSchedule(ctx context.Context, maxSlots uint) (*pb.GetLeaderScheduleResponse, error)
 	GetMarketsV2(ctx context.Context) (*pb.GetMarketsResponseV2, error)
 	GetOrderbookV2(ctx context.Context, market string, limit uint32) (*pb.GetOrderbookResponseV2, error)
 	GetMarketDepthV2(ctx context.Context, market string, limit uint32) (*pb.GetMarketDepthResponseV2, error)

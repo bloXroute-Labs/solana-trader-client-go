@@ -62,11 +62,6 @@ func (g *GRPCClient) GetPriorityFeeByProgram(ctx context.Context, request *pb.Ge
 	return g.apiClient.GetPriorityFeeByProgram(ctx, request)
 }
 
-// GetLeaderSchedule returns leader schedule for given max slots
-func (g *GRPCClient) GetLeaderSchedule(ctx context.Context, request *pb.GetLeaderScheduleRequest) (*pb.GetLeaderScheduleResponse, error) {
-	return g.apiClient.GetLeaderSchedule(ctx, request)
-}
-
 // GetRateLimit returns details of an account rate-limits
 func (g *GRPCClient) GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error) {
 	return g.apiClient.GetRateLimit(ctx, request)

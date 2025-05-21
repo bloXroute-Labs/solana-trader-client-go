@@ -40,7 +40,6 @@ type GRPCClientTraderAPI interface {
 	GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error)
 	GetPriorityFee(ctx context.Context, request *pb.GetPriorityFeeRequest) (*pb.GetPriorityFeeResponse, error)
 	GetPriorityFeeByProgram(ctx context.Context, request *pb.GetPriorityFeeByProgramRequest) (*pb.GetPriorityFeeByProgramResponse, error)
-	GetLeaderSchedule(ctx context.Context, request *pb.GetLeaderScheduleRequest) (*pb.GetLeaderScheduleResponse, error)
 	GetRateLimit(ctx context.Context, request *pb.GetRateLimitRequest) (*pb.GetRateLimitResponse, error)
 	GetTransaction(ctx context.Context, request *pb.GetTransactionRequest) (*pb.GetTransactionResponse, error)
 	GetRaydiumPoolReserve(ctx context.Context, req *pb.GetRaydiumPoolReserveRequest) (*pb.GetRaydiumPoolReserveResponse, error)
