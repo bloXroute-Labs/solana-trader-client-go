@@ -917,10 +917,11 @@ func callGetPumpFunAmmQuotes(_ provider.WSClientTraderAPI) bool {
 	defer cancel()
 
 	quotes, err := w.GetPumpFunAmmQuotes(ctx, &pb.GetPumpFunAmmQuotesRequest{
-		QuoteType:   "buy",
-		MintAddress: "So11111111111111111111111111111111111111112",
-		PoolAddress: "Gf7sXMoP8iRw4iiXmJ1nq4vxcRycbGXy5RL8a8LnTd3v",
-		Amount:      0.01,
+		InToken:  "So11111111111111111111111111111111111111112",
+		InAmount: 0.01,
+		OutToken: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+		Pool:     "Gf7sXMoP8iRw4iiXmJ1nq4vxcRycbGXy5RL8a8LnTd3v",
+		Slippage: 1,
 	})
 	if err != nil {
 		return true

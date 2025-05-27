@@ -13,6 +13,8 @@ github.com/blendle/zapdriver v1.3.1 h1:C3dydBOWYRiOk+B8X9IVZ5IOe+7cl+tGOexN4QqHf
 github.com/blendle/zapdriver v1.3.1/go.mod h1:mdXfREi6u5MArG4j9fewC+FGnXaBR+T4Ox4J2u4eHCc=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250520193223-d1ab193697b8 h1:5ithhlVryzfi8CCfigH7U8F1vrwnXgDzZ2fRq8Yz41g=
 github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250520193223-d1ab193697b8/go.mod h1:LX1oCICqovaeRuoWcKgwLcbAJcdySn6jFsovz+1IGZc=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250527192455-e5e04812e048 h1:FtV55emFUOs6czh8+RKpfGzfvAeto8JjjvgzpmgyxBw=
+github.com/bloXroute-Labs/solana-trader-proto v1.9.3-0.20250527192455-e5e04812e048/go.mod h1:LX1oCICqovaeRuoWcKgwLcbAJcdySn6jFsovz+1IGZc=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
