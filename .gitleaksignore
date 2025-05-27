@@ -1,1 +1,3 @@
 d243e75f5db384bd4e54fe4ca5e3c6e88ef9ab04:examples/grpcclient/main.go:generic-api-key:880
+d243e75f5db384bd4e54fe4ca5e3c6e88ef9ab04:examples/wsclient/main.go:generic-api-key:922
+d243e75f5db384bd4e54fe4ca5e3c6e88ef9ab04:examples/httpclient/main.go:generic-api-key:833
