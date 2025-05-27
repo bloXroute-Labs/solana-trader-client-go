@@ -48,6 +48,30 @@ func (h *HTTPClient) PostPumpFunSwapSol(ctx context.Context, request *pb.PostPum
 	return &response, nil
 }
 
+// Get a pump fun AMM Quote
+func (h *HTTPClient) GetPumpFunAmmQuotes(ctx context.Context, request *pb.GetPumpFunAmmQuotesRequest) (*pb.GetPumpFunAmmQuotesResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/pumpfun/amm/quotes", h.baseURL)
+	var response pb.GetPumpFunAmmQuotesResponse
+	err := connections.HTTPPostWithClient[*pb.GetPumpFunAmmQuotesResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// Post a pump fun AMM swap
+func (h *HTTPClient) PostPumpFunAmmSwap(ctx context.Context, request *pb.PostPumpFunAmmSwapRequest) (*pb.PostPumpFunAmmSwapResponse, error) {
+	url := fmt.Sprintf("%s/api/v2/pumpfun/amm/swap", h.baseURL)
+	var response pb.PostPumpFunAmmSwapResponse
+	err := connections.HTTPPostWithClient[*pb.PostPumpFunAmmSwapResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // Get quote for Raydium CPMM pool
 func (h *HTTPClient) GetRaydiumCPMMQuotes(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/raydium/cpmm-quotes?inToken=%s&outToken=%s&inAmount=%f&slippage=%f", h.baseURL, request.InToken, request.OutToken, request.InAmount, request.Slippage)
@@ -767,6 +791,20 @@ func (h *HTTPClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.Post
 	}
 	return h.SignAndSubmit(ctx, &pb.TransactionMessage{
 		Content: resp.Transaction.Content,
+	}, false, false, false)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (h *HTTPClient) SubmitPostPumpFunAmmSwap(ctx context.Context, request *pb.PostPumpFunAmmSwapRequest) (string, error) {
+	resp, err := h.PostPumpFunAmmSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Transactions) == 0 {
+		return "", fmt.Errorf("no transactions returned from PostPumpFunAmmSwap")
+	}
+	return h.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transactions[0].Content,
 	}, false, false, false)
 }
 

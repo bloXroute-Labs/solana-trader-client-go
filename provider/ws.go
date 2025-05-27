@@ -43,6 +43,26 @@ func (w *WSClient) PostPumpFunSwapSol(ctx context.Context, request *pb.PostPumpF
 	return &response, nil
 }
 
+// Get a pump fun AMM Quote
+func (w *WSClient) GetPumpFunAmmQuotes(ctx context.Context, request *pb.GetPumpFunAmmQuotesRequest) (*pb.GetPumpFunAmmQuotesResponse, error) {
+	var response pb.GetPumpFunAmmQuotesResponse
+	err := w.conn.Request(ctx, "GetPumpFunAmmQuotes", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// Post a pump fun AMM swap
+func (w *WSClient) PostPumpFunAmmSwap(ctx context.Context, request *pb.PostPumpFunAmmSwapRequest) (*pb.PostPumpFunAmmSwapResponse, error) {
+	var response pb.PostPumpFunAmmSwapResponse
+	err := w.conn.Request(ctx, "PostPumpFunAmmSwap", request, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
 // Get quotes for Raydium CPMM pool
 func (w *WSClient) GetRaydiumCPMMQuotes(ctx context.Context, request *pb.GetRaydiumCPMMQuotesRequest) (*pb.GetRaydiumCPMMQuotesResponse, error) {
 	var response pb.GetRaydiumCPMMQuotesResponse
@@ -822,6 +842,20 @@ func (w *WSClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.PostPu
 	}
 	return w.SignAndSubmit(ctx, &pb.TransactionMessage{
 		Content: resp.Transaction.Content,
+	}, false, false, false)
+}
+
+// SubmitPostPumpFunAmmSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (w *WSClient) SubmitPostPumpFunAmmSwap(ctx context.Context, request *pb.PostPumpFunAmmSwapRequest) (string, error) {
+	resp, err := w.PostPumpFunAmmSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Transactions) == 0 {
+		return "", fmt.Errorf("no transactions returned from PostPumpFunAmmSwap")
+	}
+	return w.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transactions[0].Content,
 	}, false, false, false)
 }
 

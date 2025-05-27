@@ -27,6 +27,16 @@ func (g *GRPCClient) PostPumpFunSwapSol(ctx context.Context, request *pb.PostPum
 	return g.apiClient.PostPumpFunSwapSol(ctx, request)
 }
 
+// Get a pump fun AMM Quote
+func (g *GRPCClient) GetPumpFunAmmQuotes(ctx context.Context, request *pb.GetPumpFunAmmQuotesRequest) (*pb.GetPumpFunAmmQuotesResponse, error) {
+	return g.apiClient.GetPumpFunAmmQuotes(ctx, request)
+}
+
+// Post a pump fun AMM swap
+func (g *GRPCClient) PostPumpFunAmmSwap(ctx context.Context, request *pb.PostPumpFunAmmSwapRequest) (*pb.PostPumpFunAmmSwapResponse, error) {
+	return g.apiClient.PostPumpFunAmmSwap(ctx, request)
+}
+
 // Post a Raydium swap for a specific route
 func (g *GRPCClient) PostRaydiumCLMMRouteSwap(ctx context.Context, request *pb.PostRaydiumRouteSwapRequest) (*pb.PostRaydiumRouteSwapResponse, error) {
 	return g.apiClient.PostRaydiumCLMMRouteSwap(ctx, request)
@@ -465,6 +475,20 @@ func (g *GRPCClient) SubmitPostPumpFunSwap(ctx context.Context, request *pb.Post
 	}
 	return g.SignAndSubmit(ctx, &pb.TransactionMessage{
 		Content: resp.Transaction.Content,
+	}, false, false, false)
+}
+
+// SubmitPostPumpFunSwap builds a pumpfun Swap transaction then signs it, and submits to the network.
+func (g *GRPCClient) SubmitPostPumpFunAmmSwap(ctx context.Context, request *pb.PostPumpFunAmmSwapRequest) (string, error) {
+	resp, err := g.PostPumpFunAmmSwap(ctx, request)
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Transactions) == 0 {
+		return "", fmt.Errorf("no transactions returned from PostPumpFunAmmSwap")
+	}
+	return g.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: resp.Transactions[0].Content,
 	}, false, false, false)
 }
 

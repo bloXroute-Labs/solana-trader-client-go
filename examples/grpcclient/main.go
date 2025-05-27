@@ -65,14 +65,13 @@ func main() {
 
 	for {
 		client := setupGRPCClient(config.Env(environment), config.GRPCUrls[config.Region(region)])
-		if err != nil {
-			log.Fatalf("failed to setup GRPC client: %v", err)
-		}
 
 		var names []string
 		for name := range ExampleEndpoints {
 			names = append(names, name)
 		}
+
+		sort.Strings(names)
 
 		// Choose example
 		examplePrompt := promptui.Select{
@@ -315,6 +314,11 @@ var ExampleEndpoints = map[string]struct {
 		description: "get pump fun quotes",
 	},
 
+	"getPumpFunAmmQuotes": {
+		run:         callGetPumpFunAmmQuotes,
+		description: "get pump fun AMM quotes",
+	},
+
 	"getJupiterQuotes": {
 		run:         callGetJupiterQuotes,
 		description: "get jupiter quotes",
@@ -440,6 +444,12 @@ var ExampleEndpoints = map[string]struct {
 	"pumpFunSwap": {
 		run:                               callPostPumpFunSwapWrap,
 		description:                       "pump fun swap",
+		requiresAdditionalEnvironmentVars: true,
+	},
+
+	"pumpFunAmmSwap": {
+		run:                               callPostPumpFunAmmSwap,
+		description:                       "pump fun AMM swap",
 		requiresAdditionalEnvironmentVars: true,
 	},
 
@@ -850,6 +860,31 @@ func callGetPumpFunQuotes(g provider.GRPCClientTraderAPI) bool {
 	}
 
 	log.Infof("best quote for PumpFun is %v", quotes)
+
+	fmt.Println()
+	return false
+}
+
+func callGetPumpFunAmmQuotes(_ provider.GRPCClientTraderAPI) bool {
+	g, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	quotes, err := g.GetPumpFunAmmQuotes(ctx, &pb.GetPumpFunAmmQuotesRequest{
+		QuoteType:   "buy",
+		MintAddress: "So11111111111111111111111111111111111111112",
+		PoolAddress: "Gf7sXMoP8iRw4iiXmJ1nq4vxcRycbGXy5RL8a8LnTd3v",
+		Amount:      0.01,
+	})
+	if err != nil {
+		return true
+	}
+
+	log.Infof("quote for PumpFun AMM is %v", quotes)
 
 	fmt.Println()
 	return false
@@ -1892,6 +1927,37 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 		return true
 	}
 	log.Infof("PumpFun swap transaction signature : %s", sig)
+	return false
+}
+
+func callPostPumpFunAmmSwap(_ provider.GRPCClientTraderAPI) bool {
+	log.Info("starting PostPumpFunAmmSwap test")
+	g, err := provider.NewGRPCClientPumpNY()
+	if err != nil {
+		panic(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Info("PumpFun AMM swap")
+	tip := uint64(10000)
+	sig, err := g.SubmitPostPumpFunAmmSwap(ctx, &pb.PostPumpFunAmmSwapRequest{
+		OwnerAddress: Environment.PublicKey,
+		InToken:      "So11111111111111111111111111111111111111112",
+		InAmount:     0.01,
+		OutToken:     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+		Pool:         "Gf7sXMoP8iRw4iiXmJ1nq4vxcRycbGXy5RL8a8LnTd3v",
+		Slippage:     1,
+		ComputeLimit: 130000,
+		ComputePrice: uint64(0.1 * 1000000),
+		Tip:          &tip,
+	})
+	if err != nil {
+		log.Error(err)
+		return true
+	}
+	log.Infof("PumpFun AMM swap transaction signature : %s", sig)
 	return false
 }
 
