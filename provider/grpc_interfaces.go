@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
@@ -223,12 +224,21 @@ type GRPCClient struct {
 
 // NewGRPCClientFullService connects to Mainnet Trader API with full service API
 func NewGRPCClientFullService(bloxrouteEndpoint string) (GRPCClientTraderAPI, error) {
-	if bloxrouteEndpoint != MainnetNYGRPC && bloxrouteEndpoint != MainnetUKGRPC {
+	if bloxrouteEndpoint != MainnetNYGRPC &&
+		bloxrouteEndpoint != MainnetUKGRPC &&
+		bloxrouteEndpoint != MainnetNYGRPCSecure &&
+		bloxrouteEndpoint != MainnetUKGRPCSecure {
 		return nil, fmt.Errorf("not a valid endpoint for a full service trader api")
 	}
 
+	isSecure := isSecureGRPC(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
 	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	opts.UseTLS = isSecure
 
 	return NewGRPCClientWithOpts(opts)
 }
@@ -238,20 +248,44 @@ func NewGRPCClientSubmitOnly(bloxrouteEndpoint string) (GRPCClientTraderAPISubmi
 	if bloxrouteEndpoint != MainnetAmsterdamGRPC &&
 		bloxrouteEndpoint != MainnetFrankfurtGRPC &&
 		bloxrouteEndpoint != MainnetLAGRPC &&
-		bloxrouteEndpoint != MainnetTokyoGRPC {
+		bloxrouteEndpoint != MainnetTokyoGRPC &&
+		bloxrouteEndpoint != MainnetAmsterdamGRPCSecure &&
+		bloxrouteEndpoint != MainnetFrankfurtGRPCSecure &&
+		bloxrouteEndpoint != MainnetLAGRPCSecure &&
+		bloxrouteEndpoint != MainnetTokyoGRPCSecure {
 		return nil, fmt.Errorf("not a valid endpoint for submit only trader api")
 	}
 
+	isSecure := isSecureGRPC(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
 	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	opts.UseTLS = isSecure
 
 	return NewGRPCClientWithOpts(opts)
 }
 
 // NewGRPCClientPumpNY connects to Mainnet NY Pump Trader API
-func NewGRPCClientPumpNY() (GRPCClientTraderAPI, error) {
-	opts := DefaultRPCOpts(MainnetPumpNYGRPC)
-	opts.UseTLS = true
+func NewGRPCClientPumpNY(bloxrouteEndpoint string) (GRPCClientTraderAPI, error) {
+	if bloxrouteEndpoint != MainnetPumpNYGRPC &&
+		bloxrouteEndpoint != MainnetPumpUKGRPC &&
+		bloxrouteEndpoint != MainnetPumpNYGRPCSecure &&
+		bloxrouteEndpoint != MainnetPumpUKGRPCSecure {
+		return nil, fmt.Errorf("not a valid endpoint for a trader api pump")
+	}
+
+	isSecure := isSecureGRPC(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(bloxrouteEndpoint)
+	opts.UseTLS = isSecure
+
 	return NewGRPCClientWithOpts(opts)
 }
 

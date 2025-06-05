@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -190,15 +191,23 @@ type HTTPClient struct {
 
 // NewHTTPClientFullService connects to Mainnet Trader pb with full service pb
 func NewHTTPClientFullService(bloxrouteEndpoint string) (HTTPClientTraderAPI, error) {
-	if bloxrouteEndpoint != MainnetNYHTTP && bloxrouteEndpoint != MainnetUKHTTP {
-		return nil, fmt.Errorf("not a valid endpoint for a full service trader pb")
+	if bloxrouteEndpoint != MainnetNYHTTP &&
+		bloxrouteEndpoint != MainnetUKHTTP &&
+		bloxrouteEndpoint != MainnetNYHTTPSecure &&
+		bloxrouteEndpoint != MainnetUKHTTPSecure {
+		return nil, fmt.Errorf("not a valid endpoint for a full service trader api")
+	}
+
+	isSecure := isSecureHTTP(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
 	}
 
 	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	opts.UseTLS = isSecure
 
-	httpClient := NewHTTPClientWithOpts(nil, opts)
-	return httpClient, nil
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
 // NewHTTPClientSubmitOnly connects to Mainnet Trader pb with full service pb
@@ -206,15 +215,24 @@ func NewHTTPClientSubmitOnly(bloxrouteEndpoint string) (HTTPClientTraderAPISubmi
 	if bloxrouteEndpoint != MainnetAmsterdamHTTP &&
 		bloxrouteEndpoint != MainnetFrankfurtHTTP &&
 		bloxrouteEndpoint != MainnetLAHTTP &&
-		bloxrouteEndpoint != MainnetTokyoHTTP {
-		return nil, fmt.Errorf("not a valid endpoint for submit only trader pb")
+		bloxrouteEndpoint != MainnetTokyoHTTP &&
+		bloxrouteEndpoint != MainnetAmsterdamHTTPSecure &&
+		bloxrouteEndpoint != MainnetFrankfurtHTTPSecure &&
+		bloxrouteEndpoint != MainnetLAHTTPSecure &&
+		bloxrouteEndpoint != MainnetTokyoHTTPSecure {
+		return nil, fmt.Errorf("not a valid endpoint for submit only trader api")
+	}
+
+	isSecure := isSecureHTTP(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
 	}
 
 	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	opts.UseTLS = isSecure
 
-	httpClient := NewHTTPClientWithOpts(nil, opts)
-	return httpClient, nil
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
 // NewHTTPClient connects to Mainnet Trader pb

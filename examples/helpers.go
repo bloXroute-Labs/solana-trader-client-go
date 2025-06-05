@@ -10,7 +10,7 @@ import (
 )
 
 func GetPumpFunNewTokenHelper() (*pb.GetPumpFunNewTokensStreamResponse, error) {
-	grpcClient, err := provider.NewGRPCClientPumpNY()
+	grpcClient, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}

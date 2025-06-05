@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -188,11 +189,22 @@ type WSClient struct {
 
 // NewWSClientFullService connects to Mainnet Trader API with full service
 func NewWSClientFullService(bloxrouteEndpoint string) (WSClientTraderAPI, error) {
-	if bloxrouteEndpoint != MainnetNYWS && bloxrouteEndpoint != MainnetUKWS {
+	if bloxrouteEndpoint != MainnetNYWS &&
+		bloxrouteEndpoint != MainnetUKWS &&
+		bloxrouteEndpoint != MainnetNYWSSecure &&
+		bloxrouteEndpoint != MainnetUKWSSecure {
 		return nil, fmt.Errorf("not a valid endpoint for a full service trader api")
 	}
 
+	isSecure := isSecureWS(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
 	opts := DefaultRPCOpts(MainnetNYWS)
+	opts.UseTLS = isSecure
+
 	return NewWSClientWithOpts(opts)
 }
 
@@ -201,19 +213,44 @@ func NewWSClientSubmitOnly(bloxrouteEndpoint string) (WSClientTraderAPISubmitOnl
 	if bloxrouteEndpoint != MainnetAmsterdamWS &&
 		bloxrouteEndpoint != MainnetFrankfurtWS &&
 		bloxrouteEndpoint != MainnetLAWS &&
-		bloxrouteEndpoint != MainnetTokyoWS {
+		bloxrouteEndpoint != MainnetTokyoWS &&
+		bloxrouteEndpoint != MainnetAmsterdamWSSecure &&
+		bloxrouteEndpoint != MainnetFrankfurtWSSecure &&
+		bloxrouteEndpoint != MainnetLAWSSecure &&
+		bloxrouteEndpoint != MainnetTokyoWSSecure {
 		return nil, fmt.Errorf("not a valid endpoint for submit only trader api")
 	}
 
-	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	isSecure := isSecureWS(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(MainnetNYWS)
+	opts.UseTLS = isSecure
 
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientPumpNY connects to Mainnet NY Pump Trader API
-func NewWSClientPumpNY() (WSClientTraderAPI, error) {
-	opts := DefaultRPCOpts(MainnetPumpNYWS)
+func NewWSClientPumpNY(bloxrouteEndpoint string) (WSClientTraderAPI, error) {
+	if bloxrouteEndpoint != MainnetPumpNYWS &&
+		bloxrouteEndpoint != MainnetPumpUKWS &&
+		bloxrouteEndpoint != MainnetPumpNYWSSecure &&
+		bloxrouteEndpoint != MainnetPumpUKWSSecure {
+		return nil, fmt.Errorf("not a valid endpoint for a trader api pump")
+	}
+
+	isSecure := isSecureWS(bloxrouteEndpoint)
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(MainnetNYWS)
+	opts.UseTLS = isSecure
+
 	return NewWSClientWithOpts(opts)
 }
 
