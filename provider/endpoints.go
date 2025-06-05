@@ -7,10 +7,29 @@ import (
 // Warning to display when creating TLS client
 const WarningTLSSlowDown = "Performance Notice: Secure (TLS) endpoints may introduce latency due to handshake overhead. For optimal trading speed, consider using non-secure endpoints when appropriate."
 
-// Endpoint type as before
-type Endpoint string
+type Protocol string
 
-// Region DNS struct
+const (
+	HTTP Protocol = "http"
+	WS   Protocol = "ws"
+	GRPC Protocol = "grpc"
+)
+
+type ServiceType string
+
+const (
+	FullService ServiceType = "full"
+	SubmitOnly  ServiceType = "submit"
+	Pump        ServiceType = "pump"
+	Development ServiceType = "dev"
+)
+
+type EndpointConfig struct {
+	Host        string
+	ServiceType ServiceType
+	PumpHost    string
+}
+
 type Region struct {
 	HTTP, HTTPSecure         string
 	WS, WSSecure             string
@@ -20,23 +39,43 @@ type Region struct {
 	PumpGRPC, PumpGRPCSecure string
 }
 
-// Remote endpoints
-const (
-	NY         Endpoint = "ny.solana.dex.blxrbdn.com"
-	NYPump     Endpoint = "pump-ny.solana.dex.blxrbdn.com"
-	UK         Endpoint = "uk.solana.dex.blxrbdn.com"
-	UKPump     Endpoint = "pump-uk.solana.dex.blxrbdn.com"
-	Frankfurt  Endpoint = "germany.solana.dex.blxrbdn.com"
-	LosAngeles Endpoint = "la.solana.dex.blxrbdn.com"
-	Amsterdam  Endpoint = "amsterdam.solana.dex.blxrbdn.com"
-	Tokyo      Endpoint = "tokyo.solana.dex.blxrbdn.com"
-)
-
-// Developer endpoints
-const (
-	Testnet Endpoint = "solana.dex.bxrtest.com"
-	Devnet  Endpoint = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
-)
+// Regional endpoint configurations
+var endpointConfigs = map[string]EndpointConfig{
+	"NY": {
+		Host:        "ny.solana.dex.blxrbdn.com",
+		ServiceType: FullService,
+		PumpHost:    "pump-ny.solana.dex.blxrbdn.com",
+	},
+	"UK": {
+		Host:        "uk.solana.dex.blxrbdn.com",
+		ServiceType: FullService,
+		PumpHost:    "pump-uk.solana.dex.blxrbdn.com",
+	},
+	"Frankfurt": {
+		Host:        "germany.solana.dex.blxrbdn.com",
+		ServiceType: SubmitOnly,
+	},
+	"LosAngeles": {
+		Host:        "la.solana.dex.blxrbdn.com",
+		ServiceType: SubmitOnly,
+	},
+	"Amsterdam": {
+		Host:        "amsterdam.solana.dex.blxrbdn.com",
+		ServiceType: SubmitOnly,
+	},
+	"Tokyo": {
+		Host:        "tokyo.solana.dex.blxrbdn.com",
+		ServiceType: SubmitOnly,
+	},
+	"Testnet": {
+		Host:        "solana.dex.bxrtest.com",
+		ServiceType: Development,
+	},
+	"Devnet": {
+		Host:        "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com",
+		ServiceType: Development,
+	},
+}
 
 // Local endpoints
 const (
@@ -45,273 +84,187 @@ const (
 	LocalGRPC string = "localhost:9000"
 )
 
-var endpointsByRegion = map[string]Region{
-	"NY": {
-		HTTP:       httpEndpoint(NY, false),
-		HTTPSecure: httpEndpoint(NY, true),
-		WS:         wsEndpoint(NY, false),
-		WSSecure:   wsEndpoint(NY, true),
-		GRPC:       grpcEndpoint(NY, false),
-		GRPCSecure: grpcEndpoint(NY, true),
-
-		PumpHTTP:       httpEndpoint(NYPump, false),
-		PumpHTTPSecure: httpEndpoint(NYPump, true),
-		PumpWS:         wsEndpoint(NYPump, false),
-		PumpWSSecure:   wsEndpoint(NYPump, true),
-		PumpGRPC:       grpcEndpoint(NYPump, false),
-		PumpGRPCSecure: grpcEndpoint(NYPump, true),
-	},
-	"UK": {
-		HTTP:       httpEndpoint(UK, false),
-		HTTPSecure: httpEndpoint(UK, true),
-		WS:         wsEndpoint(UK, false),
-		WSSecure:   wsEndpoint(UK, true),
-		GRPC:       grpcEndpoint(UK, false),
-		GRPCSecure: grpcEndpoint(UK, true),
-
-		PumpHTTP:       httpEndpoint(UKPump, false),
-		PumpHTTPSecure: httpEndpoint(UKPump, true),
-		PumpWS:         wsEndpoint(UKPump, false),
-		PumpWSSecure:   wsEndpoint(UKPump, true),
-		PumpGRPC:       grpcEndpoint(UKPump, false),
-		PumpGRPCSecure: grpcEndpoint(UKPump, true),
-	},
-	"Frankfurt": {
-		HTTP:       httpEndpoint(Frankfurt, false),
-		HTTPSecure: httpEndpoint(Frankfurt, true),
-		WS:         wsEndpoint(Frankfurt, false),
-		WSSecure:   wsEndpoint(Frankfurt, true),
-		GRPC:       grpcEndpoint(Frankfurt, false),
-		GRPCSecure: grpcEndpoint(Frankfurt, true),
-	},
-	"LosAngeles": {
-		HTTP:       httpEndpoint(LosAngeles, false),
-		HTTPSecure: httpEndpoint(LosAngeles, true),
-		WS:         wsEndpoint(LosAngeles, false),
-		WSSecure:   wsEndpoint(LosAngeles, true),
-		GRPC:       grpcEndpoint(LosAngeles, false),
-		GRPCSecure: grpcEndpoint(LosAngeles, true),
-	},
-	"Amsterdam": {
-		HTTP:       httpEndpoint(Amsterdam, false),
-		HTTPSecure: httpEndpoint(Amsterdam, true),
-		WS:         wsEndpoint(Amsterdam, false),
-		WSSecure:   wsEndpoint(Amsterdam, true),
-		GRPC:       grpcEndpoint(Amsterdam, false),
-		GRPCSecure: grpcEndpoint(Amsterdam, true),
-	},
-	"Tokyo": {
-		HTTP:       httpEndpoint(Tokyo, false),
-		HTTPSecure: httpEndpoint(Tokyo, true),
-		WS:         wsEndpoint(Tokyo, false),
-		WSSecure:   wsEndpoint(Tokyo, true),
-		GRPC:       grpcEndpoint(Tokyo, false),
-		GRPCSecure: grpcEndpoint(Tokyo, true),
-	},
-	"Testnet": {
-		HTTP:       httpEndpoint(Testnet, false),
-		HTTPSecure: httpEndpoint(Testnet, true),
-		WS:         wsEndpoint(Testnet, false),
-		WSSecure:   wsEndpoint(Testnet, true),
-		GRPC:       grpcEndpoint(Testnet, false),
-		GRPCSecure: grpcEndpoint(Testnet, true),
-	},
-	"Devnet": {
-		HTTP:       httpEndpoint(Devnet, false),
-		HTTPSecure: httpEndpoint(Devnet, true),
-		WS:         wsEndpoint(Devnet, false),
-		WSSecure:   wsEndpoint(Devnet, true),
-		GRPC:       grpcEndpoint(Devnet, false),
-		GRPCSecure: grpcEndpoint(Devnet, true),
-	},
-}
+var endpointsByRegion = generateRegions()
 
 var (
-	MainnetNYHTTP       = endpointsByRegion["NY"].HTTP
-	MainnetNYHTTPSecure = endpointsByRegion["NY"].HTTPSecure
-	MainnetNYWS         = endpointsByRegion["NY"].WS
-	MainnetNYWSSecure   = endpointsByRegion["NY"].WSSecure
-	MainnetNYGRPC       = endpointsByRegion["NY"].GRPC
-	MainnetNYGRPCSecure = endpointsByRegion["NY"].GRPCSecure
+	// NY Endpoints
+	MainnetNYHTTP, MainnetNYHTTPSecure         = getEndpoints("NY", HTTP)
+	MainnetNYWS, MainnetNYWSSecure             = getEndpoints("NY", WS)
+	MainnetNYGRPC, MainnetNYGRPCSecure         = getEndpoints("NY", GRPC)
+	MainnetPumpNYHTTP, MainnetPumpNYHTTPSecure = getPumpEndpoints("NY", HTTP)
+	MainnetPumpNYWS, MainnetPumpNYWSSecure     = getPumpEndpoints("NY", WS)
+	MainnetPumpNYGRPC, MainnetPumpNYGRPCSecure = getPumpEndpoints("NY", GRPC)
 
-	MainnetPumpNYHTTP       = endpointsByRegion["NY"].PumpHTTP
-	MainnetPumpNYHTTPSecure = endpointsByRegion["NY"].PumpHTTPSecure
-	MainnetPumpNYWS         = endpointsByRegion["NY"].PumpWS
-	MainnetPumpNYWSSecure   = endpointsByRegion["NY"].PumpWSSecure
-	MainnetPumpNYGRPC       = endpointsByRegion["NY"].PumpGRPC
-	MainnetPumpNYGRPCSecure = endpointsByRegion["NY"].PumpGRPCSecure
+	// UK Endpoints
+	MainnetUKHTTP, MainnetUKHTTPSecure         = getEndpoints("UK", HTTP)
+	MainnetUKWS, MainnetUKWSSecure             = getEndpoints("UK", WS)
+	MainnetUKGRPC, MainnetUKGRPCSecure         = getEndpoints("UK", GRPC)
+	MainnetPumpUKHTTP, MainnetPumpUKHTTPSecure = getPumpEndpoints("UK", HTTP)
+	MainnetPumpUKWS, MainnetPumpUKWSSecure     = getPumpEndpoints("UK", WS)
+	MainnetPumpUKGRPC, MainnetPumpUKGRPCSecure = getPumpEndpoints("UK", GRPC)
 
-	MainnetUKHTTP       = endpointsByRegion["UK"].HTTP
-	MainnetUKHTTPSecure = endpointsByRegion["UK"].HTTPSecure
-	MainnetUKWS         = endpointsByRegion["UK"].WS
-	MainnetUKWSSecure   = endpointsByRegion["UK"].WSSecure
-	MainnetUKGRPC       = endpointsByRegion["UK"].GRPC
-	MainnetUKGRPCSecure = endpointsByRegion["UK"].GRPCSecure
+	// Other regions (Submit-only)
+	MainnetFrankfurtHTTP, MainnetFrankfurtHTTPSecure = getEndpoints("Frankfurt", HTTP)
+	MainnetFrankfurtWS, MainnetFrankfurtWSSecure     = getEndpoints("Frankfurt", WS)
+	MainnetFrankfurtGRPC, MainnetFrankfurtGRPCSecure = getEndpoints("Frankfurt", GRPC)
+	MainnetLAHTTP, MainnetLAHTTPSecure               = getEndpoints("LosAngeles", HTTP)
+	MainnetLAWS, MainnetLAWSSecure                   = getEndpoints("LosAngeles", WS)
+	MainnetLAGRPC, MainnetLAGRPCSecure               = getEndpoints("LosAngeles", GRPC)
+	MainnetAmsterdamHTTP, MainnetAmsterdamHTTPSecure = getEndpoints("Amsterdam", HTTP)
+	MainnetAmsterdamWS, MainnetAmsterdamWSSecure     = getEndpoints("Amsterdam", WS)
+	MainnetAmsterdamGRPC, MainnetAmsterdamGRPCSecure = getEndpoints("Amsterdam", GRPC)
+	MainnetTokyoHTTP, MainnetTokyoHTTPSecure         = getEndpoints("Tokyo", HTTP)
+	MainnetTokyoWS, MainnetTokyoWSSecure             = getEndpoints("Tokyo", WS)
+	MainnetTokyoGRPC, MainnetTokyoGRPCSecure         = getEndpoints("Tokyo", GRPC)
 
-	MainnetPumpUKHTTP       = endpointsByRegion["UK"].PumpHTTP
-	MainnetPumpUKHTTPSecure = endpointsByRegion["UK"].PumpHTTPSecure
-	MainnetPumpUKWS         = endpointsByRegion["UK"].PumpWS
-	MainnetPumpUKWSSecure   = endpointsByRegion["UK"].PumpWSSecure
-	MainnetPumpUKGRPC       = endpointsByRegion["UK"].PumpGRPC
-	MainnetPumpUKGRPCSecure = endpointsByRegion["UK"].PumpGRPCSecure
-
-	MainnetFrankfurtHTTP       = endpointsByRegion["Frankfurt"].HTTP
-	MainnetFrankfurtHTTPSecure = endpointsByRegion["Frankfurt"].HTTPSecure
-	MainnetFrankfurtWS         = endpointsByRegion["Frankfurt"].WS
-	MainnetFrankfurtWSSecure   = endpointsByRegion["Frankfurt"].WSSecure
-	MainnetFrankfurtGRPC       = endpointsByRegion["Frankfurt"].GRPC
-	MainnetFrankfurtGRPCSecure = endpointsByRegion["Frankfurt"].GRPCSecure
-
-	MainnetLAHTTP       = endpointsByRegion["LosAngeles"].HTTP
-	MainnetLAHTTPSecure = endpointsByRegion["LosAngeles"].HTTPSecure
-	MainnetLAWS         = endpointsByRegion["LosAngeles"].WS
-	MainnetLAWSSecure   = endpointsByRegion["LosAngeles"].WSSecure
-	MainnetLAGRPC       = endpointsByRegion["LosAngeles"].GRPC
-	MainnetLAGRPCSecure = endpointsByRegion["LosAngeles"].GRPCSecure
-
-	MainnetAmsterdamHTTP       = endpointsByRegion["Amsterdam"].HTTP
-	MainnetAmsterdamHTTPSecure = endpointsByRegion["Amsterdam"].HTTPSecure
-	MainnetAmsterdamWS         = endpointsByRegion["Amsterdam"].WS
-	MainnetAmsterdamWSSecure   = endpointsByRegion["Amsterdam"].WSSecure
-	MainnetAmsterdamGRPC       = endpointsByRegion["Amsterdam"].GRPC
-	MainnetAmsterdamGRPCSecure = endpointsByRegion["Amsterdam"].GRPCSecure
-
-	MainnetTokyoHTTP       = endpointsByRegion["Tokyo"].HTTP
-	MainnetTokyoHTTPSecure = endpointsByRegion["Tokyo"].HTTPSecure
-	MainnetTokyoWS         = endpointsByRegion["Tokyo"].WS
-	MainnetTokyoWSSecure   = endpointsByRegion["Tokyo"].WSSecure
-	MainnetTokyoGRPC       = endpointsByRegion["Tokyo"].GRPC
-	MainnetTokyoGRPCSecure = endpointsByRegion["Tokyo"].GRPCSecure
-
-	TestnetHTTP       = endpointsByRegion["Testnet"].HTTP
-	TestnetHTTPSecure = endpointsByRegion["Testnet"].HTTPSecure
-	TestnetWS         = endpointsByRegion["Testnet"].WS
-	TestnetWSSecure   = endpointsByRegion["Testnet"].WSSecure
-	TestnetGRPC       = endpointsByRegion["Testnet"].GRPC
-	TestnetGRPCSecure = endpointsByRegion["Testnet"].GRPCSecure
-
-	DevnetHTTP       = endpointsByRegion["Devnet"].HTTP
-	DevnetHTTPSecure = endpointsByRegion["Devnet"].HTTPSecure
-	DevnetWS         = endpointsByRegion["Devnet"].WS
-	DevnetWSSecure   = endpointsByRegion["Devnet"].WSSecure
-	DevnetGRPC       = endpointsByRegion["Devnet"].GRPC
-	DevnetGRPCSecure = endpointsByRegion["Devnet"].GRPCSecure
+	// Development endpoints
+	TestnetHTTP, TestnetHTTPSecure = getEndpoints("Testnet", HTTP)
+	TestnetWS, TestnetWSSecure     = getEndpoints("Testnet", WS)
+	TestnetGRPC, TestnetGRPCSecure = getEndpoints("Testnet", GRPC)
+	DevnetHTTP, DevnetHTTPSecure   = getEndpoints("Devnet", HTTP)
+	DevnetWS, DevnetWSSecure       = getEndpoints("Devnet", WS)
+	DevnetGRPC, DevnetGRPCSecure   = getEndpoints("Devnet", GRPC)
 )
 
-func GetFullServiceGRPCAllEndpoints() []string {
-	return []string{
-		MainnetNYGRPC,
-		MainnetNYGRPCSecure,
-		MainnetUKGRPC,
-		MainnetUKGRPCSecure,
+func generateRegions() map[string]Region {
+	regions := make(map[string]Region)
+
+	for name, config := range endpointConfigs {
+		region := Region{
+			HTTP:       buildEndpoint(config.Host, HTTP, false),
+			HTTPSecure: buildEndpoint(config.Host, HTTP, true),
+			WS:         buildEndpoint(config.Host, WS, false),
+			WSSecure:   buildEndpoint(config.Host, WS, true),
+			GRPC:       buildEndpoint(config.Host, GRPC, false),
+			GRPCSecure: buildEndpoint(config.Host, GRPC, true),
+		}
+
+		// Add pump endpoints if available
+		if config.PumpHost != "" {
+			region.PumpHTTP = buildEndpoint(config.PumpHost, HTTP, false)
+			region.PumpHTTPSecure = buildEndpoint(config.PumpHost, HTTP, true)
+			region.PumpWS = buildEndpoint(config.PumpHost, WS, false)
+			region.PumpWSSecure = buildEndpoint(config.PumpHost, WS, true)
+			region.PumpGRPC = buildEndpoint(config.PumpHost, GRPC, false)
+			region.PumpGRPCSecure = buildEndpoint(config.PumpHost, GRPC, true)
+		}
+
+		regions[name] = region
 	}
+
+	return regions
+}
+
+func buildEndpoint(host string, protocol Protocol, secure bool) string {
+	switch protocol {
+	case HTTP:
+		scheme := "http"
+		if secure {
+			scheme = "https"
+		}
+		return fmt.Sprintf("%s://%s", scheme, host)
+	case WS:
+		scheme := "ws"
+		if secure {
+			scheme = "wss"
+		}
+		return fmt.Sprintf("%s://%s/ws", scheme, host)
+	case GRPC:
+		port := "80"
+		if secure {
+			port = "443"
+		}
+		return fmt.Sprintf("%s:%s", host, port)
+	default:
+		return ""
+	}
+}
+
+func getEndpoints(region string, protocol Protocol) (string, string) {
+	config := endpointConfigs[region]
+	return buildEndpoint(config.Host, protocol, false), buildEndpoint(config.Host, protocol, true)
+}
+
+func getPumpEndpoints(region string, protocol Protocol) (string, string) {
+	config := endpointConfigs[region]
+	if config.PumpHost == "" {
+		return "", ""
+	}
+	return buildEndpoint(config.PumpHost, protocol, false), buildEndpoint(config.PumpHost, protocol, true)
+}
+
+func GetEndpointsByService(serviceType ServiceType, protocol Protocol) []string {
+	var endpoints []string
+
+	for name, config := range endpointConfigs {
+		if config.ServiceType == serviceType {
+			region := endpointsByRegion[name]
+			switch protocol {
+			case HTTP:
+				endpoints = append(endpoints, region.HTTP, region.HTTPSecure)
+			case WS:
+				endpoints = append(endpoints, region.WS, region.WSSecure)
+			case GRPC:
+				endpoints = append(endpoints, region.GRPC, region.GRPCSecure)
+			}
+		}
+	}
+
+	return endpoints
+}
+
+func GetPumpEndpoints(protocol Protocol) []string {
+	var endpoints []string
+
+	for name, config := range endpointConfigs {
+		if config.PumpHost != "" {
+			region := endpointsByRegion[name]
+			switch protocol {
+			case HTTP:
+				endpoints = append(endpoints, region.PumpHTTP, region.PumpHTTPSecure)
+			case WS:
+				endpoints = append(endpoints, region.PumpWS, region.PumpWSSecure)
+			case GRPC:
+				endpoints = append(endpoints, region.PumpGRPC, region.PumpGRPCSecure)
+			}
+		}
+	}
+
+	return endpoints
+}
+
+func GetFullServiceGRPCAllEndpoints() []string {
+	return GetEndpointsByService(FullService, GRPC)
 }
 
 func GetFullServiceHTTPAllEndpoints() []string {
-	return []string{
-		MainnetNYHTTP,
-		MainnetNYHTTPSecure,
-		MainnetUKHTTP,
-		MainnetUKHTTPSecure,
-	}
+	return GetEndpointsByService(FullService, HTTP)
 }
 
 func GetFullServiceWSAllEndpoints() []string {
-	return []string{
-		MainnetNYWS,
-		MainnetNYWSSecure,
-		MainnetUKWS,
-		MainnetUKWSSecure,
-	}
+	return GetEndpointsByService(FullService, WS)
 }
 
 func GetSubmitOnlyGRPCAllEndpoints() []string {
-	return []string{
-		MainnetAmsterdamGRPC,
-		MainnetAmsterdamGRPCSecure,
-		MainnetLAGRPC,
-		MainnetLAGRPCSecure,
-		MainnetFrankfurtGRPC,
-		MainnetFrankfurtGRPCSecure,
-		MainnetTokyoGRPC,
-		MainnetTokyoGRPCSecure,
-	}
+	return GetEndpointsByService(SubmitOnly, GRPC)
 }
 
 func GetSubmitOnlyHTTPAllEndpoints() []string {
-	return []string{
-		MainnetAmsterdamHTTP,
-		MainnetAmsterdamHTTPSecure,
-		MainnetLAHTTP,
-		MainnetLAHTTPSecure,
-		MainnetFrankfurtHTTP,
-		MainnetFrankfurtHTTPSecure,
-		MainnetTokyoHTTP,
-		MainnetTokyoHTTPSecure,
-	}
+	return GetEndpointsByService(SubmitOnly, HTTP)
 }
 
 func GetSubmitOnlyWSAllEndpoints() []string {
-	return []string{
-		MainnetAmsterdamWS,
-		MainnetAmsterdamWSSecure,
-		MainnetLAWS,
-		MainnetLAWSSecure,
-		MainnetFrankfurtWS,
-		MainnetFrankfurtWSSecure,
-		MainnetTokyoWS,
-		MainnetTokyoWSSecure,
-	}
+	return GetEndpointsByService(SubmitOnly, WS)
 }
 
 func GetPumpGRPCAllEndpoints() []string {
-	return []string{
-		MainnetPumpNYGRPC,
-		MainnetPumpNYGRPCSecure,
-		MainnetPumpUKGRPC,
-		MainnetPumpUKGRPCSecure,
-	}
+	return GetPumpEndpoints(GRPC)
 }
 
 func GetPumpHTTPAllEndpoints() []string {
-	return []string{
-		MainnetPumpNYHTTP,
-		MainnetPumpNYHTTPSecure,
-		MainnetPumpUKHTTP,
-		MainnetPumpUKHTTPSecure,
-	}
+	return GetPumpEndpoints(HTTP)
 }
 
 func GetPumpWSAllEndpoints() []string {
-	return []string{
-		MainnetPumpNYWS,
-		MainnetPumpNYWSSecure,
-		MainnetPumpUKWS,
-		MainnetPumpUKWSSecure,
-	}
-}
-
-// Endpoint string generators
-func httpEndpoint(e Endpoint, secure bool) string {
-	proto := "http"
-	if secure {
-		proto = "https"
-	}
-	return fmt.Sprintf("%s://%s", proto, e)
-}
-
-func wsEndpoint(e Endpoint, secure bool) string {
-	proto := "ws"
-	if secure {
-		proto = "wss"
-	}
-	return fmt.Sprintf("%s://%s/ws", proto, e)
-}
-
-func grpcEndpoint(e Endpoint, secure bool) string {
-	port := "80"
-	if secure {
-		port = "443"
-	}
-	return fmt.Sprintf("%s:%s", e, port)
+	return GetPumpEndpoints(WS)
 }
