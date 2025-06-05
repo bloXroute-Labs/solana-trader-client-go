@@ -908,7 +908,7 @@ func callGetPumpFunQuotes(w provider.WSClientTraderAPI) bool {
 }
 
 func callGetPumpFunAmmQuotes(_ provider.WSClientTraderAPI) bool {
-	w, err := provider.NewWSClientPumpNY()
+	w, err := provider.NewWSClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -1889,7 +1889,7 @@ func callPostPumpFunSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	wp, err := provider.NewWSClientPumpNY()
+	wp, err := provider.NewWSClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -1922,7 +1922,7 @@ func callPostPumpFunSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 
 func callPostPumpFunAmmSwap(_ provider.WSClientTraderAPI) bool {
 	log.Info("starting PostPumpFunAmmSwap test")
-	w, err := provider.NewWSClientPumpNY()
+	w, err := provider.NewWSClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -2311,7 +2311,7 @@ func callGetTickersWSStream(w provider.WSClientTraderAPI) bool {
 }
 
 func callGetPumpFunNewTokensWSStreamWrap(_ provider.WSClientTraderAPI) bool {
-	ww, err := provider.NewWSClientPumpNY()
+	ww, err := provider.NewWSClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -2351,7 +2351,7 @@ func callGetPumpFunNewTokensWSStream(w provider.WSClientTraderAPI) (string, bool
 
 func callGetPumpFunAmmSwapWSStream(_ provider.WSClientTraderAPI) bool {
 	log.Info("starting GetPumpFunAMMSwap stream")
-	wp, err := provider.NewWSClientPumpNY()
+	wp, err := provider.NewWSClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		log.Errorf("failed to create pump fun provider: %v", err)
 		return true
@@ -2382,7 +2382,7 @@ func callGetPumpFunAmmSwapWSStream(_ provider.WSClientTraderAPI) bool {
 func callGetPumpFunNewAmmPoolWSStream(w provider.WSClientTraderAPI) bool {
 	log.Info("starting GetPumpFunNewAmmPool stream")
 
-	wp, err := provider.NewWSClientPumpNY()
+	wp, err := provider.NewWSClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		log.Errorf("failed to create pump fun provider: %v", err)
 		return true

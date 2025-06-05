@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
@@ -189,32 +191,57 @@ type HTTPClient struct {
 }
 
 // NewHTTPClientFullService connects to Mainnet Trader pb with full service pb
-func NewHTTPClientFullService(bloxrouteEndpoint string) (HTTPClientTraderAPI, error) {
-	if bloxrouteEndpoint != MainnetNYHTTP && bloxrouteEndpoint != MainnetUKHTTP {
+func NewHTTPClientFullService(endpoint string) (HTTPClientTraderAPI, error) {
+	if !contains(GetFullServiceHTTPAllEndpoints(), endpoint) {
 		return nil, fmt.Errorf("not a valid endpoint for a full service trader pb")
 	}
 
-	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	isSecure := strings.HasPrefix(endpoint, "https://")
 
-	httpClient := NewHTTPClientWithOpts(nil, opts)
-	return httpClient, nil
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(endpoint)
+	opts.UseTLS = isSecure
+
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
 // NewHTTPClientSubmitOnly connects to Mainnet Trader pb with full service pb
-func NewHTTPClientSubmitOnly(bloxrouteEndpoint string) (HTTPClientTraderAPISubmitOnly, error) {
-	if bloxrouteEndpoint != MainnetAmsterdamHTTP &&
-		bloxrouteEndpoint != MainnetFrankfurtHTTP &&
-		bloxrouteEndpoint != MainnetLAHTTP &&
-		bloxrouteEndpoint != MainnetTokyoHTTP {
+func NewHTTPClientSubmitOnly(endpoint string) (HTTPClientTraderAPISubmitOnly, error) {
+	if !contains(GetSubmitOnlyHTTPAllEndpoints(), endpoint) {
 		return nil, fmt.Errorf("not a valid endpoint for submit only trader pb")
 	}
 
-	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	isSecure := strings.HasPrefix(endpoint, "https://")
 
-	httpClient := NewHTTPClientWithOpts(nil, opts)
-	return httpClient, nil
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(endpoint)
+	opts.UseTLS = isSecure
+
+	return NewHTTPClientWithOpts(nil, opts), nil
+}
+
+// NewHTTPClientPumpNY connects to Mainnet Trader pb
+func NewHTTPClientPumpNY(endpoint string) (HTTPClientTraderAPI, error) {
+	if !contains(GetPumpHTTPAllEndpoints(), endpoint) {
+		return nil, fmt.Errorf("not a valid endpoint for trader api pump")
+	}
+
+	isSecure := strings.HasPrefix(endpoint, "https://")
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(endpoint)
+	opts.UseTLS = isSecure
+
+	return NewHTTPClientWithOpts(nil, opts), nil
 }
 
 // NewHTTPClient connects to Mainnet Trader pb
@@ -223,16 +250,9 @@ func NewHTTPClient() HTTPClientTraderAPI {
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
-// NewHTTPClientPumpNY connects to Mainnet Trader pb
-func NewHTTPClientPumpNY() HTTPClientTraderAPI {
-	opts := DefaultRPCOpts(MainnetPumpNYHTTP)
-	return NewHTTPClientWithOpts(nil, opts)
-}
-
 // NewHTTPTestnet connects to Testnet Trader pb
 func NewHTTPTestnet() HTTPClientTraderAPI {
 	opts := DefaultRPCOpts(TestnetHTTP)
-	opts.UseTLS = true
 	return NewHTTPClientWithOpts(nil, opts)
 }
 

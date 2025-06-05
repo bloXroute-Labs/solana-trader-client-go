@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
@@ -187,40 +189,62 @@ type WSClient struct {
 }
 
 // NewWSClientFullService connects to Mainnet Trader API with full service
-func NewWSClientFullService(bloxrouteEndpoint string) (WSClientTraderAPI, error) {
-	if bloxrouteEndpoint != MainnetNYWS && bloxrouteEndpoint != MainnetUKWS {
+func NewWSClientFullService(endpoint string) (WSClientTraderAPI, error) {
+	if !contains(GetFullServiceWSAllEndpoints(), endpoint) {
 		return nil, fmt.Errorf("not a valid endpoint for a full service trader api")
 	}
 
-	opts := DefaultRPCOpts(MainnetNYWS)
+	isSecure := strings.HasPrefix(endpoint, "wss://")
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(endpoint)
+	opts.UseTLS = isSecure
+
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientSubmitOnly connects to Mainnet Trader API with submission only service
-func NewWSClientSubmitOnly(bloxrouteEndpoint string) (WSClientTraderAPISubmitOnly, error) {
-	if bloxrouteEndpoint != MainnetAmsterdamWS &&
-		bloxrouteEndpoint != MainnetFrankfurtWS &&
-		bloxrouteEndpoint != MainnetLAWS &&
-		bloxrouteEndpoint != MainnetTokyoWS {
+func NewWSClientSubmitOnly(endpoint string) (WSClientTraderAPISubmitOnly, error) {
+	if !contains(GetSubmitOnlyWSAllEndpoints(), endpoint) {
 		return nil, fmt.Errorf("not a valid endpoint for submit only trader api")
 	}
 
-	opts := DefaultRPCOpts(bloxrouteEndpoint)
-	opts.UseTLS = true
+	isSecure := strings.HasPrefix(endpoint, "wss://")
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(endpoint)
+	opts.UseTLS = isSecure
 
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientPumpNY connects to Mainnet NY Pump Trader API
-func NewWSClientPumpNY() (WSClientTraderAPI, error) {
-	opts := DefaultRPCOpts(MainnetPumpNYWS)
+func NewWSClientPumpNY(endpoint string) (WSClientTraderAPI, error) {
+	if !contains(GetPumpWSAllEndpoints(), endpoint) {
+		return nil, fmt.Errorf("not a valid endpoint for trader api pump")
+	}
+
+	isSecure := strings.HasPrefix(endpoint, "wss://")
+
+	if isSecure {
+		log.Println(WarningTLSSlowDown)
+	}
+
+	opts := DefaultRPCOpts(endpoint)
+	opts.UseTLS = isSecure
+
 	return NewWSClientWithOpts(opts)
 }
 
 // NewWSClientTestnet connects to Testnet Trader API
 func NewWSClientTestnet() (WSClientTraderAPI, error) {
 	opts := DefaultRPCOpts(TestnetWS)
-	opts.UseTLS = true
 	return NewWSClientWithOpts(opts)
 }
 

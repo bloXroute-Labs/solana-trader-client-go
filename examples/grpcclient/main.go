@@ -866,7 +866,7 @@ func callGetPumpFunQuotes(g provider.GRPCClientTraderAPI) bool {
 }
 
 func callGetPumpFunAmmQuotes(_ provider.GRPCClientTraderAPI) bool {
-	g, err := provider.NewGRPCClientPumpNY()
+	g, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -1897,7 +1897,7 @@ func callPostPumpFunSwapWrap(g provider.GRPCClientTraderAPI) bool {
 
 func callPostPumpFunSwap(ownerAddr string) bool {
 	log.Info("starting PostPumpFunSwap test")
-	g, err := provider.NewGRPCClientPumpNY()
+	g, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -1933,7 +1933,7 @@ func callPostPumpFunSwap(ownerAddr string) bool {
 
 func callPostPumpFunAmmSwap(_ provider.GRPCClientTraderAPI) bool {
 	log.Info("starting PostPumpFunAmmSwap test")
-	g, err := provider.NewGRPCClientPumpNY()
+	g, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		panic(err)
 	}
@@ -2281,7 +2281,7 @@ func callJupiterRouteSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool
 }
 
 func callGetpumpFunNewTokenGRPCStreamWrap(g provider.GRPCClientTraderAPI) bool {
-	gg, err := provider.NewGRPCClientPumpNY()
+	gg, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -2317,7 +2317,7 @@ func callGetPumpFunNewTokensGRPCStream(g provider.GRPCClientTraderAPI) (string, 
 }
 
 func callGetPumpFunNewAmmPoolGRPCStream(g provider.GRPCClientTraderAPI) bool {
-	gg, err := provider.NewGRPCClientPumpNY()
+	gg, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		log.Errorf("failed to create pump provider: %v", err)
 		return true
@@ -2346,7 +2346,7 @@ func callGetPumpFunNewAmmPoolGRPCStream(g provider.GRPCClientTraderAPI) bool {
 }
 
 func callGetPumpFunAmmSwapGRPCStream(g provider.GRPCClientTraderAPI) bool {
-	gg, err := provider.NewGRPCClientPumpNY()
+	gg, err := provider.NewGRPCClientPumpNY(provider.MainnetPumpNYGRPC)
 	if err != nil {
 		log.Errorf("failed to create pump provider: %v", err)
 		return true

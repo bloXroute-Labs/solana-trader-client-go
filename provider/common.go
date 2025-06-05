@@ -14,90 +14,6 @@ import (
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 )
 
-const (
-	mainnetNY     = "ny.solana.dex.blxrbdn.com"
-	mainnetPumpNY = "pump-ny.solana.dex.blxrbdn.com"
-	mainnetUK     = "uk.solana.dex.blxrbdn.com"
-	// see https://docs.bloxroute.com/solana/trader-api/introduction/regions for all regions of traderAPI. There are
-	// some regions below that are only available for transaction submission related endpoints, not full API service.
-	mainnetFrankfurt = "germany.solana.dex.blxrbdn.com"
-	mainnetLA        = "la.solana.dex.blxrbdn.com"
-	mainnetAmsterdam = "amsterdam.solana.dex.blxrbdn.com"
-	mainnetTokyo     = "tokyo.solana.dex.blxrbdn.com"
-	testnet          = "solana.dex.bxrtest.com"
-	devnet           = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
-)
-
-// for information about submit only regions, see documentation: https://docs.bloxroute.com/solana/trader-api/introduction/regions
-
-var (
-	MainnetNYHTTP     = httpEndpoint(mainnetNY, true)
-	MainnetPumpNYHTTP = httpEndpoint(mainnetPumpNY, true)
-	MainnetUKHTTP     = httpEndpoint(mainnetUK, true)
-
-	// submit only http
-	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, true)
-	MainnetLAHTTP        = httpEndpoint(mainnetLA, true)
-	MainnetAmsterdamHTTP = httpEndpoint(mainnetAmsterdam, true)
-	MainnetTokyoHTTP     = httpEndpoint(mainnetTokyo, true)
-
-	MainnetNYWS     = wsEndpoint(mainnetNY, true)
-	MainnetPumpNYWS = wsEndpoint(mainnetPumpNY, true)
-	MainnetUKWS     = wsEndpoint(mainnetUK, true)
-
-	// submit only ws
-	MainnetFrankfurtWS = wsEndpoint(mainnetFrankfurt, true)
-	MainnetLAWS        = wsEndpoint(mainnetLA, true)
-	MainnetAmsterdamWS = wsEndpoint(mainnetAmsterdam, true)
-	MainnetTokyoWS     = wsEndpoint(mainnetTokyo, true)
-
-	MainnetNYGRPC     = grpcEndpoint(mainnetNY, true)
-	MainnetPumpNYGRPC = grpcEndpoint(mainnetPumpNY, true)
-	MainnetUKGRPC     = grpcEndpoint(mainnetUK, true)
-
-	// submit only grpc
-	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, true)
-	MainnetLAGRPC        = grpcEndpoint(mainnetLA, true)
-	MainnetAmsterdamGRPC = grpcEndpoint(mainnetAmsterdam, true)
-	MainnetTokyoGRPC     = grpcEndpoint(mainnetTokyo, true)
-
-	TestnetHTTP = httpEndpoint(testnet, true)
-	TestnetWS   = wsEndpoint(testnet, true)
-	TestnetGRPC = grpcEndpoint(testnet, true)
-
-	DevnetHTTP = httpEndpoint(devnet, false)
-	DevnetWS   = wsEndpoint(devnet, false)
-	DevnetGRPC = grpcEndpoint(devnet, false)
-
-	LocalHTTP = "http://localhost:9000"
-	LocalWS   = "ws://localhost:9000/ws"
-	LocalGRPC = "localhost:9000"
-)
-
-func httpEndpoint(baseUrl string, secure bool) string {
-	prefix := "http"
-	if secure {
-		prefix = "https"
-	}
-	return fmt.Sprintf("%v://%v", prefix, baseUrl)
-}
-
-func wsEndpoint(baseUrl string, secure bool) string {
-	prefix := "ws"
-	if secure {
-		prefix = "wss"
-	}
-	return fmt.Sprintf("%v://%v/ws", prefix, baseUrl)
-}
-
-func grpcEndpoint(baseUrl string, secure bool) string {
-	port := "80"
-	if secure {
-		port = "443"
-	}
-	return fmt.Sprintf("%v:%v", baseUrl, port)
-}
-
 var ErrPrivateKeyNotFound = errors.New("private key not provided for signing transaction")
 
 type PostOrderOpts struct {
@@ -197,4 +113,13 @@ func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana
 	}
 
 	return &oneRequest, nil
+}
+
+func contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }

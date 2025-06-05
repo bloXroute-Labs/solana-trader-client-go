@@ -822,7 +822,11 @@ func callGetPumpFunQuotesHTTP(h provider.HTTPClientTraderAPI) bool {
 }
 
 func callGetPumpFunAmmQuotes(_ provider.HTTPClientTraderAPI) bool {
-	g := provider.NewHTTPClientPumpNY()
+	g, err := provider.NewHTTPClientPumpNY(provider.MainnetPumpNYHTTP)
+	if err != nil {
+		log.Errorf("failed to create pump fun provider: %v", err)
+		return true
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -1608,7 +1612,11 @@ func callPostPumpFunSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool 
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	h = provider.NewHTTPClientPumpNY()
+	h, err := provider.NewHTTPClientPumpNY(provider.MainnetPumpNYHTTP)
+	if err != nil {
+		log.Errorf("failed to create pump fun provider: %v", err)
+		return true
+	}
 
 	newToken, err := examples.GetPumpFunNewTokenHelper()
 	if err != nil {
@@ -1638,7 +1646,11 @@ func callPostPumpFunSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool 
 
 func callPostPumpFunAmmSwap(_ provider.HTTPClientTraderAPI) bool {
 	log.Info("starting PostPumpFunAmmSwap test")
-	h := provider.NewHTTPClientPumpNY()
+	h, err := provider.NewHTTPClientPumpNY(provider.MainnetPumpNYHTTP)
+	if err != nil {
+		log.Errorf("failed to create pump fun provider: %v", err)
+		return true
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
