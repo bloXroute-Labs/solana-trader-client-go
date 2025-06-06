@@ -347,7 +347,7 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 
 	keepaliveParams := grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:                15 * time.Second,
-		Timeout:             30 * time.Second,
+		Timeout:             5 * time.Second,
 		PermitWithoutStream: true,
 	})
 	grpcOpts = append(grpcOpts, keepaliveParams)

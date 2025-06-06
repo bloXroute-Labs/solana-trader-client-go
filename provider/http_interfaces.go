@@ -276,7 +276,7 @@ func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 			MaxIdleConns:        200,
 			MaxIdleConnsPerHost: 20,
 			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
+				Timeout:   5 * time.Second,
 				KeepAlive: 15 * time.Second,
 			}).DialContext,
 		}

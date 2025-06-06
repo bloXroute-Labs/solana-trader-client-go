@@ -83,7 +83,7 @@ func connect(endpoint string, auth string) (*websocket.Conn, error) {
 	dialer := websocket.Dialer{
 		HandshakeTimeout: handshakeTimeout,
 		NetDialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
+			Timeout:   5 * time.Second,
 			KeepAlive: 15 * time.Second,
 		}).DialContext,
 	}
