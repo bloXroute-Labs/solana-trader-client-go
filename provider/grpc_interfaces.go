@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"time"
 
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 type GRPCClientTraderAPISubmitOnly interface {
@@ -292,7 +294,6 @@ func NewGRPCClientPumpNY(bloxrouteEndpoint string) (GRPCClientTraderAPI, error) 
 // NewGRPCTestnet connects to Testnet Trader API
 func NewGRPCTestnet() (GRPCClientTraderAPI, error) {
 	opts := DefaultRPCOpts(TestnetGRPC)
-	opts.UseTLS = true
 	return NewGRPCClientWithOpts(opts)
 }
 
@@ -343,6 +344,14 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 	}
 	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(&grpc.MaxRecvMsgSizeCallOption{MaxRecvMsgSize: 1024 * 1024 * 16}))
 	grpcOpts = append(grpcOpts, dialOpts...)
+
+	keepaliveParams := grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time:                15 * time.Second,
+		Timeout:             30 * time.Second,
+		PermitWithoutStream: true,
+	})
+	grpcOpts = append(grpcOpts, keepaliveParams)
+
 	conn, err = grpc.NewClient(opts.Endpoint, grpcOpts...)
 	if err != nil {
 		return nil, err

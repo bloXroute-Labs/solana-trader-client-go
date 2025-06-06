@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"time"
 
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 	"github.com/bloXroute-Labs/solana-trader-proto/common"
@@ -250,7 +252,6 @@ func NewHTTPClientPumpNY() HTTPClientTraderAPI {
 // NewHTTPTestnet connects to Testnet Trader pb
 func NewHTTPTestnet() HTTPClientTraderAPI {
 	opts := DefaultRPCOpts(TestnetHTTP)
-	opts.UseTLS = true
 	return NewHTTPClientWithOpts(nil, opts)
 }
 
@@ -269,7 +270,19 @@ func NewHTTPLocal() HTTPClientTraderAPI {
 // NewHTTPClientWithOpts connects to custom Trader pb (set client to nil to use default client)
 func NewHTTPClientWithOpts(client *http.Client, opts RPCOpts) *HTTPClient {
 	if client == nil {
-		client = &http.Client{}
+		transport := &http.Transport{
+			DisableKeepAlives:   false,
+			IdleConnTimeout:     0,
+			MaxIdleConns:        200,
+			MaxIdleConnsPerHost: 20,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 15 * time.Second,
+			}).DialContext,
+		}
+		client = &http.Client{
+			Transport: transport,
+		}
 	}
 
 	return &HTTPClient{
