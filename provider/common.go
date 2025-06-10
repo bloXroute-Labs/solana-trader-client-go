@@ -14,67 +14,140 @@ import (
 	pb "github.com/bloXroute-Labs/solana-trader-proto/api"
 )
 
-const (
-	mainnetNY     = "ny.solana.dex.blxrbdn.com"
-	mainnetPumpNY = "pump-ny.solana.dex.blxrbdn.com"
-	mainnetUK     = "uk.solana.dex.blxrbdn.com"
-	// see https://docs.bloxroute.com/solana/trader-api/introduction/regions for all regions of traderAPI. There are
-	// some regions below that are only available for transaction submission related endpoints, not full API service.
-	mainnetFrankfurt = "germany.solana.dex.blxrbdn.com"
-	mainnetLA        = "la.solana.dex.blxrbdn.com"
-	mainnetAmsterdam = "amsterdam.solana.dex.blxrbdn.com"
-	mainnetTokyo     = "tokyo.solana.dex.blxrbdn.com"
-	testnet          = "solana.dex.bxrtest.com"
-	devnet           = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
-)
+const WarningTLSSlowDown = "Performance Notice: Secure (TLS) endpoints may introduce latency due to handshake overhead. For optimal trading speed, consider using non-secure endpoints when appropriate."
+
+type Region string
 
 // for information about submit only regions, see documentation: https://docs.bloxroute.com/solana/trader-api/introduction/regions
+const (
+	mainnetNY        Region = "ny.solana.dex.blxrbdn.com"
+	mainnetPumpNY    Region = "pump-ny.solana.dex.blxrbdn.com"
+	mainnetUK        Region = "uk.solana.dex.blxrbdn.com"
+	mainnetPumpUK    Region = "pump-uk.solana.dex.blxrbdn.com"
+	mainnetFrankfurt Region = "germany.solana.dex.blxrbdn.com"
+	mainnetLA        Region = "la.solana.dex.blxrbdn.com"
+	mainnetAmsterdam Region = "amsterdam.solana.dex.blxrbdn.com"
+	mainnetTokyo     Region = "tokyo.solana.dex.blxrbdn.com"
+	testnet          Region = "solana.dex.bxrtest.com"
+	devnet           Region = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
+)
 
 var (
-	MainnetNYHTTP     = httpEndpoint(mainnetNY, true)
-	MainnetPumpNYHTTP = httpEndpoint(mainnetPumpNY, true)
-	MainnetUKHTTP     = httpEndpoint(mainnetUK, true)
 
-	// submit only http
-	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, true)
-	MainnetLAHTTP        = httpEndpoint(mainnetLA, true)
-	MainnetAmsterdamHTTP = httpEndpoint(mainnetAmsterdam, true)
-	MainnetTokyoHTTP     = httpEndpoint(mainnetTokyo, true)
+	// FULL SERVICE
 
-	MainnetNYWS     = wsEndpoint(mainnetNY, true)
-	MainnetPumpNYWS = wsEndpoint(mainnetPumpNY, true)
-	MainnetUKWS     = wsEndpoint(mainnetUK, true)
+	// http
+	MainnetNYHTTP     = httpEndpoint(mainnetNY, false)
+	MainnetPumpNYHTTP = httpEndpoint(mainnetPumpNY, false)
+	MainnetUKHTTP     = httpEndpoint(mainnetUK, false)
+	MainnetPumpUKHTTP = httpEndpoint(mainnetPumpUK, false)
 
-	// submit only ws
-	MainnetFrankfurtWS = wsEndpoint(mainnetFrankfurt, true)
-	MainnetLAWS        = wsEndpoint(mainnetLA, true)
-	MainnetAmsterdamWS = wsEndpoint(mainnetAmsterdam, true)
-	MainnetTokyoWS     = wsEndpoint(mainnetTokyo, true)
+	// grpc
+	MainnetNYGRPC     = grpcEndpoint(mainnetNY, false)
+	MainnetPumpNYGRPC = grpcEndpoint(mainnetPumpNY, false)
+	MainnetUKGRPC     = grpcEndpoint(mainnetUK, false)
+	MainnetPumpUKGRPC = grpcEndpoint(mainnetPumpUK, false)
 
-	MainnetNYGRPC     = grpcEndpoint(mainnetNY, true)
-	MainnetPumpNYGRPC = grpcEndpoint(mainnetPumpNY, true)
-	MainnetUKGRPC     = grpcEndpoint(mainnetUK, true)
+	// ws
+	MainnetNYWS     = wsEndpoint(mainnetNY, false)
+	MainnetPumpNYWS = wsEndpoint(mainnetPumpNY, false)
+	MainnetUKWS     = wsEndpoint(mainnetUK, false)
+	MainnetPumpUKWS = wsEndpoint(mainnetPumpUK, false)
 
-	// submit only grpc
-	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, true)
-	MainnetLAGRPC        = grpcEndpoint(mainnetLA, true)
-	MainnetAmsterdamGRPC = grpcEndpoint(mainnetAmsterdam, true)
-	MainnetTokyoGRPC     = grpcEndpoint(mainnetTokyo, true)
+	// SUBMIT ONLY
 
-	TestnetHTTP = httpEndpoint(testnet, true)
-	TestnetWS   = wsEndpoint(testnet, true)
-	TestnetGRPC = grpcEndpoint(testnet, true)
+	// http
+	MainnetFrankfurtHTTP = httpEndpoint(mainnetFrankfurt, false)
+	MainnetLAHTTP        = httpEndpoint(mainnetLA, false)
+	MainnetAmsterdamHTTP = httpEndpoint(mainnetAmsterdam, false)
+	MainnetTokyoHTTP     = httpEndpoint(mainnetTokyo, false)
 
+	// grpc
+	MainnetFrankfurtGRPC = grpcEndpoint(mainnetFrankfurt, false)
+	MainnetLAGRPC        = grpcEndpoint(mainnetLA, false)
+	MainnetAmsterdamGRPC = grpcEndpoint(mainnetAmsterdam, false)
+	MainnetTokyoGRPC     = grpcEndpoint(mainnetTokyo, false)
+
+	// ws
+	MainnetFrankfurtWS = wsEndpoint(mainnetFrankfurt, false)
+	MainnetLAWS        = wsEndpoint(mainnetLA, false)
+	MainnetAmsterdamWS = wsEndpoint(mainnetAmsterdam, false)
+	MainnetTokyoWS     = wsEndpoint(mainnetTokyo, false)
+
+	// TESTING
+
+	// testnet
+	TestnetHTTP = httpEndpoint(testnet, false)
+	TestnetWS   = wsEndpoint(testnet, false)
+	TestnetGRPC = grpcEndpoint(testnet, false)
+
+	// devnet
 	DevnetHTTP = httpEndpoint(devnet, false)
 	DevnetWS   = wsEndpoint(devnet, false)
 	DevnetGRPC = grpcEndpoint(devnet, false)
 
+	// local
 	LocalHTTP = "http://localhost:9000"
 	LocalWS   = "ws://localhost:9000/ws"
 	LocalGRPC = "localhost:9000"
 )
 
-func httpEndpoint(baseUrl string, secure bool) string {
+var (
+
+	// FULL SERVICE
+
+	// http
+	MainnetNYHTTPSecure     = httpEndpoint(mainnetNY, true)
+	MainnetPumpNYHTTPSecure = httpEndpoint(mainnetPumpNY, true)
+	MainnetUKHTTPSecure     = httpEndpoint(mainnetUK, true)
+	MainnetPumpUKHTTPSecure = httpEndpoint(mainnetPumpUK, true)
+
+	// grpc
+	MainnetNYGRPCSecure     = grpcEndpoint(mainnetNY, true)
+	MainnetPumpNYGRPCSecure = grpcEndpoint(mainnetPumpNY, true)
+	MainnetUKGRPCSecure     = grpcEndpoint(mainnetUK, true)
+	MainnetPumpUKGRPCSecure = grpcEndpoint(mainnetPumpUK, true)
+
+	// ws
+	MainnetNYWSSecure     = wsEndpoint(mainnetNY, true)
+	MainnetPumpNYWSSecure = wsEndpoint(mainnetPumpNY, true)
+	MainnetUKWSSecure     = wsEndpoint(mainnetUK, true)
+	MainnetPumpUKWSSecure = wsEndpoint(mainnetPumpUK, true)
+
+	// SUBMIT ONLY
+
+	// http
+	MainnetFrankfurtHTTPSecure = httpEndpoint(mainnetFrankfurt, true)
+	MainnetLAHTTPSecure        = httpEndpoint(mainnetLA, true)
+	MainnetAmsterdamHTTPSecure = httpEndpoint(mainnetAmsterdam, true)
+	MainnetTokyoHTTPSecure     = httpEndpoint(mainnetTokyo, true)
+
+	// grpc
+	MainnetFrankfurtGRPCSecure = grpcEndpoint(mainnetFrankfurt, true)
+	MainnetLAGRPCSecure        = grpcEndpoint(mainnetLA, true)
+	MainnetAmsterdamGRPCSecure = grpcEndpoint(mainnetAmsterdam, true)
+	MainnetTokyoGRPCSecure     = grpcEndpoint(mainnetTokyo, true)
+
+	// ws
+	MainnetFrankfurtWSSecure = wsEndpoint(mainnetFrankfurt, true)
+	MainnetLAWSSecure        = wsEndpoint(mainnetLA, true)
+	MainnetAmsterdamWSSecure = wsEndpoint(mainnetAmsterdam, true)
+	MainnetTokyoWSSecure     = wsEndpoint(mainnetTokyo, true)
+
+	// TESTING
+
+	// testnet
+	TestnetHTTPSecure = httpEndpoint(testnet, true)
+	TestnetWSSecure   = wsEndpoint(testnet, true)
+	TestnetGRPCSecure = grpcEndpoint(testnet, true)
+
+	// devnet
+	DevnetHTTPSecure = httpEndpoint(devnet, true)
+	DevnetWSSecure   = wsEndpoint(devnet, true)
+	DevnetGRPCSecure = grpcEndpoint(devnet, true)
+)
+
+func httpEndpoint(baseUrl Region, secure bool) string {
 	prefix := "http"
 	if secure {
 		prefix = "https"
@@ -82,7 +155,7 @@ func httpEndpoint(baseUrl string, secure bool) string {
 	return fmt.Sprintf("%v://%v", prefix, baseUrl)
 }
 
-func wsEndpoint(baseUrl string, secure bool) string {
+func wsEndpoint(baseUrl Region, secure bool) string {
 	prefix := "ws"
 	if secure {
 		prefix = "wss"
@@ -90,7 +163,7 @@ func wsEndpoint(baseUrl string, secure bool) string {
 	return fmt.Sprintf("%v://%v/ws", prefix, baseUrl)
 }
 
-func grpcEndpoint(baseUrl string, secure bool) string {
+func grpcEndpoint(baseUrl Region, secure bool) string {
 	port := "80"
 	if secure {
 		port = "443"
@@ -197,4 +270,14 @@ func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana
 	}
 
 	return &oneRequest, nil
+}
+
+func isSecureGRPC(bloxrouteEndpoint string) bool {
+	return strings.HasSuffix(bloxrouteEndpoint, "443")
+}
+func isSecureHTTP(bloxrouteEndpoint string) bool {
+	return strings.HasPrefix(bloxrouteEndpoint, "https://")
+}
+func isSecureWS(bloxrouteEndpoint string) bool {
+	return strings.HasPrefix(bloxrouteEndpoint, "ws://")
 }

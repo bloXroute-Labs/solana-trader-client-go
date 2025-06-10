@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -79,7 +80,13 @@ func NewWS(endpoint string, authHeader string, disablePingLoop bool) (*WS, error
 }
 
 func connect(endpoint string, auth string) (*websocket.Conn, error) {
-	dialer := websocket.Dialer{HandshakeTimeout: handshakeTimeout}
+	dialer := websocket.Dialer{
+		HandshakeTimeout: handshakeTimeout,
+		NetDialContext: (&net.Dialer{
+			Timeout:   5 * time.Second,
+			KeepAlive: 15 * time.Second,
+		}).DialContext,
+	}
 	header := http.Header{}
 	header.Set("Authorization", auth)
 	header.Set("x-sdk", package_info.Name)
