@@ -53,7 +53,7 @@ func main() {
 
 	regionPrompt := promptui.Select{
 		Label: "Select region",
-		Items: []string{"ny", "uk"},
+		Items: []string{"ny", "uk", "fr"},
 	}
 
 	_, region, err := regionPrompt.Run()
@@ -998,9 +998,9 @@ func callPlaceOrderHTTP(h provider.HTTPClientTraderAPI, ownerAddr, ooAddr string
 		}
 		return &wlt.PrivateKey
 	})
-	tru := true
-	resp, err := h.SignAndSubmitPaladin(ctx, &pb.TransactionMessage{
-		Content: tx1.MustToBase64()}, &tru)
+	//tru := true
+	resp, err := h.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: tx1.MustToBase64()}, true, false, true)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true

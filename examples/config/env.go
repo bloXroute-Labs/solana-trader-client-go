@@ -58,6 +58,7 @@ type Region string
 const (
 	NY Region = "ny"
 	UK Region = "uk"
+	FR Region = "fr"
 )
 
 var (
@@ -69,6 +70,7 @@ var (
 	HTTPUrls = map[Region]string{
 		NY: provider.MainnetNYHTTP,
 		UK: provider.MainnetUKHTTP,
+		FR: provider.MainnetFrankfurtHTTP,
 	}
 
 	WSUrls = map[Region]string{
