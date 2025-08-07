@@ -41,7 +41,7 @@ func SignTxWithPrivateKey(unsignedTxBase64 string, privateKey solana.PrivateKey)
 		return "", err
 	}
 
-	err = signTx(solanaTx, privateKey)
+	err = SignTransactionWithPrivateKey(solanaTx, privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +49,7 @@ func SignTxWithPrivateKey(unsignedTxBase64 string, privateKey solana.PrivateKey)
 	return solanaTx.ToBase64()
 }
 
-func signTx(solanaTx *solana.Transaction, privateKey solana.PrivateKey) error {
+func SignTransactionWithPrivateKey(solanaTx *solana.Transaction, privateKey solana.PrivateKey) error {
 	signaturesRequired := int(solanaTx.Message.Header.NumRequiredSignatures)
 	signaturesPresent := len(solanaTx.Signatures)
 	if signaturesPresent != signaturesRequired {

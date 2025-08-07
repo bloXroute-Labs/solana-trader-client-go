@@ -1375,9 +1375,9 @@ func callPlaceOrderBundle(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr,
 		}
 		return &wlt.PrivateKey
 	})
-	tru := true
-	resp, err := g.SignAndSubmitPaladin(ctx, &pb.TransactionMessage{
-		Content: tx1.MustToBase64()}, &tru)
+
+	resp, err := g.SignAndSubmit(ctx, &pb.TransactionMessage{
+		Content: tx1.MustToBase64()}, false, false, true)
 	if err != nil {
 		log.Errorf("failed to sign and submit order (%v)", err)
 		return true

@@ -603,7 +603,29 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: frontRunningProtection,
 		UseStakedRPCs:          useStakedRPCs,
-		// Other fields default to zero values
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return response.Signature, nil
+}
+
+func (h *HTTPClient) SignAndSubmitWithOpts(ctx context.Context, tx *pb.TransactionMessage,
+	opts PostSubmitOpts) (string, error) {
+	if h.privateKey == nil {
+		return "", ErrPrivateKeyNotFound
+	}
+	txBase64, err := transaction.SignTxWithPrivateKey(tx.Content, *h.privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := h.PostSubmit(ctx, txBase64, PostSubmitOpts{
+		SkipPreFlight:          opts.SkipPreFlight,
+		FrontRunningProtection: opts.FrontRunningProtection,
+		UseStakedRPCs:          opts.UseStakedRPCs,
+		FastBestEffort:         opts.FastBestEffort, // Other fields default to zero values
 	})
 	if err != nil {
 		return "", err
@@ -869,7 +891,7 @@ func (h *HTTPClient) SubmitJupiterSwapInstructions(ctx context.Context, request 
 		return nil, err
 	}
 
-	err = transaction.PartialSign(tx, h.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	err = transaction.SignTransactionWithPrivateKey(tx, *h.privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -890,15 +912,15 @@ func (h *HTTPClient) SubmitJupiterSwapInstructions(ctx context.Context, request 
 }
 
 // SubmitRaydiumSwapInstructions builds a Raydium Swap transaction then signs it, and submits to the network.
-func (h *HTTPClient) SubmitRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchResponse, error) {
+func (h *HTTPClient) SubmitRaydiumSwapInstructions(ctx context.Context, request *pb.PostRaydiumSwapInstructionsRequest, frp bool, opts SubmitOpts) (string, error) {
 	swapInstructions, err := h.PostRaydiumSwapInstructions(ctx, request)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	instructions, err := utils.ConvertRaydiumInstructions(swapInstructions.Instructions)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	txBuilder := solana.NewTransactionBuilder()
@@ -915,33 +937,37 @@ func (h *HTTPClient) SubmitRaydiumSwapInstructions(ctx context.Context, request 
 
 	hash, err := solana.HashFromBase58(blockHash.BlockHash)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	txBuilder.SetRecentBlockHash(hash)
 	tx, err := txBuilder.Build()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	err = transaction.PartialSign(tx, h.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	err = transaction.SignTransactionWithPrivateKey(tx, *h.privateKey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	var txToBeSigned []*pb.TransactionMessage
+	var txToBeSigned *pb.TransactionMessage
 
 	txBase64, err := tx.ToBase64()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	txToBeSigned = append(txToBeSigned, &pb.TransactionMessage{
+	txToBeSigned = &pb.TransactionMessage{
 		Content:   txBase64,
 		IsCleanup: false,
-	})
+	}
 
-	return h.SignAndSubmitBatch(ctx, txToBeSigned, useBundle, opts)
+	return h.SignAndSubmitWithOpts(ctx, txToBeSigned, PostSubmitOpts{
+		SkipPreFlight:          *opts.SkipPreFlight,
+		FrontRunningProtection: frp,
+		UseStakedRPCs:          !frp,
+	})
 }
 
 // SubmitJupiterRouteSwap builds a Jupiter RouteSwap transaction then signs it, and submits to the network.

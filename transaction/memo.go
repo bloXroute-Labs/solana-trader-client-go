@@ -84,7 +84,7 @@ func AddMemoAndSign(txBase64 string, privateKey solana.PrivateKey) (string, erro
 		return "", err
 	}
 
-	err = signTx(solanaTx, privateKey)
+	err = SignTransactionWithPrivateKey(solanaTx, privateKey)
 	if err != nil {
 		return "", err
 	}

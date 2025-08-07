@@ -345,6 +345,11 @@ func NewGRPCClientWithOpts(opts RPCOpts, dialOpts ...grpc.DialOption) (*GRPCClie
 	grpcOpts = append(grpcOpts, grpc.WithDefaultCallOptions(&grpc.MaxRecvMsgSizeCallOption{MaxRecvMsgSize: 1024 * 1024 * 16}))
 	grpcOpts = append(grpcOpts, dialOpts...)
 
+	initialWindowSizeOpt := grpc.WithInitialWindowSize(1024 * 1024) // 1MB
+	grpcOpts = append(grpcOpts, initialWindowSizeOpt)
+	initialConnWindoweOpt := grpc.WithInitialConnWindowSize(16 * 1024 * 1024) // 16MB per connection
+	grpcOpts = append(grpcOpts, initialConnWindoweOpt)
+
 	keepaliveParams := grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:                15 * time.Second,
 		Timeout:             5 * time.Second,

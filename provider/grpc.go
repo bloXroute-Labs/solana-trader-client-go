@@ -568,7 +568,7 @@ func (g *GRPCClient) SubmitJupiterSwapInstructions(ctx context.Context, request 
 		return nil, err
 	}
 
-	err = transaction.PartialSign(tx, g.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	err = transaction.SignTransactionWithPrivateKey(tx, *g.privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -623,7 +623,7 @@ func (g *GRPCClient) SubmitRaydiumSwapInstructions(ctx context.Context, request 
 		return nil, err
 	}
 
-	err = transaction.PartialSign(tx, g.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	err = transaction.SignTransactionWithPrivateKey(tx, *g.privateKey)
 	if err != nil {
 		return nil, err
 	}

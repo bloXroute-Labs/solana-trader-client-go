@@ -5,13 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-
 	package_info "github.com/bloXroute-Labs/solana-trader-client-go"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"io/ioutil"
+	"net/http"
 )
 
 const contentType = "application/json"

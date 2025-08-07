@@ -192,6 +192,7 @@ type PostSubmitOpts struct {
 	RevenueAddress         string
 	Sniping                bool
 	AllowRevert            bool
+	FastBestEffort         bool
 }
 
 type RPCOpts struct {

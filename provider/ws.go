@@ -920,7 +920,7 @@ func (w *WSClient) SubmitJupiterSwapInstructions(ctx context.Context, request *p
 		return nil, err
 	}
 
-	err = transaction.PartialSign(tx, w.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	err = transaction.SignTransactionWithPrivateKey(tx, *w.privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -975,7 +975,7 @@ func (w *WSClient) SubmitRaydiumSwapInstructions(ctx context.Context, request *p
 		return nil, err
 	}
 
-	err = transaction.PartialSign(tx, w.privateKey.PublicKey(), make(map[solana.PublicKey]solana.PrivateKey))
+	err = transaction.SignTransactionWithPrivateKey(tx, *w.privateKey)
 	if err != nil {
 		return nil, err
 	}
