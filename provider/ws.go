@@ -570,7 +570,7 @@ func (w *WSClient) PostOrder(ctx context.Context, owner, payer, market string, s
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -584,7 +584,6 @@ func (w *WSClient) PostSubmit(ctx context.Context, txBase64 string, opts PostSub
 		UseStakedRPCs:          &opts.UseStakedRPCs,
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
-		Sniping:                &opts.Sniping,
 		Timestamp:              utils.GetTimestamp(),
 	}
 	var response pb.PostSubmitResponse
@@ -619,7 +618,7 @@ func (w *WSClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBa
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
+func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error) {
 	if w.privateKey == nil {
 		return &pb.PostSubmitResponse{}, ErrPrivateKeyNotFound
 	}
@@ -638,7 +637,6 @@ func (w *WSClient) PostSubmitV2(ctx context.Context, txBase64 string, opts PostS
 		UseStakedRPCs:          &opts.UseStakedRPCs,
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
-		Sniping:                &opts.Sniping,
 		Timestamp:              utils.GetTimestamp(),
 	}
 	var response pb.PostSubmitResponse
@@ -671,7 +669,7 @@ func (w *WSClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		return "", err
 	}
 
-	response, err := w.PostSubmit(ctx, txBase64, PostSubmitOpts{
+	response, err := w.PostSubmit(ctx, txBase64, SubmitOpts{
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: frontRunningProtection,
 		UseStakedRPCs:          useStakedRPCs,
@@ -758,7 +756,7 @@ func (w *WSClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.Tr
 	}
 
 	if len(transactions) == 1 {
-		signature, err := w.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
+		signature, err := w.SignAndSubmit(ctx, transactions[0], opts.SkipPreFlight, false, false)
 		if err != nil {
 			return nil, err
 		}
@@ -1523,8 +1521,7 @@ func (w *WSClient) SubmitCancelOrderV2(ctx context.Context, request *pb.PostCanc
 	}
 
 	return w.SignAndSubmitBatch(ctx, order.Transactions, false, SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  &skipPreFlight,
+		SkipPreFlight: skipPreFlight,
 	})
 }
 

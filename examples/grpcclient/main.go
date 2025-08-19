@@ -1463,7 +1463,7 @@ func callPlaceOrderBundleWithBatch(g provider.GRPCClientTraderAPI, ownerAddr, pa
 		panic(err)
 	}
 
-	useBundle := true
+	frp := true
 
 	batchEntry := pb.PostSubmitRequestEntry{
 		Transaction:   &pb.TransactionMessage{Content: signedTx},
@@ -1471,9 +1471,8 @@ func callPlaceOrderBundleWithBatch(g provider.GRPCClientTraderAPI, ownerAddr, pa
 	}
 
 	batchRequest := pb.PostSubmitBatchRequest{
-		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry},
-		SubmitStrategy: 1,
-		UseBundle:      &useBundle,
+		Entries:                []*pb.PostSubmitRequestEntry{&batchEntry},
+		FrontRunningProtection: &frp,
 	}
 
 	batchResp, err := g.PostSubmitBatchV2(ctx, &batchRequest)
@@ -1525,8 +1524,7 @@ func callCancelByClientOrderIDGRPC(g provider.GRPCClientTraderAPI, ownerAddr, oo
 
 	sig, err := g.SubmitCancelOrderV2(ctx, "", clientID, sideAsk, ownerAddr,
 		marketAddr, ooAddr, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(true),
+			SkipPreFlight: true,
 		})
 	if err != nil {
 		log.Errorf("failed to cancel order by client order ID (%v)", err)
@@ -1619,8 +1617,7 @@ func cancelAll(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAddr stri
 	// Cancel all the orders
 	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1729,8 +1726,7 @@ func callReplaceByClientOrderID(g provider.GRPCClientTraderAPI, ownerAddr, payer
 	// Cancel all the orders
 	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1826,8 +1822,7 @@ func callReplaceOrder(g provider.GRPCClientTraderAPI, ownerAddr, payerAddr, ooAd
 	// Cancel all the orders
 	log.Info("cancelling the orders")
 	sigs, err := g.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1848,8 +1843,7 @@ func callTradeSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 	log.Info("trade swap")
 	sig, err := g.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		"So11111111111111111111111111111111111111112", 0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  config.BoolPtr(false),
+			SkipPreFlight: false,
 		})
 	if err != nil {
 		log.Error(err)
@@ -1880,8 +1874,7 @@ func callRaydiumSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 		Tip:          &tip,
 		ComputePrice: computePrice,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1984,8 +1977,7 @@ func callRaydiumCLMMSwapGRPC(g provider.GRPCClientTraderAPI, ownerAddr string) b
 		ComputePrice: 10000,
 		ComputeLimit: 300000,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2046,8 +2038,7 @@ func callJupiterSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2076,8 +2067,7 @@ func callJupiterSwapInstructions(g provider.GRPCClientTraderAPI, ownerAddr strin
 		InAmount:     0.001,
 		Tip:          &tipAmount,
 	}, useBundle, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 
 	if err != nil {
@@ -2107,8 +2097,7 @@ func callRaydiumSwapInstructions(g provider.GRPCClientTraderAPI, ownerAddr strin
 		InAmount:     0.001,
 		Tip:          &tipAmount,
 	}, useBundle, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 
 	if err != nil {
@@ -2151,8 +2140,7 @@ func callRouteTradeSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool {
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2190,8 +2178,7 @@ func callRaydiumRouteSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2225,8 +2212,7 @@ func callRaydiumCLMMRouteSwapGRPC(g provider.GRPCClientTraderAPI, ownerAddr stri
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2269,8 +2255,7 @@ func callJupiterRouteSwap(g provider.GRPCClientTraderAPI, ownerAddr string) bool
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)

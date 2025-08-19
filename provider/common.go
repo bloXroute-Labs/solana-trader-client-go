@@ -180,17 +180,11 @@ type PostOrderOpts struct {
 }
 
 type SubmitOpts struct {
-	SubmitStrategy pb.SubmitStrategy
-	SkipPreFlight  *bool
-}
-
-type PostSubmitOpts struct {
 	SkipPreFlight          bool
 	FrontRunningProtection bool
 	UseStakedRPCs          bool
 	AllowBackRun           bool
 	RevenueAddress         string
-	Sniping                bool
 	AllowRevert            bool
 	FastBestEffort         bool
 }
@@ -234,9 +228,8 @@ func ProjectFromString(project string) (pb.Project, error) {
 	return pb.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, frp bool, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
-	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
 	for _, tx := range transactions {
 		request, err := createBatchRequestEntry(opts, tx.Content, privateKey)
@@ -248,7 +241,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 
 	}
 
-	batchRequest.UseBundle = &useBundle
+	batchRequest.FrontRunningProtection = &frp
 	batchRequest.Timestamp = utils.GetTimestamp()
 
 	return &batchRequest, nil
@@ -256,11 +249,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 
 func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana.PrivateKey) (*pb.PostSubmitRequestEntry, error) {
 	oneRequest := pb.PostSubmitRequestEntry{}
-	if opts.SkipPreFlight == nil {
-		oneRequest.SkipPreFlight = true
-	} else {
-		oneRequest.SkipPreFlight = *opts.SkipPreFlight
-	}
+	oneRequest.SkipPreFlight = opts.SkipPreFlight
 
 	signedTxBase64, err := transaction.SignTxWithPrivateKey(txBase64, privateKey)
 	if err != nil {

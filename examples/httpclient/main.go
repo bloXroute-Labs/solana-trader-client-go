@@ -1088,9 +1088,8 @@ func callPlaceOrderBundleUsingBatchHTTP(h provider.HTTPClientTraderAPI, ownerAdd
 	}
 
 	batchRequest := pb.PostSubmitBatchRequest{
-		Entries:        []*pb.PostSubmitRequestEntry{&batchEntry},
-		SubmitStrategy: 1,
-		UseBundle:      &useBundle,
+		Entries:                []*pb.PostSubmitRequestEntry{&batchEntry},
+		FrontRunningProtection: &useBundle,
 	}
 
 	batchResp, err := h.PostSubmitBatchV2(ctx, &batchRequest)
@@ -1184,8 +1183,7 @@ func callCancelByClientOrderIDHTTP(h provider.HTTPClientTraderAPI, ownerAddr, oo
 
 	_, err := h.SubmitCancelOrderV2(ctx, "", clientOrderID, sideAsk, ownerAddr,
 		marketAddr, ooAddr, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(false),
+			SkipPreFlight: false,
 		})
 	if err != nil {
 		log.Errorf("failed to cancel order by client ID (%v)", err)
@@ -1281,8 +1279,7 @@ func cancelAll(h provider.HTTPClientTraderAPI, ownerAddr, payerAddr, ooAddr stri
 	// Cancel all the orders
 	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1391,8 +1388,7 @@ func callReplaceByClientOrderID(h provider.HTTPClientTraderAPI, ownerAddr, payer
 	// Cancel all the orders
 	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1488,8 +1484,7 @@ func callReplaceOrder(h provider.HTTPClientTraderAPI, ownerAddr, payerAddr, ooAd
 	// Cancel all the orders
 	log.Info("cancelling the orders")
 	sigs, err := h.SubmitCancelOrderV2(ctx, "", 0, sideAsk, ownerAddr, marketAddr, ooAddr, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1530,8 +1525,7 @@ func callTradeSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool {
 	log.Info("trade swap")
 	sig, err := h.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "So11111111111111111111111111111111111111112",
 		0.01, 0.1, pb.Project_P_RAYDIUM, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-			SkipPreFlight:  config.BoolPtr(false),
+			SkipPreFlight: false,
 		})
 	if err != nil {
 		log.Error(err)
@@ -1559,8 +1553,7 @@ func callRaydiumSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool {
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1588,8 +1581,7 @@ func callRaydiumCLMMSwapHTTP(h provider.HTTPClientTraderAPI, ownerAddr string) b
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1725,8 +1717,7 @@ func callRaydiumRouteSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1767,8 +1758,7 @@ func callRaydiumCLMMRouteSwap(h provider.HTTPClientTraderAPI, ownerAddr string) 
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1811,8 +1801,7 @@ func callJupiterRouteSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1840,8 +1829,7 @@ func callJupiterSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool {
 		Slippage:     0.4,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1871,8 +1859,7 @@ func callJupiterSwapInstructions(h provider.HTTPClientTraderAPI, ownerAddr strin
 		InAmount:     0.01,
 		Tip:          tipAmount,
 	}, useBundle, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1902,8 +1889,7 @@ func callRaydiumSwapInstructions(h provider.HTTPClientTraderAPI, ownerAddr strin
 		InAmount:     0.01,
 		Tip:          tipAmount,
 	}, useBundle, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -1942,8 +1928,7 @@ func callRouteTradeSwap(h provider.HTTPClientTraderAPI, ownerAddr string) bool {
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_ABORT_ON_FIRST_ERROR,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)

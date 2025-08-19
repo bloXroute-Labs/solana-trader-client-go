@@ -1453,8 +1453,7 @@ func callPlaceOrderBundleWithBatch(w provider.WSClientTraderAPI, ownerAddr strin
 
 	signature, err := w.SignAndSubmitBatch(ctx, []*pb.TransactionMessage{{Content: resp.Transactions[0].Content}},
 		true, provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_UKNOWN,
-			SkipPreFlight:  config.BoolPtr(true),
+			SkipPreFlight: true,
 		})
 
 	if err != nil {
@@ -1815,8 +1814,7 @@ func callTradeSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 	log.Info("trade swap")
 	sig, err := w.SubmitTradeSwap(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		"So11111111111111111111111111111111111111112", 0.01, 0.1, "raydium", provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(false),
+			SkipPreFlight: false,
 		})
 	if err != nil {
 		log.Error(err)
@@ -1840,8 +1838,7 @@ func callTradeSwapWithPriorityFee(w provider.WSClientTraderAPI, ownerAddr string
 	sig, err := w.SubmitTradeSwapWithPriorityFee(ctx, ownerAddr, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		"So11111111111111111111111111111111111111112", 0.01, 0.1, "raydium", computeLimit, computePrice,
 		provider.SubmitOpts{
-			SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-			SkipPreFlight:  config.BoolPtr(false),
+			SkipPreFlight: false,
 		})
 	if err != nil {
 		log.Error(err)
@@ -1868,8 +1865,7 @@ func callRaydiumSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 
 	if err != nil {
@@ -1972,8 +1968,7 @@ func callRaydiumCLMMSwapWS(w provider.WSClientTraderAPI, ownerAddr string) bool 
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2037,8 +2032,7 @@ func callRouteTradeSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2075,8 +2069,7 @@ func callRaydiumRouteSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2121,8 +2114,7 @@ func callRaydiumCLMMRouteSwapWS(w provider.WSClientTraderAPI, ownerAddr string) 
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(true),
+		SkipPreFlight: true,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2145,8 +2137,7 @@ func callJupiterSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 		Slippage:     0.1,
 		InAmount:     0.01,
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2175,8 +2166,7 @@ func callJupiterSwapInstructions(w provider.WSClientTraderAPI, ownerAddr string,
 		InAmount:     0.01,
 		Tip:          tipAmount,
 	}, useBundle, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2205,8 +2195,7 @@ func callRaydiumSwapInstructions(w provider.WSClientTraderAPI, ownerAddr string,
 		InAmount:     0.01,
 		Tip:          tipAmount,
 	}, useBundle, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
@@ -2248,8 +2237,7 @@ func callJupiterRouteSwap(w provider.WSClientTraderAPI, ownerAddr string) bool {
 			},
 		},
 	}, provider.SubmitOpts{
-		SubmitStrategy: pb.SubmitStrategy_P_SUBMIT_ALL,
-		SkipPreFlight:  config.BoolPtr(false),
+		SkipPreFlight: false,
 	})
 	if err != nil {
 		log.Error(err)
