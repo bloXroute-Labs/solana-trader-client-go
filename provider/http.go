@@ -510,7 +510,7 @@ func (h *HTTPClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 }
 
 // PostSubmit posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
 	request := &pb.PostSubmitRequest{
 		Transaction:            &pb.TransactionMessage{Content: txBase64},
@@ -519,7 +519,6 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts PostS
 		UseStakedRPCs:          &opts.UseStakedRPCs,
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
-		Sniping:                &opts.Sniping,
 		Timestamp:              utils.GetTimestamp(),
 	}
 
@@ -555,7 +554,7 @@ func (h *HTTPClient) PostSubmitBatch(ctx context.Context, request *pb.PostSubmit
 }
 
 // PostSubmitV2 posts the transaction string to the Solana network.
-func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error) {
+func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v2/submit", h.baseURL)
 	request := &pb.PostSubmitRequest{
 		Transaction:            &pb.TransactionMessage{Content: txBase64},
@@ -564,7 +563,6 @@ func (h *HTTPClient) PostSubmitV2(ctx context.Context, txBase64 string, opts Pos
 		UseStakedRPCs:          &opts.UseStakedRPCs,
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
-		Sniping:                &opts.Sniping,
 		Timestamp:              utils.GetTimestamp(),
 	}
 
@@ -599,7 +597,7 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 		return "", err
 	}
 
-	response, err := h.PostSubmit(ctx, txBase64, PostSubmitOpts{
+	response, err := h.PostSubmit(ctx, txBase64, SubmitOpts{
 		SkipPreFlight:          skipPreFlight,
 		FrontRunningProtection: frontRunningProtection,
 		UseStakedRPCs:          useStakedRPCs,
@@ -612,7 +610,7 @@ func (h *HTTPClient) SignAndSubmit(ctx context.Context, tx *pb.TransactionMessag
 }
 
 func (h *HTTPClient) SignAndSubmitWithOpts(ctx context.Context, tx *pb.TransactionMessage,
-	opts PostSubmitOpts) (string, error) {
+	opts SubmitOpts) (string, error) {
 	if h.privateKey == nil {
 		return "", ErrPrivateKeyNotFound
 	}
@@ -621,7 +619,7 @@ func (h *HTTPClient) SignAndSubmitWithOpts(ctx context.Context, tx *pb.Transacti
 		return "", err
 	}
 
-	response, err := h.PostSubmit(ctx, txBase64, PostSubmitOpts{
+	response, err := h.PostSubmit(ctx, txBase64, SubmitOpts{
 		SkipPreFlight:          opts.SkipPreFlight,
 		FrontRunningProtection: opts.FrontRunningProtection,
 		UseStakedRPCs:          opts.UseStakedRPCs,
@@ -709,7 +707,7 @@ func (h *HTTPClient) SignAndSubmitBatch(ctx context.Context, transactions []*pb.
 	}
 
 	if len(transactions) == 1 {
-		signature, err := h.SignAndSubmit(ctx, transactions[0], *opts.SkipPreFlight, false, false)
+		signature, err := h.SignAndSubmit(ctx, transactions[0], opts.SkipPreFlight, false, false)
 		if err != nil {
 			return nil, err
 		}
@@ -827,7 +825,7 @@ func (h *HTTPClient) SubmitPostPumpFunAmmSwap(ctx context.Context, request *pb.P
 	}
 	return h.SignAndSubmit(ctx, &pb.TransactionMessage{
 		Content: resp.Transactions[0].Content,
-	}, false, false, false)
+	}, true, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.
@@ -963,8 +961,8 @@ func (h *HTTPClient) SubmitRaydiumSwapInstructions(ctx context.Context, request 
 		IsCleanup: false,
 	}
 
-	return h.SignAndSubmitWithOpts(ctx, txToBeSigned, PostSubmitOpts{
-		SkipPreFlight:          *opts.SkipPreFlight,
+	return h.SignAndSubmitWithOpts(ctx, txToBeSigned, SubmitOpts{
+		SkipPreFlight:          opts.SkipPreFlight,
 		FrontRunningProtection: frp,
 		UseStakedRPCs:          !frp,
 	})

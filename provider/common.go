@@ -28,7 +28,7 @@ const (
 	mainnetLA        Region = "la.solana.dex.blxrbdn.com"
 	mainnetAmsterdam Region = "amsterdam.solana.dex.blxrbdn.com"
 	mainnetTokyo     Region = "tokyo.solana.dex.blxrbdn.com"
-	testnet          Region = "solana.dex.bxrtest.com"
+	testnet          Region = "160.202.128.145"
 	devnet           Region = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
 
@@ -164,7 +164,7 @@ func wsEndpoint(baseUrl Region, secure bool) string {
 }
 
 func grpcEndpoint(baseUrl Region, secure bool) string {
-	port := "80"
+	port := "1809"
 	if secure {
 		port = "443"
 	}
@@ -180,17 +180,11 @@ type PostOrderOpts struct {
 }
 
 type SubmitOpts struct {
-	SubmitStrategy pb.SubmitStrategy
-	SkipPreFlight  *bool
-}
-
-type PostSubmitOpts struct {
 	SkipPreFlight          bool
 	FrontRunningProtection bool
 	UseStakedRPCs          bool
 	AllowBackRun           bool
 	RevenueAddress         string
-	Sniping                bool
 	AllowRevert            bool
 	FastBestEffort         bool
 }
@@ -234,9 +228,8 @@ func ProjectFromString(project string) (pb.Project, error) {
 	return pb.Project_P_UNKNOWN, fmt.Errorf("could not find project %s", project)
 }
 
-func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, useBundle bool, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
+func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.PrivateKey, frp bool, opts SubmitOpts) (*pb.PostSubmitBatchRequest, error) {
 	batchRequest := pb.PostSubmitBatchRequest{}
-	batchRequest.SubmitStrategy = opts.SubmitStrategy
 
 	for _, tx := range transactions {
 		request, err := createBatchRequestEntry(opts, tx.Content, privateKey)
@@ -248,7 +241,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 
 	}
 
-	batchRequest.UseBundle = &useBundle
+	batchRequest.FrontRunningProtection = &frp
 	batchRequest.Timestamp = utils.GetTimestamp()
 
 	return &batchRequest, nil
@@ -256,11 +249,7 @@ func buildBatchRequest(transactions []*pb.TransactionMessage, privateKey solana.
 
 func createBatchRequestEntry(opts SubmitOpts, txBase64 string, privateKey solana.PrivateKey) (*pb.PostSubmitRequestEntry, error) {
 	oneRequest := pb.PostSubmitRequestEntry{}
-	if opts.SkipPreFlight == nil {
-		oneRequest.SkipPreFlight = true
-	} else {
-		oneRequest.SkipPreFlight = *opts.SkipPreFlight
-	}
+	oneRequest.SkipPreFlight = opts.SkipPreFlight
 
 	signedTxBase64, err := transaction.SignTxWithPrivateKey(txBase64, privateKey)
 	if err != nil {

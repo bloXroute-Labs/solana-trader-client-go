@@ -12,10 +12,10 @@ import (
 )
 
 type WSClientTraderAPISubmitOnly interface {
-	PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error)
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
-	PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmitV2(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error)
@@ -76,10 +76,10 @@ type WSClientTraderAPI interface {
 		slippage float64, computeLimit uint32, computePrice uint64, projectStr string) (*pb.TradeSwapResponse, error)
 	PostRouteTradeSwap(ctx context.Context, request *pb.RouteTradeSwapRequest) (*pb.TradeSwapResponse, error)
 	PostOrder(ctx context.Context, owner, payer, market string, side pb.Side, types []common.OrderType, amount, price float64, project pb.Project, opts PostOrderOpts) (*pb.PostOrderResponse, error)
-	PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error)
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
-	PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmitV2(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
@@ -174,8 +174,8 @@ type WSClientTraderAPI interface {
 	SubmitSettleV2(ctx context.Context, owner, market, baseTokenWallet, quoteTokenWallet, openOrdersAccount string, skipPreflight bool) (string, error)
 	PostReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (*pb.PostOrderResponse, error)
 	SubmitReplaceOrderV2(ctx context.Context, orderID, owner, payer, market string, side string, orderType string, amount, price float64, opts PostOrderOpts) (string, error)
-	GetRecentBlockHash(ctx context.Context, request *pb.GetRecentBlockHashRequest) (*pb.GetRecentBlockHashResponse, error)
-	GetRecentBlockHashV2(ctx context.Context, request *pb.GetRecentBlockHashRequestV2) (*pb.GetRecentBlockHashResponseV2, error)
+	GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error)
+	GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error)
 }
 
 type WSClient struct {
@@ -287,7 +287,7 @@ func NewWSClientWithOpts(opts RPCOpts) (*WSClient, error) {
 	}
 	client.recentBlockHashStore = newRecentBlockHashStore(
 		func(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
-			return client.GetRecentBlockHash(ctx, &pb.GetRecentBlockHashRequest{})
+			return client.GetRecentBlockHash(ctx)
 		},
 		client.GetRecentBlockHashStream,
 		opts,

@@ -57,10 +57,10 @@ type HTTPClientTraderAPI interface {
 	GetTokenAccounts(ctx context.Context, req *pb.GetTokenAccountsRequest) (*pb.GetTokenAccountsResponse, error)
 	GetPrice(ctx context.Context, tokens []string) (*pb.GetPriceResponse, error)
 	GetQuotes(ctx context.Context, inToken, outToken string, inAmount, slippage float64, limit int32, projects []pb.Project) (*pb.GetQuotesResponse, error)
-	PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error)
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
-	PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmitV2(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage,
 		skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
@@ -171,10 +171,10 @@ type HTTPClientTraderAPI interface {
 }
 
 type HTTPClientTraderAPISubmitOnly interface {
-	PostSubmit(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitSnipeV2(ctx context.Context, request *pb.PostSubmitSnipeRequest) (*pb.PostSubmitSnipeResponse, error)
 	PostSubmitBatch(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
-	PostSubmitV2(ctx context.Context, txBase64 string, opts PostSubmitOpts) (*pb.PostSubmitResponse, error)
+	PostSubmitV2(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error)
 	PostSubmitBatchV2(ctx context.Context, request *pb.PostSubmitBatchRequest) (*pb.PostSubmitBatchResponse, error)
 	SignAndSubmit(ctx context.Context, tx *pb.TransactionMessage, skipPreFlight bool, frontRunningProtection bool, useStakedRPCs bool) (string, error)
 	SignAndSubmitSnipe(ctx context.Context, transactions []*pb.TransactionMessage, useStakedRPCs bool) ([]string, error)
