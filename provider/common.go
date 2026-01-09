@@ -28,7 +28,7 @@ const (
 	mainnetLA        Region = "la.solana.dex.blxrbdn.com"
 	mainnetAmsterdam Region = "amsterdam.solana.dex.blxrbdn.com"
 	mainnetTokyo     Region = "tokyo.solana.dex.blxrbdn.com"
-	testnet          Region = "solana.dex.bxrtest.com"
+	testnet          Region = "160.202.128.145"
 	devnet           Region = "solana-trader-api-nlb-6b0f765f2fc759e1.elb.us-east-1.amazonaws.com"
 )
 
@@ -164,7 +164,7 @@ func wsEndpoint(baseUrl Region, secure bool) string {
 }
 
 func grpcEndpoint(baseUrl Region, secure bool) string {
-	port := "80"
+	port := "1809"
 	if secure {
 		port = "443"
 	}

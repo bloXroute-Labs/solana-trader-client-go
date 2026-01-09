@@ -1585,9 +1585,9 @@ func (w *WSClient) SubmitReplaceOrderV2(ctx context.Context, orderID, owner, pay
 }
 
 // GetRecentBlockHash returns recent block hash.
-func (w *WSClient) GetRecentBlockHash(ctx context.Context, request *pb.GetRecentBlockHashRequest) (*pb.GetRecentBlockHashResponse, error) {
+func (w *WSClient) GetRecentBlockHash(ctx context.Context) (*pb.GetRecentBlockHashResponse, error) {
 	var response pb.GetRecentBlockHashResponse
-	err := w.conn.Request(ctx, "GetRecentBlockHash", request, &response)
+	err := w.conn.Request(ctx, "GetRecentBlockHash", &pb.GetRecentBlockHashRequest{}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -1595,9 +1595,9 @@ func (w *WSClient) GetRecentBlockHash(ctx context.Context, request *pb.GetRecent
 }
 
 // GetRecentBlockHashV2 returns recent block hash, supports optional offset.
-func (w *WSClient) GetRecentBlockHashV2(ctx context.Context, request *pb.GetRecentBlockHashRequestV2) (*pb.GetRecentBlockHashResponseV2, error) {
+func (w *WSClient) GetRecentBlockHashV2(ctx context.Context, offset uint64) (*pb.GetRecentBlockHashResponseV2, error) {
 	var response pb.GetRecentBlockHashResponseV2
-	err := w.conn.Request(ctx, "GetRecentBlockHashV2", request, &response)
+	err := w.conn.Request(ctx, "GetRecentBlockHashV2", &pb.GetRecentBlockHashRequestV2{Offset: offset}, &response)
 	if err != nil {
 		return nil, err
 	}

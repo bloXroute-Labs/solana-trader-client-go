@@ -825,7 +825,7 @@ func (h *HTTPClient) SubmitPostPumpFunAmmSwap(ctx context.Context, request *pb.P
 	}
 	return h.SignAndSubmit(ctx, &pb.TransactionMessage{
 		Content: resp.Transactions[0].Content,
-	}, false, false, false)
+	}, true, false, false)
 }
 
 // SubmitRaydiumRouteSwap builds a Raydium RouteSwap transaction then signs it, and submits to the network.

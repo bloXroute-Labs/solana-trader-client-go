@@ -408,6 +408,7 @@ func (g *GRPCClient) PostSubmit(ctx context.Context, tx *pb.TransactionMessage, 
 		UseStakedRPCs:          &opts.UseStakedRPCs,
 		AllowBackRun:           &opts.AllowBackRun,
 		RevenueAddress:         &opts.RevenueAddress,
+		FastBestEffort:         &opts.FastBestEffort,
 		Timestamp:              utils.GetTimestamp(),
 	})
 }
