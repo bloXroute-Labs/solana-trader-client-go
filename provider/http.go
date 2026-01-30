@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	neturl "net/url"
 	"strings"
 
 	"github.com/bloXroute-Labs/solana-trader-client-go/connections"
@@ -509,21 +510,44 @@ func (h *HTTPClient) GetQuotes(ctx context.Context, inToken, outToken string, in
 	return result, nil
 }
 
+func boolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
 // PostSubmit posts the transaction string to the Solana network.
 func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error) {
 	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
-	request := &pb.PostSubmitRequest{
-		Transaction:            &pb.TransactionMessage{Content: txBase64},
-		SkipPreFlight:          opts.SkipPreFlight,
-		FrontRunningProtection: &opts.FrontRunningProtection,
-		UseStakedRPCs:          &opts.UseStakedRPCs,
-		AllowBackRun:           &opts.AllowBackRun,
-		RevenueAddress:         &opts.RevenueAddress,
-		Timestamp:              utils.GetTimestamp(),
-	}
 
+	var err error
 	var response pb.PostSubmitResponse
-	err := connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	if connections.GlobalPostSubmitContentType == "application/json" {
+		request := &pb.PostSubmitRequest{
+			Transaction:            &pb.TransactionMessage{Content: txBase64},
+			SkipPreFlight:          opts.SkipPreFlight,
+			FrontRunningProtection: &opts.FrontRunningProtection,
+			UseStakedRPCs:          &opts.UseStakedRPCs,
+			AllowBackRun:           &opts.AllowBackRun,
+			RevenueAddress:         &opts.RevenueAddress,
+			Timestamp:              utils.GetTimestamp(),
+		}
+		err = connections.HTTPPostWithClient[*pb.PostSubmitResponse](ctx, url, h.httpClient, request, &response, h.authHeader)
+	} else {
+		url += fmt.Sprintf(
+			"?skip_preflight=%s&front_running_protection=%s&use_staked_rpcs=%s&fast_best_effort=%s&allow_back_run=%s&revenue_address=%s&timestamp_ns=%d",
+			boolToString(opts.SkipPreFlight),
+			boolToString(opts.FrontRunningProtection),
+			boolToString(opts.UseStakedRPCs),
+			boolToString(opts.FastBestEffort),
+			boolToString(opts.AllowBackRun),
+			neturl.QueryEscape(opts.RevenueAddress),
+			utils.GetTimestamp().Nanos,
+		)
+
+		err = connections.HTTPPostWithClientRaw[*pb.PostSubmitResponse](ctx, url, h.httpClient, []byte(txBase64), &response, h.authHeader, connections.GlobalPostSubmitContentType, connections.GlobalCorrelationID)
+	}
 	if err != nil {
 		return nil, err
 	}

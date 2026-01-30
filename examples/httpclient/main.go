@@ -357,7 +357,7 @@ func callPostSubmit(h provider.HTTPClientTraderAPI) bool {
 
 	tx1, err := solana.NewTransaction([]solana.Instruction{
 		priceLimitIx,
-		system.NewTransferInstruction(10000000, privateKey.PublicKey(), solana.MustPublicKeyFromBase58("HWEoBxYs7ssKuudEjzjmpfJVX7Dvi7wescFsVx2L5yoY")).Build(),
+		system.NewTransferInstruction(10000000, privateKey.PublicKey(), solana.MustPublicKeyFromBase58("FZwLKcQupnTy2CbaVMGGsutxDtjv9CqYVDJxiNZSj5Xi")).Build(),
 	}, bh, solana.TransactionPayer(privateKey.PublicKey()))
 	if err != nil {
 		return false
