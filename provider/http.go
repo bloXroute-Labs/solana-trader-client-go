@@ -546,7 +546,7 @@ func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts Submi
 			utils.GetTimestamp().Nanos,
 		)
 
-		err = connections.HTTPPostWithClientRaw[*pb.PostSubmitResponse](ctx, url, h.httpClient, []byte(txBase64), &response, h.authHeader, connections.GlobalPostSubmitContentType, connections.GlobalCorrelationID)
+		err = connections.HTTPPostWithClientRaw[*pb.PostSubmitResponse](ctx, url, h.httpClient, []byte(txBase64), &response, h.authHeader, connections.GlobalPostSubmitContentType)
 	}
 	if err != nil {
 		return nil, err
