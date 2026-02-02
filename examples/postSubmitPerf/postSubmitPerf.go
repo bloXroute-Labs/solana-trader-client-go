@@ -34,7 +34,9 @@ func main() {
 	iterationCount := 5_000
 	//iterationCount = 1
 
+	log.Infof("Starting %d JSON iterations...", iterationCount)
 	roundTripStatsJson, bodyUnmarshalStatsJson := submitNcountWithContentType(client, iterationCount, "application/json")
+	log.Infof("Starting %d TEXT iterations...", iterationCount)
 	roundTripStatsText, bodyUnmarshalStatsText := submitNcountWithContentType(client, iterationCount, "text/plain")
 
 	formatStr := "%53s | roundTrip(ns) avg=%11s p50=%11s p90=%11s p99=%11s errors=%3d | bodyUnmarshal(ns) avg=%11s p50=%11s p90=%11s p99=%11s errors=%3d"
@@ -105,6 +107,10 @@ func submitNcountWithContentType(h provider.HTTPClientTraderAPI, iterationCount 
 			iteration:               i,
 			roundTripDurationNs:     endTime.Sub(startTime).Nanoseconds(),
 			bodyUnmarshalDurationNs: connections.GlobalBodyUnmarshalDurationNs,
+		}
+
+		if (i+1)%100 == 0 {
+			log.Infof("Completed %d/%d iterations for content type %s", i+1, iterationCount, contentType)
 		}
 	}
 
@@ -205,15 +211,14 @@ func extractBodyUnmarshalDurations(perfs []PostSubmitPerf) []int64 {
 }
 
 func summarizeDurations(durations []int64) durationSummary {
-	if len(durations) == 0 {
-		return durationSummary{}
-	}
-
 	sorted := make([]int64, 0, len(durations))
 	for _, d := range durations {
 		if d > 0 {
 			sorted = append(sorted, d)
 		}
+	}
+	if len(sorted) == 0 {
+		return durationSummary{}
 	}
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
 

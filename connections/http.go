@@ -86,7 +86,9 @@ func HTTPPostWithClientRaw[T protoreflect.ProtoMessage](ctx context.Context, url
 		return httpUnmarshalError(httpResp)
 	}
 
-	_ = httpUnmarshal[T](httpResp, val)
+	if err := httpUnmarshal[T](httpResp, val); err != nil {
+		return err
+	}
 
 	bodyUnmarshalDurationNsStr := httpResp.Header.Get("X-BODY-UNMARSHAL-DURATION-NS")
 	if len(bodyUnmarshalDurationNsStr) > 0 {
