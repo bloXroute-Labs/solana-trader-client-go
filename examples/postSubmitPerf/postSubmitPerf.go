@@ -26,12 +26,12 @@ func main() {
 
 	submitNcountWithContentType(client, 1, "application/json", "postSubmit-cold-start-json")
 
-	iterationCount := 20_000
-	//iterationCount = 1
+	iterationCount := 5_000
+	iterationCount = 1
 
-	time.Sleep(11 * time.Second)
+	//time.Sleep(11 * time.Second)
 	submitNcountWithContentType(client, iterationCount, "application/json", "postSubmit-1-json")
-	time.Sleep(11 * time.Second)
+	//time.Sleep(11 * time.Second)
 	submitNcountWithContentType(client, iterationCount, "text/plain", "postSubmit-1-text")
 }
 

@@ -519,7 +519,7 @@ func boolToString(b bool) string {
 
 // PostSubmit posts the transaction string to the Solana network.
 func (h *HTTPClient) PostSubmit(ctx context.Context, txBase64 string, opts SubmitOpts) (*pb.PostSubmitResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/trade/submit", h.baseURL)
+	url := fmt.Sprintf("%s/api/v2/submit-unmarshal-only", h.baseURL)
 
 	var err error
 	var response pb.PostSubmitResponse
